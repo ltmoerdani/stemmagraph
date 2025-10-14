@@ -5,6 +5,7 @@ import { EditableMemberCard } from './EditableMemberCard';
 import { MemberCard } from './MemberCard';
 import { useFamilyStore } from '../../store/familyStore';
 import { FamilyMember } from '../../types/family';
+import { GenealogyConnections } from './GenealogyConnections';
 
 /**
  * Enhanced family grouping function for better organization
@@ -495,6 +496,13 @@ export const TreeCanvas: React.FC = () => {
             willChange: 'transform',
           }}
         >
+          {/* Genealogy Connections */}
+          <GenealogyConnections
+            members={filteredMembers}
+            memberPositions={memberPositions}
+            canvasDimensions={canvasDimensions}
+          />
+
           {/* Render Member Cards */}
           <div style={{ position: 'relative', zIndex: 10 }} className="pointer-events-auto">
             {filteredMembers.map(member => {
@@ -512,7 +520,7 @@ export const TreeCanvas: React.FC = () => {
                     <MemberCard
                       member={member}
                       position={position}
-                      showConnections={true}
+                      showConnections={false} // Disable old connection points
                       size="medium"
                     />
                   )}

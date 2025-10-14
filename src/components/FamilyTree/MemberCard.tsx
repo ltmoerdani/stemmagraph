@@ -204,17 +204,11 @@ export const MemberCard: React.FC<MemberCardProps> = ({
         {/* Connection Points for Lines */}
         {showConnections && (
           <>
-            {/* Top connection point (for parents) */}
-            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gray-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border-2 border-white" />
-            
-            {/* Bottom connection point (for children) */}
-            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gray-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border-2 border-white" />
-            
-            {/* Left connection point (for spouse/siblings) */}
-            <div className="absolute top-1/2 -left-1 transform -translate-y-1/2 w-3 h-3 bg-gray-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border-2 border-white" />
-            
-            {/* Right connection point (for spouse/siblings) */}
-            <div className="absolute top-1/2 -right-1 transform -translate-y-1/2 w-3 h-3 bg-gray-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border-2 border-white" />
+            {/* Connection points are now handled by GenealogyConnections component */}
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity border border-white" />
+            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity border border-white" />
+            <div className="absolute top-1/2 -left-1 transform -translate-y-1/2 w-2 h-2 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity border border-white" />
+            <div className="absolute top-1/2 -right-1 transform -translate-y-1/2 w-2 h-2 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity border border-white" />
           </>
         )}
       </button>

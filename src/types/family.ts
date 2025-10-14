@@ -78,3 +78,30 @@ export interface FamilyTreeConnectionPoint extends Position {
   type: 'parent' | 'child' | 'spouse' | 'sibling';
   memberId: string;
 }
+
+/**
+ * Genealogy-specific connection types
+ */
+export type GenealogyConnectionType = 
+  | 'marriage' 
+  | 'parentChild' 
+  | 'sibling' 
+  | 'adoption' 
+  | 'stepParent';
+
+export interface GenealogyLineStyle {
+  stroke: string;
+  strokeWidth: number;
+  strokeDasharray?: string;
+  fill: string;
+  markerEnd?: string;
+}
+
+export interface FamilyRelationship {
+  id: string;
+  type: GenealogyConnectionType;
+  sourceId: string;
+  targetId: string;
+  confirmed: boolean;
+  notes?: string;
+}
