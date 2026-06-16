@@ -1,5 +1,65 @@
 import { create } from 'zustand';
 import { FamilyMember, FamilyStats, ViewMode, TreePosition } from '../types/family';
+import { getAdapter, FamilyMemberRecord, MemberRelationship } from '@/lib/adapters';
+
+// ─── Adapter ⟷ Legacy Type Bridge ──────────────────────────
+
+/**
+ * Merge adapter member records + relationships into the legacy FamilyMember type
+ * that the UI components still consume.
+ */
+function hydrateMembers(
+  records: FamilyMemberRecord[],
+  relationships: MemberRelationship[],
+): FamilyMember[] {
+  return records.map((r) => {
+    const rels = relationships.filter((rel) => rel.memberId === r.id || rel.relatedId === r.id);
+
+    const spouseRel = rels.find((rel) => rel.type === 'spouse');
+    const spouseId = spouseRel
+      ? spouseRel.memberId === r.id
+        ? spouseRel.relatedId
+        : spouseRel.memberId
+      : undefined;
+
+    const parentIds = rels
+      .filter((rel) => rel.type === 'parent' && rel.relatedId === r.id)
+      .map((rel) => rel.memberId);
+
+    const childrenIds = rels
+      .filter((rel) => rel.type === 'parent' && rel.memberId === r.id)
+      .map((rel) => rel.relatedId);
+
+    const siblingIds = rels
+      .filter((rel) => rel.type === 'sibling' && rel.memberId === r.id)
+      .map((rel) => rel.relatedId);
+
+    return {
+      id: r.id,
+      name: r.name,
+      nickname: r.nickname,
+      birthDate: r.birthDate,
+      deathDate: r.deathDate,
+      birthPlace: r.birthPlace,
+      currentLocation: r.currentLocation,
+      profession: r.profession,
+      education: r.education,
+      gender: r.gender as 'male' | 'female',
+      photoUrl: r.photoUrl,
+      spouseId,
+      parentIds: parentIds.length ? parentIds : undefined,
+      childrenIds: childrenIds.length ? childrenIds : undefined,
+      siblingIds: siblingIds.length ? siblingIds : undefined,
+      email: r.email,
+      phone: r.phone,
+      isAlive: r.isAlive,
+      generation: r.generation,
+      maritalStatus: r.maritalStatus,
+      created_at: r.createdAt,
+      updated_at: r.updatedAt,
+    };
+  });
+}
 
 interface FamilyStore {
   members: FamilyMember[];
@@ -11,8 +71,10 @@ interface FamilyStore {
   editMode: boolean;
   hasUnsavedChanges: boolean;
   currentFamilyTreeId: string | null;
-  
+  isLoading: boolean;
+
   // Actions
+  fetchMembers: (treeId: string) => Promise<void>;
   setMembers: (members: FamilyMember[]) => void;
   setSelectedMember: (member: FamilyMember | null) => void;
   setSearchQuery: (query: string) => void;
@@ -22,10 +84,37 @@ interface FamilyStore {
   setHasUnsavedChanges: (hasChanges: boolean) => void;
   setCurrentFamilyTreeId: (id: string | null) => void;
   updateStats: () => void;
-  addMember: (member: FamilyMember) => void;
-  updateMember: (id: string, updates: Partial<FamilyMember>) => void;
-  deleteMember: (id: string) => void;
-  addMemberWithRelationship: (member: FamilyMember, relationshipType: string, targetMemberId: string) => void;
+  addMember: (member: FamilyMember) => Promise<void>;
+  updateMember: (id: string, updates: Partial<FamilyMember>) => Promise<void>;
+  deleteMember: (id: string) => Promise<void>;
+  addMemberWithRelationship: (member: FamilyMember, relationshipType: string, targetMemberId: string) => Promise<void>;
+}
+
+function mapRelationshipType(uiType: string): MemberRelationship['type'] | null {
+  switch (uiType) {
+    case 'husband':
+    case 'wife':
+    case 'partner':
+      return 'spouse';
+    case 'father':
+    case 'mother':
+    case 'grandfather':
+    case 'grandmother':
+    case 'both_parents':
+      return 'parent';
+    case 'biological_child':
+    case 'step_child':
+    case 'adopted_child':
+    case 'grandchild':
+    case 'great_grandchild':
+      return 'child';
+    case 'brother':
+    case 'sister':
+    case 'sibling':
+      return 'sibling';
+    default:
+      return null;
+  }
 }
 
 export const useFamilyStore = create<FamilyStore>((set, get) => ({
@@ -47,6 +136,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   editMode: false,
   hasUnsavedChanges: false,
   currentFamilyTreeId: null,
+  isLoading: false,
   stats: {
     totalMembers: 0,
     totalGenerations: 0,
@@ -61,6 +151,22 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     locationDistribution: {},
   },
 
+  fetchMembers: async (treeId: string) => {
+    set({ isLoading: true, currentFamilyTreeId: treeId });
+    try {
+      const adapter = getAdapter();
+      const [records, relationships] = await Promise.all([
+        adapter.listMembers(treeId),
+        adapter.listRelationships(treeId),
+      ]);
+      const members = hydrateMembers(records, relationships);
+      set({ members, isLoading: false });
+      get().updateStats();
+    } catch {
+      set({ isLoading: false });
+    }
+  },
+
   setMembers: (members) => {
     set({ members });
     get().updateStats();
@@ -71,11 +177,11 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
 
   setViewMode: (mode) => set((state) => ({
-    viewMode: { ...state.viewMode, ...mode }
+    viewMode: { ...state.viewMode, ...mode },
   })),
 
   setTreePosition: (position) => set((state) => ({
-    treePosition: { ...state.treePosition, ...position }
+    treePosition: { ...state.treePosition, ...position },
   })),
 
   setEditMode: (enabled) => set({ editMode: enabled }),
@@ -87,7 +193,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   updateStats: () => {
     const { members } = get();
     const currentYear = new Date().getFullYear();
-    
+
     const stats: FamilyStats = {
       totalMembers: members.length,
       totalGenerations: Math.max(...members.map((m: FamilyMember) => m.generation), 0),
@@ -103,26 +209,21 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     };
 
     members.forEach((member: FamilyMember) => {
-      // Helper function to calculate age
-      const calculateAge = (member: FamilyMember): number => {
-        const birthYear = new Date(member.birthDate).getFullYear();
-        if (member.isAlive) {
-          return currentYear - birthYear;
-        }
-        return member.deathDate ? new Date(member.deathDate).getFullYear() - birthYear : 0;
+      const calculateAge = (m: FamilyMember): number => {
+        const birthYear = new Date(m.birthDate).getFullYear();
+        if (m.isAlive) return currentYear - birthYear;
+        return m.deathDate ? new Date(m.deathDate).getFullYear() - birthYear : 0;
       };
 
-      // Calculate age distribution
       const age = calculateAge(member);
-      
+
       if (age <= 18) stats.ageDistribution['0-18']++;
       else if (age <= 35) stats.ageDistribution['19-35']++;
       else if (age <= 60) stats.ageDistribution['36-60']++;
       else stats.ageDistribution['60+']++;
 
-      // Calculate location distribution
       if (member.currentLocation) {
-        stats.locationDistribution[member.currentLocation] = 
+        stats.locationDistribution[member.currentLocation] =
           (stats.locationDistribution[member.currentLocation] || 0) + 1;
       }
     });
@@ -130,46 +231,73 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     set({ stats });
   },
 
-  addMember: (newMember: FamilyMember) => {
-    const member: FamilyMember = {
-      ...newMember,
-      id: newMember.id || `member-${Date.now()}`,
+  addMember: async (newMember: FamilyMember) => {
+    const adapter = getAdapter();
+    const treeId = get().currentFamilyTreeId;
+    if (!treeId) return;
+
+    await adapter.createMember(treeId, {
+      name: newMember.name,
+      nickname: newMember.nickname,
+      gender: (newMember.gender as 'male' | 'female' | 'other') || 'male',
+      birthDate: newMember.birthDate,
+      birthPlace: newMember.birthPlace,
+      isAlive: newMember.isAlive ?? true,
+      deathDate: newMember.deathDate,
       generation: newMember.generation || 1,
       maritalStatus: newMember.maritalStatus || 'single',
-      isAlive: newMember.isAlive ?? true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    });
 
-    set((state) => ({
-      members: [...state.members, member],
-    }));
+    // Re-fetch to get hydrated members with relationships
+    await get().fetchMembers(treeId);
   },
 
-  updateMember: (id: string, updates: Partial<FamilyMember>) => {
-    const members = get().members.map((m: FamilyMember) => 
-      m.id === id ? { ...m, ...updates } : m
-    );
-    set({ members, hasUnsavedChanges: true });
-    get().updateStats();
+  updateMember: async (id: string, updates: Partial<FamilyMember>) => {
+    const adapter = getAdapter();
+    await adapter.updateMember(id, {
+      name: updates.name,
+      nickname: updates.nickname,
+      birthDate: updates.birthDate,
+      deathDate: updates.deathDate,
+      birthPlace: updates.birthPlace,
+      currentLocation: updates.currentLocation,
+      profession: updates.profession,
+      education: updates.education,
+      gender: updates.gender as 'male' | 'female' | 'other',
+      photoUrl: updates.photoUrl,
+      email: updates.email,
+      phone: updates.phone,
+      isAlive: updates.isAlive,
+      generation: updates.generation,
+      maritalStatus: updates.maritalStatus,
+    });
+
+    // Optimistic update + re-fetch
+    const treeId = get().currentFamilyTreeId;
+    if (treeId) await get().fetchMembers(treeId);
+    set({ hasUnsavedChanges: true });
   },
 
-  deleteMember: (id: string) => {
-    const members = get().members.filter((m: FamilyMember) => m.id !== id);
-    set({ members, hasUnsavedChanges: true });
-    get().updateStats();
+  deleteMember: async (id: string) => {
+    const adapter = getAdapter();
+    await adapter.deleteMember(id);
+
+    const treeId = get().currentFamilyTreeId;
+    if (treeId) await get().fetchMembers(treeId);
+    set({ hasUnsavedChanges: true });
   },
 
-  addMemberWithRelationship: (member, relationshipType, targetMemberId) => {
+  addMemberWithRelationship: async (member, relationshipType, targetMemberId) => {
+    const adapter = getAdapter();
+    const treeId = get().currentFamilyTreeId;
+    if (!treeId) return;
+
     const { members } = get();
-    const targetMember = members.find(m => m.id === targetMemberId);
-    
+    const targetMember = members.find((m) => m.id === targetMemberId);
     if (!targetMember) return;
 
     // Calculate generation based on relationship type
     let newGeneration = targetMember.generation;
-    
-    // Determine generation based on relationship type
     switch (relationshipType) {
       case 'father':
       case 'mother':
@@ -189,43 +317,28 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       case 'great_grandchild':
         newGeneration = targetMember.generation + 3;
         break;
-      case 'husband':
-      case 'wife':
-      case 'partner':
-        // Same generation for spouses - no change needed
-        break;
-      default:
-        // Keep same generation for unspecified relationships
-        break;
     }
 
-    // Create new member with calculated generation
-    const newMember = {
-      ...member,
-      id: `member-${Date.now()}`,
+    // Create member via adapter
+    const record = await adapter.createMember(treeId, {
+      name: member.name,
+      nickname: member.nickname,
+      gender: (member.gender as 'male' | 'female' | 'other') || 'male',
+      birthDate: member.birthDate,
+      birthPlace: member.birthPlace,
+      isAlive: member.isAlive ?? true,
+      deathDate: member.deathDate,
       generation: newGeneration,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      maritalStatus: member.maritalStatus || 'single',
+    });
 
-    // Update relationships
-    const updatedMembers = [...members, newMember];
-    
-    // Update target member relationships if needed
-    if (['biological_child', 'step_child', 'adopted_child'].includes(relationshipType)) {
-      const targetIndex = updatedMembers.findIndex(m => m.id === targetMemberId);
-      if (targetIndex !== -1) {
-        updatedMembers[targetIndex] = {
-          ...updatedMembers[targetIndex],
-          childrenIds: [...(updatedMembers[targetIndex].childrenIds || []), newMember.id]
-        };
-      }
-      
-      // Set parent relationship for new member
-      newMember.parentIds = [targetMemberId];
+    // Create relationship via adapter
+    const relType = mapRelationshipType(relationshipType);
+    if (relType) {
+      await adapter.createRelationship(treeId, record.id, targetMemberId, relType);
     }
 
-    set({ members: updatedMembers });
-    get().updateStats();
+    // Re-fetch to get consistent state
+    await get().fetchMembers(treeId);
   },
 }));

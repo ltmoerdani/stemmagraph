@@ -1,92 +1,80 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-interface FamilyTree {
-  id: string;
-  name: string;
-  memberCount: number;
-  generationCount: number;
-  lastUpdated: string;
-  createdAt: string;
-  thumbnail?: string;
-}
+import { getAdapter, FamilyTreeRecord } from '@/lib/adapters';
 
 interface DashboardState {
-  familyTrees: FamilyTree[];
+  familyTrees: FamilyTreeRecord[];
   viewMode: 'card' | 'list';
   isPremium: boolean;
-  
+  isLoading: boolean;
+
   // Actions
+  fetchTrees: () => Promise<void>;
   setViewMode: (mode: 'card' | 'list') => void;
-  createFamilyTree: (name: string) => FamilyTree;
-  updateFamilyTree: (id: string, updates: Partial<FamilyTree>) => void;
-  deleteFamilyTree: (id: string) => void;
+  createFamilyTree: (name: string) => Promise<FamilyTreeRecord>;
+  updateFamilyTree: (id: string, updates: Partial<FamilyTreeRecord>) => Promise<void>;
+  deleteFamilyTree: (id: string) => Promise<void>;
   setPremium: (premium: boolean) => void;
 }
-
-// Mock data for existing family trees
-const mockFamilyTrees: FamilyTree[] = [
-  {
-    id: 'wijaya-family',
-    name: 'Keluarga Besar Wijaya',
-    memberCount: 11,
-    generationCount: 3,
-    lastUpdated: '2024-01-15T10:30:00Z',
-    createdAt: '2023-06-15T08:00:00Z'
-  }
-];
 
 export const useDashboardStore = create<DashboardState>()(
   persist(
     (set) => ({
-      familyTrees: mockFamilyTrees,
+      familyTrees: [],
       viewMode: 'card',
       isPremium: false,
+      isLoading: false,
+
+      fetchTrees: async () => {
+        set({ isLoading: true });
+        try {
+          const adapter = getAdapter();
+          const trees = await adapter.listTrees();
+          set({ familyTrees: trees, isLoading: false });
+        } catch {
+          set({ isLoading: false });
+          // Silently fail — keep cached data if available
+        }
+      },
 
       setViewMode: (mode) => set({ viewMode: mode }),
 
-      createFamilyTree: (name) => {
-        const newTree: FamilyTree = {
-          id: `family-${Date.now()}`,
-          name,
-          memberCount: 0,
-          generationCount: 0,
-          lastUpdated: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        };
-
-        set(state => ({
-          familyTrees: [...state.familyTrees, newTree]
+      createFamilyTree: async (name) => {
+        const adapter = getAdapter();
+        const newTree = await adapter.createTree({ name });
+        set((state) => ({
+          familyTrees: [...state.familyTrees, newTree],
         }));
-
         return newTree;
       },
 
-      updateFamilyTree: (id, updates) => {
-        set(state => ({
-          familyTrees: state.familyTrees.map(tree =>
-            tree.id === id 
-              ? { ...tree, ...updates, lastUpdated: new Date().toISOString() }
-              : tree
-          )
+      updateFamilyTree: async (id, updates) => {
+        const adapter = getAdapter();
+        const updated = await adapter.updateTree(id, updates);
+        set((state) => ({
+          familyTrees: state.familyTrees.map((tree) =>
+            tree.id === id ? { ...tree, ...updated } : tree,
+          ),
         }));
       },
 
-      deleteFamilyTree: (id) => {
-        set(state => ({
-          familyTrees: state.familyTrees.filter(tree => tree.id !== id)
+      deleteFamilyTree: async (id) => {
+        const adapter = getAdapter();
+        await adapter.deleteTree(id);
+        set((state) => ({
+          familyTrees: state.familyTrees.filter((tree) => tree.id !== id),
         }));
       },
 
-      setPremium: (premium) => set({ isPremium: premium })
+      setPremium: (premium) => set({ isPremium: premium }),
     }),
     {
       name: 'dashboard-storage',
       partialize: (state) => ({
         familyTrees: state.familyTrees,
         viewMode: state.viewMode,
-        isPremium: state.isPremium
-      })
-    }
-  )
+        isPremium: state.isPremium,
+      }),
+    },
+  ),
 );

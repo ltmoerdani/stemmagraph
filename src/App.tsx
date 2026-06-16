@@ -12,76 +12,69 @@ import { BottomNavigation } from './components/BottomNavigation/BottomNavigation
 import { useFamilyStore } from './store/familyStore';
 import { useDashboardStore } from './store/dashboardStore';
 import { useAuthStore } from './store/authStore';
-import { mockFamilyData } from './data/mockData';
 
 function App() {
-  const { setMembers, selectedMember } = useFamilyStore();
-  const { familyTrees } = useDashboardStore();
-  useAuthStore();
+  const { selectedMember, fetchMembers } = useFamilyStore();
+  const { familyTrees, fetchTrees } = useDashboardStore();
+  const { isInitialized, initialize } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'family-tree' | 'upgrade'>('dashboard');
   const [currentFamilyTreeName, setCurrentFamilyTreeName] = useState<string>('');
 
+  // Initialize auth + load trees on mount
   useEffect(() => {
-    // Check URL to determine current view
+    initialize();
+    fetchTrees();
+  }, [initialize, fetchTrees]);
+
+  useEffect(() => {
+    // Wait for trees to load before determining view
+    if (!isInitialized) return;
+
     const path = window.location.pathname;
-    
+
     if (path.startsWith('/family-tree/')) {
       const treeId = path.split('/family-tree/')[1];
       const familyTree = familyTrees.find(tree => tree.id === treeId);
-      
+
       if (!familyTree) {
-        // Family tree not found, redirect to dashboard
         window.history.pushState({}, '', '/dashboard');
         setCurrentView('dashboard');
         return;
       }
-      
+
       setCurrentFamilyTreeName(familyTree.name);
       setCurrentView('family-tree');
-      
-      // Load appropriate data based on family tree
-      if (treeId === 'wijaya-family') {
-        // Load existing mock data for Wijaya family
-        setMembers(mockFamilyData);
-      } else {
-        // For new family trees, start with empty members array
-        // TreeCanvas will handle empty state properly
-        setMembers([]);
-      }
+
+      // Load members from adapter
+      fetchMembers(treeId);
     } else if (path === '/upgrade') {
       setCurrentView('upgrade');
     } else {
       setCurrentView('dashboard');
     }
-  }, [setMembers, familyTrees]);
+  }, [isInitialized, fetchMembers, familyTrees]);
 
   const handleMenuToggle = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // Handle navigation
+  // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
       if (path.startsWith('/family-tree/')) {
         const treeId = path.split('/family-tree/')[1];
         const familyTree = familyTrees.find(tree => tree.id === treeId);
-        
+
         if (!familyTree) {
           setCurrentView('dashboard');
           return;
         }
-        
+
         setCurrentFamilyTreeName(familyTree.name);
         setCurrentView('family-tree');
-        
-        // Load data consistently
-        if (treeId === 'wijaya-family') {
-          setMembers(mockFamilyData);
-        } else {
-          setMembers([]);
-        }
+        fetchMembers(treeId);
       } else if (path === '/upgrade') {
         setCurrentView('upgrade');
       } else {
@@ -91,7 +84,7 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [setMembers, familyTrees]);
+  }, [fetchMembers, familyTrees]);
 
   return (
     <ProtectedRoute>
@@ -99,34 +92,27 @@ function App() {
       {currentView === 'upgrade' && <UpgradePage />}
       {currentView === 'family-tree' && (
         <div className="h-screen flex flex-col bg-gray-50">
-          {/* Header with consistent family name display */}
           <Header onMenuToggle={handleMenuToggle} familyName={currentFamilyTreeName} />
-          
-          {/* Toolbar */}
-          <Toolbar 
+
+          <Toolbar
             onBackToDashboard={() => {
               window.history.pushState({}, '', '/dashboard');
               setCurrentView('dashboard');
             }}
           />
-          
-          {/* Main Content */}
+
           <div className="flex flex-1 overflow-hidden">
-            {/* Left Sidebar - Stats */}
             <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block`}>
               <StatsSidebar />
             </div>
-            
-            {/* Main Canvas Area - Always use FamilyTreeView for consistency */}
+
             <div className="flex-1 flex flex-col">
               <FamilyTreeView />
             </div>
-            
-            {/* Right Sidebar - Member Details */}
+
             {selectedMember && <MemberDetailSidebar />}
           </div>
-          
-          {/* Bottom Navigation */}
+
           <BottomNavigation />
         </div>
       )}

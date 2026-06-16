@@ -331,7 +331,7 @@ export const LoginPage: React.FC = () => {
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <p className="text-xs text-gray-600 text-center mb-2">Demo Credentials:</p>
             <div className="text-xs text-gray-500 space-y-1">
-              <p><strong>Email:</strong> demo@familytree.com</p>
+              <p><strong>Email:</strong> demo@familytree.app</p>
               <p><strong>Password:</strong> demo123</p>
             </div>
           </div>

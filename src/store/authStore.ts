@@ -1,46 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  familyName?: string;
-  avatar?: string;
-  createdAt: string;
-}
+import { getAdapter, AuthUser } from '@/lib/adapters';
 
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  
+  isInitialized: boolean;
+
   // Actions
+  initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   clearError: () => void;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
 }
-
-// Mock user database
-const mockUsers: Record<string, { password: string; user: User }> = {
-  'demo@familytree.com': {
-    password: 'demo123',
-    user: {
-      id: '1',
-      email: 'demo@familytree.com',
-      name: 'Demo User',
-      familyName: 'Wijaya',
-      avatar: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150',
-      createdAt: '2024-01-01T00:00:00Z'
-    }
-  }
-};
-
-// Simulate API delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -49,81 +25,82 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      isInitialized: false,
+
+      /**
+       * Initialize auth state on app start.
+       * Tries to restore session from the configured adapter.
+       * Call this once in App.tsx on mount.
+       */
+      initialize: async () => {
+        if (get().isInitialized) return;
+        set({ isLoading: true });
+        try {
+          const adapter = getAdapter();
+          const session = await adapter.getSession();
+          if (session) {
+            set({
+              user: session.user,
+              isAuthenticated: true,
+              isLoading: false,
+              isInitialized: true,
+            });
+          } else {
+            set({ isLoading: false, isInitialized: true });
+          }
+        } catch {
+          // Session restore failed — user stays logged out
+          set({ isLoading: false, isInitialized: true });
+        }
+      },
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await delay(1000);
-          
-          const userRecord = mockUsers[email.toLowerCase()];
-          
-          if (!userRecord || userRecord.password !== password) {
-            throw new Error('Email atau password salah');
-          }
-
+          const adapter = getAdapter();
+          const session = await adapter.login({ email, password });
           set({
-            user: userRecord.user,
+            user: session.user,
             isAuthenticated: true,
             isLoading: false,
-            error: null
+            error: null,
           });
         } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : 'Login gagal'
-          });
+          const message = error instanceof Error ? error.message : 'Login gagal';
+          set({ isLoading: false, error: message });
           throw error;
         }
       },
 
       register: async (email: string, password: string, name: string) => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await delay(1000);
-          
-          // Check if user already exists
-          if (mockUsers[email.toLowerCase()]) {
-            throw new Error('Email sudah terdaftar');
-          }
-
-          // Create new user
-          const newUser: User = {
-            id: Date.now().toString(),
-            email: email.toLowerCase(),
-            name,
-            createdAt: new Date().toISOString()
-          };
-
-          // Add to mock database
-          mockUsers[email.toLowerCase()] = {
-            password,
-            user: newUser
-          };
-
+          const adapter = getAdapter();
+          const session = await adapter.register({ email, password, name });
           set({
-            user: newUser,
+            user: session.user,
             isAuthenticated: true,
             isLoading: false,
-            error: null
+            error: null,
           });
         } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : 'Registrasi gagal'
-          });
+          const message = error instanceof Error ? error.message : 'Registrasi gagal';
+          set({ isLoading: false, error: message });
           throw error;
         }
       },
 
-      logout: () => {
+      logout: async () => {
+        try {
+          const adapter = getAdapter();
+          await adapter.logout();
+        } catch {
+          // Logout locally even if adapter call fails
+        }
         set({
           user: null,
           isAuthenticated: false,
-          error: null
+          error: null,
         });
       },
 
@@ -131,21 +108,19 @@ export const useAuthStore = create<AuthState>()(
         set({ error: null });
       },
 
-      updateUser: (updates: Partial<User>) => {
+      updateUser: (updates: Partial<AuthUser>) => {
         const { user } = get();
         if (user) {
-          set({
-            user: { ...user, ...updates }
-          });
+          set({ user: { ...user, ...updates } });
         }
-      }
+      },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated
-      })
-    }
-  )
+        isAuthenticated: state.isAuthenticated,
+      }),
+    },
+  ),
 );
