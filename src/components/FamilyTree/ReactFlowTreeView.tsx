@@ -1,15 +1,16 @@
 import React from 'react';
 import { ReactFlowFamilyTree } from './ReactFlowFamilyTree';
 import { useFamilyStore } from '../../store/familyStore';
+import { FamilyMember } from '../../types/family';
 
 export const ReactFlowTreeView: React.FC = () => {
   const { members, addMember, updateMember, deleteMember } = useFamilyStore();
 
-  const handleMemberUpdate = (updatedMember: any) => {
+  const handleMemberUpdate = (updatedMember: FamilyMember) => {
     updateMember(updatedMember.id, updatedMember);
   };
 
-  const handleMemberAdd = (newMember: any) => {
+  const handleMemberAdd = (newMember: Partial<FamilyMember>) => {
     const member = {
       id: `member-${Date.now()}`,
       name: 'New Member',

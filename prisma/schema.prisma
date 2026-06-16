@@ -1,0 +1,90 @@
+// Prisma schema for Family Tree Platform
+// SQLite for local development — zero config, file-based
+// Swap to PostgreSQL/MySQL by changing `provider` below
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── User (Auth) ──────────────────────────────────────────
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  password   String
+  name       String
+  familyName String?
+  avatar     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ─── Family Tree ──────────────────────────────────────────
+
+model FamilyTree {
+  id              String               @id @default(uuid())
+  name            String
+  description     String?
+  memberCount     Int                  @default(0)
+  generationCount Int                  @default(0)
+  thumbnail       String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  members         FamilyMember[]
+  relationships   FamilyRelationship[]
+}
+
+// ─── Family Member ────────────────────────────────────────
+
+model FamilyMember {
+  id              String               @id @default(uuid())
+  treeId          String
+  name            String
+  nickname        String?
+  birthDate       String
+  deathDate       String?
+  birthPlace      String?
+  currentLocation String?
+  profession      String?
+  education       String?
+  gender          String               @default("male")
+  photoUrl        String?
+  email           String?
+  phone           String?
+  isAlive         Boolean              @default(true)
+  generation      Int                  @default(1)
+  maritalStatus   String               @default("single")
+  notes           String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  tree              FamilyTree           @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  relationshipsFrom FamilyRelationship[] @relation("MemberFrom")
+  relationshipsTo   FamilyRelationship[] @relation("MemberTo")
+
+  @@index([treeId])
+  @@index([generation])
+}
+
+// ─── Family Relationship ─────────────────────────────────
+
+model FamilyRelationship {
+  id        String   @id @default(uuid())
+  treeId    String
+  memberId  String
+  relatedId String
+  type      String
+  createdAt DateTime @default(now())
+
+  tree    FamilyTree   @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  member  FamilyMember @relation("MemberFrom", fields: [memberId], references: [id], onDelete: Cascade)
+  related FamilyMember @relation("MemberTo", fields: [relatedId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, relatedId, type])
+  @@index([treeId])
+}
