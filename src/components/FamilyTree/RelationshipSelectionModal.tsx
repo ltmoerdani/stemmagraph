@@ -208,7 +208,7 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -251,7 +251,7 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
                   className="sr-only"
                 />
                 <div className="flex items-start space-x-3 w-full">
-                  <div className={`p-2 rounded-lg bg-white shadow-sm ${getIconColorClasses(option.color)}`}>
+                  <div className={`p-2 rounded-lg bg-white shadow-xs ${getIconColorClasses(option.color)}`}>
                     {option.icon}
                   </div>
                   <div className="flex-1">

@@ -117,7 +117,7 @@ export const GridMemberCard: React.FC<GridMemberCardProps> = ({
     <>
       <button
         type="button"
-        className={`relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full text-left ${
+        className={`relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full text-left ${
           isSelected ? 'ring-2 ring-blue-500 shadow-lg' : ''
         } ${
           member.gender === 'male' 
@@ -134,7 +134,7 @@ export const GridMemberCard: React.FC<GridMemberCardProps> = ({
       >
         {/* Generation Badge - Moved to top left corner */}
         <div className="absolute -top-2 -left-2">
-          <div className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-sm ${
+          <div className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-xs ${
             member.gender === 'male' ? 'bg-blue-500' : 'bg-pink-500'
           }`}>
             {member.generation}
@@ -194,24 +194,24 @@ export const GridMemberCard: React.FC<GridMemberCardProps> = ({
         </div>
 
         {/* Additional Info - Visible on Hover */}
-        <div className="absolute inset-x-0 bottom-0 bg-white bg-opacity-95 backdrop-blur-sm rounded-b-lg p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 border-t border-gray-100">
+        <div className="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm rounded-b-lg p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 border-t border-gray-100">
           <div className="space-y-2 text-xs">
             {member.profession && (
               <div className="flex items-center space-x-2 text-gray-600">
-                <Briefcase className="w-3 h-3 flex-shrink-0" />
+                <Briefcase className="w-3 h-3 shrink-0" />
                 <span className="truncate">{highlightText(member.profession)}</span>
               </div>
             )}
             
             {member.currentLocation && (
               <div className="flex items-center space-x-2 text-gray-600">
-                <MapPin className="w-3 h-3 flex-shrink-0" />
+                <MapPin className="w-3 h-3 shrink-0" />
                 <span className="truncate">{highlightText(member.currentLocation)}</span>
               </div>
             )}
             
             <div className="flex items-center space-x-2 text-gray-600">
-              <Calendar className="w-3 h-3 flex-shrink-0" />
+              <Calendar className="w-3 h-3 shrink-0" />
               <span>Generasi {member.generation}</span>
             </div>
           </div>
@@ -235,7 +235,7 @@ export const GridMemberCard: React.FC<GridMemberCardProps> = ({
         <>
           <button 
             type="button"
-            className="fixed inset-0 z-40 cursor-default bg-transparent border-none p-0 m-0 outline-none"
+            className="fixed inset-0 z-40 cursor-default bg-transparent border-none p-0 m-0 outline-hidden"
             onClick={() => setShowContextMenu(false)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {

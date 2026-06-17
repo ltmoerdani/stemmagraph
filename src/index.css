@@ -1,28 +1,63 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Global scaling to 80% for better spacing and readability */
+/* ─── Preserve v3 defaults for minimal visual regression ─── */
+@layer base {
+  /*
+   * v4 changed default border color from gray-200 to currentColor.
+   * Preserve v3 behavior to avoid visual regressions on bare borders.
+   */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  /*
+   * v4 changed default button cursor from pointer to default.
+   * Preserve v3 behavior for better UX on interactive elements.
+   */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /*
+   * v4 changed default placeholder color from gray-400 to currentColor/50%.
+   * Preserve v3 behavior for consistent form styling.
+   */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+}
+
+/* ─── Global scaling to 80% for better spacing and readability ─── */
 @layer base {
   html {
     font-size: 14px; /* Reduced from default 16px to achieve 80% scaling */
   }
-  
+
   body {
     font-size: 1rem; /* This will now be 14px instead of 16px */
     line-height: 1.5;
   }
-  
+
   /* Ensure consistent scaling across all elements */
   * {
     font-size: inherit;
   }
-  
+
   /* Scale down buttons, inputs, and form elements proportionally */
-  button, input, select, textarea, .btn {
+  button,
+  input,
+  select,
+  textarea,
+  .btn {
     font-size: inherit;
   }
-  
+
   /* Ensure headings scale proportionally */
   h1 { font-size: 1.5rem; }    /* ~21px instead of 24px */
   h2 { font-size: 1.25rem; }   /* ~17.5px instead of 20px */

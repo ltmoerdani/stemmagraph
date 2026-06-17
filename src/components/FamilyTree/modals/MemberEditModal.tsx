@@ -66,7 +66,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -99,7 +99,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Masukkan nama lengkap"
@@ -119,7 +119,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 type="text"
                 value={formData.nickname ?? ''}
                 onChange={(e) => handleInputChange('nickname', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 placeholder="Nama panggilan sehari-hari"
               />
             </div>
@@ -133,7 +133,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 id="member-gender"
                 value={formData.gender}
                 onChange={(e) => handleInputChange('gender', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${
                   errors.gender ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
@@ -158,7 +158,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 max="10"
                 value={formData.generation}
                 onChange={(e) => handleInputChange('generation', parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -179,7 +179,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   type="date"
                   value={formData.birthDate}
                   onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${
                     errors.birthDate ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -197,7 +197,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   type="text"
                   value={formData.birthPlace ?? ''}
                   onChange={(e) => handleInputChange('birthPlace', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${
                     errors.birthPlace ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Kota/tempat kelahiran"
@@ -236,7 +236,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   type="date"
                   value={formData.deathDate ?? ''}
                   onChange={(e) => handleInputChange('deathDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-xs"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 max-w-xs"
                 />
               </div>
             )}
@@ -258,7 +258,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   type="text"
                   value={formData.profession ?? ''}
                   onChange={(e) => handleInputChange('profession', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="Pekerjaan atau profesi"
                 />
               </div>
@@ -272,7 +272,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   type="text"
                   value={formData.education ?? ''}
                   onChange={(e) => handleInputChange('education', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="Pendidikan terakhir"
                 />
               </div>
@@ -294,7 +294,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 type="text"
                 value={formData.currentLocation ?? ''}
                 onChange={(e) => handleInputChange('currentLocation', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 placeholder="Kota/daerah tempat tinggal saat ini"
               />
             </div>
@@ -316,7 +316,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   type="tel"
                   value={formData.phone ?? ''}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="+62812345678"
                 />
               </div>
@@ -330,7 +330,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   type="email"
                   value={formData.email ?? ''}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="nama@email.com"
                 />
               </div>
@@ -342,13 +342,13 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               Simpan Perubahan
             </button>

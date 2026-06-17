@@ -152,7 +152,7 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
         {/* Interactive button overlay for accessibility */}
         <button
           type="button"
-          className="absolute inset-0 w-full h-full bg-transparent border-none outline-none p-0 m-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl z-10"
+          className="absolute inset-0 w-full h-full bg-transparent border-none outline-hidden p-0 m-0 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl z-10"
           onClick={handleClick}
           onContextMenu={handleContextMenu}
           onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -181,7 +181,7 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
         >
           {/* Generation badge - Moved to top left corner */}
           <div className="absolute -top-2 -left-2">
-            <div className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-sm ${
+            <div className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-xs ${
               member.gender === 'male' ? 'bg-blue-500' : 'bg-pink-500'
             }`}>
               {member.generation}
@@ -194,12 +194,12 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
             aria-label="Status indicators"
           >
             {member.maritalStatus === 'married' && (
-              <div className="w-5 h-5 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+              <div className="w-5 h-5 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center shadow-xs">
                 <span className="text-xs">💍</span>
               </div>
             )}
             {!member.isAlive && (
-              <div className="w-5 h-5 bg-gray-600 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+              <div className="w-5 h-5 bg-gray-600 rounded-full border-2 border-white flex items-center justify-center shadow-xs">
                 <span className="text-xs text-white">✕</span>
               </div>
             )}
@@ -241,7 +241,7 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
 
           {/* Photo */}
           <div className="p-4 pb-2">
-            <div className="w-16 h-16 mx-auto rounded-full overflow-hidden bg-gray-200 shadow-sm">
+            <div className="w-16 h-16 mx-auto rounded-full overflow-hidden bg-gray-200 shadow-xs">
               {member.photoUrl ? (
                 <img
                   src={member.photoUrl}
@@ -295,7 +295,7 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
 
           {/* Edit Mode Overlay */}
           {editMode && (
-            <div className="absolute inset-0 bg-blue-100 bg-opacity-20 rounded-xl pointer-events-none" />
+            <div className="absolute inset-0 bg-blue-100/20 rounded-xl pointer-events-none" />
           )}
         </div>
       </div>
@@ -306,7 +306,7 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
           {/* Use a button for the overlay for accessibility */}
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-transparent p-0 m-0 border-none outline-none"
+            className="fixed inset-0 z-40 bg-transparent p-0 m-0 border-none outline-hidden"
             aria-label="Close context menu"
             tabIndex={0}
             onClick={() => setShowContextMenu(false)}

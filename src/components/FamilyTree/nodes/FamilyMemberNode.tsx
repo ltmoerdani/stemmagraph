@@ -71,7 +71,7 @@ export const FamilyMemberNode = memo<NodeProps<FamilyMemberNodeData>>(({ data, s
 
   // Helper function to get generation badge color
   const getGenerationBadgeClass = () => {
-    const baseClass = 'w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center text-white shadow-sm';
+    const baseClass = 'w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center text-white shadow-xs';
     const colorClass = member.gender === 'male' ? 'bg-blue-500' : 'bg-pink-500';
     return `${baseClass} ${colorClass}`;
   };
@@ -163,7 +163,7 @@ export const FamilyMemberNode = memo<NodeProps<FamilyMemberNodeData>>(({ data, s
         <div className="p-4">
           {/* Photo */}
           <div className="flex justify-center mb-3">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 shadow-sm">
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 shadow-xs">
               {member.photoUrl ? (
                 <img
                   src={member.photoUrl}
@@ -231,7 +231,7 @@ export const FamilyMemberNode = memo<NodeProps<FamilyMemberNodeData>>(({ data, s
         <>
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-transparent cursor-default border-none p-0 m-0 outline-none"
+            className="fixed inset-0 z-40 bg-transparent cursor-default border-none p-0 m-0 outline-hidden"
             onClick={() => setShowContextMenu(false)}
             onKeyDown={(e) => {
               if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
