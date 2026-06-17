@@ -1,5 +1,5 @@
 import { Node } from 'reactflow';
-import { FamilyMember } from '../../../types/family';
+import type { FamilyMember } from '../../../types/family';
 
 export interface TierLayout {
   generation: number;

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getAdapter, AuthUser } from '@/lib/adapters';
+import { getAdapter } from '@/lib/adapters';
+import type { AuthUser } from '@/lib/adapters';
 
 interface AuthState {
   user: AuthUser | null;

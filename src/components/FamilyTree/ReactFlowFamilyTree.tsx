@@ -20,7 +20,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
-import { FamilyMember } from '../../types/family';
+import type { FamilyMember } from '../../types/family';
 import { FamilyMemberNode } from './nodes/FamilyMemberNode';
 import { MarriageEdge } from './edges/MarriageEdge';
 import { ParentChildEdge } from './edges/ParentChildEdge';

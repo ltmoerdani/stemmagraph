@@ -1,6 +1,6 @@
 import React from 'react';
 import type { JSX } from 'react';
-import { FamilyMember } from '../../types/family';
+import type { FamilyMember } from '../../types/family';
 
 interface FamilyTreeConnectionsProps {
   members: FamilyMember[];

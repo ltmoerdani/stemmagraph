@@ -1,7 +1,7 @@
 // Fix React import for TypeScript
 import * as React from 'react';
 import { useState } from 'react';
-import { FamilyMember } from '../../types/family';
+import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { 
   ArrowUp, 

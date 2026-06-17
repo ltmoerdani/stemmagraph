@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getAdapter, FamilyTreeRecord } from '@/lib/adapters';
+import { getAdapter } from '@/lib/adapters';
+import type { FamilyTreeRecord } from '@/lib/adapters';
 
 interface DashboardState {
   familyTrees: FamilyTreeRecord[];

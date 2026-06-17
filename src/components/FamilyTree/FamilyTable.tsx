@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useFamilyStore } from '../../store/familyStore';
-import { FamilyMember } from '../../types/family';
+import type { FamilyMember } from '../../types/family';
 import { 
   ChevronUp, 
   ChevronDown, 
