@@ -17,7 +17,6 @@ import { DataAdapter } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
-import { PrismaAdapter } from './prisma.adapter';
 
 // ─── Singleton ────────────────────────────────────────────
 

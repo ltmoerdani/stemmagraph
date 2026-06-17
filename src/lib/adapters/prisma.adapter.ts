@@ -17,7 +17,6 @@ import {
   CreateMemberInput,
   MemberRelationship,
   AuthError,
-  NotFoundError,
 } from './types';
 
 export class PrismaAdapter implements DataAdapter {
