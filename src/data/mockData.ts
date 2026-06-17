@@ -1,4 +1,4 @@
-import { FamilyMember } from '../types/family';
+import type { FamilyMember } from '../types/family';
 
 export const mockFamilyData: FamilyMember[] = [
   // Generation 1 (Grandparents)

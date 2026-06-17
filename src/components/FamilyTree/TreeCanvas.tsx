@@ -5,7 +5,7 @@ import { EditableMemberCard } from './EditableMemberCard';
 import { MemberCard } from './MemberCard';
 import { FamilyTreeConnections } from './FamilyTreeConnections.tsx';
 import { useFamilyStore } from '../../store/familyStore';
-import { FamilyMember } from '../../types/family';
+import type { FamilyMember } from '../../types/family';
 
 /**
  * Enhanced family grouping function for better organization

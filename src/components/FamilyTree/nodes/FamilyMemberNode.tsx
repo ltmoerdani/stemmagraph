@@ -8,7 +8,7 @@ import {
   MapPin,
   Briefcase
 } from 'lucide-react';
-import { FamilyMember } from '../../../types/family';
+import type { FamilyMember } from '../../../types/family';
 
 interface FamilyMemberNodeData {
   member: FamilyMember;

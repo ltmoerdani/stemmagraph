@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { FamilyMember, FamilyStats, ViewMode, TreePosition } from '../types/family';
-import { getAdapter, FamilyMemberRecord, MemberRelationship } from '@/lib/adapters';
+import type { FamilyMember, FamilyStats, ViewMode, TreePosition } from '../types/family';
+import { getAdapter } from '@/lib/adapters';
+import type { FamilyMemberRecord, MemberRelationship } from '@/lib/adapters';
 
 // ─── Adapter ⟷ Legacy Type Bridge ──────────────────────────
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FamilyMember } from '../../types/family';
+import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { MapPin, Briefcase, Calendar, Phone, Mail, Edit, Plus } from 'lucide-react';
 import { UnifiedMemberModal } from '../Forms/UnifiedMemberModal';

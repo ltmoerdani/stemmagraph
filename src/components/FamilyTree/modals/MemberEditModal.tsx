@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Calendar, MapPin, Briefcase, Phone } from 'lucide-react';
-import { FamilyMember } from '../../../types/family';
+import type { FamilyMember } from '../../../types/family';
 
 interface MemberEditModalProps {
   member: FamilyMember;

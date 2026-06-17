@@ -1,7 +1,7 @@
 import React from 'react';
 import { ReactFlowFamilyTree } from './ReactFlowFamilyTree';
 import { useFamilyStore } from '../../store/familyStore';
-import { FamilyMember } from '../../types/family';
+import type { FamilyMember } from '../../types/family';
 
 export const ReactFlowTreeView: React.FC = () => {
   const { members, addMember, updateMember, deleteMember } = useFamilyStore();
