@@ -1,6 +1,7 @@
 // Seed script — demo data for local development
 // Run: npx prisma db seed
 
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../generated/prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
@@ -11,13 +12,14 @@ const prisma = new PrismaClient({
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // ── Demo User ───────────────────────────────────────────
+  // ── Demo User (password hashed with bcrypt) ─────────────
+  const passwordHash = await bcrypt.hash('demo123', 12);
   const user = await prisma.user.upsert({
     where: { email: 'demo@familytree.app' },
-    update: {},
+    update: { password: passwordHash },
     create: {
       email: 'demo@familytree.app',
-      password: 'demo123',
+      password: passwordHash,
       name: 'Demo User',
       familyName: 'Wijaya',
     },
