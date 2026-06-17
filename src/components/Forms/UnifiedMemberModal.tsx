@@ -1,7 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, AlertCircle, User, Calendar, MapPin } from 'lucide-react';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
+
+const buildInitialFormData = (editingMember?: FamilyMember): FormData => {
+  if (!editingMember) return initialFormData;
+  return {
+    name: editingMember.name ?? '',
+    nickname: editingMember.nickname ?? '',
+    gender: (editingMember.gender ?? 'male') as FormData['gender'],
+    birthDate: editingMember.birthDate ?? '',
+    birthPlace: editingMember.birthPlace ?? '',
+    isAlive: editingMember.isAlive ?? true,
+    deathDate: editingMember.deathDate ?? '',
+    role: 'myself',
+  };
+};
 
 interface UnifiedMemberModalProps {
   isOpen: boolean;
@@ -45,23 +59,16 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form data for editing
-  useEffect(() => {
-    if (editingMember) {
-      setFormData({
-        name: editingMember.name ?? '',
-        nickname: editingMember.nickname ?? '',
-        gender: editingMember.gender ?? 'male',
-        birthDate: editingMember.birthDate ?? '',
-        birthPlace: editingMember.birthPlace ?? '',
-        isAlive: editingMember.isAlive ?? true,
-        deathDate: editingMember.deathDate ?? '',
-        role: 'myself'
-      });
-    } else {
-      setFormData(initialFormData);
-    }
-  }, [editingMember, isOpen]);
+  // Reset form state when the modal opens or the editing target changes.
+  // Using the setState-during-render pattern (guarded by a ref) avoids
+  // cascading renders from a syncing effect.
+  const prevSignature = useRef<string | null>(null);
+  const signature = `${isOpen ? 'open' : 'closed'}:${editingMember?.id ?? 'new'}`;
+  if (prevSignature.current !== signature) {
+    prevSignature.current = signature;
+    setFormData(buildInitialFormData(editingMember));
+    setError('');
+  }
 
   if (!isOpen) return null;
 
@@ -72,19 +79,19 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      setError('Nama lengkap harus diisi');
+      setError('Full name is required');
       return false;
     }
 
     if (formData.name.trim().length < 2) {
-      setError('Nama minimal 2 karakter');
+      setError('Name must be at least 2 characters');
       return false;
     }
 
     if (formData.birthDate) {
       const birthDate = new Date(formData.birthDate);
       if (isNaN(birthDate.getTime())) {
-        setError('Format tanggal lahir tidak valid');
+        setError('Invalid birth date format');
         return false;
       }
     }
@@ -93,7 +100,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       const deathDate = new Date(formData.deathDate);
       const birthDate = new Date(formData.birthDate);
       if (birthDate > deathDate) {
-        setError('Tanggal wafat tidak boleh lebih awal dari tanggal lahir');
+        setError('Death date cannot be earlier than birth date');
         return false;
       }
     }
@@ -131,7 +138,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       } else {
         // Add new member with proper generation logic for new family trees
         const newMember: FamilyMember = {
-          id: `member-${Date.now()}`,
+          id: `member-${crypto.randomUUID()}`,
           name: formData.name.trim(),
           nickname: formData.nickname.trim() || undefined,
           gender: formData.gender,
@@ -151,7 +158,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       
     } catch (err) {
       console.error('Error saving member:', err);
-      setError('Gagal menyimpan data anggota. Silakan coba lagi.');
+      setError('Failed to save member data. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -176,15 +183,15 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   };
 
   const getModalTitle = () => {
-    if (editingMember) return 'Edit Anggota Keluarga';
-    if (isFirstMember) return 'Anggota Pertama Keluarga';
-    return 'Tambah Anggota Keluarga';
+    if (editingMember) return 'Edit Family Member';
+    if (isFirstMember) return 'First Family Member';
+    return 'Add Family Member';
   };
 
   const getModalSubtitle = () => {
     if (isFirstMember && familyTreeName) return familyTreeName;
-    if (editingMember) return 'Ubah data anggota keluarga';
-    return 'Masukkan data anggota baru';
+    if (editingMember) return 'Edit family member details';
+    return 'Enter new member details';
   };
 
   return (
@@ -216,7 +223,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           {isFirstMember && (
             <div className="mb-6 text-center">
               <p className="text-gray-700 mb-4">
-                Siapa yang akan menjadi <strong>"akar"</strong> family tree ini?
+                Who will be the <strong>"root"</strong> of this family tree?
               </p>
             </div>
           )}
@@ -224,10 +231,10 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           <div className="space-y-6">
             {/* Basic Information Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Nama Lengkap */}
+              {/* Full Name */}
               <div className="md:col-span-2">
                 <label htmlFor="member-name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nama Lengkap <span className="text-red-500">*</span>
+                  Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="member-name"
@@ -237,16 +244,16 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
                     error && !formData.name.trim() ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Contoh: Ahmad Sutrisno, Siti Handayani"
+                  placeholder="e.g., John Smith, Jane Doe"
                   disabled={isSubmitting}
                   autoFocus
                 />
               </div>
 
-              {/* Nama Panggilan */}
+              {/* Nickname */}
               <div>
                 <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nama Panggilan
+                  Nickname
                 </label>
                 <input
                   id="nickname"
@@ -254,15 +261,15 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                   value={formData.nickname}
                   onChange={(e) => updateFormData({ nickname: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Nama panggilan atau julukan"
+                  placeholder="Nickname or alias"
                   disabled={isSubmitting}
                 />
               </div>
 
-              {/* Jenis Kelamin */}
+              {/* Gender */}
               <fieldset>
                 <legend className="block text-sm font-medium text-gray-700 mb-2">
-                  Jenis Kelamin <span className="text-red-500">*</span>
+                  Gender <span className="text-red-500">*</span>
                 </legend>
                 <div className="flex space-x-4">
                   <label className="flex items-center cursor-pointer">
@@ -274,7 +281,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                       className="mr-2 text-blue-600 focus:ring-blue-500"
                       disabled={isSubmitting}
                     />
-                    <span className="text-sm text-gray-700">Laki-laki</span>
+                    <span className="text-sm text-gray-700">Male</span>
                   </label>
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -285,15 +292,15 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                       className="mr-2 text-blue-600 focus:ring-blue-500"
                       disabled={isSubmitting}
                     />
-                    <span className="text-sm text-gray-700">Perempuan</span>
+                    <span className="text-sm text-gray-700">Female</span>
                   </label>
                 </div>
               </fieldset>
 
-              {/* Tanggal Lahir */}
+              {/* Birth Date */}
               <div>
                 <label htmlFor="birth-date" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tanggal Lahir
+                  Birth Date
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -310,10 +317,10 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                 {/* Birth year only checkbox removed - not in core data */}
               </div>
 
-              {/* Tempat Lahir */}
+              {/* Birth Place */}
               <div>
                 <label htmlFor="birth-place" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tempat Lahir
+                  Birth Place
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -323,13 +330,13 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                     value={formData.birthPlace}
                     onChange={(e) => updateFormData({ birthPlace: e.target.value })}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Kota/Kabupaten"
+                    placeholder="City/Town"
                     disabled={isSubmitting}
                   />
                 </div>
               </div>
 
-              {/* Status Hidup */}
+              {/* Living Status */}
               <fieldset className="md:col-span-2">
                 <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Status
@@ -343,7 +350,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                       className="mr-2 text-blue-600 focus:ring-blue-500"
                       disabled={isSubmitting}
                     />
-                    <span className="text-sm text-gray-700">Masih Hidup</span>
+                    <span className="text-sm text-gray-700">Living</span>
                   </label>
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -353,15 +360,15 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                       className="mr-2 text-blue-600 focus:ring-blue-500"
                       disabled={isSubmitting}
                     />
-                    <span className="text-sm text-gray-700">Almarhum/Almarhumah</span>
+                    <span className="text-sm text-gray-700">Deceased</span>
                   </label>
                 </div>
 
-                {/* Tanggal Wafat */}
+                {/* Death Date */}
                 {!formData.isAlive && (
                   <div>
                     <label htmlFor="death-date" className="block text-sm font-medium text-gray-700 mb-2">
-                      Tanggal Wafat
+                      Death Date
                     </label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -383,14 +390,14 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                 <div className="md:col-span-2">
                   <fieldset>
                     <legend className="block text-sm font-medium text-gray-700 mb-3">
-                      Sebagai:
+                      Role:
                     </legend>
                     <div className="space-y-3">
                       {[
-                        { value: 'myself', label: 'Diri saya sendiri', desc: 'Saya akan menjadi pusat family tree' },
-                        { value: 'parent', label: 'Orang tua saya', desc: 'Ayah atau ibu sebagai akar keluarga' },
-                        { value: 'grandparent', label: 'Kakek/nenek', desc: 'Generasi tertua yang diketahui' },
-                        { value: 'other', label: 'Lainnya', desc: 'Anggota keluarga lainnya' }
+                        { value: 'myself', label: 'Myself', desc: 'I will be the center of the family tree' },
+                        { value: 'parent', label: 'My parent', desc: 'Father or mother as the family root' },
+                        { value: 'grandparent', label: 'Grandparent', desc: 'Oldest known generation' },
+                        { value: 'other', label: 'Other', desc: 'Another family member' }
                       ].map((option) => (
                         <label
                           key={option.value}
@@ -437,21 +444,21 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                 disabled={isSubmitting}
                 className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
               >
-                BATAL
+                CANCEL
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || !formData.name.trim()}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center space-x-2 min-w-[120px] justify-center"
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center space-x-2 min-w-30 justify-center"
               >
                 {isSubmitting && (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 )}
                 <span>
                   {(() => {
-                    if (isSubmitting) return 'MENYIMPAN...';
+                    if (isSubmitting) return 'SAVING...';
                     if (editingMember) return 'UPDATE';
-                    return 'SIMPAN';
+                    return 'SAVE';
                   })()}
                 </span>
               </button>

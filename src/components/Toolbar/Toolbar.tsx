@@ -15,7 +15,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
 
   const handleEditModeToggle = () => {
     if (editMode && hasUnsavedChanges) {
-      if (confirm('Anda memiliki perubahan yang belum disimpan. Yakin ingin keluar dari mode edit?')) {
+      if (confirm('You have unsaved changes. Are you sure you want to exit edit mode?')) {
         setEditMode(false);
       }
     } else {
@@ -55,7 +55,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Pohon
+                Tree
               </button>
               <button
                 onClick={() => handleViewChange('card')}
@@ -65,7 +65,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Kartu
+                Card
               </button>
               <button
                 onClick={() => handleViewChange('list')}
@@ -75,7 +75,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Daftar
+                List
               </button>
             </div>
           </div>
@@ -120,11 +120,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                 selectedGeneration: e.target.value ? parseInt(e.target.value) : null 
               })}
             >
-              <option value="">Semua Generasi</option>
-              <option value="1">Generasi 1</option>
-              <option value="2">Generasi 2</option>
-              <option value="3">Generasi 3</option>
-              <option value="4">Generasi 4</option>
+              <option value="">All Generations</option>
+              <option value="1">Generation 1</option>
+              <option value="2">Generation 2</option>
+              <option value="3">Generation 3</option>
+              <option value="4">Generation 4</option>
             </select>
             
             <label className="flex items-center space-x-2 text-sm">
@@ -134,7 +134,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                 onChange={(e) => setViewMode({ showAlive: e.target.checked })}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span>Hidup</span>
+              <span>Living</span>
             </label>
             
             <label className="flex items-center space-x-2 text-sm">
@@ -144,7 +144,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                 onChange={(e) => setViewMode({ showDeceased: e.target.checked })}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span>Meninggal</span>
+              <span>Deceased</span>
             </label>
           </div>
         </div>
@@ -157,7 +157,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
               className="flex items-center space-x-1 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
             >
               <Save className="w-4 h-4" />
-              <span>Simpan Semua</span>
+              <span>Save All</span>
             </button>
             
             <button
@@ -165,7 +165,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
               className="flex items-center space-x-1 px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
             >
               <X className="w-4 h-4" />
-              <span>Keluar Edit</span>
+              <span>Exit Edit</span>
             </button>
           </div>
         )}
@@ -178,11 +178,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
             <div className="flex items-center space-x-2">
               <Edit3 className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-800">
-                Mode Edit Aktif - Klik card untuk edit, gunakan ikon + untuk menambah anggota
+                Edit Mode Active - Click a card to edit, use the + icon to add a member
               </span>
             </div>
             <div className="text-xs text-blue-600">
-              Tip: Klik area kosong untuk keluar dari mode edit
+              Tip: Click an empty area to exit edit mode
             </div>
           </div>
         </div>

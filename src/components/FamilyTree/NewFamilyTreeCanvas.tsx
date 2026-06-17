@@ -76,7 +76,7 @@ export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
                         width: '280px',  // Consistent with TreeCanvas card width
                         height: '200px', // Professional spacing
                       }}
-                      aria-label="Tambah anggota pertama keluarga"
+                      aria-label="Add the first family member"
                       aria-describedby="first-member-description"
                     >
                       <div className="w-full h-full flex flex-col items-center justify-center">
@@ -85,7 +85,7 @@ export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
                         </div>
                         
                         <h3 className="font-semibold text-gray-700 group-hover:text-gray-900 mb-2 transition-colors">
-                          Anggota Pertama
+                          First Member
                         </h3>
                         
                         <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 group-hover:bg-green-100 rounded-lg transition-colors">
@@ -107,11 +107,11 @@ export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
                           <span className="text-blue-600 text-sm">💡</span>
                         </div>
                         <p className="text-gray-600 font-medium">
-                          Mulai dengan menambahkan anggota pertama keluarga
+                          Start by adding the first family member
                         </p>
                       </div>
                       <p className="text-sm text-gray-500 text-center">
-                        (bisa diri sendiri, orang tua, atau kakek/nenek)
+                        (can be yourself, a parent, or a grandparent)
                       </p>
                     </div>
                   </div>

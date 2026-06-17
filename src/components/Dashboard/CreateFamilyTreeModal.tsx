@@ -23,12 +23,12 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
     e.preventDefault();
     
     if (!familyName.trim()) {
-      setError('Nama keluarga harus diisi');
+      setError('Family name is required');
       return;
     }
 
     if (familyName.trim().length < 3) {
-      setError('Nama keluarga minimal 3 karakter');
+      setError('Family name must be at least 3 characters');
       return;
     }
 
@@ -49,7 +49,7 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
       navigate(`/family-tree/${newTree.id}`);
     } catch (err) {
       console.error('Error creating family tree:', err);
-      setError('Gagal membuat family tree. Silakan coba lagi.');
+      setError('Failed to create family tree. Please try again.');
     } finally {
       setIsCreating(false);
     }
@@ -72,7 +72,7 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
               <TreePine className="w-5 h-5 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Buat Family Tree Baru</h2>
+            <h2 className="text-xl font-bold text-gray-900">Create New Family Tree</h2>
           </div>
           <button
             onClick={handleClose}
@@ -87,7 +87,7 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6">
           <div className="mb-6">
             <label htmlFor="family-name" className="block text-sm font-medium text-gray-700 mb-2">
-              Nama Keluarga
+              Family Name
             </label>
             <input
               id="family-name"
@@ -100,7 +100,7 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors ${
                 error ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="Contoh: Keluarga Sutrisno, Keluarga Handayani"
+              placeholder="e.g., The Sutrisno Family, The Handayani Family"
               disabled={isCreating}
               autoFocus
             />
@@ -113,11 +113,11 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h4 className="font-medium text-blue-900 mb-2">Tips Penamaan:</h4>
+            <h4 className="font-medium text-blue-900 mb-2">Naming Tips:</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Gunakan nama marga atau nama keluarga besar</li>
-              <li>• Contoh: "Keluarga Besar Wijaya", "Marga Sitorus"</li>
-              <li>• Hindari nama yang terlalu spesifik</li>
+              <li>• Use a surname or extended family name</li>
+              <li>• Examples: "The Wijaya Family", "The Sitorus Clan"</li>
+              <li>• Avoid overly specific names</li>
             </ul>
           </div>
 
@@ -139,7 +139,7 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
               {isCreating && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               )}
-              <span>{isCreating ? 'MEMBUAT...' : 'BUAT'}</span>
+              <span>{isCreating ? 'CREATING...' : 'CREATE'}</span>
             </button>
           </div>
         </form>

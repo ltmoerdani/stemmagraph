@@ -88,4 +88,15 @@ See the [README](README.md#-architecture) for the architecture overview.
 - Bug report → [open an issue](https://github.com/ltmoerdani/stemmagraph/issues/new?labels=bug) with the `bug` label
 - Feature idea → [open an issue](https://github.com/ltmoerdani/stemmagraph/issues/new?labels=enhancement) with the `enhancement` label
 
+## 📄 License & CLA
+
+By contributing, you agree that your contributions will be licensed under the
+[GNU AGPL v3 License](LICENSE).
+
+You must also agree to the [Contributor License Agreement](CLA.md) before your
+first PR can be merged. This allows us to offer Stemmagraph under both the
+open-source (AGPL) and commercial licenses.
+
+---
+
 Thanks for helping Stemmagraph grow! 🌳

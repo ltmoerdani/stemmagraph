@@ -29,19 +29,19 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Nama harus diisi';
+      newErrors.name = 'Name is required';
     }
 
     if (!formData.birthDate) {
-      newErrors.birthDate = 'Tanggal lahir harus diisi';
+      newErrors.birthDate = 'Birth date is required';
     }
 
     if (!formData.birthPlace?.trim()) {
-      newErrors.birthPlace = 'Tempat lahir harus diisi';
+      newErrors.birthPlace = 'Birth place is required';
     }
 
     if (!formData.gender) {
-      newErrors.gender = 'Jenis kelamin harus dipilih';
+      newErrors.gender = 'Gender must be selected';
     }
 
     setErrors(newErrors);
@@ -73,13 +73,13 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
           <div className="flex items-center space-x-2">
             <User className="w-5 h-5 text-blue-600" />
             <h2 className="text-xl font-semibold text-gray-900">
-              Edit Profil Anggota
+              Edit Member Profile
             </h2>
           </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-            aria-label="Tutup modal"
+            aria-label="Close modal"
           >
             <X className="w-6 h-6" />
           </button>
@@ -92,7 +92,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
             {/* Full Name */}
             <div>
               <label htmlFor="member-name" className="block text-sm font-medium text-gray-700 mb-1">
-                Nama Lengkap *
+                Full Name *
               </label>
               <input
                 id="member-name"
@@ -102,7 +102,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 className={`w-full px-3 py-2 border rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="Masukkan nama lengkap"
+                placeholder="Enter full name"
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -112,7 +112,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
             {/* Nickname */}
             <div>
               <label htmlFor="member-nickname" className="block text-sm font-medium text-gray-700 mb-1">
-                Nama Panggilan
+                Nickname
               </label>
               <input
                 id="member-nickname"
@@ -120,14 +120,14 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 value={formData.nickname ?? ''}
                 onChange={(e) => handleInputChange('nickname', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                placeholder="Nama panggilan sehari-hari"
+                placeholder="Daily nickname"
               />
             </div>
 
             {/* Gender */}
             <div>
               <label htmlFor="member-gender" className="block text-sm font-medium text-gray-700 mb-1">
-                Jenis Kelamin *
+                Gender *
               </label>
               <select
                 id="member-gender"
@@ -137,9 +137,9 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   errors.gender ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
-                <option value="">Pilih jenis kelamin</option>
-                <option value="male">Laki-laki</option>
-                <option value="female">Perempuan</option>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
               </select>
               {errors.gender && (
                 <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
@@ -149,7 +149,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
             {/* Generation */}
             <div>
               <label htmlFor="member-generation" className="block text-sm font-medium text-gray-700 mb-1">
-                Generasi
+                Generation
               </label>
               <input
                 id="member-generation"
@@ -167,12 +167,12 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
               <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-              Informasi Kelahiran
+              Birth Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="member-birth-date" className="block text-sm font-medium text-gray-700 mb-1">
-                  Tanggal Lahir *
+                  Birth Date *
                 </label>
                 <input
                   id="member-birth-date"
@@ -190,7 +190,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
 
               <div>
                 <label htmlFor="member-birth-place" className="block text-sm font-medium text-gray-700 mb-1">
-                  Tempat Lahir *
+                  Birth Place *
                 </label>
                 <input
                   id="member-birth-place"
@@ -200,7 +200,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   className={`w-full px-3 py-2 border rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${
                     errors.birthPlace ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Kota/tempat kelahiran"
+                  placeholder="City/place of birth"
                 />
                 {errors.birthPlace && (
                   <p className="mt-1 text-sm text-red-600">{errors.birthPlace}</p>
@@ -221,7 +221,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                 />
                 <label htmlFor="member-alive" className="ml-2 text-sm font-medium text-gray-700">
-                  Masih hidup
+                  Living
                 </label>
               </div>
             </div>
@@ -229,7 +229,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
             {!formData.isAlive && (
               <div>
                 <label htmlFor="member-death-date" className="block text-sm font-medium text-gray-700 mb-1">
-                  Tanggal Wafat
+                  Death Date
                 </label>
                 <input
                   id="member-death-date"
@@ -246,12 +246,12 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
               <Briefcase className="w-5 h-5 mr-2 text-blue-600" />
-              Informasi Profesi
+              Professional Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="member-profession" className="block text-sm font-medium text-gray-700 mb-1">
-                  Profesi/Pekerjaan
+                  Profession/Occupation
                 </label>
                 <input
                   id="member-profession"
@@ -259,13 +259,13 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   value={formData.profession ?? ''}
                   onChange={(e) => handleInputChange('profession', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  placeholder="Pekerjaan atau profesi"
+                  placeholder="Occupation or profession"
                 />
               </div>
 
               <div>
                 <label htmlFor="member-education" className="block text-sm font-medium text-gray-700 mb-1">
-                  Pendidikan
+                  Education
                 </label>
                 <input
                   id="member-education"
@@ -273,7 +273,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   value={formData.education ?? ''}
                   onChange={(e) => handleInputChange('education', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  placeholder="Pendidikan terakhir"
+                  placeholder="Latest education"
                 />
               </div>
             </div>
@@ -283,11 +283,11 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
               <MapPin className="w-5 h-5 mr-2 text-blue-600" />
-              Informasi Lokasi
+              Location Information
             </h3>
             <div>
               <label htmlFor="member-location" className="block text-sm font-medium text-gray-700 mb-1">
-                Lokasi Saat Ini
+                Current Location
               </label>
               <input
                 id="member-location"
@@ -295,7 +295,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 value={formData.currentLocation ?? ''}
                 onChange={(e) => handleInputChange('currentLocation', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                placeholder="Kota/daerah tempat tinggal saat ini"
+                placeholder="Current city/area of residence"
               />
             </div>
           </div>
@@ -304,12 +304,12 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
               <Phone className="w-5 h-5 mr-2 text-blue-600" />
-              Informasi Kontak
+              Contact Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="member-phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nomor Telepon
+                  Phone Number
                 </label>
                 <input
                   id="member-phone"
@@ -331,7 +331,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                   value={formData.email ?? ''}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  placeholder="nama@email.com"
+                  placeholder="name@email.com"
                 />
               </div>
             </div>
@@ -344,13 +344,13 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
-              Batal
+              Cancel
             </button>
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
-              Simpan Perubahan
+              Save Changes
             </button>
           </div>
         </form>

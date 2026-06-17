@@ -27,7 +27,7 @@ export const MemberDetailSidebar: React.FC = () => {
     <>
       <div className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Detail Anggota</h2>
+          <h2 className="text-xl font-bold text-gray-900">Member Details</h2>
           <div className="flex items-center space-x-2">
             <button
               onClick={handleEdit}
@@ -71,9 +71,9 @@ export const MemberDetailSidebar: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Calendar className="w-5 h-5 text-gray-400" />
             <div>
-              <p className="text-sm text-gray-600">Tanggal Lahir</p>
+              <p className="text-sm text-gray-600">Birth Date</p>
               <p className="font-medium">
-                {new Date(selectedMember.birthDate).toLocaleDateString('id-ID', {
+                {new Date(selectedMember.birthDate).toLocaleDateString('en-US', {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric'
@@ -85,10 +85,10 @@ export const MemberDetailSidebar: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Calendar className="w-5 h-5 text-gray-400" />
             <div>
-              <p className="text-sm text-gray-600">Usia</p>
+              <p className="text-sm text-gray-600">Age</p>
               <p className="font-medium">
-                {calculateAge(selectedMember.birthDate, selectedMember.deathDate)} tahun
-                {!selectedMember.isAlive && ' (alm.)'}
+                {calculateAge(selectedMember.birthDate, selectedMember.deathDate)} years
+                {!selectedMember.isAlive && ' (dec.)'}
               </p>
             </div>
           </div>
@@ -97,7 +97,7 @@ export const MemberDetailSidebar: React.FC = () => {
             <div className="flex items-center space-x-3">
               <MapPin className="w-5 h-5 text-gray-400" />
               <div>
-                <p className="text-sm text-gray-600">Tempat Lahir</p>
+                <p className="text-sm text-gray-600">Birth Place</p>
                 <p className="font-medium">{selectedMember.birthPlace}</p>
               </div>
             </div>
@@ -107,7 +107,7 @@ export const MemberDetailSidebar: React.FC = () => {
             <div className="flex items-center space-x-3">
               <MapPin className="w-5 h-5 text-gray-400" />
               <div>
-                <p className="text-sm text-gray-600">Tempat Tinggal</p>
+                <p className="text-sm text-gray-600">Current Location</p>
                 <p className="font-medium">{selectedMember.currentLocation}</p>
               </div>
             </div>
@@ -117,7 +117,7 @@ export const MemberDetailSidebar: React.FC = () => {
             <div className="flex items-center space-x-3">
               <Briefcase className="w-5 h-5 text-gray-400" />
               <div>
-                <p className="text-sm text-gray-600">Profesi</p>
+                <p className="text-sm text-gray-600">Profession</p>
                 <p className="font-medium">{selectedMember.profession}</p>
               </div>
             </div>
@@ -127,7 +127,7 @@ export const MemberDetailSidebar: React.FC = () => {
             <div className="flex items-center space-x-3">
               <GraduationCap className="w-5 h-5 text-gray-400" />
               <div>
-                <p className="text-sm text-gray-600">Pendidikan</p>
+                <p className="text-sm text-gray-600">Education</p>
                 <p className="font-medium">{selectedMember.education}</p>
               </div>
             </div>
@@ -136,12 +136,12 @@ export const MemberDetailSidebar: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Heart className="w-5 h-5 text-gray-400" />
             <div>
-              <p className="text-sm text-gray-600">Status Pernikahan</p>
+              <p className="text-sm text-gray-600">Marital Status</p>
               <p className="font-medium">
-                {selectedMember.maritalStatus === 'married' && 'Menikah'}
-                {selectedMember.maritalStatus === 'single' && 'Belum Menikah'}
-                {selectedMember.maritalStatus === 'divorced' && 'Bercerai'}
-                {selectedMember.maritalStatus === 'widowed' && 'Janda/Duda'}
+                {selectedMember.maritalStatus === 'married' && 'Married'}
+                {selectedMember.maritalStatus === 'single' && 'Single'}
+                {selectedMember.maritalStatus === 'divorced' && 'Divorced'}
+                {selectedMember.maritalStatus === 'widowed' && 'Widowed'}
               </p>
             </div>
           </div>
@@ -150,7 +150,7 @@ export const MemberDetailSidebar: React.FC = () => {
         {/* Contact Information */}
         {(selectedMember.phone || selectedMember.email) && (
           <div className="mb-8">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">Kontak</h4>
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Contact</h4>
             <div className="space-y-3">
               {selectedMember.phone && (
                 <div className="flex items-center space-x-3">
@@ -174,7 +174,7 @@ export const MemberDetailSidebar: React.FC = () => {
             onClick={handleEdit}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
-            Edit Profil
+            Edit Profile
           </button>
           
           {selectedMember.phone && (
@@ -192,7 +192,7 @@ export const MemberDetailSidebar: React.FC = () => {
           )}
           
           <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
-            Share Profil
+            Share Profile
           </button>
         </div>
       </div>

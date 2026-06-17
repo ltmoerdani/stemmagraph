@@ -211,28 +211,28 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
               <DirectionalPlusButton
                 direction="up"
                 icon={<ArrowUp className="w-4 h-4" />}
-                tooltip="Tambah Orang Tua"
+                tooltip="Add Parent"
                 className="-top-5 left-1/2 transform -translate-x-1/2"
                 onDirectionalAdd={handleDirectionalAdd}
               />
               <DirectionalPlusButton
                 direction="down"
                 icon={<ArrowDown className="w-4 h-4" />}
-                tooltip="Tambah Anak/Keturunan"
+                tooltip="Add Child/Descendant"
                 className="-bottom-5 left-1/2 transform -translate-x-1/2"
                 onDirectionalAdd={handleDirectionalAdd}
               />
               <DirectionalPlusButton
                 direction="left"
                 icon={<ArrowLeft className="w-4 h-4" />}
-                tooltip="Tambah Pasangan (Kiri)"
+                tooltip="Add Partner (Left)"
                 className="-left-5 top-1/2 transform -translate-y-1/2"
                 onDirectionalAdd={handleDirectionalAdd}
               />
               <DirectionalPlusButton
                 direction="right"
                 icon={<ArrowRight className="w-4 h-4" />}
-                tooltip="Tambah Pasangan (Kanan)"
+                tooltip="Add Partner (Right)"
                 className="-right-5 top-1/2 transform -translate-y-1/2"
                 onDirectionalAdd={handleDirectionalAdd}
               />
@@ -359,7 +359,7 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
             
             <button 
               onClick={() => {
-                if (confirm('Yakin ingin menghapus anggota ini?')) {
+                if (confirm('Are you sure you want to delete this member?')) {
                   // Handle delete
                 }
                 setShowContextMenu(false);
@@ -367,7 +367,7 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
               className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center space-x-2"
             >
               <Trash2 className="w-4 h-4" />
-              <span>Hapus</span>
+              <span>Delete</span>
             </button>
           </div>
         </>

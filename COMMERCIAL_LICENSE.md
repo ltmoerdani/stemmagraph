@@ -39,7 +39,7 @@ If you want to:
 
 …then you need a **Commercial License** from the copyright holder.
 
-**Contact:** `license [at] ltmoerdani [dot] com`
+**Contact:** [ltmoerdani@gmail.com](mailto:ltmoerdani@gmail.com)
 
 Please include:
 
@@ -67,6 +67,46 @@ Stemmagraph itself.
 
 This model is used by projects like **Mattermost, MinIO, Sentry (self-hosted),
 Plausible Analytics, Mastodon, and Element/Matrix**.
+
+## ❓ FAQ
+
+**Can I use Stemmagraph for commercial purposes?**
+
+Yes. AGPL v3 permits commercial use. The one obligation: if you modify the
+source code and run it as a hosted service for others, you must publish your
+modifications under the same AGPL v3 license. Running it internally for your
+own organization or family has no restrictions.
+
+**Can I self-host for free?**
+
+Yes — the entire codebase is AGPL v3 on GitHub. Clone it, run it on your own
+server, no license key required. Self-hosting means you manage your own server,
+database, and upgrades.
+
+**Can I modify the source and sell the result as my product?**
+
+Only if you publish your modifications under AGPL v3 and make the source code
+available to your users. If you cannot or will not publish the source, you need
+a commercial license.
+
+**Is my data sent anywhere?**
+
+No. Stemmagraph runs entirely in your browser (mock adapter) or on your own
+backend (REST/Supabase adapter). There is no telemetry, no analytics, no
+third-party call-home.
+
+**Can I use the "Stemmagraph" name and logo for my fork?**
+
+No. The name "Stemmagraph", the logo, and associated branding are trademarks of
+the maintainer. Forks must choose a different name. See the trademark note
+below.
+
+## ©️ Trademark
+
+"Stemmagraph" and the Stemmagraph logo are trademarks of ltmoerdani. The AGPL
+license grants you rights to the **source code**, but not to the project's name
+or branding. If you fork and redistribute, you must choose a different name and
+remove the Stemmagraph logo from user-visible surfaces.
 
 ## 🤝 Contributor License Agreement (CLA)
 

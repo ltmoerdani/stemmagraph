@@ -56,7 +56,7 @@ export const FamilyTreeControls: React.FC<FamilyTreeControlsProps> = ({
               ? 'bg-blue-100 text-blue-600'
               : 'hover:bg-gray-100 text-gray-600'
           }`}
-          title="Tier Layout (Generasi tersusun rapi)"
+          title="Tier Layout (Generations neatly arranged)"
         >
           <ArrowUpDown className="w-4 h-4" />
         </button>
@@ -68,7 +68,7 @@ export const FamilyTreeControls: React.FC<FamilyTreeControlsProps> = ({
               ? 'bg-blue-100 text-blue-600'
               : 'hover:bg-gray-100 text-gray-600'
           }`}
-          title="Free Layout (Susunan bebas)"
+          title="Free Layout (Free arrangement)"
         >
           <ArrowLeftRight className="w-4 h-4" />
         </button>

@@ -38,7 +38,7 @@ export const CanvasControls: React.FC = () => {
                 : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
             }`}
           >
-            Legenda
+            Legend
           </button>
         </div>
         <button
@@ -74,8 +74,8 @@ export const CanvasControls: React.FC = () => {
                 <div className="absolute border-2 border-blue-600 bg-blue-200/40 w-8 h-6 top-2 left-2 rounded-sm" />
               </div>
               <div className="flex justify-between text-xs text-gray-500">
-                <span>{members.length} anggota</span>
-                <span>{[...new Set(members.map(m => m.generation))].length} generasi</span>
+                <span>{members.length} members</span>
+                <span>{[...new Set(members.map(m => m.generation))].length} generations</span>
               </div>
             </div>
           )}
@@ -84,25 +84,25 @@ export const CanvasControls: React.FC = () => {
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 border-2 border-blue-200 rounded bg-white shrink-0"></div>
-                <span className="text-gray-700">Laki-laki</span>
+                <span className="text-gray-700">Male</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 border-2 border-pink-200 rounded bg-white shrink-0"></div>
-                <span className="text-gray-700">Perempuan</span>
+                <span className="text-gray-700">Female</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 border-2 border-gray-400 rounded bg-gray-50 shrink-0"></div>
-                <span className="text-gray-700">Almarhum</span>
+                <span className="text-gray-700">Deceased</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-0.5 bg-gray-600 shrink-0"></div>
-                <span className="text-gray-700">Hubungan Keluarga</span>
+                <span className="text-gray-700">Family Relationship</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-400 rounded-full text-xs flex items-center justify-center shrink-0">
                   💍
                 </div>
-                <span className="text-gray-700">Menikah</span>
+                <span className="text-gray-700">Married</span>
               </div>
             </div>
           )}
