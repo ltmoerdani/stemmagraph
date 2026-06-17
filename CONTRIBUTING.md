@@ -1,8 +1,7 @@
 # Contributing to Stemmagraph
 
 Thanks for your interest in contributing! 🎉 Stemmagraph is community-driven — every PR, issue, and discussion helps.
-
- **Have a question?** Start a [Discussion](https://github.com/ltmoerdani/stemmagraph/discussions) before opening an issue.
+🔗 **Live demo:** <https://ltmoerdani.github.io/stemmagraph/>   **Have a question?** Start a [Discussion](https://github.com/ltmoerdani/stemmagraph/discussions) before opening an issue.
 
 ## 🚀 Getting Started
 

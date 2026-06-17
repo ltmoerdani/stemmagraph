@@ -5,6 +5,7 @@
 **Build, visualize, and share beautiful family trees.**  
 Open-source, interactive, and free — forever.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-stemmagraph.app-22c55e?style=for-the-badge&logo=githubpages)](https://ltmoerdani.github.io/stemmagraph/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/ltmoerdani/stemmagraph/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/ltmoerdani/stemmagraph/actions/workflows/ci.yml)
 [![Deploy](https://img.shields.io/github/actions/workflow/status/ltmoerdani/stemmagraph/deploy.yml?branch=main&style=for-the-badge&label=Deploy)](https://github.com/ltmoerdani/stemmagraph/actions/workflows/deploy.yml)
@@ -37,25 +38,15 @@ Open-source, interactive, and free — forever.
 
 ## 🚀 Live Demo
 
-> 🚧 **Coming soon.** A demo is published automatically to GitHub Pages on every
-> push to `main` (see `.github/workflows/deploy.yml`). The site will appear at
-> `https://ltmoerdani.github.io/stemmagraph/` once the deploy workflow runs.
+Try Stemmagraph right now — **no signup, no backend, no install**:
 
-In the meantime, run Stemmagraph locally in seconds — **no signup, no backend**:
+> **🔗 https://ltmoerdani.github.io/stemmagraph/**
 
-```bash
-git clone https://github.com/ltmoerdani/stemmagraph.git
-cd stemmagraph
-npm install
-cp .env.github-pages .env   # mock adapter — no backend needed
-npm run dev
-```
-
-The mock adapter serves seed data in-memory (the *Wijaya* family tree — 11 members, 3 generations) so you can explore the full UI instantly.
+The demo runs entirely in your browser using the in-memory **mock adapter** with the pre-seeded *Wijaya* family tree (11 members, 3 generations).
 
 **Demo login:** `demo@familytree.app` / `demo123`
 
-Want the full stack? See [Quick Start](#-quick-start).
+Want to run it locally? See [Quick Start](#-quick-start).
 
 ## 📦 Quick Start
 
