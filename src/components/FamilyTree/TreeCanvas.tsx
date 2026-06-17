@@ -558,10 +558,10 @@ export const TreeCanvas: React.FC = () => {
               <div className="text-center p-8 bg-white rounded-lg shadow-lg border-2 border-blue-200">
                 <div className="text-4xl mb-4">👨‍👩‍👧‍👦</div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {members.length === 0 ? 'Pohon Keluarga Kosong' : 'Mode Edit Aktif'}
+                  {members.length === 0 ? 'Empty Family Tree' : 'Edit Mode Active'}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Mulai membangun pohon keluarga dengan menambahkan anggota pertama
+                  Start building your family tree by adding the first member
                 </p>
                 <button 
                   onClick={() => {

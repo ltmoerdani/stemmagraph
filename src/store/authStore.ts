@@ -67,7 +67,7 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Login gagal';
+          const message = error instanceof Error ? error.message : 'Login failed';
           set({ isLoading: false, error: message });
           throw error;
         }
@@ -85,7 +85,7 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Registrasi gagal';
+          const message = error instanceof Error ? error.message : 'Registration failed';
           set({ isLoading: false, error: message });
           throw error;
         }

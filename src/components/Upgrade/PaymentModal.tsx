@@ -34,14 +34,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const paymentMethods = [
     {
       id: 'credit-card',
-      name: 'Kartu Kredit/Debit',
+      name: 'Credit/Debit Card',
       icon: CreditCard,
       description: 'Visa, Mastercard, JCB',
       popular: true
     },
     {
       id: 'bank-transfer',
-      name: 'Transfer Bank',
+      name: 'Bank Transfer',
       icon: Building2,
       description: 'BCA, Mandiri, BNI, BRI'
     },
@@ -55,7 +55,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       id: 'virtual-account',
       name: 'Virtual Account',
       icon: Building2,
-      description: 'Semua bank'
+      description: 'All banks'
     },
     {
       id: 'qris',
@@ -81,31 +81,31 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const planDetails = {
     trial: {
-      title: '7 Hari Gratis',
+      title: '7-Day Free Trial',
       price: '$0.00',
-      description: 'Coba semua fitur premium gratis selama 7 hari',
+      description: 'Try all premium features free for 7 days',
       features: [
         'Unlimited family trees',
-        'Unlimited anggota',
+        'Unlimited members',
         '10GB storage',
         'Export PDF + Excel + GEDCOM',
-        'Kolaborator unlimited',
+        'Unlimited collaborators',
         'Priority support'
       ]
     },
     premium: {
       title: 'Premium Plan',
       price: '$9.99',
-      description: 'Akses penuh ke semua fitur premium',
+      description: 'Full access to all premium features',
       features: [
         'Unlimited family trees',
-        'Unlimited anggota',
+        'Unlimited members',
         '10GB storage',
         'Export PDF + Excel + GEDCOM',
-        'Kolaborator unlimited',
+        'Unlimited collaborators',
         'Family analytics',
         'Priority support',
-        'Backup harian otomatis'
+        'Automatic daily backup'
       ]
     }
   };
@@ -122,8 +122,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <Crown className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Upgrade ke Premium</h2>
-              <p className="text-sm text-gray-600">Step {currentStep} dari 3</p>
+              <h2 className="text-xl font-bold text-gray-900">Upgrade to Premium</h2>
+              <p className="text-sm text-gray-600">Step {currentStep} of 3</p>
             </div>
           </div>
           <button
@@ -137,7 +137,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Step 1: Plan Confirmation */}
         {currentStep === 1 && (
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Konfirmasi Paket</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Plan Confirmation</h3>
             
             <div className="bg-linear-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -148,7 +148,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   )}
                   <div className="text-2xl font-bold text-green-600">{currentPlan.price}</div>
                   <div className="text-sm text-gray-600">
-                    {planType === 'trial' ? 'kemudian $9.99/tahun' : 'per tahun'}
+                    {planType === 'trial' ? 'then $9.99/year' : 'per year'}
                   </div>
                 </div>
               </div>
@@ -169,24 +169,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                 <div className="flex items-center space-x-2 mb-2">
                   <Clock className="w-4 h-4 text-yellow-600" />
-                  <span className="font-medium text-yellow-800">Promo Terbatas</span>
+                  <span className="font-medium text-yellow-800">Limited Offer</span>
                 </div>
                 <p className="text-sm text-yellow-700">
-                  Hemat 50% dari harga normal $19.99. Promo berakhir dalam 23:45:12
+                  Save 50% off the regular price of $19.99. Offer ends in 23:45:12
                 </p>
               </div>
             )}
 
             <div className="border-t border-gray-200 pt-4 mb-6">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-600">Harga normal:</span>
+                <span className="text-gray-600">Regular price:</span>
                 <span className="text-gray-500 line-through">
                   {planType === 'trial' ? '$0.00' : '$19.99'}
                 </span>
               </div>
               {planType === 'premium' && (
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Diskon 50%:</span>
+                  <span className="text-gray-600">50% Discount:</span>
                   <span className="text-green-600">-$10.00</span>
                 </div>
               )}
@@ -200,7 +200,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               onClick={() => setCurrentStep(2)}
               className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 transition-colors"
             >
-              Lanjut ke Pembayaran
+              Continue to Payment
             </button>
           </div>
         )}
@@ -208,7 +208,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Step 2: Payment Method */}
         {currentStep === 2 && (
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Pilih Metode Pembayaran</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Select Payment Method</h3>
             
             <div className="space-y-3 mb-6">
               {paymentMethods.map((method) => (
@@ -239,7 +239,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   </div>
                   {method.popular && (
                     <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                      Populer
+                      Popular
                     </div>
                   )}
                   {selectedPayment === method.id && (
@@ -252,10 +252,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex items-center space-x-2 mb-2">
                 <Shield className="w-4 h-4 text-blue-600" />
-                <span className="font-medium text-blue-800">Pembayaran Aman</span>
+                <span className="font-medium text-blue-800">Secure Payment</span>
               </div>
               <p className="text-sm text-blue-700">
-                Diproses oleh Midtrans dengan enkripsi SSL 256-bit. Data kartu kredit tidak disimpan di server kami.
+                Processed by Midtrans with 256-bit SSL encryption. Credit card data is never stored on our servers.
               </p>
             </div>
 
@@ -267,20 +267,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 className="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500"
               />
               <span className="text-sm text-gray-700">
-                Saya setuju dengan{' '}
+                I agree to the{' '}
                 <a
                   href="/terms"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"
-                >Syarat & Ketentuan</a>
-                {' '}dan{' '}
+                >Terms & Conditions</a>
+                {' '}and{' '}
                 <a
                   href="/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"
-                >Kebijakan Privasi</a>
+                >Privacy Policy</a>
               </span>
             </label>
 
@@ -289,7 +289,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 onClick={() => setCurrentStep(1)}
                 className="flex-1 border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
-                Kembali
+                Back
               </button>
               <button
                 onClick={handlePayment}
@@ -299,10 +299,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 {isProcessing ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Memproses...</span>
+                    <span>Processing...</span>
                   </>
                 ) : (
-                  <span>Bayar {currentPlan.price}</span>
+                  <span>Pay {currentPlan.price}</span>
                 )}
               </button>
             </div>
@@ -317,47 +317,47 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
             
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Selamat! Akun Anda Sudah Premium
+              Congratulations! Your Account Is Now Premium
             </h3>
             
             <p className="text-gray-600 mb-6">
               {planType === 'trial' 
-                ? 'Trial 7 hari dimulai sekarang. Nikmati semua fitur premium!'
-                : 'Pembayaran berhasil. Akun premium aktif hingga 15 Januari 2025.'
+                ? 'Your 7-day trial starts now. Enjoy all premium features!'
+                : 'Payment successful. Premium account active until January 15, 2025.'
               }
             </p>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-green-800 mb-2">Yang Anda Dapatkan:</h4>
+              <h4 className="font-semibold text-green-800 mb-2">What You Get:</h4>
               <ul className="text-sm text-green-700 space-y-1">
                 <li>✅ Unlimited family trees</li>
-                <li>✅ Unlimited anggota keluarga</li>
-                <li>✅ 10GB storage untuk foto</li>
-                <li>✅ Export ke PDF, Excel, GEDCOM</li>
-                <li>✅ Kolaborator unlimited</li>
+                <li>✅ Unlimited family members</li>
+                <li>✅ 10GB photo storage</li>
+                <li>✅ Export to PDF, Excel, GEDCOM</li>
+                <li>✅ Unlimited collaborators</li>
                 <li>✅ Priority support</li>
               </ul>
             </div>
 
             <div className="space-y-3">
               <p className="text-sm text-gray-600">
-                Email konfirmasi telah dikirim ke akun Anda
+                A confirmation email has been sent to your account
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <button className="bg-blue-600 text-white py-2 px-4 rounded-lg text-sm hover:bg-blue-700 transition-colors">
-                  Buat Family Tree Baru
+                  Create New Family Tree
                 </button>
                 <button className="bg-green-600 text-white py-2 px-4 rounded-lg text-sm hover:bg-green-700 transition-colors">
-                  Upload Foto Keluarga
+                  Upload Family Photos
                 </button>
                 <button className="bg-purple-600 text-white py-2 px-4 rounded-lg text-sm hover:bg-purple-700 transition-colors">
-                  Undang Anggota Keluarga
+                  Invite Family Members
                 </button>
               </div>
 
               <p className="text-sm text-gray-500 mt-4">
-                Butuh bantuan? <button type="button" className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 underline cursor-pointer" onClick={() => window.open('https://wa.me/6281234567890', '_blank', 'noopener,noreferrer')}>Chat dengan Success Team</button>
+                Need help? <button type="button" className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 underline cursor-pointer" onClick={() => window.open('https://wa.me/6281234567890', '_blank', 'noopener,noreferrer')}>Chat with our Success Team</button>
               </p>
             </div>
           </div>

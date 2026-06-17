@@ -51,8 +51,8 @@ db.users.set('demo@familytree.app', {
 
 db.trees.set('wijaya-family', {
   id: 'wijaya-family',
-  name: 'Keluarga Besar Wijaya',
-  description: 'Pohon keluarga besar marga Wijaya dari Yogyakarta',
+  name: 'The Wijaya Family',
+  description: 'Extended family tree of the Wijaya clan from Yogyakarta',
   memberCount: 11,
   generationCount: 3,
   lastUpdated: '2024-01-15T10:30:00Z',
@@ -65,21 +65,21 @@ const seedMembers: FamilyMemberRecord[] = [
   {
     id: '1', treeId: 'wijaya-family', name: 'Budi Wijaya',
     birthDate: '1945-03-15', deathDate: '2018-08-20', birthPlace: 'Yogyakarta',
-    currentLocation: 'Jakarta', profession: 'Pensiunan Guru', education: 'S1 Pendidikan',
+    currentLocation: 'Jakarta', profession: 'Retired Teacher', education: "Bachelor's in Education",
     gender: 'male', isAlive: false, generation: 1, maritalStatus: 'married',
     photoUrl: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=150',
   },
   {
     id: '2', treeId: 'wijaya-family', name: 'Siti Wijaya',
     birthDate: '1948-07-22', deathDate: '2020-12-10', birthPlace: 'Yogyakarta',
-    currentLocation: 'Jakarta', profession: 'Ibu Rumah Tangga',
+    currentLocation: 'Jakarta', profession: 'Homemaker',
     gender: 'female', isAlive: false, generation: 1, maritalStatus: 'married',
     photoUrl: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150',
   },
   {
     id: '3', treeId: 'wijaya-family', name: 'Andi Wijaya',
-    nickname: 'Pak Andi', birthDate: '1970-05-15', birthPlace: 'Jakarta',
-    currentLocation: 'Jakarta Selatan', profession: 'Pengusaha', education: 'S1 Ekonomi',
+    nickname: 'Mr. Andi', birthDate: '1970-05-15', birthPlace: 'Jakarta',
+    currentLocation: 'South Jakarta', profession: 'Entrepreneur', education: "Bachelor's in Economics",
     gender: 'male', isAlive: true, generation: 2, maritalStatus: 'married',
     email: 'andi.wijaya@email.com', phone: '+62812345678',
     photoUrl: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150',
@@ -87,7 +87,7 @@ const seedMembers: FamilyMemberRecord[] = [
   {
     id: '4', treeId: 'wijaya-family', name: 'Sari Handayani',
     birthDate: '1975-09-08', birthPlace: 'Bandung', currentLocation: 'Surabaya',
-    profession: 'Dokter', education: 'S1 Kedokteran',
+    profession: 'Doctor', education: "Bachelor's in Medicine",
     gender: 'female', isAlive: true, generation: 2, maritalStatus: 'married',
     email: 'sari.handayani@email.com', phone: '+62812345679',
     photoUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150',
@@ -95,14 +95,14 @@ const seedMembers: FamilyMemberRecord[] = [
   {
     id: '5', treeId: 'wijaya-family', name: 'Dedi Wijaya',
     birthDate: '1968-11-30', birthPlace: 'Jakarta', currentLocation: 'Surabaya',
-    profession: 'Insinyur', education: 'S1 Teknik',
+    profession: 'Engineer', education: "Bachelor's in Engineering",
     gender: 'male', isAlive: true, generation: 2, maritalStatus: 'married',
     photoUrl: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150',
   },
   {
     id: '6', treeId: 'wijaya-family', name: 'Rudi Wijaya',
     birthDate: '1998-03-12', birthPlace: 'Jakarta', currentLocation: 'Jakarta',
-    profession: 'Software Engineer', education: 'S1 Informatika',
+    profession: 'Software Engineer', education: "Bachelor's in Computer Science",
     gender: 'male', isAlive: true, generation: 3, maritalStatus: 'single',
     email: 'rudi.wijaya@email.com', phone: '+62812345680',
     photoUrl: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150',
@@ -110,7 +110,7 @@ const seedMembers: FamilyMemberRecord[] = [
   {
     id: '7', treeId: 'wijaya-family', name: 'Maya Wijaya',
     birthDate: '2000-07-18', birthPlace: 'Jakarta', currentLocation: 'Jakarta',
-    profession: 'Mahasiswa', education: 'S1 Psikologi',
+    profession: 'University Student', education: "Bachelor's in Psychology",
     gender: 'female', isAlive: true, generation: 3, maritalStatus: 'single',
     email: 'maya.wijaya@email.com', phone: '+62812345681',
     photoUrl: 'https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=150',
@@ -118,28 +118,28 @@ const seedMembers: FamilyMemberRecord[] = [
   {
     id: '8', treeId: 'wijaya-family', name: 'Arif Wijaya',
     birthDate: '1992-01-25', birthPlace: 'Surabaya', currentLocation: 'Surabaya',
-    profession: 'Dokter Gigi', education: 'S1 Kedokteran Gigi',
+    profession: 'Dentist', education: "Bachelor's in Dentistry",
     gender: 'male', isAlive: true, generation: 3, maritalStatus: 'married',
     photoUrl: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=150',
   },
   {
     id: '9', treeId: 'wijaya-family', name: 'Lia Wijaya',
     birthDate: '1995-06-14', birthPlace: 'Surabaya', currentLocation: 'Bandung',
-    profession: 'Desainer', education: 'S1 Desain',
+    profession: 'Designer', education: "Bachelor's in Design",
     gender: 'female', isAlive: true, generation: 3, maritalStatus: 'single',
     photoUrl: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
   },
   {
     id: '10', treeId: 'wijaya-family', name: 'Kenzo Wijaya',
     birthDate: '1997-09-03', birthPlace: 'Surabaya', currentLocation: 'Surabaya',
-    profession: 'Fotografer', education: 'S1 Seni Rupa',
+    profession: 'Photographer', education: "Bachelor's in Fine Arts",
     gender: 'male', isAlive: true, generation: 3, maritalStatus: 'single',
     photoUrl: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150',
   },
   {
     id: '11', treeId: 'wijaya-family', name: 'Aira Wijaya',
     birthDate: '1999-12-20', birthPlace: 'Surabaya', currentLocation: 'Jakarta',
-    profession: 'Content Creator', education: 'S1 Komunikasi',
+    profession: 'Content Creator', education: "Bachelor's in Communications",
     gender: 'female', isAlive: true, generation: 3, maritalStatus: 'single',
     photoUrl: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150',
   },
@@ -188,7 +188,7 @@ export class MockAdapter implements DataAdapter {
     await delay(300);
     const record = db.users.get(email.toLowerCase());
     if (!record || record.password !== password) {
-      throw new AuthError('Email atau password salah', 'INVALID_CREDENTIALS');
+      throw new AuthError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
     const session: AuthSession = { user: record.user, token: `mock-token-${uid()}` };
     db.currentSession = session;
@@ -199,7 +199,7 @@ export class MockAdapter implements DataAdapter {
     await delay(300);
     const email = input.email.toLowerCase();
     if (db.users.has(email)) {
-      throw new AuthError('Email sudah terdaftar', 'EMAIL_EXISTS');
+      throw new AuthError('Email is already registered', 'EMAIL_EXISTS');
     }
     const user = {
       id: `user-${uid()}`,

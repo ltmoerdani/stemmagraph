@@ -101,7 +101,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
     }
 
     const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return res.status(409).json({ code: 'EMAIL_EXISTS', message: 'Email sudah terdaftar' });
+    if (existing) return res.status(409).json({ code: 'EMAIL_EXISTS', message: 'Email is already registered' });
 
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
@@ -124,12 +124,12 @@ app.post('/api/v1/auth/login', async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(401).json({ code: 'INVALID_CREDENTIALS', message: 'Email atau password salah' });
+      return res.status(401).json({ code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' });
     }
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      return res.status(401).json({ code: 'INVALID_CREDENTIALS', message: 'Email atau password salah' });
+      return res.status(401).json({ code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' });
     }
 
     const token = signToken(user.id);

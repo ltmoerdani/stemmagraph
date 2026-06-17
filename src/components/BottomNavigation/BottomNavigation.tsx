@@ -15,7 +15,7 @@ export const BottomNavigation: React.FC = () => {
         <div className="flex items-center justify-between">
           {/* Generation Tabs */}
           <div className="flex items-center space-x-1">
-            <span className="text-sm font-medium text-gray-700 mr-3">Generasi:</span>
+            <span className="text-sm font-medium text-gray-700 mr-3">Generation:</span>
             <div className="flex space-x-1">
               {generations.map(gen => (
                 <button
@@ -35,7 +35,7 @@ export const BottomNavigation: React.FC = () => {
               className="flex items-center space-x-2 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span>Tambah Anggota</span>
+              <span>Add Member</span>
             </button>
             
             <button className="flex items-center space-x-2 px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">

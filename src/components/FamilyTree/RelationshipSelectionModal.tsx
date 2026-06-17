@@ -25,23 +25,23 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
         return [
           { 
             value: 'husband', 
-            label: 'Suami', 
+            label: 'Husband', 
             icon: <Users className="w-5 h-5" />,
-            description: 'Tambah suami sebagai pasangan',
+            description: 'Add husband as partner',
             color: 'blue'
           },
           { 
             value: 'wife', 
-            label: 'Istri', 
+            label: 'Wife', 
             icon: <Heart className="w-5 h-5" />,
-            description: 'Tambah istri sebagai pasangan',
+            description: 'Add wife as partner',
             color: 'pink'
           },
           { 
             value: 'partner', 
-            label: 'Pasangan', 
+            label: 'Partner', 
             icon: <Users className="w-5 h-5" />,
-            description: 'Tambah pasangan hidup',
+            description: 'Add life partner',
             color: 'purple'
           }
         ];
@@ -49,37 +49,37 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
         return [
           { 
             value: 'father', 
-            label: 'Ayah', 
+            label: 'Father', 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Tambah ayah kandung',
+            description: 'Add biological father',
             color: 'blue'
           },
           { 
             value: 'mother', 
-            label: 'Ibu', 
+            label: 'Mother', 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Tambah ibu kandung',
+            description: 'Add biological mother',
             color: 'pink'
           },
           { 
             value: 'both_parents', 
-            label: 'Kedua Orang Tua', 
+            label: 'Both Parents', 
             icon: <Users className="w-5 h-5" />,
-            description: 'Tambah ayah dan ibu sekaligus',
+            description: 'Add both father and mother at once',
             color: 'green'
           },
           { 
             value: 'grandfather', 
-            label: 'Kakek', 
+            label: 'Grandfather', 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Tambah kakek',
+            description: 'Add grandfather',
             color: 'gray'
           },
           { 
             value: 'grandmother', 
-            label: 'Nenek', 
+            label: 'Grandmother', 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Tambah nenek',
+            description: 'Add grandmother',
             color: 'gray'
           }
         ];
@@ -87,37 +87,37 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
         return [
           { 
             value: 'biological_child', 
-            label: 'Anak Kandung', 
+            label: 'Biological Child', 
             icon: <Baby className="w-5 h-5" />,
-            description: 'Tambah anak kandung',
+            description: 'Add biological child',
             color: 'green'
           },
           { 
             value: 'step_child', 
-            label: 'Anak Tiri', 
+            label: 'Stepchild', 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Tambah anak tiri',
+            description: 'Add stepchild',
             color: 'orange'
           },
           { 
             value: 'adopted_child', 
-            label: 'Anak Adopsi', 
+            label: 'Adopted Child', 
             icon: <Heart className="w-5 h-5" />,
-            description: 'Tambah anak adopsi',
+            description: 'Add adopted child',
             color: 'purple'
           },
           { 
             value: 'grandchild', 
-            label: 'Cucu', 
+            label: 'Grandchild', 
             icon: <Baby className="w-5 h-5" />,
-            description: 'Tambah cucu',
+            description: 'Add grandchild',
             color: 'yellow'
           },
           { 
             value: 'great_grandchild', 
-            label: 'Cicit', 
+            label: 'Great-grandchild', 
             icon: <Baby className="w-5 h-5" />,
-            description: 'Tambah cicit',
+            description: 'Add great-grandchild',
             color: 'indigo'
           }
         ];
@@ -142,26 +142,26 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
   const getDirectionTitle = () => {
     switch (direction) {
       case 'up':
-        return 'Tambah Generasi Atas';
+        return 'Add Ancestor';
       case 'down':
-        return 'Tambah Generasi Bawah';
+        return 'Add Descendant';
       case 'left':
-        return 'Tambah Pasangan (Kiri)';
+        return 'Add Partner (Left)';
       case 'right':
-        return 'Tambah Pasangan (Kanan)';
+        return 'Add Partner (Right)';
     }
   };
 
   const getDirectionDescription = () => {
     switch (direction) {
       case 'up':
-        return 'Anggota baru akan muncul di atas card ini';
+        return 'The new member will appear above this card';
       case 'down':
-        return 'Anggota baru akan muncul di bawah card ini';
+        return 'The new member will appear below this card';
       case 'left':
-        return 'Anggota baru akan muncul di sebelah kiri card ini';
+        return 'The new member will appear to the left of this card';
       case 'right':
-        return 'Anggota baru akan muncul di sebelah kanan card ini';
+        return 'The new member will appear to the right of this card';
     }
   };
 
@@ -233,7 +233,7 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
         {/* Content */}
         <div className="p-6">
           <div className="mb-4">
-            <h4 className="font-semibold text-gray-900 mb-2">Pilih jenis hubungan:</h4>
+            <h4 className="font-semibold text-gray-900 mb-2">Select relationship type:</h4>
           </div>
           
           <div className="space-y-3 max-h-80 overflow-y-auto">

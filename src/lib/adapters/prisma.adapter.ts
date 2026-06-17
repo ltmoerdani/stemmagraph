@@ -38,7 +38,7 @@ export class PrismaAdapter implements DataAdapter {
   async login({ email, password }: AuthCredentials): Promise<AuthSession> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || user.password !== password) {
-      throw new AuthError('Email atau password salah', 'INVALID_CREDENTIALS');
+      throw new AuthError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
     this.currentUserId = user.id;
     return {
@@ -57,7 +57,7 @@ export class PrismaAdapter implements DataAdapter {
   async register(input: RegisterInput): Promise<AuthSession> {
     const existing = await this.prisma.user.findUnique({ where: { email: input.email } });
     if (existing) {
-      throw new AuthError('Email sudah terdaftar', 'EMAIL_EXISTS');
+      throw new AuthError('Email is already registered', 'EMAIL_EXISTS');
     }
     const user = await this.prisma.user.create({
       data: {

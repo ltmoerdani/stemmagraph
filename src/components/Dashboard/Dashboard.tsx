@@ -53,14 +53,14 @@ export const Dashboard: React.FC = () => {
       type="button"
       onClick={handleCreateTree}
       className="group relative bg-white rounded-xl border-2 border-dashed transition-all duration-200 h-48 flex flex-col items-center justify-center cursor-pointer border-gray-300 hover:border-green-500 hover:bg-green-50"
-      aria-label="Buat Family Tree Baru"
+      aria-label="Create New Family Tree"
     >
       <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-green-200 transition-colors">
         <Plus className="w-6 h-6 text-green-600" />
       </div>
-      <h3 className="font-semibold text-gray-900 mb-1">Buat Family Tree Baru</h3>
+      <h3 className="font-semibold text-gray-900 mb-1">Create New Family Tree</h3>
       <p className="text-sm text-gray-500 text-center px-4">
-        Mulai membangun pohon keluarga baru
+        Start building a new family tree
       </p>
     </button>
   );
@@ -73,13 +73,13 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Crown className="w-6 h-6" />
             <div>
-              <p className="font-semibold">Selamat! Akun Anda Sudah Premium</p>
-              <p className="text-sm opacity-90">Nikmati semua fitur unlimited</p>
+              <p className="font-semibold">Congratulations! Your Account Is Now Premium</p>
+              <p className="text-sm opacity-90">Enjoy all unlimited features</p>
             </div>
             <button
               onClick={() => setShowUpgradeSuccess(false)}
               className="text-white hover:text-gray-200"
-              aria-label="Tutup notifikasi upgrade"
+              aria-label="Close upgrade notification"
             >
               {/* Use lucide-react X icon safely */}
               <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -163,11 +163,11 @@ export const Dashboard: React.FC = () => {
             ) : (
               <div className="flex items-center space-x-4">
                 <span className="font-medium text-blue-800">
-                  Akun Gratis: {familyTrees.length} Family Tree (Mode Development)
+                  Free Account: {familyTrees.length} Family Tree (Development Mode)
                 </span>
                 <span className="text-blue-700">•</span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-blue-700">{currentMemberCount}/{maxMembersPerTree} Anggota</span>
+                  <span className="text-blue-700">{currentMemberCount}/{maxMembersPerTree} Members</span>
                   <div className="w-24 h-2 bg-blue-200 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-blue-600 transition-all duration-300"
@@ -184,7 +184,7 @@ export const Dashboard: React.FC = () => {
               onClick={handleUpgrade}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
-              Upgrade Premium $9.99/tahun
+              Upgrade Premium $9.99/year
             </button>
           )}
         </div>
@@ -198,7 +198,7 @@ export const Dashboard: React.FC = () => {
             <div>
               <h2 className="text-3xl font-bold text-gray-900">Family Trees</h2>
               <p className="text-gray-600 mt-1">
-                Kelola dan jelajahi pohon keluarga Anda
+                Manage and explore your family trees
               </p>
             </div>
             
@@ -208,7 +208,7 @@ export const Dashboard: React.FC = () => {
                 className="flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700"
               >
                 <Plus className="w-5 h-5" />
-                <span>Buat Family Tree Baru</span>
+                <span>Create New Family Tree</span>
               </button>
             )}
           </div>
@@ -241,11 +241,11 @@ export const Dashboard: React.FC = () => {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <Users className="w-4 h-4" />
-                        <span>{tree.memberCount} anggota • {tree.generationCount} generasi</span>
+                        <span>{tree.memberCount} members • {tree.generationCount} generations</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <Calendar className="w-4 h-4" />
-                        <span>Update: {formatDate(tree.lastUpdated)}</span>
+                        <span>Updated: {formatDate(tree.lastUpdated)}</span>
                       </div>
                     </div>
 
@@ -255,7 +255,7 @@ export const Dashboard: React.FC = () => {
                         onClick={() => handleOpenTree(tree.id)}
                         className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                       >
-                        BUKA
+                        OPEN
                       </button>
                       <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         <Settings className="w-4 h-4 text-gray-600" />
@@ -272,11 +272,11 @@ export const Dashboard: React.FC = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Nama Family Tree</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Anggota</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Generasi</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Update Terakhir</th>
-                      <th className="text-center py-4 px-6 font-semibold text-gray-900">Aksi</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Family Tree Name</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Members</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Generations</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Last Updated</th>
+                      <th className="text-center py-4 px-6 font-semibold text-gray-900">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -289,7 +289,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{tree.name}</h3>
-                              <p className="text-sm text-gray-500">Dibuat {formatDate(tree.createdAt)}</p>
+                              <p className="text-sm text-gray-500">Created {formatDate(tree.createdAt)}</p>
                             </div>
                           </div>
                         </td>
@@ -308,7 +308,7 @@ export const Dashboard: React.FC = () => {
                               onClick={() => handleOpenTree(tree.id)}
                               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                             >
-                              BUKA
+                              OPEN
                             </button>
                             <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                               <Settings className="w-4 h-4 text-gray-600" />
@@ -324,13 +324,13 @@ export const Dashboard: React.FC = () => {
               {familyTrees.length === 0 && (
                 <div className="text-center py-12">
                   <TreePine className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Belum ada Family Tree</h3>
-                  <p className="text-gray-500 mb-6">Mulai dengan membuat family tree pertama Anda</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Family Tree Yet</h3>
+                  <p className="text-gray-500 mb-6">Start by creating your first family tree</p>
                   <button
                     onClick={handleCreateTree}
                     className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
                   >
-                    Buat Family Tree Pertama
+                    Create First Family Tree
                   </button>
                 </div>
               )}
@@ -346,12 +346,12 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-yellow-800">
-                    {currentMemberCount >= maxMembersPerTree ? 'Batas anggota tercapai!' : 'Hampir penuh!'}
+                    {currentMemberCount >= maxMembersPerTree ? 'Member limit reached!' : 'Almost full!'}
                   </h4>
                   <p className="text-yellow-700 text-sm">
                     {currentMemberCount >= maxMembersPerTree 
-                      ? 'Upgrade ke Premium untuk menambah anggota unlimited.'
-                      : 'Upgrade ke Premium untuk unlimited anggota dan family trees.'}
+                      ? 'Upgrade to Premium to add unlimited members.'
+                      : 'Upgrade to Premium for unlimited members and family trees.'}
                   </p>
                 </div>
                 <button 

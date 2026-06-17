@@ -199,7 +199,7 @@ const TableRow: React.FC<TableRowProps> = ({
               member.isAlive ? 'bg-green-500' : 'bg-gray-500'
             }`} />
             <span className="text-xs text-gray-700">
-              {member.isAlive ? 'Hidup' : 'Almarhum'}
+              {member.isAlive ? 'Living' : 'Deceased'}
             </span>
           </div>
         </td>
@@ -258,14 +258,14 @@ const TableRow: React.FC<TableRowProps> = ({
 
 const getColumnLabel = (key: string): string => {
   const columnLabels: Record<string, string> = {
-    photo: 'Foto',
-    name: 'Nama',
-    relationship: 'Hubungan',
-    birth: 'Lahir',
-    age: 'Usia',
+    photo: 'Photo',
+    name: 'Name',
+    relationship: 'Relationship',
+    birth: 'Birth',
+    age: 'Age',
     status: 'Status',
-    location: 'Lokasi',
-    contact: 'Kontak'
+    location: 'Location',
+    contact: 'Contact'
   };
   return columnLabels[key] || key;
 };
@@ -396,11 +396,11 @@ export const FamilyTable: React.FC = () => {
   const getRelationshipText = (member: FamilyMember) => {
     if (member.parentIds && member.parentIds.length > 0) {
       const parent = members.find((m: FamilyMember) => m.id === member.parentIds![0]);
-      return parent ? `Anak dari ${parent.name}` : 'Anak';
+      return parent ? `Child of ${parent.name}` : 'Child';
     }
-    if (member.generation === 1) return 'Kakek/Nenek';
-    if (member.generation === 2) return 'Orang Tua';
-    return 'Keturunan';
+    if (member.generation === 1) return 'Grandparent';
+    if (member.generation === 2) return 'Parent';
+    return 'Descendant';
   };
 
   const handleSort = (field: SortField) => {
@@ -474,7 +474,7 @@ export const FamilyTable: React.FC = () => {
                 </button>
                 <button className="flex items-center space-x-1 px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors">
                   <Trash2 className="w-4 h-4" />
-                  <span>Hapus</span>
+                  <span>Delete</span>
                 </button>
               </div>
             </div>
@@ -493,11 +493,11 @@ export const FamilyTable: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h3 className="text-lg font-semibold text-gray-900">
-              {filteredMembers.length} Anggota Keluarga
+              {filteredMembers.length} Family Members
             </h3>
             {searchQuery && (
               <div className="text-sm text-gray-600">
-                Hasil pencarian untuk "{searchQuery}"
+                Search results for "{searchQuery}"
               </div>
             )}
           </div>
@@ -605,7 +605,7 @@ export const FamilyTable: React.FC = () => {
                   sortConfig={sortConfig}
                   onSort={handleSort}
                 >
-                  Usia
+                  Age
                 </SortableHeader>
               )}
               
@@ -645,7 +645,7 @@ export const FamilyTable: React.FC = () => {
                     <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Filter nama..."
+                      placeholder="Filter by name..."
                       value={columnFilters.name || ''}
                       onChange={(e) => setColumnFilters(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
@@ -708,9 +708,9 @@ export const FamilyTable: React.FC = () => {
         {filteredMembers.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-gray-500">
             <Filter className="w-12 h-12 mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium mb-2">Tidak ada anggota ditemukan</h3>
+            <h3 className="text-lg font-medium mb-2">No members found</h3>
             <p className="text-sm text-center">
-              Coba ubah filter atau kata kunci pencarian
+              Try adjusting the filters or search keywords
             </p>
           </div>
         )}
@@ -721,7 +721,7 @@ export const FamilyTable: React.FC = () => {
         <div className="bg-white border-t border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredMembers.length)} dari {filteredMembers.length} anggota
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredMembers.length)} of {filteredMembers.length} members
             </div>
             
             <div className="flex items-center space-x-2">
@@ -730,7 +730,7 @@ export const FamilyTable: React.FC = () => {
                 disabled={currentPage === 1}
                 className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sebelumnya
+                Previous
               </button>
               
               <div className="flex items-center space-x-1">
@@ -757,7 +757,7 @@ export const FamilyTable: React.FC = () => {
                 disabled={currentPage === totalPages}
                 className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Selanjutnya
+                Next
               </button>
             </div>
           </div>

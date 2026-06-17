@@ -63,86 +63,86 @@ export const UpgradePage: React.FC = () => {
   const testimonials = [
     {
       rating: 5,
-      text: "Sekarang seluruh keluarga besar bisa terdokumentasi dengan baik. Worth banget untuk $9.99/tahun!",
-      author: "Ibu Sari",
-      family: "Keluarga Besar Sutrisno",
-      members: "350 anggota"
+      text: "Now our entire extended family is well documented. Totally worth it for $9.99/year!",
+      author: "Mrs. Sari",
+      family: "The Sutrisno Family",
+      members: "350 members"
     },
     {
       rating: 5,
-      text: "Fitur kolaborasi memungkinkan semua saudara ikut update data. Sangat membantu untuk reuni keluarga.",
-      author: "Pak Budi",
-      family: "Marga Simanjuntak",
-      members: "180 anggota"
+      text: "The collaboration feature lets all siblings help update data. So helpful for family reunions.",
+      author: "Mr. Budi",
+      family: "The Simanjuntak Clan",
+      members: "180 members"
     },
     {
       rating: 5,
-      text: "Export ke GEDCOM sangat berguna untuk backup dan sharing dengan aplikasi lain. Recommended!",
+      text: "GEDCOM export is great for backups and sharing with other apps. Highly recommended!",
       author: "Dr. Maya",
-      family: "Keluarga Handayani",
-      members: "95 anggota"
+      family: "The Handayani Family",
+      members: "95 members"
     },
     {
       rating: 5,
-      text: "Analytics keluarga memberikan insight menarik tentang distribusi usia dan lokasi. Keren!",
+      text: "Family analytics provides interesting insights about age and location distribution. Awesome!",
       author: "Andi Wijaya",
-      family: "Keluarga Besar Wijaya",
-      members: "220 anggota"
+      family: "The Wijaya Family",
+      members: "220 members"
     }
   ];
 
   const faqs = [
     {
-      question: "🔒 Apakah data saya aman?",
-      answer: "Data dienkripsi bank-grade dengan standar AES-256, backup harian otomatis, dan server berlokasi di Indonesia untuk kepatuhan data lokal. Kami tidak pernah membagikan data pribadi Anda kepada pihak ketiga."
+      question: "🔒 Is my data safe?",
+      answer: "Data is encrypted with bank-grade AES-256 standards, with automatic daily backups. We never share your personal data with third parties."
     },
     {
-      question: "😞 Bagaimana jika saya tidak puas?",
-      answer: "Kami menawarkan jaminan uang kembali 30 hari tanpa pertanyaan. Jika tidak puas, hubungi support dan dana akan dikembalikan 100% dalam 3-5 hari kerja."
+      question: "😞 What if I'm not satisfied?",
+      answer: "We offer a 30-day no-questions-asked money-back guarantee. If you're not satisfied, contact support and you'll receive a 100% refund within 3-5 business days."
     },
     {
-      question: "⬇️ Bisakah saya downgrade ke akun gratis?",
-      answer: "Ya, Anda bisa downgrade kapan saja. Data akan tetap aman, namun akses terbatas sesuai batasan akun gratis (1 family tree, 15 anggota). Fitur premium akan dinonaktifkan."
+      question: "⬇️ Can I downgrade to a free account?",
+      answer: "Yes, you can downgrade anytime. Your data stays safe, but access is limited according to the free account limits (1 family tree, 15 members). Premium features will be disabled."
     },
     {
-      question: "💳 Metode pembayaran apa saja yang diterima?",
-      answer: "Kami menerima kartu kredit/debit (Visa, Mastercard), transfer bank, e-wallet (GoPay, OVO, DANA), virtual account, dan QRIS. Pembayaran diproses aman oleh Midtrans."
+      question: "💳 What payment methods are accepted?",
+      answer: "We accept credit/debit cards (Visa, Mastercard), bank transfers, e-wallets, virtual accounts, and QR codes. Payments are securely processed by Midtrans."
     },
     {
-      question: "🔄 Bagaimana jika lupa perpanjang langganan?",
-      answer: "Kami akan mengirim reminder 7 hari dan 1 hari sebelum expired. Jika terlewat, akun otomatis downgrade ke gratis tanpa kehilangan data. Anda bisa upgrade kembali kapan saja."
+      question: "🔄 What if I forget to renew my subscription?",
+      answer: "We'll send reminders 7 days and 1 day before expiration. If you miss it, your account automatically downgrades to free without losing data. You can upgrade again anytime."
     }
   ];
 
   const benefits = [
     {
       icon: Users,
-      title: "Keluarga besar 200+ anggota",
-      description: "Dokumentasikan seluruh keluarga besar tanpa batasan jumlah anggota",
-      solution: "✅ Unlimited anggota keluarga"
+      title: "Extended family with 200+ members",
+      description: "Document your entire extended family without member count limits",
+      solution: "✅ Unlimited family members"
     },
     {
       icon: UserPlus,
-      title: "Ingin libatkan saudara update data",
-      description: "Ajak anggota keluarga lain untuk berkontribusi menambah dan update data",
-      solution: "✅ Kolaborator unlimited dengan permission control"
+      title: "Want relatives to help update data",
+      description: "Invite other family members to contribute by adding and updating data",
+      solution: "✅ Unlimited collaborators with permission controls"
     },
     {
       icon: HardDrive,
-      title: "Banyak foto keluarga",
-      description: "Simpan ribuan foto keluarga dari berbagai acara dan momen berharga",
-      solution: "✅ Storage 10GB untuk foto dan dokumen"
+      title: "Lots of family photos",
+      description: "Store thousands of family photos from various events and precious moments",
+      solution: "✅ 10GB storage for photos and documents"
     },
     {
       icon: TreePine,
-      title: "Keluarga suami-istri terpisah",
-      description: "Kelola pohon keluarga suami dan istri dalam satu akun",
-      solution: "✅ Unlimited family trees dalam satu akun"
+      title: "Spouse's families kept separate",
+      description: "Manage the husband's and wife's family trees within a single account",
+      solution: "✅ Unlimited family trees in one account"
     },
     {
       icon: BarChart3,
-      title: "Ingin analisis statistik keluarga",
-      description: "Lihat insights menarik tentang distribusi usia, lokasi, dan profesi keluarga",
+      title: "Want family statistics analysis",
+      description: "See interesting insights about the distribution of ages, locations, and professions in your family",
       solution: "✅ Family Analytics & Insights dashboard"
     }
   ];
@@ -175,18 +175,18 @@ export const UpgradePage: React.FC = () => {
         <div className="text-center mb-16">
           <div className="inline-flex items-center space-x-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
             <Crown className="w-4 h-4" />
-            <span>PROMO TERBATAS - HEMAT 50%</span>
+            <span>LIMITED OFFER - SAVE 50%</span>
           </div>
           
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Dokumentasikan Seluruh<br />
-            <span className="text-green-600">Keluarga Besar</span>
+            Document Your Entire<br />
+            <span className="text-green-600">Extended Family</span>
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Upgrade ke Premium dan kelola unlimited family trees dengan unlimited anggota keluarga. 
-            Hanya <span className="font-bold text-green-600">$9.99 per tahun</span> 
-            <span className="text-gray-500"> (kurang dari Rp 1.000 per bulan)</span>
+            Upgrade to Premium and manage unlimited family trees with unlimited family members. 
+            Only <span className="font-bold text-green-600">$9.99 per year</span> 
+            <span className="text-gray-500"> (less than $1 per month)</span>
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
@@ -194,48 +194,48 @@ export const UpgradePage: React.FC = () => {
               onClick={() => handleUpgrade('trial')}
               className="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors shadow-lg"
             >
-              MULAI 7 HARI GRATIS
+              START 7-DAY FREE TRIAL
             </button>
             <button
               onClick={() => handleUpgrade('premium')}
               className="w-full sm:w-auto bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-colors"
             >
-              LANGSUNG UPGRADE $9.99
+              UPGRADE NOW $9.99
             </button>
           </div>
 
           <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
             <div className="flex items-center space-x-2">
               <Check className="w-4 h-4 text-green-600" />
-              <span>Tanpa kartu kredit untuk trial</span>
+              <span>No credit card required for trial</span>
             </div>
             <div className="flex items-center space-x-2">
               <Shield className="w-4 h-4 text-green-600" />
-              <span>Jaminan 30 hari uang kembali</span>
+              <span>30-day money-back guarantee</span>
             </div>
             <div className="flex items-center space-x-2">
               <Users className="w-4 h-4 text-green-600" />
-              <span>10,000+ keluarga Indonesia</span>
+              <span>10,000+ families worldwide</span>
             </div>
           </div>
 
           {/* Countdown Timer */}
           <div className="mt-8 bg-red-50 border border-red-200 rounded-xl p-6 max-w-md mx-auto">
-            <p className="text-red-800 font-medium mb-3">Promo berakhir dalam:</p>
+            <p className="text-red-800 font-medium mb-3">Offer ends in:</p>
             <div className="flex items-center justify-center space-x-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{timeLeft.hours.toString().padStart(2, '0')}</div>
-                <div className="text-xs text-red-500">JAM</div>
+                <div className="text-xs text-red-500">HRS</div>
               </div>
               <div className="text-red-600">:</div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{timeLeft.minutes.toString().padStart(2, '0')}</div>
-                <div className="text-xs text-red-500">MENIT</div>
+                <div className="text-xs text-red-500">MIN</div>
               </div>
               <div className="text-red-600">:</div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{timeLeft.seconds.toString().padStart(2, '0')}</div>
-                <div className="text-xs text-red-500">DETIK</div>
+                <div className="text-xs text-red-500">SEC</div>
               </div>
             </div>
           </div>
@@ -244,37 +244,37 @@ export const UpgradePage: React.FC = () => {
         {/* Comparison Table */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-            Bandingkan Paket
+            Compare Plans
           </h2>
           
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto">
             <div className="grid grid-cols-3 gap-0">
               {/* Header */}
               <div className="p-6 bg-gray-50 border-r border-gray-200">
-                <h3 className="font-semibold text-gray-900">Fitur</h3>
+                <h3 className="font-semibold text-gray-900">Feature</h3>
               </div>
               <div className="p-6 bg-gray-50 border-r border-gray-200 text-center">
-                <h3 className="font-semibold text-gray-900">Gratis</h3>
-                <p className="text-sm text-gray-600 mt-1">$0/tahun</p>
+                <h3 className="font-semibold text-gray-900">Free</h3>
+                <p className="text-sm text-gray-600 mt-1">$0/year</p>
               </div>
               <div className="p-6 bg-linear-to-r from-green-500 to-blue-500 text-center">
                 <h3 className="font-semibold text-white">Premium</h3>
                 <p className="text-green-100 mt-1">
                   <span className="line-through text-sm">$19.99</span> 
-                  <span className="font-bold ml-2">$9.99/tahun</span>
+                  <span className="font-bold ml-2">$9.99/year</span>
                 </p>
               </div>
 
               {/* Features */}
               {[
                 { feature: 'Family Tree', free: '1', premium: 'Unlimited ✨' },
-                { feature: 'Anggota Keluarga', free: '15', premium: 'Unlimited 👨‍👩‍👧‍👦' },
+                { feature: 'Family Members', free: '15', premium: 'Unlimited 👨‍👩‍👧‍👦' },
                 { feature: 'Storage', free: '500MB', premium: '10GB 📁' },
                 { feature: 'Export', free: 'PDF', premium: 'PDF + Excel + GEDCOM 📊' },
-                { feature: 'Kolaborator', free: 'Tidak ada', premium: 'Unlimited 🤝' },
-                { feature: 'Backup Otomatis', free: 'Tidak ada', premium: 'Harian 🔄' },
+                { feature: 'Collaborators', free: 'None', premium: 'Unlimited 🤝' },
+                { feature: 'Automatic Backup', free: 'None', premium: 'Daily 🔄' },
                 { feature: 'Support', free: 'Email', premium: 'Priority Chat 💬' },
-                { feature: 'Analytics', free: 'Tidak ada', premium: 'Family Insights 📈' }
+                { feature: 'Analytics', free: 'None', premium: 'Family Insights 📈' }
               ].map((row) => (
                 <React.Fragment key={row.feature}>
                   <div className="p-4 border-r border-gray-200 border-t">
@@ -295,10 +295,10 @@ export const UpgradePage: React.FC = () => {
         {/* Benefits Section */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
-            Mengapa Keluarga Memilih Premium
+            Why Families Choose Premium
           </h2>
           <p className="text-xl text-gray-600 text-center mb-12">
-            Solusi untuk kebutuhan keluarga besar Indonesia
+            Solutions for every family's needs
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -320,7 +320,7 @@ export const UpgradePage: React.FC = () => {
         {/* Testimonials */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Apa Kata Keluarga Indonesia
+            What Families Say
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -347,28 +347,28 @@ export const UpgradePage: React.FC = () => {
         {/* Pricing Section */}
         <div className="mb-16">
           <div className="bg-linear-to-r from-green-500 to-blue-500 rounded-2xl p-8 text-white text-center">
-            <h2 className="text-3xl font-bold mb-4">Harga Spesial Terbatas</h2>
+            <h2 className="text-3xl font-bold mb-4">Limited-Time Special Price</h2>
             
             <div className="mb-6">
               <div className="text-6xl font-bold mb-2">
                 <span className="line-through text-3xl opacity-75">$19.99</span>
                 <span className="ml-4">$9.99</span>
               </div>
-              <p className="text-xl opacity-90">per tahun • HEMAT 50%</p>
+              <p className="text-xl opacity-90">per year • SAVE 50%</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-sm">
               <div className="bg-white/20 rounded-lg p-4">
-                <p className="font-semibold">Rp 13.500 per bulan</p>
-                <p className="opacity-75">Lebih murah dari secangkir kopi</p>
+                <p className="font-semibold">About $1 per month</p>
+                <p className="opacity-75">Cheaper than a cup of coffee</p>
               </div>
               <div className="bg-white/20 rounded-lg p-4">
-                <p className="font-semibold">Rp 450 per hari</p>
-                <p className="opacity-75">Lebih murah dari parkir motor</p>
+                <p className="font-semibold">About $0.03 per day</p>
+                <p className="opacity-75">Cheaper than motorcycle parking</p>
               </div>
               <div className="bg-white/20 rounded-lg p-4">
-                <p className="font-semibold">Bonus Gratis</p>
-                <p className="opacity-75">7 hari trial + setup assistance</p>
+                <p className="font-semibold">Free Bonus</p>
+                <p className="opacity-75">7-day trial + setup assistance</p>
               </div>
             </div>
 
@@ -377,18 +377,18 @@ export const UpgradePage: React.FC = () => {
                 onClick={() => handleUpgrade('trial')}
                 className="w-full bg-white text-green-600 py-4 px-8 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors"
               >
-                MULAI 7 HARI GRATIS - TANPA KARTU KREDIT
+                START 7-DAY FREE TRIAL - NO CREDIT CARD REQUIRED
               </button>
               <button
                 onClick={() => handleUpgrade('premium')}
                 className="w-full bg-yellow-400 text-gray-900 py-4 px-8 rounded-xl font-bold text-lg hover:bg-yellow-300 transition-colors"
               >
-                LANGSUNG UPGRADE $9.99 - HEMAT 50%
+                UPGRADE NOW $9.99 - SAVE 50%
               </button>
             </div>
 
             <p className="text-sm opacity-75 mt-4">
-              Bergabung dengan 10,000+ keluarga Indonesia yang sudah mempercayai FamilyTree
+              Join 10,000+ families who already trust FamilyTree
             </p>
           </div>
         </div>
@@ -396,7 +396,7 @@ export const UpgradePage: React.FC = () => {
         {/* FAQ Section */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Pertanyaan yang Sering Diajukan
+            Frequently Asked Questions
           </h2>
 
           <div className="max-w-3xl mx-auto space-y-4">
@@ -426,10 +426,10 @@ export const UpgradePage: React.FC = () => {
         {/* Final CTA */}
         <div className="text-center bg-white rounded-2xl p-8 shadow-xl">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Siap Mendokumentasikan Keluarga Besar?
+            Ready to Document Your Extended Family?
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Mulai sekarang dan rasakan kemudahan mengelola unlimited family trees
+            Get started now and experience the ease of managing unlimited family trees
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
@@ -437,32 +437,32 @@ export const UpgradePage: React.FC = () => {
               onClick={() => handleUpgrade('trial')}
               className="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors"
             >
-              MULAI 7 HARI GRATIS
+              START 7-DAY FREE TRIAL
             </button>
             <button
               onClick={() => handleUpgrade('premium')}
               className="w-full sm:w-auto bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-colors"
             >
-              LANGSUNG UPGRADE $9.99
+              UPGRADE NOW $9.99
             </button>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
             <div className="flex items-center justify-center space-x-2">
               <Check className="w-4 h-4 text-green-600" />
-              <span>Tanpa kartu kredit</span>
+              <span>No credit card required</span>
             </div>
             <div className="flex items-center justify-center space-x-2">
               <Clock className="w-4 h-4 text-green-600" />
-              <span>Batal kapan saja</span>
+              <span>Cancel anytime</span>
             </div>
             <div className="flex items-center justify-center space-x-2">
               <Shield className="w-4 h-4 text-green-600" />
-              <span>Jaminan uang kembali</span>
+              <span>Money-back guarantee</span>
             </div>
             <div className="flex items-center justify-center space-x-2">
               <Download className="w-4 h-4 text-green-600" />
-              <span>Data bisa export</span>
+              <span>Data is exportable</span>
             </div>
           </div>
         </div>

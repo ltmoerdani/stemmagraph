@@ -212,7 +212,7 @@ export const GridMemberCard: React.FC<GridMemberCardProps> = ({
             
             <div className="flex items-center space-x-2 text-gray-600">
               <Calendar className="w-3 h-3 shrink-0" />
-              <span>Generasi {member.generation}</span>
+              <span>Generation {member.generation}</span>
             </div>
           </div>
         </div>
@@ -256,7 +256,7 @@ export const GridMemberCard: React.FC<GridMemberCardProps> = ({
               className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2"
             >
               <Edit className="w-4 h-4" />
-              <span>Edit Profil</span>
+              <span>Edit Profile</span>
             </button>
 
             <button 
@@ -264,7 +264,7 @@ export const GridMemberCard: React.FC<GridMemberCardProps> = ({
               className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
-              <span>Tambah Anak</span>
+              <span>Add Child</span>
             </button>
             
             {member.phone && (

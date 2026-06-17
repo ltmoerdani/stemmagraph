@@ -94,8 +94,8 @@ export const MemberCard: React.FC<MemberCardProps> = ({
 
   const getAriaLabel = () => {
     const professionText = member.profession ? `, ${member.profession}` : '';
-    const statusText = member.isAlive ? 'masih hidup' : 'almarhum';
-    return `Anggota keluarga ${member.name}, ${calculateAge()} tahun, ${statusText}, generasi ${member.generation}${professionText}`;
+    const statusText = member.isAlive ? 'living' : 'deceased';
+    return `Family member ${member.name}, ${calculateAge()} years, ${statusText}, generation ${member.generation}${professionText}`;
   };
 
   const currentlySelected = selectedMember?.id === member.id;

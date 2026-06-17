@@ -198,7 +198,7 @@ export const FamilyMemberNode = memo<NodeProps<FamilyMemberNodeData>>(({ data, s
                 {getYearDisplay()}
               </p>
               <p className="text-xs text-gray-500">
-                {calculateAge()} tahun
+                {calculateAge()} years
               </p>
             </div>
           </div>

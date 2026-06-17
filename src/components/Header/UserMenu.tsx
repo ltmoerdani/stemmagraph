@@ -43,7 +43,7 @@ export const UserMenu: React.FC = () => {
         <>
           <button
             className="fixed inset-0 z-10 bg-transparent border-none cursor-default"
-            aria-label="Tutup menu pengguna"
+            aria-label="Close user menu"
             onClick={() => setIsOpen(false)}
             onKeyDown={e => {
               if (e.key === 'Escape') {
@@ -64,7 +64,7 @@ export const UserMenu: React.FC = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <User className="w-4 h-4" />
-                <span>Profil</span>
+                <span>Profile</span>
               </button>
               
               <button
@@ -72,7 +72,7 @@ export const UserMenu: React.FC = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <Settings className="w-4 h-4" />
-                <span>Pengaturan</span>
+                <span>Settings</span>
               </button>
               
               <hr className="my-2" />
@@ -82,7 +82,7 @@ export const UserMenu: React.FC = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Keluar</span>
+                <span>Sign Out</span>
               </button>
             </div>
           </div>

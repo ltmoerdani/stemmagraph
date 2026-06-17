@@ -76,11 +76,11 @@ export const MemberCardGrid: React.FC = () => {
 
   const getSortLabel = (sortOption: SortOption): string => {
     switch (sortOption) {
-      case 'name': return 'Nama';
-      case 'age': return 'Usia';
-      case 'location': return 'Lokasi';
-      case 'generation': return 'Generasi';
-      default: return 'Nama';
+      case 'name': return 'Name';
+      case 'age': return 'Age';
+      case 'location': return 'Location';
+      case 'generation': return 'Generation';
+      default: return 'Name';
     }
   };
 
@@ -103,12 +103,12 @@ export const MemberCardGrid: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            {filteredMembers.length} Anggota Keluarga
+            {filteredMembers.length} Family Members
           </h3>
           
           {searchQuery && (
             <div className="text-sm text-gray-600">
-              Hasil pencarian untuk "{searchQuery}"
+              Search results for "{searchQuery}"
             </div>
           )}
         </div>
@@ -120,7 +120,7 @@ export const MemberCardGrid: React.FC = () => {
           >
             <SortAsc className="w-4 h-4" />
             <span className="text-sm">
-              Urutkan: {getSortLabel(sortBy)}
+              Sort by: {getSortLabel(sortBy)}
             </span>
             <ChevronDown className="w-4 h-4" />
           </button>
@@ -129,10 +129,10 @@ export const MemberCardGrid: React.FC = () => {
             <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
               <div className="py-2">
                 {[
-                  { key: 'name' as SortOption, label: 'Nama' },
-                  { key: 'age' as SortOption, label: 'Usia' },
-                  { key: 'generation' as SortOption, label: 'Generasi' },
-                  { key: 'location' as SortOption, label: 'Lokasi' },
+                  { key: 'name' as SortOption, label: 'Name' },
+                  { key: 'age' as SortOption, label: 'Age' },
+                  { key: 'generation' as SortOption, label: 'Generation' },
+                  { key: 'location' as SortOption, label: 'Location' },
                 ].map(option => (
                   <button
                     key={option.key}
@@ -159,9 +159,9 @@ export const MemberCardGrid: React.FC = () => {
       {filteredMembers.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-gray-500">
           <Filter className="w-12 h-12 mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">Tidak ada anggota ditemukan</h3>
+          <h3 className="text-lg font-medium mb-2">No members found</h3>
           <p className="text-sm text-center">
-            Coba ubah filter atau kata kunci pencarian
+            Try adjusting the filters or search keywords
           </p>
         </div>
       ) : (
@@ -181,7 +181,7 @@ export const MemberCardGrid: React.FC = () => {
       {filteredMembers.length > 50 && (
         <div className="flex justify-center mt-8">
           <div className="text-sm text-gray-500">
-            Menampilkan {Math.min(50, filteredMembers.length)} dari {filteredMembers.length} anggota
+            Showing {Math.min(50, filteredMembers.length)} of {filteredMembers.length} members
           </div>
         </div>
       )}

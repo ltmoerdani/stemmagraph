@@ -96,7 +96,7 @@ of contribution to the Stemmagraph project, **you agree to this CLA**.
 
 If you are contributing on behalf of your employer, your employer must agree to
 the terms of this agreement separately. Please contact
-`license [at] ltmoerdani [dot] com` if this applies.
+[ltmoerdani@gmail.com](mailto:ltmoerdani@gmail.com) if this applies.
 
 ## 📚 Why dual-license requires a CLA
 

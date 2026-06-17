@@ -30,8 +30,8 @@ const ForgotPasswordForm: React.FC<{
           <div className="flex items-center justify-center mb-4">
             <TreePine className="w-8 h-8 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Lupa Password</h1>
-          <p className="text-gray-600">Masukkan email untuk reset password</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Forgot Password</h1>
+          <p className="text-gray-600">Enter your email to reset your password</p>
         </div>
 
         {/* Success Message */}
@@ -58,7 +58,7 @@ const ForgotPasswordForm: React.FC<{
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                   errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
                 }`}
-                placeholder="Masukkan email Anda"
+                placeholder="Enter your email"
               />
             </div>
             {errors.email && (
@@ -79,7 +79,7 @@ const ForgotPasswordForm: React.FC<{
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Kirim Link Reset</span>
+                  <span>Send Reset Link</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -90,7 +90,7 @@ const ForgotPasswordForm: React.FC<{
               onClick={onBack}
               className="w-full text-gray-600 hover:text-gray-800 transition-colors"
             >
-              Kembali ke Login
+              Back to Login
             </button>
           </div>
         </form>
@@ -116,16 +116,16 @@ export const LoginPage: React.FC = () => {
 
     // Email validation
     if (!formData.email) {
-      newErrors.email = 'Email harus diisi';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Format email tidak valid';
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = 'Password harus diisi';
+      newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password minimal 6 karakter';
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
     setErrors(newErrors);
@@ -137,7 +137,7 @@ export const LoginPage: React.FC = () => {
     if (!validateForm()) return;
     if (isSignUp) {
       // Handle sign up
-      setSuccessMessage('Akun berhasil dibuat! Silakan login.');
+      setSuccessMessage('Account created successfully! Please log in.');
       setIsSignUp(false);
       setFormData({ email: '', password: '' });
     } else {
@@ -150,12 +150,12 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     
     if (!formData.email) {
-      setErrors({ email: 'Masukkan email untuk reset password' });
+      setErrors({ email: 'Enter your email to reset your password' });
       return;
     }
 
     // Simulate forgot password
-    setSuccessMessage('Link reset password telah dikirim ke email Anda.');
+    setSuccessMessage('A password reset link has been sent to your email.');
     setShowForgotPassword(false);
     setFormData({ email: '', password: '' });
   };
@@ -192,12 +192,12 @@ export const LoginPage: React.FC = () => {
               <TreePine className="w-8 h-8 text-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {isSignUp ? 'Buat Akun Baru' : 'Masuk ke Pohon Keluarga'}
+              {isSignUp ? 'Create a New Account' : 'Sign In to Your Family Tree'}
             </h1>
             <p className="text-gray-600">
               {isSignUp 
-                ? 'Daftar untuk mulai membangun pohon keluarga Anda' 
-                : 'Kelola dan jelajahi pohon keluarga Anda'
+                ? 'Sign up to start building your family tree' 
+                : 'Manage and explore your family tree'
               }
             </p>
           </div>
@@ -235,7 +235,7 @@ export const LoginPage: React.FC = () => {
                   className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                     errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="nama@email.com"
+                  placeholder="name@email.com"
                 />
               </div>
               {errors.email && (
@@ -261,7 +261,7 @@ export const LoginPage: React.FC = () => {
                   className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                     errors.password ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="Masukkan password"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
@@ -287,7 +287,7 @@ export const LoginPage: React.FC = () => {
                   onClick={() => setShowForgotPassword(true)}
                   className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                  Lupa password?
+                  Forgot password?
                 </button>
               </div>
             )}
@@ -302,7 +302,7 @@ export const LoginPage: React.FC = () => {
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>{isSignUp ? 'Daftar' : 'Masuk'}</span>
+                  <span>{isSignUp ? 'Sign Up' : 'Sign In'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -312,7 +312,7 @@ export const LoginPage: React.FC = () => {
           {/* Toggle Sign Up / Login */}
           <div className="mt-8 text-center">
             <p className="text-gray-600">
-              {isSignUp ? 'Sudah punya akun?' : 'Belum punya akun?'}
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}
               <button
                 onClick={() => {
                   setIsSignUp(!isSignUp);
@@ -322,7 +322,7 @@ export const LoginPage: React.FC = () => {
                 }}
                 className="ml-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
               >
-                {isSignUp ? 'Masuk di sini' : 'Daftar sekarang'}
+                {isSignUp ? 'Sign in here' : 'Sign up now'}
               </button>
             </p>
           </div>
@@ -340,7 +340,7 @@ export const LoginPage: React.FC = () => {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-sm text-gray-500">
-            © 2024 Family Tree App. Kelola pohon keluarga dengan mudah dan aman.
+            © 2024 Family Tree App. Manage your family tree easily and securely.
           </p>
         </div>
       </div>
