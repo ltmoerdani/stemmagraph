@@ -12,6 +12,7 @@ import { BottomNavigation } from './components/BottomNavigation/BottomNavigation
 import { useFamilyStore } from './store/familyStore';
 import { useDashboardStore } from './store/dashboardStore';
 import { useAuthStore } from './store/authStore';
+import { currentRoute, pushRoute, replaceRoute } from './utils/routing';
 
 function App() {
   const { selectedMember, fetchMembers } = useFamilyStore();
@@ -31,14 +32,14 @@ function App() {
     // Wait for trees to load before determining view
     if (!isInitialized) return;
 
-    const path = window.location.pathname;
+    const route = currentRoute();
 
-    if (path.startsWith('/family-tree/')) {
-      const treeId = path.split('/family-tree/')[1];
+    if (route.startsWith('/family-tree/')) {
+      const treeId = route.split('/family-tree/')[1];
       const familyTree = familyTrees.find(tree => tree.id === treeId);
 
       if (!familyTree) {
-        window.history.pushState({}, '', '/dashboard');
+        pushRoute('/dashboard');
         setCurrentView('dashboard');
         return;
       }
@@ -48,7 +49,7 @@ function App() {
 
       // Load members from adapter
       fetchMembers(treeId);
-    } else if (path === '/upgrade') {
+    } else if (route === '/upgrade') {
       setCurrentView('upgrade');
     } else {
       setCurrentView('dashboard');
@@ -62,9 +63,9 @@ function App() {
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname;
-      if (path.startsWith('/family-tree/')) {
-        const treeId = path.split('/family-tree/')[1];
+      const route = currentRoute();
+      if (route.startsWith('/family-tree/')) {
+        const treeId = route.split('/family-tree/')[1];
         const familyTree = familyTrees.find(tree => tree.id === treeId);
 
         if (!familyTree) {
@@ -75,7 +76,7 @@ function App() {
         setCurrentFamilyTreeName(familyTree.name);
         setCurrentView('family-tree');
         fetchMembers(treeId);
-      } else if (path === '/upgrade') {
+      } else if (route === '/upgrade') {
         setCurrentView('upgrade');
       } else {
         setCurrentView('dashboard');
@@ -96,7 +97,7 @@ function App() {
 
           <Toolbar
             onBackToDashboard={() => {
-              window.history.pushState({}, '', '/dashboard');
+              pushRoute('/dashboard');
               setCurrentView('dashboard');
             }}
           />

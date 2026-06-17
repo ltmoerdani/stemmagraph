@@ -1,0 +1,65 @@
+name: 🐛 Bug report
+description: Report something that's broken or behaving unexpectedly
+title: "[bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report! 🐛
+        Before you continue, please search [existing issues](https://github.com/ltmoerdani/stemmagraph/issues?q=is%3Aissue+label%3Abug) to avoid duplicates.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug. What did you expect, and what actually happened?
+      placeholder: |
+        **Steps to reproduce:**
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+
+        **Expected:** ...
+        **Actual:** ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where did this happen?
+      multiple: true
+      options:
+        - Live demo (https://ltmoerdani.github.io/stemmagraph/)
+        - Local dev (frontend only, mock adapter)
+        - Local dev (full stack with backend)
+        - Self-hosted deployment
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser & OS
+      placeholder: e.g. Chrome 130 on macOS 14, Safari on iOS 18
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste console errors, stack traces, or screenshots. Screenshots are super helpful for UI bugs.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

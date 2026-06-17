@@ -1,8 +1,28 @@
 # Contributing to Stemmagraph
 
-Thanks for your interest in contributing! 🎉
+Thanks for your interest in contributing! 🎉 Stemmagraph is community-driven — every PR, issue, and discussion helps.
+
+ **Have a question?** Start a [Discussion](https://github.com/ltmoerdani/stemmagraph/discussions) before opening an issue.
 
 ## 🚀 Getting Started
+
+You have two paths:
+
+### Path A — Frontend-only (fastest, no DB)
+
+Best for UI/UX work, bug fixes in components, docs, and exploring the codebase.
+
+```bash
+git clone https://github.com/<your-username>/stemmagraph.git
+cd stemmagraph
+npm install
+cp .env.github-pages .env   # mock adapter — no backend needed
+npm run dev
+```
+
+### Path B — Full stack (with backend + database)
+
+Required when working on the API, Prisma schema, or auth.
 
 1. **Fork** the repository
 2. **Clone** your fork: `git clone https://github.com/<your-username>/stemmagraph.git`
@@ -57,12 +77,16 @@ chore: upgrade dependencies
 
 ## 🧪 Testing
 
-Currently the project has no automated tests. If you add a feature, consider adding tests.
+Currently the project has no automated tests. If you add a feature, consider adding tests (Vitest for units, Playwright for E2E). We're happy to help scope this — just ask in [Discussions](https://github.com/ltmoerdani/stemmagraph/discussions).
 
 ## 📁 Project Structure
 
-See the [README](README.md#architecture) for the architecture overview.
+See the [README](README.md#-architecture) for the architecture overview.
 
 ## ❓ Questions?
 
-Open an issue with the `question` label.
+- Quick question → [Discussions](https://github.com/ltmoerdani/stemmagraph/discussions)
+- Bug report → [open an issue](https://github.com/ltmoerdani/stemmagraph/issues/new?labels=bug) with the `bug` label
+- Feature idea → [open an issue](https://github.com/ltmoerdani/stemmagraph/issues/new?labels=enhancement) with the `enhancement` label
+
+Thanks for helping Stemmagraph grow! 🌳

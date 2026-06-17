@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PaymentModal } from './PaymentModal';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { navigate } from '../../utils/routing';
 
 export const UpgradePage: React.FC = () => {
   const { setPremium } = useDashboardStore();
@@ -56,7 +57,7 @@ export const UpgradePage: React.FC = () => {
     setPremium(true);
     setShowPaymentModal(false);
     // Redirect to dashboard with success message
-    window.location.href = '/dashboard?upgraded=true';
+    navigate('/dashboard?upgraded=true');
   };
 
   const testimonials = [

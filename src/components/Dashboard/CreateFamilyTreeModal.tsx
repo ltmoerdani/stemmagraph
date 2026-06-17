@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, TreePine, AlertCircle } from 'lucide-react';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { navigate } from '../../utils/routing';
 
 interface CreateFamilyTreeModalProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
       setFamilyName('');
       
       // Navigate to the new family tree
-      window.location.href = `/family-tree/${newTree.id}`;
+      navigate(`/family-tree/${newTree.id}`);
     } catch (err) {
       console.error('Error creating family tree:', err);
       setError('Gagal membuat family tree. Silakan coba lagi.');
