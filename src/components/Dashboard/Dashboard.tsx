@@ -3,6 +3,7 @@ import { Plus, Users, Calendar, Settings, List, Grid3X3, Crown, TreePine } from 
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { navigate, replaceRoute } from '../../utils/routing';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
@@ -19,7 +20,7 @@ export const Dashboard: React.FC = () => {
     if (urlParams.get('upgraded') === 'true') {
       setShowUpgradeSuccess(true);
       // Remove the parameter from URL
-      window.history.replaceState({}, '', '/dashboard');
+      replaceRoute('/dashboard');
       // Hide success message after 5 seconds
       setTimeout(() => setShowUpgradeSuccess(false), 5000);
     }
@@ -31,11 +32,11 @@ export const Dashboard: React.FC = () => {
 
   const handleOpenTree = (treeId: string) => {
     // Navigate to family tree interface
-    window.location.href = `/family-tree/${treeId}`;
+    navigate(`/family-tree/${treeId}`);
   };
 
   const handleUpgrade = () => {
-    window.location.href = '/upgrade';
+    navigate('/upgrade');
   };
 
   const formatDate = (dateString: string) => {

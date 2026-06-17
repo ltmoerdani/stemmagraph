@@ -25,3 +25,7 @@ dist-ssr
 .env
 
 /generated/prisma
+
+# Local environment overrides (committed variants: .env.example, .env.github-pages)
+.env
+.env.local

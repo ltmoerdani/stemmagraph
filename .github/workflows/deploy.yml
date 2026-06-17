@@ -1,0 +1,89 @@
+# Build and deploy Stemmagraph to GitHub Pages.
+#
+# This workflow:
+#   1. Builds the frontend in "demo mode" (mock data adapter — no backend required)
+#   2. Adds a SPA-friendly .nojekyll + 404.html (deep-link support)
+#   3. Publishes the `dist/` artifact to GitHub Pages
+#
+# Repository setup (one-time, under Settings → Pages):
+#   - Source: GitHub Actions
+#
+# Trigger: every push to `main`, plus manual dispatch.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Permissions required by the `actions/deploy-pages` action.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment, cancel any in-flight run.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  # Demo mode — Mock adapter serves seed data without a backend.
+  # See src/lib/adapters/mock.adapter.ts for the seed dataset.
+  GITHUB_PAGES: 'true'
+  VITE_DATA_ADAPTER: mock
+
+jobs:
+  build:
+    name: Build demo site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build (demo mode)
+        env:
+          GITHUB_PAGES: 'true'
+          VITE_DATA_ADAPTER: mock
+        run: npm run build
+
+      - name: Add SPA fallback (404.html)
+        run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
