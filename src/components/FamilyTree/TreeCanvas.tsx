@@ -461,8 +461,8 @@ export const TreeCanvas: React.FC = () => {
 
   return (
     <section
-      className={`flex-1 bg-gray-50 relative transition-all duration-200 border-0 outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset ${
-        editMode ? 'bg-blue-25' : ''
+      className={`flex-1 bg-gray-50 relative transition-all duration-200 border-0 outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-inset ${
+        editMode ? 'bg-blue-50' : ''
       } ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
       style={{
         backgroundImage: `

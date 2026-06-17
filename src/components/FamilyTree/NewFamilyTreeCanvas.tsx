@@ -71,7 +71,7 @@ export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
                     <button 
                       type="button"
                       onClick={handleAddFirstMember}
-                      className="group relative bg-white rounded-xl border-2 border-dashed border-gray-300 hover:border-green-500 hover:bg-green-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                      className="group relative bg-white rounded-xl border-2 border-dashed border-gray-300 hover:border-green-500 hover:bg-green-50 transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                       style={{
                         width: '280px',  // Consistent with TreeCanvas card width
                         height: '200px', // Professional spacing
@@ -96,7 +96,7 @@ export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
                         </div>
 
                         {/* Hover effect overlay */}
-                        <div className="absolute inset-0 bg-green-500 bg-opacity-0 group-hover:bg-opacity-5 rounded-xl transition-all duration-200" />
+                        <div className="absolute inset-0 bg-green-500/0 group-hover:bg-green-500/5 rounded-xl transition-all duration-200" />
                       </div>
                     </button>
 

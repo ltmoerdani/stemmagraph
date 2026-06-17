@@ -71,7 +71,7 @@ export const CanvasControls: React.FC = () => {
                 ))}
                 
                 {/* Viewport indicator */}
-                <div className="absolute border-2 border-blue-600 bg-blue-200 bg-opacity-40 w-8 h-6 top-2 left-2 rounded-sm" />
+                <div className="absolute border-2 border-blue-600 bg-blue-200/40 w-8 h-6 top-2 left-2 rounded-sm" />
               </div>
               <div className="flex justify-between text-xs text-gray-500">
                 <span>{members.length} anggota</span>
@@ -83,23 +83,23 @@ export const CanvasControls: React.FC = () => {
           {activeTab === 'legend' && (
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 border-2 border-blue-200 rounded bg-white flex-shrink-0"></div>
+                <div className="w-3 h-3 border-2 border-blue-200 rounded bg-white shrink-0"></div>
                 <span className="text-gray-700">Laki-laki</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 border-2 border-pink-200 rounded bg-white flex-shrink-0"></div>
+                <div className="w-3 h-3 border-2 border-pink-200 rounded bg-white shrink-0"></div>
                 <span className="text-gray-700">Perempuan</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 border-2 border-gray-400 rounded bg-gray-50 flex-shrink-0"></div>
+                <div className="w-3 h-3 border-2 border-gray-400 rounded bg-gray-50 shrink-0"></div>
                 <span className="text-gray-700">Almarhum</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-0.5 bg-gray-600 flex-shrink-0"></div>
+                <div className="w-4 h-0.5 bg-gray-600 shrink-0"></div>
                 <span className="text-gray-700">Hubungan Keluarga</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full text-xs flex items-center justify-center flex-shrink-0">
+                <div className="w-3 h-3 bg-yellow-400 rounded-full text-xs flex items-center justify-center shrink-0">
                   💍
                 </div>
                 <span className="text-gray-700">Menikah</span>

@@ -113,7 +113,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
     >
       <button
         type="button"
-        className={`${cardSize.width} ${cardSize.height} ${getBackgroundColor()} rounded-xl shadow-md hover:shadow-lg border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ${
+        className={`${cardSize.width} ${cardSize.height} ${getBackgroundColor()} rounded-xl shadow-md hover:shadow-lg border-2 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ${
           getBorderColor()
         } ${
           currentlySelected ? 'shadow-lg ring-2 ring-blue-400' : ''
@@ -127,7 +127,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
       >
         {/* Generation Badge - Moved to top left corner */}
         <div className="absolute -top-2 -left-2">
-          <div className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-sm ${
+          <div className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-xs ${
             getGenerationBadgeColor()
           }`}>
             {member.generation}
@@ -137,12 +137,12 @@ export const MemberCard: React.FC<MemberCardProps> = ({
         {/* Status Indicators - Keep in top right */}
         <div className="absolute -top-2 -right-2 flex space-x-1 z-10">
           {member.maritalStatus === 'married' && (
-            <div className="w-5 h-5 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+            <div className="w-5 h-5 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center shadow-xs">
               <span className="text-xs" aria-hidden="true">💍</span>
             </div>
           )}
           {!member.isAlive && (
-            <div className="w-5 h-5 bg-gray-600 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+            <div className="w-5 h-5 bg-gray-600 rounded-full border-2 border-white flex items-center justify-center shadow-xs">
               <span className="text-xs text-white" aria-hidden="true">✕</span>
             </div>
           )}
@@ -150,7 +150,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
 
         {/* Photo */}
         <div className="p-4 pb-2">
-          <div className={`${cardSize.photo} mx-auto rounded-full overflow-hidden bg-gray-200 shadow-sm`}>
+          <div className={`${cardSize.photo} mx-auto rounded-full overflow-hidden bg-gray-200 shadow-xs`}>
             {member.photoUrl ? (
               <img
                 src={member.photoUrl}

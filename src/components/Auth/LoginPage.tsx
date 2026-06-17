@@ -22,7 +22,7 @@ const ForgotPasswordForm: React.FC<{
   handleForgotPassword: (e: React.FormEvent) => void;
   onBack: () => void;
 }> = ({ formData, errors, isLoading, successMessage, updateFormData, handleForgotPassword, onBack }) => (
-  <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 flex items-center justify-center p-4">
+  <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-pink-50 flex items-center justify-center p-4">
     <div className="w-full max-w-md">
       <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
         {/* Header */}
@@ -37,7 +37,7 @@ const ForgotPasswordForm: React.FC<{
         {/* Success Message */}
         {successMessage && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+            <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
             <p className="text-green-800 text-sm">{successMessage}</p>
           </div>
         )}
@@ -183,7 +183,7 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-pink-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           {/* Header */}
@@ -205,7 +205,7 @@ export const LoginPage: React.FC = () => {
           {/* Success Message */}
           {successMessage && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
               <p className="text-green-800 text-sm">{successMessage}</p>
             </div>
           )}
@@ -213,7 +213,7 @@ export const LoginPage: React.FC = () => {
           {/* Error Message */}
           {(errors.general || error) && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
               <p className="text-red-800 text-sm">{errors.general ?? error}</p>
             </div>
           )}

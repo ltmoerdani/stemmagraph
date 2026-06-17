@@ -109,7 +109,7 @@ export const Dashboard: React.FC = () => {
                 onClick={() => setViewMode('card')}
                 className={`p-2 rounded-md transition-colors ${
                   viewMode === 'card' 
-                    ? 'bg-white text-gray-900 shadow-sm' 
+                    ? 'bg-white text-gray-900 shadow-xs' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
                 title="Card View"
@@ -120,7 +120,7 @@ export const Dashboard: React.FC = () => {
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-md transition-colors ${
                   viewMode === 'list' 
-                    ? 'bg-white text-gray-900 shadow-sm' 
+                    ? 'bg-white text-gray-900 shadow-xs' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
                 title="List View"
@@ -150,7 +150,7 @@ export const Dashboard: React.FC = () => {
       </header>
 
       {/* Status Bar */}
-      <div className={`px-6 py-3 border-b ${isPremium ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
+      <div className={`px-6 py-3 border-b ${isPremium ? 'bg-linear-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {isPremium ? (
@@ -222,11 +222,11 @@ export const Dashboard: React.FC = () => {
               {familyTrees.map((tree) => (
                 <div
                   key={tree.id}
-                  className="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden"
+                  className="group bg-white rounded-xl shadow-xs border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden"
                 >
                   {/* Thumbnail */}
-                  <div className="h-24 bg-gradient-to-br from-blue-500 to-green-500 relative">
-                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                  <div className="h-24 bg-linear-to-br from-blue-500 to-green-500 relative">
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                       <TreePine className="w-8 h-8 text-white" />
                     </div>
                   </div>
@@ -266,7 +266,7 @@ export const Dashboard: React.FC = () => {
             </div>
           ) : (
             /* List View */
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
@@ -283,7 +283,7 @@ export const Dashboard: React.FC = () => {
                       <tr key={tree.id} className="hover:bg-gray-50 transition-colors">
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
                               <TreePine className="w-5 h-5 text-white" />
                             </div>
                             <div>

@@ -23,7 +23,7 @@ export const MiniMap: React.FC = () => {
         ))}
         
         {/* Viewport indicator */}
-        <div className="absolute border-2 border-blue-500 bg-blue-100 bg-opacity-30 w-8 h-6 top-2 left-2" />
+        <div className="absolute border-2 border-blue-500 bg-blue-100/30 w-8 h-6 top-2 left-2" />
       </div>
     </div>
   );

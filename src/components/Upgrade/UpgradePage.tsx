@@ -256,7 +256,7 @@ export const UpgradePage: React.FC = () => {
                 <h3 className="font-semibold text-gray-900">Gratis</h3>
                 <p className="text-sm text-gray-600 mt-1">$0/tahun</p>
               </div>
-              <div className="p-6 bg-gradient-to-r from-green-500 to-blue-500 text-center">
+              <div className="p-6 bg-linear-to-r from-green-500 to-blue-500 text-center">
                 <h3 className="font-semibold text-white">Premium</h3>
                 <p className="text-green-100 mt-1">
                   <span className="line-through text-sm">$19.99</span> 
@@ -345,7 +345,7 @@ export const UpgradePage: React.FC = () => {
 
         {/* Pricing Section */}
         <div className="mb-16">
-          <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl p-8 text-white text-center">
+          <div className="bg-linear-to-r from-green-500 to-blue-500 rounded-2xl p-8 text-white text-center">
             <h2 className="text-3xl font-bold mb-4">Harga Spesial Terbatas</h2>
             
             <div className="mb-6">
@@ -357,15 +357,15 @@ export const UpgradePage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-sm">
-              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+              <div className="bg-white/20 rounded-lg p-4">
                 <p className="font-semibold">Rp 13.500 per bulan</p>
                 <p className="opacity-75">Lebih murah dari secangkir kopi</p>
               </div>
-              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+              <div className="bg-white/20 rounded-lg p-4">
                 <p className="font-semibold">Rp 450 per hari</p>
                 <p className="opacity-75">Lebih murah dari parkir motor</p>
               </div>
-              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+              <div className="bg-white/20 rounded-lg p-4">
                 <p className="font-semibold">Bonus Gratis</p>
                 <p className="opacity-75">7 hari trial + setup assistance</p>
               </div>

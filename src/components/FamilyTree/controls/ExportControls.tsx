@@ -104,7 +104,7 @@ export const ExportControls: React.FC = () => {
           {/* Accessible backdrop button for closing dropdown */}
           <button 
             type="button"
-            className="fixed inset-0 z-40 bg-transparent border-none outline-none cursor-default"
+            className="fixed inset-0 z-40 bg-transparent border-none outline-hidden cursor-default"
             onClick={handleDropdownClose}
             onKeyDown={handleKeyDown}
             aria-label="Close export menu"
