@@ -6,7 +6,8 @@
 Open-source, interactive, and free — forever.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-stemmagraph.app-22c55e?style=for-the-badge&logo=githubpages)](https://ltmoerdani.github.io/stemmagraph/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](LICENSE)
+[![Commercial License](https://img.shields.io/badge/Also%20Commercial-Dual%20Licensed-orange.svg?style=for-the-badge)](LICENSE.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/ltmoerdani/stemmagraph/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/ltmoerdani/stemmagraph/actions/workflows/ci.yml)
 [![Deploy](https://img.shields.io/github/actions/workflow/status/ltmoerdani/stemmagraph/deploy.yml?branch=main&style=for-the-badge&label=Deploy)](https://github.com/ltmoerdani/stemmagraph/actions/workflows/deploy.yml)
 
@@ -205,11 +206,26 @@ Have an idea? Open a [Discussion](https://github.com/ltmoerdani/stemmagraph/disc
 
 See **[SECURITY.md](SECURITY.md)** for responsible disclosure.
 
-## 📄 License
+## 📄 License — dual-licensed
 
-[MIT](LICENSE) © 2026 [ltmoerdani](https://github.com/ltmoerdani)
+Stemmagraph uses a **dual-license model**: open source + commercial.
 
-Stemmagraph is and always will be **free and open-source**.
+| Use case | License |
+|---|---|
+| Personal use, study, modify, share | [**AGPL-3.0**](LICENSE) — free |
+| Self-host as SaaS **(you publish your source)** | [**AGPL-3.0**](LICENSE) — free |
+| Closed-source SaaS or proprietary product | [**Commercial License**](LICENSE.md) — paid |
+
+> **TL;DR:** AGPL-3.0 means anyone who offers Stemmagraph as a network service
+> must publish their modifications. If that doesn't work for you (e.g. you're
+> building a closed-source SaaS), you can purchase a commercial license from
+> `license [at] ltmoerdani [dot] com`.
+
+**Contributors:** by submitting a PR, you agree to the [CLA](CLA.md) so we can
+offer both licenses. See [`LICENSE.md`](LICENSE.md) for details.
+
+This model is used by **Mattermost, MinIO, Sentry, Plausible, Mastodon** — it
+keeps the project open source forever while funding development.
 
 <div align="center">
 

@@ -3,6 +3,17 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "license": "AGPL-3.0-only",
+  "licenses": [
+    {
+      "type": "AGPL-3.0-only",
+      "url": "https://spdx.org/licenses/AGPL-3.0-only.html"
+    },
+    {
+      "type": "Commercial",
+      "url": "https://github.com/ltmoerdani/stemmagraph/blob/main/LICENSE.md"
+    }
+  ],
   "scripts": {
     "dev": "vite",
     "dev:server": "npx tsx server/index.ts",
