@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '../generated/prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import type { FamilyTree, FamilyMember, FamilyRelationship } from '../generated/prisma/client';
 
 const app = express();
 const PORT = process.env['API_PORT'] || 3001;
@@ -136,15 +137,15 @@ app.delete('/api/v1/relationships/:id', async (req, res) => {
 
 // ─── Formatters ──────────────────────────────────────────
 
-function formatTree(t: any) {
+function formatTree(t: FamilyTree) {
   return { id: t.id, name: t.name, description: t.description, memberCount: t.memberCount, generationCount: t.generationCount, thumbnail: t.thumbnail, lastUpdated: t.updatedAt?.toISOString?.() ?? t.updatedAt, createdAt: t.createdAt?.toISOString?.() ?? t.createdAt };
 }
 
-function formatMember(m: any) {
+function formatMember(m: FamilyMember) {
   return { id: m.id, treeId: m.treeId, name: m.name, nickname: m.nickname, birthDate: m.birthDate, deathDate: m.deathDate, birthPlace: m.birthPlace, currentLocation: m.currentLocation, profession: m.profession, education: m.education, gender: m.gender, photoUrl: m.photoUrl, email: m.email, phone: m.phone, isAlive: m.isAlive, generation: m.generation, maritalStatus: m.maritalStatus, notes: m.notes, createdAt: m.createdAt?.toISOString?.() ?? m.createdAt, updatedAt: m.updatedAt?.toISOString?.() ?? m.updatedAt };
 }
 
-function formatRelationship(r: any) {
+function formatRelationship(r: FamilyRelationship) {
   return { id: r.id, treeId: r.treeId, memberId: r.memberId, relatedId: r.relatedId, type: r.type };
 }
 
