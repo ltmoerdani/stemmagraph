@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   Node,
   Edge,
   addEdge,
@@ -17,8 +18,8 @@ import ReactFlow, {
   Position,
   BackgroundVariant,
   NodeChange,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import type { FamilyMember } from '../../types/family';
 import { FamilyMemberNode } from './nodes/FamilyMemberNode';

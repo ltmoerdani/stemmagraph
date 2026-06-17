@@ -1,5 +1,5 @@
 import React from 'react';
-import { EdgeProps } from 'reactflow';
+import { EdgeProps } from '@xyflow/react';
 
 /**
  * ParentChildEdge component renders a bracket-style connection between parent and child nodes

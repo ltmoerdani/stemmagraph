@@ -1,5 +1,5 @@
 import React from 'react';
-import { EdgeProps } from 'reactflow';
+import { EdgeProps } from '@xyflow/react';
 
 /**
  * SiblingEdge component renders a bracket-style connection between siblings

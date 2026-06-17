@@ -1,5 +1,5 @@
 import React from 'react';
-import { BackgroundVariant } from 'reactflow';
+import { BackgroundVariant } from '@xyflow/react';
 import { 
   Maximize, 
   ArrowUpDown, 

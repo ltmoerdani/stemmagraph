@@ -1,5 +1,5 @@
 import React from 'react';
-import { EdgeProps } from 'reactflow';
+import { EdgeProps } from '@xyflow/react';
 
 /**
  * MarriageEdge component renders a horizontal connection line between spouses
