@@ -12,7 +12,7 @@ import { BottomNavigation } from './components/BottomNavigation/BottomNavigation
 import { useFamilyStore } from './store/familyStore';
 import { useDashboardStore } from './store/dashboardStore';
 import { useAuthStore } from './store/authStore';
-import { currentRoute, pushRoute, replaceRoute } from './utils/routing';
+import { currentRoute, pushRoute } from './utils/routing';
 
 function App() {
   const { selectedMember, fetchMembers } = useFamilyStore();
