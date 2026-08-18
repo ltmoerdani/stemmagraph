@@ -3,6 +3,7 @@ import { useFamilyStore } from '../../store/familyStore';
 import type { FamilyMember } from '../../types/family';
 import { useTranslation } from 'react-i18next';
 import { formatDate as formatDateWithLocale } from '../../lib/i18n';
+import { compareNames } from '../../utils/collator';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -353,7 +354,7 @@ export const FamilyTable: React.FC = () => {
       
       switch (sortConfig.field) {
         case 'name':
-          comparison = a.name.localeCompare(b.name);
+          comparison = compareNames(a.name, b.name);
           break;
         case 'age': {
           const ageA = calculateAge(a.birthDate, a.deathDate);
@@ -365,13 +366,13 @@ export const FamilyTable: React.FC = () => {
           comparison = a.generation - b.generation;
           break;
         case 'location':
-          comparison = (a.currentLocation ?? '').localeCompare(b.currentLocation ?? '');
+          comparison = compareNames(a.currentLocation ?? '', b.currentLocation ?? '');
           break;
         case 'birthDate':
           comparison = new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime();
           break;
         case 'profession':
-          comparison = (a.profession ?? '').localeCompare(b.profession ?? '');
+          comparison = compareNames(a.profession ?? '', b.profession ?? '');
           break;
       }
       
@@ -665,7 +666,7 @@ export const FamilyTable: React.FC = () => {
                     <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Filter lokasi..."
+                      placeholder={t('table.filterLocation')}
                       value={columnFilters.location || ''}
                       onChange={(e) => setColumnFilters(prev => ({ ...prev, location: e.target.value }))}
                       className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
@@ -708,9 +709,9 @@ export const FamilyTable: React.FC = () => {
         {filteredMembers.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-gray-500">
             <Filter className="w-12 h-12 mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium mb-2">No members found</h3>
+            <h3 className="text-lg font-medium mb-2">{t('table.noMembers')}</h3>
             <p className="text-sm text-center">
-              Try adjusting the filters or search keywords
+              {t('table.noMembersHint')}
             </p>
           </div>
         )}

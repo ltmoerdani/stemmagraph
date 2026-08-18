@@ -1,5 +1,6 @@
 import { Node } from '@xyflow/react';
 import type { FamilyMember } from '../../../types/family';
+import { compareNames } from '../../../utils/collator';
 
 export interface TierLayout {
   generation: number;
@@ -54,14 +55,14 @@ export const calculateTierLayout = (
       const familyGroupB = getFamilyGroupId(memberB);
       
       if (familyGroupA !== familyGroupB) {
-        return familyGroupA.localeCompare(familyGroupB);
+        return compareNames(familyGroupA, familyGroupB);
       }
       
       // Within same family group, spouses should be adjacent
       if (memberA.spouseId === memberB.id) return -1;
       if (memberB.spouseId === memberA.id) return 1;
       
-      return memberA.name.localeCompare(memberB.name);
+      return compareNames(memberA.name, memberB.name);
     });
     
     // Calculate optimal spacing for family groups
