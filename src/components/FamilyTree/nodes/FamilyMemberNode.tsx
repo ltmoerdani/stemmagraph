@@ -10,15 +10,22 @@ import {
 } from 'lucide-react';
 import type { FamilyMember } from '../../../types/family';
 
-interface FamilyMemberNodeData {
+export interface FamilyMemberNodeData {
   member: FamilyMember;
   onEdit: (member: FamilyMember) => void;
   onDelete: (memberId: string) => void;
   onAddChild: (parentId: string) => void;
   onAddSpouse: (memberId: string) => void;
+  /** Optional fields stamped by the tier layout pass (tierLayoutManager). */
+  tier?: number;
+  generationY?: number;
+  familyGroup?: string;
 }
 
-export const FamilyMemberNode = memo<NodeProps<FamilyMemberNodeData>>(({ data, selected }) => {
+/** Custom node type for React Flow v12: Node<data, type> as required by NodeProps. */
+export type FamilyMemberFlowNode = Node<FamilyMemberNodeData, 'familyMember'>;
+
+export const FamilyMemberNode = memo<NodeProps<FamilyMemberFlowNode>>(({ data, selected }) => {
   const { member, onEdit, onDelete, onAddChild, onAddSpouse } = data;
   const [showContextMenu, setShowContextMenu] = useState(false);
 

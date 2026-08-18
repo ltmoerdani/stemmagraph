@@ -39,7 +39,7 @@ export const calculateTierLayout = (
   const sortedGenerations = Array.from(generationMap.keys()).sort((a, b) => a - b);
   
   const tiers: TierLayout[] = [];
-  const layoutedNodes: Node[] = [];
+  const layoutedNodes: FamilyMemberFlowNode[] = [];
 
   sortedGenerations.forEach((generation, tierIndex) => {
     const nodesInGeneration = generationMap.get(generation)!;

@@ -22,7 +22,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import type { FamilyMember } from '../../types/family';
-import { FamilyMemberNode } from './nodes/FamilyMemberNode';
+import { FamilyMemberNode, type FamilyMemberFlowNode } from './nodes/FamilyMemberNode';
 import { MarriageEdge } from './edges/MarriageEdge';
 import { ParentChildEdge } from './edges/ParentChildEdge';
 import { SiblingEdge } from './edges/SiblingEdge';
@@ -60,10 +60,10 @@ interface ReactFlowFamilyTreeProps {
  * Converts family members to React Flow nodes with proper positioning
  */
 const getLayoutedElements = (
-  nodes: Node[],
+  nodes: FamilyMemberFlowNode[],
   edges: Edge[],
   direction = 'TB'
-): { nodes: Node[]; edges: Edge[] } => {
+): { nodes: FamilyMemberFlowNode[]; edges: Edge[] } => {
   const isHorizontal = direction === 'LR';
   
   // Configure dagre for bracket-style layout with professional spacing
@@ -107,8 +107,8 @@ const getLayoutedElements = (
  * Converts family members to React Flow nodes with tier-based positioning
  */
 const getTierLayoutedElements = (
-  nodes: Node[]
-): { nodes: Node[]; edges: Edge[]; tiers: TierLayout[] } => {
+  nodes: FamilyMemberFlowNode[]
+): { nodes: FamilyMemberFlowNode[]; edges: Edge[]; tiers: TierLayout[] } => {
   const { layoutedNodes, tiers } = calculateTierLayout(nodes);
   return { nodes: layoutedNodes, edges: [], tiers };
 };
@@ -116,7 +116,7 @@ const getTierLayoutedElements = (
 /**
  * Converts family members to React Flow nodes
  */
-const convertMembersToNodes = (members: FamilyMember[]): Node[] => {
+const convertMembersToNodes = (members: FamilyMember[]): FamilyMemberFlowNode[] => {
   return members.map((member) => ({
     id: member.id,
     type: 'familyMember',
@@ -288,7 +288,7 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   }, [initialNodes, initialEdges, layoutDirection, setNodes, setEdges, fitView]);
 
   // Custom node change handler to constrain movement
-  const handleNodesChange = useCallback((changes: NodeChange[]) => {
+  const handleNodesChange = useCallback((changes: NodeChange<FamilyMemberFlowNode>[]) => {
     if (layoutDirection === 'TB' && tiers.length > 0) {
       const constrainedChanges = changes.map(change => {
         if (change.type === 'position' && 'position' in change && change.position) {
