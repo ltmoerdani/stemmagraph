@@ -57,6 +57,10 @@ model FamilyMember {
   email           String?
   phone           String?
   isAlive         Boolean              @default(true)
+  // Per-individual sharing consent (S-06 Wave 1). Application domain
+  // values: "shared" | "private". NULL means not yet recorded; the
+  // export privacy gate treats NULL living members as redact.
+  privacyStatus   String?
   generation      Int                  @default(1)
   maritalStatus   String               @default("single")
   notes           String?

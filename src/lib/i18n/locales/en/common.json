@@ -23,6 +23,17 @@
     "print": "Print",
     "share": "Share"
   },
+  "export": {
+    "privacy": {
+      "title": "Export Privacy",
+      "modeClean": "Clean private copy (safe to share)",
+      "modeFull": "Full private archive",
+      "report": "{{total}} people: {{redacted}} living redacted, {{full}} living in full, {{deceased}} deceased",
+      "cleanNote": "Living members' data is redacted automatically in GEDCOM and GEDZIP files.",
+      "warning": "Warning: this file contains full data about living family members (names, birth dates, contact details). Use it only for your own private archive.",
+      "confirmLabel": "I understand and still want to download the full data"
+    }
+  },
   "toolbar": {
     "dashboard": "Dashboard",
     "unsavedConfirm": "You have unsaved changes. Are you sure you want to exit edit mode?",

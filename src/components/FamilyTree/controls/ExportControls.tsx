@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
-import { 
-  Download, 
+import React, { useMemo, useState } from 'react';
+import {
+  Download,
   FileArchive,
-  FileImage, 
-  FileJson, 
-  FileText, 
+  FileImage,
+  FileJson,
+  FileText,
   Printer,
   ChevronDown
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { useTranslation } from 'react-i18next';
 import { useFamilyStore } from '../../../store/familyStore';
 import { getAdapter } from '../../../lib/adapters';
-import { exportGedcom70 } from '../../../lib/gedcom/exportGedcom70';
+import { exportGedcom70, type ExportPrivacyMode } from '../../../lib/gedcom/exportGedcom70';
 import { exportGedzip } from '../../../lib/gedcom/exportGedzip';
+import { buildExportPrivacyReport } from '../../../lib/privacy/exportPrivacyGate';
 
 /** MIME type used when saving .ged downloads (de facto standard). */
 const GEDCOM_MIME = 'application/x-gedcom';
@@ -53,11 +55,32 @@ function downloadBlob(blob: Blob, filename: string): void {
 export const ExportControls: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  // Privacy mode for the GEDCOM/GEDZIP paths (S-06 Wave 1). Default is
+  // the clean share export; the full archive requires an explicit
+  // checkbox confirmation before its download buttons unlock.
+  const [privacyMode, setPrivacyMode] = useState<ExportPrivacyMode>('clean');
+  const [confirmFullArchive, setConfirmFullArchive] = useState(false);
+  const { t } = useTranslation();
   // Canonical adapter-layer data (not the legacy merged UI shape) so the
   // GEDCOM export reads exactly what the backend stores.
   const records = useFamilyStore((s) => s.records);
   const relationships = useFamilyStore((s) => s.relationships);
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
+
+  // Gate report computed from the same records the export will read, so
+  // the counts the user sees before downloading match the output.
+  const privacyReport = useMemo(
+    () => buildExportPrivacyReport(records),
+    [records]
+  );
+  const fullArchiveUnlocked = privacyMode === 'clean' || confirmFullArchive;
+
+  const selectPrivacyMode = (mode: ExportPrivacyMode) => {
+    setPrivacyMode(mode);
+    // Leaving full-archive mode revokes the confirmation on purpose:
+    // re-entering must require a fresh explicit opt-in.
+    if (mode === 'clean') setConfirmFullArchive(false);
+  };
 
   // Tree name only feeds the download filename; lookup failures fall
   // back to the default name instead of blocking the export.
@@ -75,7 +98,11 @@ export const ExportControls: React.FC = () => {
     setIsExporting(true);
     try {
       const treeName = await resolveTreeName();
-      const { gedcom } = exportGedcom70({ members: records, relationships });
+      const { gedcom } = exportGedcom70({
+        members: records,
+        relationships,
+        privacyMode,
+      });
       const blob = new Blob([gedcom], { type: `${GEDCOM_MIME}; charset=utf-8` });
       downloadBlob(blob, gedcomFileName(treeName, new Date()));
     } catch (error) {
@@ -90,7 +117,11 @@ export const ExportControls: React.FC = () => {
     try {
       const treeName = await resolveTreeName();
       const now = new Date();
-      const result = exportGedzip({ members: records, relationships });
+      const result = exportGedzip({
+        members: records,
+        relationships,
+        privacyMode,
+      });
       if (result.ok) {
         const blob = new Blob([result.zip], { type: GEDZIP_MIME });
         downloadBlob(blob, gedcomFileName(treeName, now, '.gedzip'));
@@ -213,7 +244,7 @@ export const ExportControls: React.FC = () => {
             tabIndex={0}
           />
           <div 
-            className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2"
+            className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2"
             role="menu"
             aria-label="Export options"
           >
@@ -252,14 +283,89 @@ export const ExportControls: React.FC = () => {
               <FileText className="w-4 h-4" />
               <span>Export as PDF</span>
             </button>
-            
+
+            {/* Privacy mode for the GEDCOM/GEDZIP exports (S-06 Wave 1):
+                the gate report is shown BEFORE any download starts, and
+                the full archive stays locked behind an explicit
+                checkbox confirmation. */}
+            <div
+              className="mt-2 mx-2 px-2 py-2 border-t border-gray-100"
+              role="group"
+              aria-label={t('export.privacy.title')}
+            >
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {t('export.privacy.title')}
+              </p>
+
+              <label className="flex items-start gap-2 mt-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-privacy-mode"
+                  value="clean"
+                  checked={privacyMode === 'clean'}
+                  onChange={() => selectPrivacyMode('clean')}
+                  className="mt-0.5"
+                />
+                <span className="text-sm text-gray-700">
+                  {t('export.privacy.modeClean')}
+                </span>
+              </label>
+              {privacyMode === 'clean' && (
+                <p
+                  className="text-xs text-gray-500 pl-6 mt-1"
+                  data-testid="export-privacy-report"
+                >
+                  {t('export.privacy.report', {
+                    total: privacyReport.total,
+                    redacted: privacyReport.livingRedacted,
+                    full: privacyReport.livingFull,
+                    deceased: privacyReport.deceased,
+                  })}
+                  <br />
+                  {t('export.privacy.cleanNote')}
+                </p>
+              )}
+
+              <label className="flex items-start gap-2 mt-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-privacy-mode"
+                  value="full"
+                  checked={privacyMode === 'full'}
+                  onChange={() => selectPrivacyMode('full')}
+                  className="mt-0.5"
+                />
+                <span className="text-sm text-gray-700">
+                  {t('export.privacy.modeFull')}
+                </span>
+              </label>
+              {privacyMode === 'full' && (
+                <div className="pl-6 mt-1">
+                  <p className="text-xs text-amber-700">
+                    {t('export.privacy.warning')}
+                  </p>
+                  <label className="flex items-start gap-2 mt-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={confirmFullArchive}
+                      onChange={(e) => setConfirmFullArchive(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span className="text-xs text-gray-600">
+                      {t('export.privacy.confirmLabel')}
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => {
                 exportAsGedcom();
                 handleDropdownClose();
               }}
-              disabled={isExporting}
-              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50"
+              disabled={isExporting || !fullArchiveUnlocked}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               role="menuitem"
             >
               <FileJson className="w-4 h-4" />
@@ -271,8 +377,8 @@ export const ExportControls: React.FC = () => {
                 exportAsGedzip();
                 handleDropdownClose();
               }}
-              disabled={isExporting}
-              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50"
+              disabled={isExporting || !fullArchiveUnlocked}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               role="menuitem"
             >
               <FileArchive className="w-4 h-4" />

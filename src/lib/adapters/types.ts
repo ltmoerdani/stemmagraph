@@ -67,6 +67,11 @@ export interface FamilyMemberRecord {
   email?: string;
   phone?: string;
   isAlive: boolean;
+  // Per-individual sharing consent (S-06 Wave 1). "shared" exports the
+  // member in full even while living; "private" redacts them. Undefined
+  // (or NULL at the database level) means not yet recorded and the
+  // export privacy gate redacts living members by default.
+  privacyStatus?: 'shared' | 'private';
   generation: number;
   maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
   notes?: string;
