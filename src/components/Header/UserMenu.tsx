@@ -45,7 +45,7 @@ export const UserMenu: React.FC = () => {
         <>
           <button
             className="fixed inset-0 z-10 bg-transparent border-none cursor-default"
-            aria-label="Close user menu"
+            aria-label={t('userMenu.close')}
             onClick={() => setIsOpen(false)}
             onKeyDown={e => {
               if (e.key === 'Escape') {

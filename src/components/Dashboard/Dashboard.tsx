@@ -222,7 +222,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{tree.name}</h3>
-                              <p className="text-sm text-gray-500">Created {formatDate(tree.createdAt)}</p>
+                              <p className="text-sm text-gray-500">{t('dashboard.created', { date: formatDate(tree.createdAt) })}</p>
                             </div>
                           </div>
                         </td>

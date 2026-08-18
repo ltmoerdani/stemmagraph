@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Users, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Heart, Baby, UserPlus } from 'lucide-react';
 
 interface RelationshipSelectionModalProps {
@@ -14,6 +15,7 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
   direction,
   onSelect
 }) => {
+  const { t } = useTranslation('canvas');
   const [selectedRelationship, setSelectedRelationship] = useState('');
 
   if (!isOpen) return null;
@@ -25,23 +27,23 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
         return [
           { 
             value: 'husband', 
-            label: 'Husband', 
+            label: t('relationship.options.husband.label'), 
             icon: <Users className="w-5 h-5" />,
-            description: 'Add husband as partner',
+            description: t('relationship.options.husband.description'),
             color: 'blue'
           },
           { 
             value: 'wife', 
-            label: 'Wife', 
+            label: t('relationship.options.wife.label'), 
             icon: <Heart className="w-5 h-5" />,
-            description: 'Add wife as partner',
+            description: t('relationship.options.wife.description'),
             color: 'pink'
           },
           { 
             value: 'partner', 
-            label: 'Partner', 
+            label: t('relationship.options.partner.label'), 
             icon: <Users className="w-5 h-5" />,
-            description: 'Add life partner',
+            description: t('relationship.options.partner.description'),
             color: 'purple'
           }
         ];
@@ -49,37 +51,37 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
         return [
           { 
             value: 'father', 
-            label: 'Father', 
+            label: t('relationship.options.father.label'), 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Add biological father',
+            description: t('relationship.options.father.description'),
             color: 'blue'
           },
           { 
             value: 'mother', 
-            label: 'Mother', 
+            label: t('relationship.options.mother.label'), 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Add biological mother',
+            description: t('relationship.options.mother.description'),
             color: 'pink'
           },
           { 
             value: 'both_parents', 
-            label: 'Both Parents', 
+            label: t('relationship.options.both_parents.label'), 
             icon: <Users className="w-5 h-5" />,
-            description: 'Add both father and mother at once',
+            description: t('relationship.options.both_parents.description'),
             color: 'green'
           },
           { 
             value: 'grandfather', 
-            label: 'Grandfather', 
+            label: t('relationship.options.grandfather.label'), 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Add grandfather',
+            description: t('relationship.options.grandfather.description'),
             color: 'gray'
           },
           { 
             value: 'grandmother', 
-            label: 'Grandmother', 
+            label: t('relationship.options.grandmother.label'), 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Add grandmother',
+            description: t('relationship.options.grandmother.description'),
             color: 'gray'
           }
         ];
@@ -87,37 +89,37 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
         return [
           { 
             value: 'biological_child', 
-            label: 'Biological Child', 
+            label: t('relationship.options.biological_child.label'), 
             icon: <Baby className="w-5 h-5" />,
-            description: 'Add biological child',
+            description: t('relationship.options.biological_child.description'),
             color: 'green'
           },
           { 
             value: 'step_child', 
-            label: 'Stepchild', 
+            label: t('relationship.options.step_child.label'), 
             icon: <UserPlus className="w-5 h-5" />,
-            description: 'Add stepchild',
+            description: t('relationship.options.step_child.description'),
             color: 'orange'
           },
           { 
             value: 'adopted_child', 
-            label: 'Adopted Child', 
+            label: t('relationship.options.adopted_child.label'), 
             icon: <Heart className="w-5 h-5" />,
-            description: 'Add adopted child',
+            description: t('relationship.options.adopted_child.description'),
             color: 'purple'
           },
           { 
             value: 'grandchild', 
-            label: 'Grandchild', 
+            label: t('relationship.options.grandchild.label'), 
             icon: <Baby className="w-5 h-5" />,
-            description: 'Add grandchild',
+            description: t('relationship.options.grandchild.description'),
             color: 'yellow'
           },
           { 
             value: 'great_grandchild', 
-            label: 'Great-grandchild', 
+            label: t('relationship.options.great_grandchild.label'), 
             icon: <Baby className="w-5 h-5" />,
-            description: 'Add great-grandchild',
+            description: t('relationship.options.great_grandchild.description'),
             color: 'indigo'
           }
         ];
@@ -142,27 +144,18 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
   const getDirectionTitle = () => {
     switch (direction) {
       case 'up':
-        return 'Add Ancestor';
+        return t('relationship.titles.ancestor');
       case 'down':
-        return 'Add Descendant';
+        return t('relationship.titles.descendant');
       case 'left':
-        return 'Add Partner (Left)';
+        return t('relationship.titles.partnerLeft');
       case 'right':
-        return 'Add Partner (Right)';
+        return t('relationship.titles.partnerRight');
     }
   };
 
   const getDirectionDescription = () => {
-    switch (direction) {
-      case 'up':
-        return 'The new member will appear above this card';
-      case 'down':
-        return 'The new member will appear below this card';
-      case 'left':
-        return 'The new member will appear to the left of this card';
-      case 'right':
-        return 'The new member will appear to the right of this card';
-    }
+    return t(`relationship.position.${direction}`);
   };
 
   const handleContinue = () => {
@@ -224,7 +217,7 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
           <button
             onClick={onClose}
             className="p-2 rounded-md hover:bg-gray-100 transition-colors"
-            aria-label="Tutup modal"
+            aria-label={t('relationship.close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -233,7 +226,7 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
         {/* Content */}
         <div className="p-6">
           <div className="mb-4">
-            <h4 className="font-semibold text-gray-900 mb-2">Select relationship type:</h4>
+            <h4 className="font-semibold text-gray-900 mb-2">{t('relationship.selectType')}</h4>
           </div>
           
           <div className="space-y-3 max-h-80 overflow-y-auto">
@@ -279,14 +272,14 @@ export const RelationshipSelectionModal: React.FC<RelationshipSelectionModalProp
             onClick={onClose}
             className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium"
           >
-            Batal
+            {t('relationship.cancel')}
           </button>
           <button
             onClick={handleContinue}
             disabled={!selectedRelationship}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center space-x-2"
           >
-            <span>Lanjutkan</span>
+            <span>{t('relationship.continue')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
