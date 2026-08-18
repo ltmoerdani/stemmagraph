@@ -23,6 +23,17 @@
     "print": "Cetak",
     "share": "Bagikan"
   },
+  "export": {
+    "privacy": {
+      "title": "Privasi Ekspor",
+      "modeClean": "Privat bersih (siap dibagikan)",
+      "modeFull": "Arsip pribadi penuh",
+      "report": "{{total}} orang: {{redacted}} hidup disamarkan, {{full}} hidup lengkap, {{deceased}} wafat",
+      "cleanNote": "Data anggota yang masih hidup otomatis disamarkan pada file GEDCOM dan GEDZIP.",
+      "warning": "Peringatan: file ini memuat data lengkap anggota yang masih hidup (nama, tanggal lahir, kontak). Gunakan hanya untuk arsip pribadi Anda.",
+      "confirmLabel": "Saya mengerti dan tetap mengunduh data lengkap"
+    }
+  },
   "toolbar": {
     "dashboard": "Dasbor",
     "unsavedConfirm": "Ada perubahan yang belum disimpan. Yakin ingin keluar dari mode edit?",
