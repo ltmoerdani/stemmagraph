@@ -37,6 +37,7 @@
     "dagre": "^0.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "fflate": "0.8.3",
     "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
