@@ -17,6 +17,9 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Allow importing package.json for the app version string (GEDCOM HEAD VERS) */
+    "resolveJsonModule": true,
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,

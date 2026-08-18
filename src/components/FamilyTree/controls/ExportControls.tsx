@@ -2,16 +2,67 @@ import React, { useState } from 'react';
 import { 
   Download, 
   FileImage, 
+  FileJson, 
   FileText, 
   Printer,
   ChevronDown
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { useFamilyStore } from '../../../store/familyStore';
+import { getAdapter } from '../../../lib/adapters';
+import { exportGedcom70 } from '../../../lib/gedcom/exportGedcom70';
+
+/** MIME type used when saving .ged downloads (de facto standard). */
+const GEDCOM_MIME = 'application/x-gedcom';
+
+/** Builds the <tree-name>-<yyyymmdd>.ged download filename. */
+function gedcomFileName(treeName: string | undefined, now: Date): string {
+  const safeName = (treeName ?? 'family-tree')
+    .trim()
+    .replace(/[^a-zA-Z0-9-_]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'family-tree';
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${safeName}-${yyyy}${mm}${dd}.ged`;
+}
 
 export const ExportControls: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  // Canonical adapter-layer data (not the legacy merged UI shape) so the
+  // GEDCOM export reads exactly what the backend stores.
+  const records = useFamilyStore((s) => s.records);
+  const relationships = useFamilyStore((s) => s.relationships);
+  const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
+
+  const exportAsGedcom = async () => {
+    setIsExporting(true);
+    try {
+      let treeName: string | undefined;
+      if (currentFamilyTreeId) {
+        try {
+          const tree = await getAdapter().getTree(currentFamilyTreeId);
+          treeName = tree?.name;
+        } catch {
+          // Tree metadata is cosmetic here; fall back to the default name.
+        }
+      }
+      const { gedcom } = exportGedcom70({ members: records, relationships });
+      const blob = new Blob([gedcom], { type: `${GEDCOM_MIME}; charset=utf-8` });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = gedcomFileName(treeName, new Date());
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('GEDCOM export failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const exportAsImage = async (format: 'png' | 'jpg') => {
     setIsExporting(true);
@@ -149,6 +200,19 @@ export const ExportControls: React.FC = () => {
             >
               <FileText className="w-4 h-4" />
               <span>Export as PDF</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                exportAsGedcom();
+                handleDropdownClose();
+              }}
+              disabled={isExporting}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50"
+              role="menuitem"
+            >
+              <FileJson className="w-4 h-4" />
+              <span>Export as GEDCOM 7.0 (.ged)</span>
             </button>
             
             <hr className="my-2" />
