@@ -124,7 +124,8 @@ export type ExportGedzipInput = ExportGedcom70Input & {
 export type ExportGedzipResult =
   | {
       ok: true
-      zip: Uint8Array
+      /** Raw archive bytes, ready for Blob construction in the UI. */
+      zip: Uint8Array<ArrayBuffer>
       stats: ExportGedcom70Stats
     }
   | {
@@ -158,7 +159,7 @@ export function packageGedzip(
   gedcom: string,
   options?: { limits?: Partial<GedzipLimits>; mtime?: Date },
 ):
-  | { ok: true; zip: Uint8Array }
+  | { ok: true; zip: Uint8Array<ArrayBuffer> }
   | { ok: false; error: GedzipLimitError } {
   const bytes = new TextEncoder().encode(gedcom)
   const entries: GedzipEntryPlan[] = [{ name: GEDZIP_ENTRY_NAME, bytes }]
