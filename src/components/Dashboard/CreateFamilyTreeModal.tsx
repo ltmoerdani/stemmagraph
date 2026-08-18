@@ -42,7 +42,9 @@ export const CreateFamilyTreeModal: React.FC<CreateFamilyTreeModalProps> = ({
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const newTree = createFamilyTree(familyName.trim());
+      // Await so the record (and its id) exists before navigating; previously
+      // navigate ran on the unresolved Promise and crashed on newTree.id.
+      const newTree = await createFamilyTree(familyName.trim());
 
       // Close modal and redirect to family tree interface
       onClose();
