@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFamilyStore } from '../../store/familyStore';
 
 export const CanvasControls: React.FC = () => {
+  const { t } = useTranslation('canvas');
   const { members } = useFamilyStore();
   const [activeTab, setActiveTab] = useState<'minimap' | 'legend'>('minimap');
   const [isCollapsed, setIsCollapsed] = useState(false);
