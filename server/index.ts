@@ -159,7 +159,7 @@ app.get('/api/v1/trees', requireAuth, async (_req: AuthenticatedRequest, res) =>
   res.json(trees.map(t => formatTree(t)));
 });
 
-app.get('/api/v1/trees/:id', requireAuth, async (req, res) => {
+app.get('/api/v1/trees/:id', requireAuth, async (req: express.Request<{ id: string }>, res) => {
   const t = await prisma.familyTree.findUnique({ where: { id: req.params.id } });
   if (!t) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
   res.json(formatTree(t));
@@ -174,7 +174,7 @@ app.post('/api/v1/trees', requireAuth, async (req, res) => {
   res.status(201).json(formatTree(t));
 });
 
-app.put('/api/v1/trees/:id', requireAuth, async (req, res) => {
+app.put('/api/v1/trees/:id', requireAuth, async (req: express.Request<{ id: string }>, res) => {
   const { name, description } = req.body;
   const t = await prisma.familyTree.update({
     where: { id: req.params.id },
@@ -183,14 +183,14 @@ app.put('/api/v1/trees/:id', requireAuth, async (req, res) => {
   res.json(formatTree(t));
 });
 
-app.delete('/api/v1/trees/:id', requireAuth, async (req, res) => {
+app.delete('/api/v1/trees/:id', requireAuth, async (req: express.Request<{ id: string }>, res) => {
   await prisma.familyTree.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 
 // ─── Family Members ──────────────────────────────────────
 
-app.get('/api/v1/trees/:treeId/members', requireAuth, async (req, res) => {
+app.get('/api/v1/trees/:treeId/members', requireAuth, async (req: express.Request<{ treeId: string }>, res) => {
   const members = await prisma.familyMember.findMany({
     where: { treeId: req.params.treeId },
     orderBy: { generation: 'asc' },
@@ -198,44 +198,44 @@ app.get('/api/v1/trees/:treeId/members', requireAuth, async (req, res) => {
   res.json(members.map(m => formatMember(m)));
 });
 
-app.get('/api/v1/members/:id', requireAuth, async (req, res) => {
+app.get('/api/v1/members/:id', requireAuth, async (req: express.Request<{ id: string }>, res) => {
   const m = await prisma.familyMember.findUnique({ where: { id: req.params.id } });
   if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
   res.json(formatMember(m));
 });
 
-app.post('/api/v1/trees/:treeId/members', requireAuth, async (req, res) => {
+app.post('/api/v1/trees/:treeId/members', requireAuth, async (req: express.Request<{ treeId: string }>, res) => {
   const m = await prisma.familyMember.create({
     data: { ...req.body, treeId: req.params.treeId },
   });
   res.status(201).json(formatMember(m));
 });
 
-app.put('/api/v1/members/:id', requireAuth, async (req, res) => {
+app.put('/api/v1/members/:id', requireAuth, async (req: express.Request<{ id: string }>, res) => {
   const m = await prisma.familyMember.update({ where: { id: req.params.id }, data: req.body });
   res.json(formatMember(m));
 });
 
-app.delete('/api/v1/members/:id', requireAuth, async (req, res) => {
+app.delete('/api/v1/members/:id', requireAuth, async (req: express.Request<{ id: string }>, res) => {
   await prisma.familyMember.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 
 // ─── Relationships ───────────────────────────────────────
 
-app.get('/api/v1/trees/:treeId/relationships', requireAuth, async (req, res) => {
+app.get('/api/v1/trees/:treeId/relationships', requireAuth, async (req: express.Request<{ treeId: string }>, res) => {
   const rels = await prisma.familyRelationship.findMany({ where: { treeId: req.params.treeId } });
   res.json(rels.map(r => formatRelationship(r)));
 });
 
-app.post('/api/v1/trees/:treeId/relationships', requireAuth, async (req, res) => {
+app.post('/api/v1/trees/:treeId/relationships', requireAuth, async (req: express.Request<{ treeId: string }>, res) => {
   const r = await prisma.familyRelationship.create({
     data: { ...req.body, treeId: req.params.treeId },
   });
   res.status(201).json(formatRelationship(r));
 });
 
-app.delete('/api/v1/relationships/:id', requireAuth, async (req, res) => {
+app.delete('/api/v1/relationships/:id', requireAuth, async (req: express.Request<{ id: string }>, res) => {
   await prisma.familyRelationship.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
