@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Download, 
+  FileArchive,
   FileImage, 
   FileJson, 
   FileText, 
@@ -12,12 +13,23 @@ import jsPDF from 'jspdf';
 import { useFamilyStore } from '../../../store/familyStore';
 import { getAdapter } from '../../../lib/adapters';
 import { exportGedcom70 } from '../../../lib/gedcom/exportGedcom70';
+import { exportGedzip } from '../../../lib/gedcom/exportGedzip';
 
 /** MIME type used when saving .ged downloads (de facto standard). */
 const GEDCOM_MIME = 'application/x-gedcom';
 
-/** Builds the <tree-name>-<yyyymmdd>.ged download filename. */
-function gedcomFileName(treeName: string | undefined, now: Date): string {
+/**
+ * MIME type used when saving .gedzip downloads. GEDZIP has no IANA
+ * registration, so the generic ZIP type is the safest hint.
+ */
+const GEDZIP_MIME = 'application/zip';
+
+/** Builds the <tree-name>-<yyyymmdd><ext> download filename. */
+function gedcomFileName(
+  treeName: string | undefined,
+  now: Date,
+  ext: string = '.ged'
+): string {
   const safeName = (treeName ?? 'family-tree')
     .trim()
     .replace(/[^a-zA-Z0-9-_]+/g, '-')
@@ -25,7 +37,17 @@ function gedcomFileName(treeName: string | undefined, now: Date): string {
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
-  return `${safeName}-${yyyy}${mm}${dd}.ged`;
+  return `${safeName}-${yyyy}${mm}${dd}${ext}`;
+}
+
+/** Triggers a browser download for an in-memory blob. */
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export const ExportControls: React.FC = () => {
@@ -37,28 +59,57 @@ export const ExportControls: React.FC = () => {
   const relationships = useFamilyStore((s) => s.relationships);
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
 
+  // Tree name only feeds the download filename; lookup failures fall
+  // back to the default name instead of blocking the export.
+  const resolveTreeName = async (): Promise<string | undefined> => {
+    if (!currentFamilyTreeId) return undefined;
+    try {
+      const tree = await getAdapter().getTree(currentFamilyTreeId);
+      return tree?.name;
+    } catch {
+      return undefined;
+    }
+  };
+
   const exportAsGedcom = async () => {
     setIsExporting(true);
     try {
-      let treeName: string | undefined;
-      if (currentFamilyTreeId) {
-        try {
-          const tree = await getAdapter().getTree(currentFamilyTreeId);
-          treeName = tree?.name;
-        } catch {
-          // Tree metadata is cosmetic here; fall back to the default name.
-        }
-      }
+      const treeName = await resolveTreeName();
       const { gedcom } = exportGedcom70({ members: records, relationships });
       const blob = new Blob([gedcom], { type: `${GEDCOM_MIME}; charset=utf-8` });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = gedcomFileName(treeName, new Date());
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, gedcomFileName(treeName, new Date()));
     } catch (error) {
       console.error('GEDCOM export failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const exportAsGedzip = async () => {
+    setIsExporting(true);
+    try {
+      const treeName = await resolveTreeName();
+      const now = new Date();
+      const result = exportGedzip({ members: records, relationships });
+      if (result.ok) {
+        const blob = new Blob([result.zip], { type: GEDZIP_MIME });
+        downloadBlob(blob, gedcomFileName(treeName, now, '.gedzip'));
+        return;
+      }
+      // The guard refused the archive (content beyond the classic ZIP
+      // limits). Tell the user plainly, then deliver the plain GEDCOM
+      // instead of failing silently.
+      console.warn('GEDZIP export blocked by guard:', result.error);
+      window.alert(
+        'This tree is too large for a GEDZIP archive (over the ZIP 4 GB ' +
+        'limit). Downloading the plain GEDCOM (.ged) file instead.'
+      );
+      const blob = new Blob([result.gedcom], {
+        type: `${GEDCOM_MIME}; charset=utf-8`,
+      });
+      downloadBlob(blob, gedcomFileName(treeName, now));
+    } catch (error) {
+      console.error('GEDZIP export failed:', error);
     } finally {
       setIsExporting(false);
     }
@@ -213,6 +264,19 @@ export const ExportControls: React.FC = () => {
             >
               <FileJson className="w-4 h-4" />
               <span>Export as GEDCOM 7.0 (.ged)</span>
+            </button>
+
+            <button
+              onClick={() => {
+                exportAsGedzip();
+                handleDropdownClose();
+              }}
+              disabled={isExporting}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50"
+              role="menuitem"
+            >
+              <FileArchive className="w-4 h-4" />
+              <span>Export as GEDZIP (.gedzip)</span>
             </button>
             
             <hr className="my-2" />
