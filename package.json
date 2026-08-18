@@ -19,6 +19,8 @@
     "dev:server": "npx tsx server/index.ts",
     "dev:full": "concurrently -n api,app -c blue,green \"npm run dev:server\" \"npm run dev\"",
     "build": "vite build",
+    "prebuild": "node scripts/guard-pure-core.mjs",
+    "guard:pure-core": "node scripts/guard-pure-core.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "db:seed": "npx prisma db seed",
