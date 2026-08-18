@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   ReactFlow,
-  Node,
   Edge,
   addEdge,
   useNodesState,
@@ -210,9 +209,9 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   onMemberAdd,
   onMemberDelete,
 }) => {
-  const { fitView, getNodes, getEdges } = useReactFlow();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const { fitView, getNodes, getEdges } = useReactFlow<FamilyMemberFlowNode, Edge>();
+  const [nodes, setNodes, onNodesChange] = useNodesState<FamilyMemberFlowNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   const [tiers, setTiers] = useState<TierLayout[]>([]);
@@ -389,7 +388,7 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
 
   return (
     <div className="w-full h-full relative">
-      <ReactFlow
+      <ReactFlow<FamilyMemberFlowNode>
         nodes={nodes}
         edges={edges}
         onNodesChange={handleNodesChange}

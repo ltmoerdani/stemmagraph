@@ -1,4 +1,4 @@
-import { Node } from '@xyflow/react';
+import type { FamilyMemberFlowNode } from '../nodes/FamilyMemberNode';
 import type { FamilyMember } from '../../../types/family';
 import { compareNames } from '../../../utils/collator';
 
@@ -15,18 +15,18 @@ export interface TierLayout {
  * @returns Object containing layouted nodes and tier information
  */
 export const calculateTierLayout = (
-  nodes: Node[]
-): { layoutedNodes: Node[]; tiers: TierLayout[] } => {
+  nodes: FamilyMemberFlowNode[]
+): { layoutedNodes: FamilyMemberFlowNode[]; tiers: TierLayout[] } => {
   const TIER_HEIGHT = 350; // Increased for better bracket spacing
   const NODE_WIDTH = 280; // Wider spacing for cleaner look
   const HORIZONTAL_SPACING = 120; // More space between nodes
   const START_Y = 200; // Better starting position
 
   // Group nodes by generation
-  const generationMap = new Map<number, Node[]>();
+  const generationMap = new Map<number, FamilyMemberFlowNode[]>();
   
   nodes.forEach(node => {
-    const member = node.data?.member as FamilyMember;
+    const member = node.data.member;
     const generation = member?.generation ?? 0;
     
     if (!generationMap.has(generation)) {
@@ -47,8 +47,8 @@ export const calculateTierLayout = (
     
     // Enhanced sorting: place spouses directly adjacent and group families
     const sortedNodes = [...nodesInGeneration].sort((a, b) => {
-      const memberA = a.data?.member as FamilyMember;
-      const memberB = b.data?.member as FamilyMember;
+      const memberA = a.data.member;
+      const memberB = b.data.member;
       
       // Group family units together
       const familyGroupA = getFamilyGroupId(memberA);
@@ -81,7 +81,7 @@ export const calculateTierLayout = (
           ...node.data,
           tier: tierIndex,
           generationY: y,
-          familyGroup: getFamilyGroupId(node.data?.member),
+          familyGroup: getFamilyGroupId(node.data.member),
         }
       });
     });
