@@ -64,6 +64,10 @@ function hydrateMembers(
 
 interface FamilyStore {
   members: FamilyMember[];
+  /** Adapter-layer member records, kept as the canonical export source. */
+  records: FamilyMemberRecord[];
+  /** Adapter-layer relationships, kept as the canonical export source. */
+  relationships: MemberRelationship[];
   selectedMember: FamilyMember | null;
   searchQuery: string;
   viewMode: ViewMode;
@@ -120,6 +124,8 @@ function mapRelationshipType(uiType: string): MemberRelationship['type'] | null 
 
 export const useFamilyStore = create<FamilyStore>((set, get) => ({
   members: [],
+  records: [],
+  relationships: [],
   selectedMember: null,
   searchQuery: '',
   viewMode: {
@@ -161,7 +167,9 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
         adapter.listRelationships(treeId),
       ]);
       const members = hydrateMembers(records, relationships);
-      set({ members, isLoading: false });
+      // records/relationships are kept unmerged so exports read the
+      // canonical adapter layer instead of the legacy UI shape.
+      set({ members, records, relationships, isLoading: false });
       get().updateStats();
     } catch {
       set({ isLoading: false });
