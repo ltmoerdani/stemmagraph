@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useTranslation } from 'react-i18next';
 
 export const UserMenu: React.FC = () => {
   const { user, logout } = useAuthStore();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   if (!user) return null;
@@ -43,7 +45,7 @@ export const UserMenu: React.FC = () => {
         <>
           <button
             className="fixed inset-0 z-10 bg-transparent border-none cursor-default"
-            aria-label="Close user menu"
+            aria-label={t('userMenu.close')}
             onClick={() => setIsOpen(false)}
             onKeyDown={e => {
               if (e.key === 'Escape') {
@@ -64,7 +66,7 @@ export const UserMenu: React.FC = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <User className="w-4 h-4" />
-                <span>Profile</span>
+                <span>{t('userMenu.profile')}</span>
               </button>
               
               <button
@@ -72,7 +74,7 @@ export const UserMenu: React.FC = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <Settings className="w-4 h-4" />
-                <span>Settings</span>
+                <span>{t('userMenu.settings')}</span>
               </button>
               
               <hr className="my-2" />
@@ -82,7 +84,7 @@ export const UserMenu: React.FC = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
+                <span>{t('userMenu.signOut')}</span>
               </button>
             </div>
           </div>
