@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# GEDCOM 7 verification runtime cache (downloaded on demand by
+# scripts/verify-gedcom70.mjs from the official GEDCOM-registries repo)
+scripts/fixtures-gedcom70/g7validation.json
+# Verify script scratch space (bundled mapper under test)
+scripts/.verify-work/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

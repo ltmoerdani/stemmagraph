@@ -98,6 +98,39 @@ function isHttpUrl(url: string): boolean {
   return /^https?:\/\//.test(url)
 }
 
+/**
+ * Infers a FORM media type for a photo URL from its file extension.
+ * FORM is required under FILE by the 7.0.18 registry, so unknown
+ * extensions fall back to the generic application/octet-stream.
+ */
+const FORM_BY_EXTENSION: Record<string, string> = {
+  avif: 'image/avif',
+  bmp: 'image/bmp',
+  gif: 'image/gif',
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  svg: 'image/svg+xml',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+  webp: 'image/webp',
+}
+
+function inferForm(url: string): string {
+  try {
+    const path = new URL(url).pathname
+    const dot = path.lastIndexOf('.')
+    if (dot >= 0) {
+      const ext = path.slice(dot + 1).toLowerCase()
+      const form = FORM_BY_EXTENSION[ext]
+      if (form) return form
+    }
+  } catch {
+    // Not a parseable URL; fall through to the generic type.
+  }
+  return 'application/octet-stream'
+}
+
 /** Adds a structure with a string payload, skipping empty values. */
 function addText(
   sup: GEDCStruct,
@@ -310,6 +343,8 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
   new GEDCStruct('DATE', head, undefined, dateExact(exportedAt))
 
   const skippedPhotos = { count: 0 }
+  // Standalone multimedia records for remotely linkable photos.
+  const objeRecords: GEDCStruct[] = []
 
   // INDI records in member id order.
   const indiRecords: GEDCStruct[] = []
@@ -356,11 +391,17 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
       addText(resi, 'PHON', m.phone)
     }
 
-    // OBJE>FILE for remotely linkable photos only.
+    // OBJE: standalone multimedia record pointed to from INDI (see
+    // mapping notes; embedded FILE under INDI.OBJE is not legal 7.0).
     if (m.photoUrl) {
       if (isHttpUrl(m.photoUrl)) {
-        const obje = new GEDCStruct('OBJE', indi)
-        new GEDCStruct('FILE', obje, undefined, m.photoUrl)
+        const objeXref = `O${objeRecords.length + 1}`
+        const objeRecord = new GEDCStruct('OBJE', null, undefined, undefined, objeXref)
+        const file = new GEDCStruct('FILE', objeRecord, undefined, m.photoUrl)
+        // FORM is mandatory under FILE per the 7.0.18 registry.
+        new GEDCStruct('FORM', file, undefined, inferForm(m.photoUrl))
+        objeRecords.push(objeRecord)
+        new GEDCStruct('OBJE', indi, objeXref)
       } else {
         skippedPhotos.count += 1
       }
@@ -416,6 +457,7 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     head,
     ...indiRecords,
     ...famRecords,
+    ...objeRecords,
     new GEDCStruct('TRLR', null),
   ]
 
@@ -428,6 +470,9 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
   })
   famRecords.forEach((fam, i) => {
     ids[famXref.get(orderedKeys[i])!] = fam
+  })
+  objeRecords.forEach((obje) => {
+    ids[obje.xref_id!] = obje
   })
   records.forEach((r) => r.fixPtrs(ids))
 
@@ -443,3 +488,4 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     },
   }
 }
+
