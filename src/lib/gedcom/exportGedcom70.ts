@@ -38,11 +38,33 @@ const PRODUCT_ID = 'Stemmagraph'
 /** GEDCOM 7 specification version advertised in HEAD.GEDC.VERS. */
 const GEDCOM_VERSION = '7.0'
 
+/**
+ * Export privacy mode (S-06 Wave 1).
+ *
+ * - 'clean': the share-ready export. Members the privacy gate labels
+ *   'redact' (living without explicit 'shared' consent) keep their
+ *   INDI record and xref so family topology stays intact, but their
+ *   NAME payload becomes "[Living]" and every sensitive
+ *   substructure is omitted (see the INDI loop below).
+ * - 'full': the private archive export. The gate changes nothing and
+ *   the output is byte-identical to the pre-privacy behavior.
+ *
+ * The default (undefined) keeps the legacy archive behavior so
+ * existing callers and verification scripts are unaffected; the UI
+ * always passes the mode explicitly.
+ */
+export type ExportPrivacyMode = 'clean' | 'full'
+
+/** NAME payload substituted for redacted living members. */
+const REDACTED_NAME = '[Living]'
+
 export interface ExportGedcom70Input {
   members: FamilyMemberRecord[]
   relationships: MemberRelationship[]
   /** Timestamp recorded in HEAD.DATE; defaults to the current time. */
   exportedAt?: Date
+  /** Privacy mode; see ExportPrivacyMode. Defaults to 'full'. */
+  privacyMode?: ExportPrivacyMode
 }
 
 export interface ExportGedcom70Stats {
@@ -171,6 +193,12 @@ function addText(
  * - notes: skipped in Wave 1 (not part of the S-04 mapping contract).
  * - OBJE>FILE: only http(s) photo URLs; blob:/data: URLs are skipped and
  *   counted in stats.skippedPhotos.
+ * - Privacy redaction (S-06 Wave 1): with privacyMode 'clean', members
+ *   the gate labels 'redact' (living without explicit 'shared' consent)
+ *   keep their INDI record and xref so FAM topology stays intact, but
+ *   export NAME payload "[Living]" and omit NICK, BIRT, DEAT, OCCU,
+ *   EDUC, RESI, and OBJE. NOTE is not written for anyone in Wave 1
+ *   (see above), so there is nothing extra to suppress.
  * - FAM HUSB/WIFE: slots are gender-neutral in 7.0 (confirmed by the
  *   official same-sex-marriage.ged fixture, which uses HUSB + WIFE for
  *   two husbands). Deterministic slot rule: the partner with the lower
@@ -349,6 +377,13 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
   // INDI records in member id order.
   const indiRecords: GEDCStruct[] = []
   for (const m of members) {
+    // One gate call per member: the mapper never re-derives the redact
+    // decision itself (S-06: a single gate feeds both export paths).
+    // Redacted members keep their INDI record and xref so FAM pointers
+    // stay valid; only the sensitive payload below is suppressed.
+    const redact =
+      input.privacyMode === 'clean' && evaluateMemberPrivacy(m) === 'redact'
+
     const indi = new GEDCStruct(
       'INDI',
       null,
@@ -358,33 +393,49 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     )
 
     // NAME (+ NICK as its substructure, the only legal parent for it).
-    if (m.name) {
+    // Redacted members keep the NAME structure (so topology stays
+    // readable in third-party tools) with the payload replaced; NICK
+    // is dropped because it can identify a person on its own.
+    if (redact) {
+      new GEDCStruct('NAME', indi, undefined, REDACTED_NAME)
+    } else if (m.name) {
       const name = new GEDCStruct('NAME', indi, undefined, m.name)
       addText(name, 'NICK', m.nickname)
     }
 
     new GEDCStruct('SEX', indi, undefined, sexPayload(m.gender))
 
-    if (m.birthDate || m.birthPlace) {
+    // BIRT is omitted entirely for redacted members (DATE and PLAC
+    // both reveal identifying data).
+    if (!redact && (m.birthDate || m.birthPlace)) {
       const birt = new GEDCStruct('BIRT', indi)
       addText(birt, 'DATE', m.birthDate)
       addText(birt, 'PLAC', m.birthPlace)
     }
 
-    if (m.deathDate) {
-      const deat = new GEDCStruct('DEAT', indi)
-      addText(deat, 'DATE', m.deathDate)
-    } else if (!m.isAlive) {
-      // Died, but no death date recorded. Payload Y is the standard way
-      // to assert the event without a date and keeps DEAT non-empty.
-      new GEDCStruct('DEAT', indi, undefined, 'Y')
+    // The gate labels only living members 'redact', so a redacted INDI
+    // carries no DEAT either: a recorded death date on a member treated
+    // as living would leak an exact date.
+    if (!redact) {
+      if (m.deathDate) {
+        const deat = new GEDCStruct('DEAT', indi)
+        addText(deat, 'DATE', m.deathDate)
+      } else if (!m.isAlive) {
+        // Died, but no death date recorded. Payload Y is the standard way
+        // to assert the event without a date and keeps DEAT non-empty.
+        new GEDCStruct('DEAT', indi, undefined, 'Y')
+      }
     }
 
-    addText(indi, 'OCCU', m.profession)
-    addText(indi, 'EDUC', m.education)
+    // OCCU and EDUC are omitted for redacted members.
+    if (!redact) {
+      addText(indi, 'OCCU', m.profession)
+      addText(indi, 'EDUC', m.education)
+    }
 
-    // RESI bundles currentLocation + contact fields (see mapping notes).
-    if (m.currentLocation || m.email || m.phone) {
+    // RESI bundles currentLocation + contact fields (see mapping
+    // notes); the whole block is omitted for redacted members.
+    if (!redact && (m.currentLocation || m.email || m.phone)) {
       const resi = new GEDCStruct('RESI', indi)
       addText(resi, 'PLAC', m.currentLocation)
       addText(resi, 'EMAIL', m.email)
@@ -393,7 +444,9 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
 
     // OBJE: standalone multimedia record pointed to from INDI (see
     // mapping notes; embedded FILE under INDI.OBJE is not legal 7.0).
-    if (m.photoUrl) {
+    // Photos of redacted members are not written at all (neither the
+    // pointer nor the standalone record, and not counted as skipped).
+    if (!redact && m.photoUrl) {
       if (isHttpUrl(m.photoUrl)) {
         const objeXref = `O${objeRecords.length + 1}`
         const objeRecord = new GEDCStruct('OBJE', null, undefined, undefined, objeXref)

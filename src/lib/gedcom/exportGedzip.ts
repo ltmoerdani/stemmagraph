@@ -112,6 +112,13 @@ export function checkGedzipLimits(
   return null
 }
 
+/**
+ * exportGedzip input. privacyMode (S-06 Wave 1) flows straight into the
+ * single exportGedcom70 call below, so the archive entry is exactly
+ * what the plain .ged path produces for the same mode: 'clean'
+ * archives ship a redacted gedcom.ged, 'full' (or omitted) archives
+ * ship the unchanged private-archive output.
+ */
 export type ExportGedzipInput = ExportGedcom70Input & {
   /**
    * Optional guard threshold override. Production callers leave this
