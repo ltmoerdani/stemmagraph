@@ -1,0 +1,93 @@
+{
+  "app": {
+    "brand": "FamilyTree"
+  },
+  "header": {
+    "language": "Bahasa",
+    "nav": {
+      "dashboard": "Dasbor",
+      "familyTree": "Silsilah Keluarga"
+    },
+    "searchPlaceholder": "Cari anggota keluarga..."
+  },
+  "userMenu": {
+    "close": "Tutup menu pengguna",
+    "profile": "Profil",
+    "settings": "Pengaturan",
+    "signOut": "Keluar"
+  },
+  "bottomNav": {
+    "generation": "Generasi:",
+    "addMember": "Tambah Anggota",
+    "export": "Ekspor",
+    "print": "Cetak",
+    "share": "Bagikan"
+  },
+  "toolbar": {
+    "dashboard": "Dasbor",
+    "unsavedConfirm": "Ada perubahan yang belum disimpan. Yakin ingin keluar dari mode edit?",
+    "view": "Tampilan:",
+    "viewMode": {
+      "tree": "Pohon",
+      "card": "Kartu",
+      "list": "Daftar"
+    },
+    "mode": "Mode:",
+    "editMode": "Mode Edit",
+    "viewModeLabel": "Mode Lihat",
+    "filter": "Filter:",
+    "allGenerations": "Semua Generasi",
+    "generationN": "Generasi {{n}}",
+    "living": "Hidup",
+    "deceased": "Wafat",
+    "saveAll": "Simpan Semua",
+    "exitEdit": "Keluar Edit",
+    "editActive": "Mode edit aktif. Klik kartu untuk mengedit, gunakan ikon + untuk menambah anggota",
+    "editTip": "Tips: klik area kosong untuk keluar dari mode edit"
+  },
+  "dashboard": {
+    "nav": "Dasbor",
+    "cardView": "Tampilan Kartu",
+    "listView": "Tampilan Daftar",
+    "treeCount_other": "{{count}} Silsilah Keluarga (Mode Pengembangan)",
+    "memberCount_other": "{{count}} Anggota",
+    "familyTreesTitle": "Silsilah Keluarga",
+    "familyTreesSubtitle": "Kelola dan jelajahi silsilah keluarga Anda",
+    "createNew": "Buat Silsilah Keluarga Baru",
+    "createNewDesc": "Mulai bangun silsilah keluarga baru",
+    "members_one": "{{count}} anggota",
+    "members_other": "{{count}} anggota",
+    "generations_one": "{{count}} generasi",
+    "generations_other": "{{count}} generasi",
+    "updated": "Diperbarui: {{date}}",
+    "open": "BUKA",
+    "table": {
+      "name": "Nama Silsilah",
+      "members": "Anggota",
+      "generations": "Generasi",
+      "lastUpdated": "Terakhir Diperbarui",
+      "actions": "Aksi"
+    },
+    "created": "Dibuat {{date}}",
+    "emptyTitle": "Belum Ada Silsilah",
+    "emptyDesc": "Mulai dengan membuat silsilah pertama Anda",
+    "createFirst": "Buat Silsilah Pertama"
+  },
+  "createModal": {
+    "title": "Buat Silsilah Keluarga Baru",
+    "nameLabel": "Nama Keluarga",
+    "placeholder": "cth. Keluarga Sutrisno, Keluarga Handayani",
+    "errorRequired": "Nama keluarga wajib diisi",
+    "errorMinLength": "Nama keluarga minimal 3 karakter",
+    "errorFailed": "Gagal membuat silsilah. Silakan coba lagi.",
+    "tipsTitle": "Tips Penamaan:",
+    "tips": {
+      "surname": "Gunakan nama marga atau nama keluarga besar",
+      "examples": "Contoh: \"Keluarga Wijaya\", \"Klan Sitorus\"",
+      "avoidSpecific": "Hindari nama yang terlalu spesifik"
+    },
+    "cancel": "BATAL",
+    "creating": "MEMBUAT...",
+    "create": "BUAT"
+  }
+}

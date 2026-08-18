@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Eye, Edit3, Save, X, ArrowLeft } from 'lucide-react';
 import { useFamilyStore } from '../../store/familyStore';
+import { useTranslation } from 'react-i18next';
 
 interface ToolbarProps {
   onBackToDashboard?: () => void;
@@ -8,6 +9,7 @@ interface ToolbarProps {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
   const { viewMode, setViewMode, editMode, setEditMode, hasUnsavedChanges } = useFamilyStore();
+  const { t } = useTranslation();
 
   const handleViewChange = (type: 'tree' | 'card' | 'list') => {
     setViewMode({ type });
@@ -15,7 +17,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
 
   const handleEditModeToggle = () => {
     if (editMode && hasUnsavedChanges) {
-      if (confirm('You have unsaved changes. Are you sure you want to exit edit mode?')) {
+      if (confirm(t('toolbar.unsavedConfirm'))) {
         setEditMode(false);
       }
     } else {
@@ -34,7 +36,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Dashboard</span>
+              <span>{t('toolbar.dashboard')}</span>
             </button>
           )}
 
@@ -45,7 +47,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
 
           {/* View Mode */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">View:</span>
+            <span className="text-sm font-medium text-gray-700">{t('toolbar.view')}</span>
             <div className="flex rounded-lg border border-gray-300">
               <button
                 onClick={() => handleViewChange('tree')}
@@ -55,7 +57,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Tree
+                {t('toolbar.viewMode.tree')}
               </button>
               <button
                 onClick={() => handleViewChange('card')}
@@ -65,7 +67,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Card
+                {t('toolbar.viewMode.card')}
               </button>
               <button
                 onClick={() => handleViewChange('list')}
@@ -75,7 +77,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                List
+                {t('toolbar.viewMode.list')}
               </button>
             </div>
           </div>
@@ -83,7 +85,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
           {/* Edit Mode Toggle - Only for Tree View */}
           {viewMode.type === 'tree' && (
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">Mode:</span>
+              <span className="text-sm font-medium text-gray-700">{t('toolbar.mode')}</span>
               <button
                 onClick={handleEditModeToggle}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
@@ -95,7 +97,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                 {editMode ? (
                   <>
                     <Edit3 className="w-4 h-4" />
-                    <span className="font-medium">Edit Mode</span>
+                    <span className="font-medium">{t('toolbar.editMode')}</span>
                     {hasUnsavedChanges && (
                       <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
                     )}
@@ -103,7 +105,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                 ) : (
                   <>
                     <Eye className="w-4 h-4" />
-                    <span>View Mode</span>
+                    <span>{t('toolbar.viewModeLabel')}</span>
                   </>
                 )}
               </button>
@@ -112,21 +114,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
 
           {/* Filter */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">Filter:</span>
-            <select 
+            <span className="text-sm font-medium text-gray-700">{t('toolbar.filter')}</span>
+            <select
               className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
               value={viewMode.selectedGeneration ?? ''}
-              onChange={(e) => setViewMode({ 
-                selectedGeneration: e.target.value ? parseInt(e.target.value) : null 
+              onChange={(e) => setViewMode({
+                selectedGeneration: e.target.value ? parseInt(e.target.value) : null
               })}
             >
-              <option value="">All Generations</option>
-              <option value="1">Generation 1</option>
-              <option value="2">Generation 2</option>
-              <option value="3">Generation 3</option>
-              <option value="4">Generation 4</option>
+              <option value="">{t('toolbar.allGenerations')}</option>
+              <option value="1">{t('toolbar.generationN', { n: 1 })}</option>
+              <option value="2">{t('toolbar.generationN', { n: 2 })}</option>
+              <option value="3">{t('toolbar.generationN', { n: 3 })}</option>
+              <option value="4">{t('toolbar.generationN', { n: 4 })}</option>
             </select>
-            
+
             <label className="flex items-center space-x-2 text-sm">
               <input
                 type="checkbox"
@@ -134,9 +136,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                 onChange={(e) => setViewMode({ showAlive: e.target.checked })}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span>Living</span>
+              <span>{t('toolbar.living')}</span>
             </label>
-            
+
             <label className="flex items-center space-x-2 text-sm">
               <input
                 type="checkbox"
@@ -144,7 +146,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
                 onChange={(e) => setViewMode({ showDeceased: e.target.checked })}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span>Deceased</span>
+              <span>{t('toolbar.deceased')}</span>
             </label>
           </div>
         </div>
@@ -157,15 +159,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
               className="flex items-center space-x-1 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
             >
               <Save className="w-4 h-4" />
-              <span>Save All</span>
+              <span>{t('toolbar.saveAll')}</span>
             </button>
-            
+
             <button
               onClick={() => setEditMode(false)}
               className="flex items-center space-x-1 px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
             >
               <X className="w-4 h-4" />
-              <span>Exit Edit</span>
+              <span>{t('toolbar.exitEdit')}</span>
             </button>
           </div>
         )}
@@ -178,11 +180,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onBackToDashboard }) => {
             <div className="flex items-center space-x-2">
               <Edit3 className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-800">
-                Edit Mode Active - Click a card to edit, use the + icon to add a member
+                {t('toolbar.editActive')}
               </span>
             </div>
             <div className="text-xs text-blue-600">
-              Tip: Click an empty area to exit edit mode
+              {t('toolbar.editTip')}
             </div>
           </div>
         </div>

@@ -1,0 +1,132 @@
+{
+  "controls": {
+    "miniMap": "Mini Map",
+    "legend": "Legend",
+    "memberTitle": "{{name}} (Gen {{generation}})",
+    "members_one": "{{count}} member",
+    "members_other": "{{count}} members",
+    "generations_one": "{{count}} generation",
+    "generations_other": "{{count}} generations",
+    "male": "Male",
+    "female": "Female",
+    "deceased": "Deceased",
+    "familyRelationship": "Family Relationship",
+    "married": "Married"
+  },
+  "table": {
+    "columns": {
+      "photo": "Photo",
+      "name": "Name",
+      "relationship": "Relationship",
+      "birth": "Birth",
+      "age": "Age",
+      "status": "Status",
+      "location": "Location",
+      "contact": "Contact"
+    },
+    "living": "Living",
+    "deceased": "Deceased",
+    "ageYears": "{{age}} yrs",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "detail": "Detail",
+    "selected_one": "{{count}} member selected",
+    "selected_other": "{{count}} members selected",
+    "export": "Export",
+    "sendMessage": "Send Message",
+    "group": "Group",
+    "delete": "Delete",
+    "clearSelection": "Clear Selection",
+    "membersTitle_one": "{{count}} Family Member",
+    "membersTitle_other": "{{count}} Family Members",
+    "searchResultsFor": "Search results for \"{{query}}\"",
+    "show": "Show:",
+    "all": "All",
+    "columnsButton": "Columns",
+    "showColumns": "Show Columns:",
+    "filterName": "Filter by name...",
+    "filterLocation": "Filter by location...",
+    "childOf": "Child of {{name}}",
+    "child": "Child",
+    "grandparent": "Grandparent",
+    "parent": "Parent",
+    "descendant": "Descendant",
+    "noMembers": "No members found",
+    "noMembersHint": "Try adjusting the filters or search keywords",
+    "showing": "Showing {{from}}-{{to}} of {{total}} members",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "relationship": {
+    "selectType": "Select relationship type:",
+    "close": "Close modal",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "titles": {
+      "ancestor": "Add Ancestor",
+      "descendant": "Add Descendant",
+      "partnerLeft": "Add Partner (Left)",
+      "partnerRight": "Add Partner (Right)"
+    },
+    "position": {
+      "up": "The new member will appear above this card",
+      "down": "The new member will appear below this card",
+      "left": "The new member will appear to the left of this card",
+      "right": "The new member will appear to the right of this card"
+    },
+    "options": {
+      "husband": {
+        "label": "Husband",
+        "description": "Add husband as partner"
+      },
+      "wife": {
+        "label": "Wife",
+        "description": "Add wife as partner"
+      },
+      "partner": {
+        "label": "Partner",
+        "description": "Add life partner"
+      },
+      "father": {
+        "label": "Father",
+        "description": "Add biological father"
+      },
+      "mother": {
+        "label": "Mother",
+        "description": "Add biological mother"
+      },
+      "both_parents": {
+        "label": "Both Parents",
+        "description": "Add both father and mother at once"
+      },
+      "grandfather": {
+        "label": "Grandfather",
+        "description": "Add grandfather"
+      },
+      "grandmother": {
+        "label": "Grandmother",
+        "description": "Add grandmother"
+      },
+      "biological_child": {
+        "label": "Biological Child",
+        "description": "Add biological child"
+      },
+      "step_child": {
+        "label": "Stepchild",
+        "description": "Add stepchild"
+      },
+      "adopted_child": {
+        "label": "Adopted Child",
+        "description": "Add adopted child"
+      },
+      "grandchild": {
+        "label": "Grandchild",
+        "description": "Add grandchild"
+      },
+      "great_grandchild": {
+        "label": "Great-grandchild",
+        "description": "Add great-grandchild"
+      }
+    }
+  }
+}

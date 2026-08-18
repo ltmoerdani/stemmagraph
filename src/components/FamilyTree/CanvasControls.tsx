@@ -74,8 +74,8 @@ export const CanvasControls: React.FC = () => {
                 <div className="absolute border-2 border-blue-600 bg-blue-200/40 w-8 h-6 top-2 left-2 rounded-sm" />
               </div>
               <div className="flex justify-between text-xs text-gray-500">
-                <span>{members.length} members</span>
-                <span>{[...new Set(members.map(m => m.generation))].length} generations</span>
+                <span>{t('controls.members', { count: members.length })}</span>
+                <span>{t('controls.generations', { count: [...new Set(members.map(m => m.generation))].length })}</span>
               </div>
             </div>
           )}
@@ -84,25 +84,25 @@ export const CanvasControls: React.FC = () => {
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 border-2 border-blue-200 rounded bg-white shrink-0"></div>
-                <span className="text-gray-700">Male</span>
+                <span className="text-gray-700">{t('controls.male')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 border-2 border-pink-200 rounded bg-white shrink-0"></div>
-                <span className="text-gray-700">Female</span>
+                <span className="text-gray-700">{t('controls.female')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 border-2 border-gray-400 rounded bg-gray-50 shrink-0"></div>
-                <span className="text-gray-700">Deceased</span>
+                <span className="text-gray-700">{t('controls.deceased')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-0.5 bg-gray-600 shrink-0"></div>
-                <span className="text-gray-700">Family Relationship</span>
+                <span className="text-gray-700">{t('controls.familyRelationship')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-400 rounded-full text-xs flex items-center justify-center shrink-0">
                   💍
                 </div>
-                <span className="text-gray-700">Married</span>
+                <span className="text-gray-700">{t('controls.married')}</span>
               </div>
             </div>
           )}

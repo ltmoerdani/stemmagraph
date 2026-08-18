@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useFamilyStore } from '../../store/familyStore';
 import type { FamilyMember } from '../../types/family';
+import { useTranslation } from 'react-i18next';
+import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -96,6 +98,7 @@ const TableRow: React.FC<TableRowProps> = ({
   getRelationshipText,
   highlightText
 }) => {
+  const { t, i18n } = useTranslation(['canvas', 'common']);
   const age = calculateAge(member.birthDate, member.deathDate);
 
   return (
@@ -173,11 +176,7 @@ const TableRow: React.FC<TableRowProps> = ({
       {visibleColumns.birth && (
         <td className="px-4 py-3">
           <div className="text-sm text-gray-700">
-            {new Date(member.birthDate).toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric'
-            })}
+            {formatDateWithLocale(member.birthDate, i18n.language)}
           </div>
         </td>
       )}
@@ -187,7 +186,7 @@ const TableRow: React.FC<TableRowProps> = ({
           <div className={`text-sm font-medium ${
             member.isAlive ? 'text-gray-900' : 'text-gray-500'
           }`}>
-            {age} thn {!member.isAlive && '✝'}
+            {t('table.ageYears', { age })} {!member.isAlive && '✝'}
           </div>
         </td>
       )}
@@ -199,7 +198,7 @@ const TableRow: React.FC<TableRowProps> = ({
               member.isAlive ? 'bg-green-500' : 'bg-gray-500'
             }`} />
             <span className="text-xs text-gray-700">
-              {member.isAlive ? 'Living' : 'Deceased'}
+              {member.isAlive ? t('table.living') : t('table.deceased')}
             </span>
           </div>
         </td>
@@ -225,7 +224,7 @@ const TableRow: React.FC<TableRowProps> = ({
               <button 
                 onClick={(e) => e.stopPropagation()}
                 className="p-1 text-green-600 hover:bg-green-100 rounded transition-colors"
-                title="WhatsApp"
+                title={t('table.whatsapp')}
               >
                 <Phone className="w-3 h-3" />
               </button>
@@ -234,7 +233,7 @@ const TableRow: React.FC<TableRowProps> = ({
               <button 
                 onClick={(e) => e.stopPropagation()}
                 className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
-                title="Email"
+                title={t('table.email')}
               >
                 <Mail className="w-3 h-3" />
               </button>
@@ -245,7 +244,7 @@ const TableRow: React.FC<TableRowProps> = ({
                 onMemberSelect(member);
               }}
               className="p-1 text-gray-600 hover:bg-gray-100 rounded transition-colors"
-              title="Detail"
+              title={t('table.detail')}
             >
               <Info className="w-3 h-3" />
             </button>
@@ -278,6 +277,7 @@ export const FamilyTable: React.FC = () => {
     selectedMember, 
     setSelectedMember 
   } = useFamilyStore();
+  const { t } = useTranslation('canvas');
 
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'name', direction: 'asc' });
@@ -396,11 +396,11 @@ export const FamilyTable: React.FC = () => {
   const getRelationshipText = (member: FamilyMember) => {
     if (member.parentIds && member.parentIds.length > 0) {
       const parent = members.find((m: FamilyMember) => m.id === member.parentIds![0]);
-      return parent ? `Child of ${parent.name}` : 'Child';
+      return parent ? t('table.childOf', { name: parent.name }) : t('table.child');
     }
-    if (member.generation === 1) return 'Grandparent';
-    if (member.generation === 2) return 'Parent';
-    return 'Descendant';
+    if (member.generation === 1) return t('table.grandparent');
+    if (member.generation === 2) return t('table.parent');
+    return t('table.descendant');
   };
 
   const handleSort = (field: SortField) => {
@@ -493,18 +493,18 @@ export const FamilyTable: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h3 className="text-lg font-semibold text-gray-900">
-              {filteredMembers.length} Family Members
+              {t('table.membersTitle', { count: filteredMembers.length })}
             </h3>
             {searchQuery && (
               <div className="text-sm text-gray-600">
-                Search results for "{searchQuery}"
+                {t('table.searchResultsFor', { query: searchQuery })}
               </div>
             )}
           </div>
 
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Tampilkan:</span>
+              <span className="text-sm text-gray-600">{t('table.show')}</span>
               <select
                 value={itemsPerPage}
                 onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
@@ -513,7 +513,7 @@ export const FamilyTable: React.FC = () => {
                 <option value={25}>25</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
-                <option value={-1}>Semua</option>
+                <option value={-1}>{t('table.all')}</option>
               </select>
             </div>
 
@@ -522,7 +522,7 @@ export const FamilyTable: React.FC = () => {
               className="flex items-center space-x-2 px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
             >
               <Settings className="w-4 h-4" />
-              <span className="text-sm">Kolom</span>
+              <span className="text-sm">{t('table.columnsButton')}</span>
             </button>
           </div>
         </div>
@@ -532,7 +532,7 @@ export const FamilyTable: React.FC = () => {
       {showColumnSettings && (
         <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
           <div className="flex items-center space-x-6">
-            <span className="text-sm font-medium text-gray-700">Tampilkan Kolom:</span>
+            <span className="text-sm font-medium text-gray-700">{t('table.showColumns')}</span>
             {Object.entries(visibleColumns).map(([key, visible]) => (
               <label key={key} className="flex items-center space-x-2">
                 <input
@@ -542,7 +542,7 @@ export const FamilyTable: React.FC = () => {
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-600 capitalize">
-                  {getColumnLabel(key)}
+                  {getColumnLabel(key, t)}
                 </span>
               </label>
             ))}
@@ -645,7 +645,7 @@ export const FamilyTable: React.FC = () => {
                     <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Filter by name..."
+                      placeholder={t('table.filterName')}
                       value={columnFilters.name || ''}
                       onChange={(e) => setColumnFilters(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"

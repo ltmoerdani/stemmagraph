@@ -4,10 +4,13 @@ import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { navigate } from '../../utils/routing';
+import { useTranslation } from 'react-i18next';
+import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
   const { familyTrees, viewMode, setViewMode } = useDashboardStore();
+  const { t, i18n } = useTranslation();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const currentMemberCount = familyTrees.reduce((total, tree) => total + tree.memberCount, 0);
@@ -22,11 +25,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
+    return formatDateWithLocale(dateString, i18n.language);
   };
 
   // Helper: Render the create new card button
@@ -35,14 +34,14 @@ export const Dashboard: React.FC = () => {
       type="button"
       onClick={handleCreateTree}
       className="group relative bg-white rounded-xl border-2 border-dashed transition-all duration-200 h-48 flex flex-col items-center justify-center cursor-pointer border-gray-300 hover:border-green-500 hover:bg-green-50"
-      aria-label="Create New Family Tree"
+      aria-label={t('dashboard.createNew')}
     >
       <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-green-200 transition-colors">
         <Plus className="w-6 h-6 text-green-600" />
       </div>
-      <h3 className="font-semibold text-gray-900 mb-1">Create New Family Tree</h3>
+      <h3 className="font-semibold text-gray-900 mb-1">{t('dashboard.createNew')}</h3>
       <p className="text-sm text-gray-500 text-center px-4">
-        Start building a new family tree
+        {t('dashboard.createNewDesc')}
       </p>
     </button>
   );
@@ -74,7 +73,7 @@ export const Dashboard: React.FC = () => {
                     ? 'bg-white text-gray-900 shadow-xs' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
-                title="Card View"
+                title={t('dashboard.cardView')}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
@@ -85,7 +84,7 @@ export const Dashboard: React.FC = () => {
                     ? 'bg-white text-gray-900 shadow-xs' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
-                title="List View"
+                title={t('dashboard.listView')}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -115,10 +114,10 @@ export const Dashboard: React.FC = () => {
       <div className="px-6 py-3 border-b bg-blue-50 border-blue-200">
         <div className="flex items-center space-x-4">
           <span className="font-medium text-blue-800">
-            {familyTrees.length} Family Tree (Development Mode)
+            {t('dashboard.treeCount', { count: familyTrees.length })}
           </span>
           <span className="text-blue-700">•</span>
-          <span className="text-blue-700">{currentMemberCount} Members</span>
+          <span className="text-blue-700">{t('dashboard.memberCount', { count: currentMemberCount })}</span>
         </div>
       </div>
 
@@ -128,9 +127,9 @@ export const Dashboard: React.FC = () => {
           {/* Header Section */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Family Trees</h2>
+              <h2 className="text-3xl font-bold text-gray-900">{t('dashboard.familyTreesTitle')}</h2>
               <p className="text-gray-600 mt-1">
-                Manage and explore your family trees
+                {t('dashboard.familyTreesSubtitle')}
               </p>
             </div>
             
@@ -140,7 +139,7 @@ export const Dashboard: React.FC = () => {
                 className="flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700"
               >
                 <Plus className="w-5 h-5" />
-                <span>Create New Family Tree</span>
+                <span>{t('dashboard.createNew')}</span>
               </button>
             )}
           </div>
@@ -173,11 +172,13 @@ export const Dashboard: React.FC = () => {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <Users className="w-4 h-4" />
-                        <span>{tree.memberCount} members • {tree.generationCount} generations</span>
+                        <span>
+                          {t('dashboard.members', { count: tree.memberCount })} • {t('dashboard.generations', { count: tree.generationCount })}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <Calendar className="w-4 h-4" />
-                        <span>Updated: {formatDate(tree.lastUpdated)}</span>
+                        <span>{t('dashboard.updated', { date: formatDate(tree.lastUpdated) })}</span>
                       </div>
                     </div>
 
@@ -187,7 +188,7 @@ export const Dashboard: React.FC = () => {
                         onClick={() => handleOpenTree(tree.id)}
                         className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                       >
-                        OPEN
+                        {t('dashboard.open')}
                       </button>
                       <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         <Settings className="w-4 h-4 text-gray-600" />
@@ -204,11 +205,11 @@ export const Dashboard: React.FC = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Family Tree Name</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Members</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Generations</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Last Updated</th>
-                      <th className="text-center py-4 px-6 font-semibold text-gray-900">Actions</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.name')}</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.members')}</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.generations')}</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.lastUpdated')}</th>
+                      <th className="text-center py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -240,7 +241,7 @@ export const Dashboard: React.FC = () => {
                               onClick={() => handleOpenTree(tree.id)}
                               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                             >
-                              OPEN
+                              {t('dashboard.open')}
                             </button>
                             <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                               <Settings className="w-4 h-4 text-gray-600" />
@@ -256,13 +257,13 @@ export const Dashboard: React.FC = () => {
               {familyTrees.length === 0 && (
                 <div className="text-center py-12">
                   <TreePine className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Family Tree Yet</h3>
-                  <p className="text-gray-500 mb-6">Start by creating your first family tree</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.emptyTitle')}</h3>
+                  <p className="text-gray-500 mb-6">{t('dashboard.emptyDesc')}</p>
                   <button
                     onClick={handleCreateTree}
                     className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
                   >
-                    Create First Family Tree
+                    {t('dashboard.createFirst')}
                   </button>
                 </div>
               )}

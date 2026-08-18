@@ -1,0 +1,132 @@
+{
+  "controls": {
+    "miniMap": "Peta Mini",
+    "legend": "Legenda",
+    "memberTitle": "{{name}} (Gen {{generation}})",
+    "members_one": "{{count}} anggota",
+    "members_other": "{{count}} anggota",
+    "generations_one": "{{count}} generasi",
+    "generations_other": "{{count}} generasi",
+    "male": "Laki-laki",
+    "female": "Perempuan",
+    "deceased": "Wafat",
+    "familyRelationship": "Hubungan Keluarga",
+    "married": "Menikah"
+  },
+  "table": {
+    "columns": {
+      "photo": "Foto",
+      "name": "Nama",
+      "relationship": "Hubungan",
+      "birth": "Lahir",
+      "age": "Usia",
+      "status": "Status",
+      "location": "Lokasi",
+      "contact": "Kontak"
+    },
+    "living": "Hidup",
+    "deceased": "Wafat",
+    "ageYears": "{{age}} thn",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "detail": "Detail",
+    "selected_one": "{{count}} anggota dipilih",
+    "selected_other": "{{count}} anggota dipilih",
+    "export": "Ekspor",
+    "sendMessage": "Kirim Pesan",
+    "group": "Grup",
+    "delete": "Hapus",
+    "clearSelection": "Batal Pilih",
+    "membersTitle_one": "{{count}} Anggota Keluarga",
+    "membersTitle_other": "{{count}} Anggota Keluarga",
+    "searchResultsFor": "Hasil pencarian untuk \"{{query}}\"",
+    "show": "Tampilkan:",
+    "all": "Semua",
+    "columnsButton": "Kolom",
+    "showColumns": "Tampilkan Kolom:",
+    "filterName": "Filter nama...",
+    "filterLocation": "Filter lokasi...",
+    "childOf": "Anak dari {{name}}",
+    "child": "Anak",
+    "grandparent": "Kakek/Nenek",
+    "parent": "Orang Tua",
+    "descendant": "Keturunan",
+    "noMembers": "Tidak ada anggota ditemukan",
+    "noMembersHint": "Coba ubah filter atau kata kunci pencarian",
+    "showing": "Menampilkan {{from}}-{{to}} dari {{total}} anggota",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya"
+  },
+  "relationship": {
+    "selectType": "Pilih jenis hubungan:",
+    "close": "Tutup modal",
+    "cancel": "Batal",
+    "continue": "Lanjutkan",
+    "titles": {
+      "ancestor": "Tambah Leluhur",
+      "descendant": "Tambah Keturunan",
+      "partnerLeft": "Tambah Pasangan (Kiri)",
+      "partnerRight": "Tambah Pasangan (Kanan)"
+    },
+    "position": {
+      "up": "Anggota baru akan muncul di atas kartu ini",
+      "down": "Anggota baru akan muncul di bawah kartu ini",
+      "left": "Anggota baru akan muncul di kiri kartu ini",
+      "right": "Anggota baru akan muncul di kanan kartu ini"
+    },
+    "options": {
+      "husband": {
+        "label": "Suami",
+        "description": "Tambahkan suami sebagai pasangan"
+      },
+      "wife": {
+        "label": "Istri",
+        "description": "Tambahkan istri sebagai pasangan"
+      },
+      "partner": {
+        "label": "Pasangan",
+        "description": "Tambahkan pasangan hidup"
+      },
+      "father": {
+        "label": "Ayah",
+        "description": "Tambahkan ayah kandung"
+      },
+      "mother": {
+        "label": "Ibu",
+        "description": "Tambahkan ibu kandung"
+      },
+      "both_parents": {
+        "label": "Kedua Orang Tua",
+        "description": "Tambahkan ayah dan ibu sekaligus"
+      },
+      "grandfather": {
+        "label": "Kakek",
+        "description": "Tambahkan kakek"
+      },
+      "grandmother": {
+        "label": "Nenek",
+        "description": "Tambahkan nenek"
+      },
+      "biological_child": {
+        "label": "Anak Kandung",
+        "description": "Tambahkan anak kandung"
+      },
+      "step_child": {
+        "label": "Anak Tiri",
+        "description": "Tambahkan anak tiri"
+      },
+      "adopted_child": {
+        "label": "Anak Angkat",
+        "description": "Tambahkan anak angkat"
+      },
+      "grandchild": {
+        "label": "Cucu",
+        "description": "Tambahkan cucu"
+      },
+      "great_grandchild": {
+        "label": "Cicit",
+        "description": "Tambahkan cicit"
+      }
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "app": {
+    "brand": "FamilyTree"
+  },
+  "header": {
+    "language": "Language",
+    "nav": {
+      "dashboard": "Dashboard",
+      "familyTree": "Family Tree"
+    },
+    "searchPlaceholder": "Search family members..."
+  },
+  "userMenu": {
+    "close": "Close user menu",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signOut": "Sign Out"
+  },
+  "bottomNav": {
+    "generation": "Generation:",
+    "addMember": "Add Member",
+    "export": "Export",
+    "print": "Print",
+    "share": "Share"
+  },
+  "toolbar": {
+    "dashboard": "Dashboard",
+    "unsavedConfirm": "You have unsaved changes. Are you sure you want to exit edit mode?",
+    "view": "View:",
+    "viewMode": {
+      "tree": "Tree",
+      "card": "Card",
+      "list": "List"
+    },
+    "mode": "Mode:",
+    "editMode": "Edit Mode",
+    "viewModeLabel": "View Mode",
+    "filter": "Filter:",
+    "allGenerations": "All Generations",
+    "generationN": "Generation {{n}}",
+    "living": "Living",
+    "deceased": "Deceased",
+    "saveAll": "Save All",
+    "exitEdit": "Exit Edit",
+    "editActive": "Edit Mode Active - Click a card to edit, use the + icon to add a member",
+    "editTip": "Tip: Click an empty area to exit edit mode"
+  },
+  "dashboard": {
+    "nav": "Dashboard",
+    "cardView": "Card View",
+    "listView": "List View",
+    "treeCount_one": "{{count}} Family Tree (Development Mode)",
+    "treeCount_other": "{{count}} Family Trees (Development Mode)",
+    "memberCount_one": "{{count}} Member",
+    "memberCount_other": "{{count}} Members",
+    "familyTreesTitle": "Family Trees",
+    "familyTreesSubtitle": "Manage and explore your family trees",
+    "createNew": "Create New Family Tree",
+    "createNewDesc": "Start building a new family tree",
+    "members_one": "{{count}} member",
+    "members_other": "{{count}} members",
+    "generations_one": "{{count}} generation",
+    "generations_other": "{{count}} generations",
+    "updated": "Updated: {{date}}",
+    "open": "OPEN",
+    "table": {
+      "name": "Family Tree Name",
+      "members": "Members",
+      "generations": "Generations",
+      "lastUpdated": "Last Updated",
+      "actions": "Actions"
+    },
+    "created": "Created {{date}}",
+    "emptyTitle": "No Family Tree Yet",
+    "emptyDesc": "Start by creating your first family tree",
+    "createFirst": "Create First Family Tree"
+  },
+  "createModal": {
+    "title": "Create New Family Tree",
+    "nameLabel": "Family Name",
+    "placeholder": "e.g., The Sutrisno Family, The Handayani Family",
+    "errorRequired": "Family name is required",
+    "errorMinLength": "Family name must be at least 3 characters",
+    "errorFailed": "Failed to create family tree. Please try again.",
+    "tipsTitle": "Naming Tips:",
+    "tips": {
+      "surname": "Use a surname or extended family name",
+      "examples": "Examples: \"The Wijaya Family\", \"The Sitorus Clan\"",
+      "avoidSpecific": "Avoid overly specific names"
+    },
+    "cancel": "CANCEL",
+    "creating": "CREATING...",
+    "create": "CREATE"
+  }
+}
