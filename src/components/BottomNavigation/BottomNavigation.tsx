@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Download, Printer, Share2 } from 'lucide-react';
 import { useFamilyStore } from '../../store/familyStore';
 import { UnifiedMemberModal } from '../Forms/UnifiedMemberModal';
 
 export const BottomNavigation: React.FC = () => {
+  const { t } = useTranslation();
   const { stats } = useFamilyStore();
   const [showAddModal, setShowAddModal] = useState(false);
 
