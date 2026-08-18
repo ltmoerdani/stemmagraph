@@ -256,18 +256,8 @@ const TableRow: React.FC<TableRowProps> = ({
   );
 };
 
-const getColumnLabel = (key: string): string => {
-  const columnLabels: Record<string, string> = {
-    photo: 'Photo',
-    name: 'Name',
-    relationship: 'Relationship',
-    birth: 'Birth',
-    age: 'Age',
-    status: 'Status',
-    location: 'Location',
-    contact: 'Contact'
-  };
-  return columnLabels[key] || key;
+const getColumnLabel = (key: string, t: (key: string) => string): string => {
+  return t(`table.columns.${key}`);
 };
 
 export const FamilyTable: React.FC = () => {
