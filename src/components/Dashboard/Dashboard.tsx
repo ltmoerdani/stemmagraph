@@ -1,30 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Users, Calendar, Settings, List, Grid3X3, Crown, TreePine } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine } from 'lucide-react';
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { navigate, replaceRoute } from '../../utils/routing';
+import { navigate } from '../../utils/routing';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
-  const { familyTrees, viewMode, setViewMode, isPremium } = useDashboardStore();
+  const { familyTrees, viewMode, setViewMode } = useDashboardStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false);
 
-  const maxMembersPerTree = isPremium ? Infinity : 15;
   const currentMemberCount = familyTrees.reduce((total, tree) => total + tree.memberCount, 0);
-
-  // Check for upgrade success
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('upgraded') === 'true') {
-      setShowUpgradeSuccess(true);
-      // Remove the parameter from URL
-      replaceRoute('/dashboard');
-      // Hide success message after 5 seconds
-      setTimeout(() => setShowUpgradeSuccess(false), 5000);
-    }
-  }, []);
 
   const handleCreateTree = () => {
     setShowCreateModal(true);
@@ -33,10 +19,6 @@ export const Dashboard: React.FC = () => {
   const handleOpenTree = (treeId: string) => {
     // Navigate to family tree interface
     navigate(`/family-tree/${treeId}`);
-  };
-
-  const handleUpgrade = () => {
-    navigate('/upgrade');
   };
 
   const formatDate = (dateString: string) => {
@@ -67,27 +49,6 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50" data-testid="dashboard">
-      {/* Upgrade Success Notification */}
-      {showUpgradeSuccess && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 animate-in slide-in-from-right-4 duration-300">
-          <div className="flex items-center space-x-3">
-            <Crown className="w-6 h-6" />
-            <div>
-              <p className="font-semibold">Congratulations! Your Account Is Now Premium</p>
-              <p className="text-sm opacity-90">Enjoy all unlimited features</p>
-            </div>
-            <button
-              onClick={() => setShowUpgradeSuccess(false)}
-              className="text-white hover:text-gray-200"
-              aria-label="Close upgrade notification"
-            >
-              {/* Use lucide-react X icon safely */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -151,42 +112,13 @@ export const Dashboard: React.FC = () => {
       </header>
 
       {/* Status Bar */}
-      <div className={`px-6 py-3 border-b ${isPremium ? 'bg-linear-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {isPremium ? (
-              <div className="flex items-center space-x-2">
-                <Crown className="w-5 h-5 text-yellow-600" />
-                <span className="font-medium text-yellow-800">Premium Plan</span>
-                <span className="text-yellow-700">• Unlimited Family Trees & Members</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <span className="font-medium text-blue-800">
-                  Free Account: {familyTrees.length} Family Tree (Development Mode)
-                </span>
-                <span className="text-blue-700">•</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-blue-700">{currentMemberCount}/{maxMembersPerTree} Members</span>
-                  <div className="w-24 h-2 bg-blue-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-600 transition-all duration-300"
-                      style={{ width: `${Math.min(100, (currentMemberCount / maxMembersPerTree) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {!isPremium && (
-            <button 
-              onClick={handleUpgrade}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Upgrade Premium $9.99/year
-            </button>
-          )}
+      <div className="px-6 py-3 border-b bg-blue-50 border-blue-200">
+        <div className="flex items-center space-x-4">
+          <span className="font-medium text-blue-800">
+            {familyTrees.length} Family Tree (Development Mode)
+          </span>
+          <span className="text-blue-700">•</span>
+          <span className="text-blue-700">{currentMemberCount} Members</span>
         </div>
       </div>
 
@@ -334,33 +266,6 @@ export const Dashboard: React.FC = () => {
                   </button>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Usage Warning for Free Users */}
-          {!isPremium && currentMemberCount >= maxMembersPerTree * 0.8 && (
-            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <Crown className="w-4 h-4 text-yellow-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-yellow-800">
-                    {currentMemberCount >= maxMembersPerTree ? 'Member limit reached!' : 'Almost full!'}
-                  </h4>
-                  <p className="text-yellow-700 text-sm">
-                    {currentMemberCount >= maxMembersPerTree 
-                      ? 'Upgrade to Premium to add unlimited members.'
-                      : 'Upgrade to Premium for unlimited members and family trees.'}
-                  </p>
-                </div>
-                <button 
-                  onClick={handleUpgrade}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium"
-                >
-                  Upgrade Sekarang
-                </button>
-              </div>
             </div>
           )}
         </div>
