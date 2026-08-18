@@ -21,6 +21,7 @@
 
 import { GEDCStruct } from './vendor/gedcstruct.js'
 import { version as appVersion } from '../../../package.json'
+import { evaluateMemberPrivacy } from '../privacy/exportPrivacyGate'
 import type {
   FamilyMemberRecord,
   MemberRelationship,
