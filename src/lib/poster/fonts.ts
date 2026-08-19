@@ -3,11 +3,20 @@
  *
  * Fonts are LOCAL OFL-licensed Noto builds served from public/fonts, never
  * fetched from the internet at render time. In the browser the loader uses a
- * same-origin fetch; in Node (dev harness) it reads the files from disk.
+ * same-origin fetch; in Node (dev harness) the caller reads the files from
+ * disk and injects them via RenderPosterOptions.fonts.
  *
  * Every embedded font is subset at embed time, so the shipped PDF only
  * carries the glyphs it actually draws.
  */
+
+// @pdf-lib/fontkit (both its UMD and ESM builds) relies on the global
+// regeneratorRuntime for complex-script shaping (Javanese and Balinese
+// syllable state machines). The runtime module already ships in this app's
+// dependency tree via jspdf, so this side-effect import only wires the
+// global; it adds no new dependency.
+import 'regenerator-runtime/runtime';
+
 
 /** Script bucket a character belongs to. */
 export type PosterScript = 'latin' | 'javanese' | 'balinese';
