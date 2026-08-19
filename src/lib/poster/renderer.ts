@@ -159,7 +159,10 @@ function drawConnector(
   });
 }
 
-/** Background chrome: page fill plus a trim-frame decorator at the bleed. */
+/**
+ * Background chrome: page fill, trim-frame decorator at the bleed boundary,
+ * and corner crop marks. Everything is flat vector, RIP friendly.
+ */
 function drawPageChrome(
   page: PDFPage,
   placement: ReturnType<typeof computePlacement>
@@ -180,6 +183,28 @@ function drawPageChrome(
     borderColor: hexToRgb(TRIM_FRAME),
     borderWidth: 0.5,
   });
+  // Corner crop marks (bonus): short strokes from each page corner to the
+  // trim frame so the print shop can align the guillotine cut.
+  const w = placement.pageWidthPt;
+  const h = placement.pageHeightPt;
+  const b = placement.bleedPt;
+  const markColor = { color: hexToRgb(NODE_BORDER), thickness: 0.4 };
+  const drawMarks = (cx: number, cy: number, sx: number, sy: number) => {
+    page.drawLine({
+      start: { x: cx, y: cy },
+      end: { x: cx + sx * b, y: cy },
+      ...markColor,
+    });
+    page.drawLine({
+      start: { x: cx, y: cy },
+      end: { x: cx, y: cy + sy * b },
+      ...markColor,
+    });
+  };
+  drawMarks(0, 0, 1, 1);
+  drawMarks(w, 0, -1, 1);
+  drawMarks(0, h, 1, -1);
+  drawMarks(w, h, -1, -1);
 }
 
 /**

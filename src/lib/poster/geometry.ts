@@ -34,6 +34,24 @@ export const ISO_PAPER_SIZES_MM: Record<
   a0: [841, 1189],
 };
 
+/** Default paper for the poster export: A1, large enough for 3+ generations. */
+export const DEFAULT_PAPER_KIND: Exclude<PosterPaperKind, 'custom'> = 'a1';
+
+/** Paper presets exposed to the UI dropdown (technical labels, mm). */
+export interface PaperPreset {
+  kind: Exclude<PosterPaperKind, 'custom'>;
+  widthMm: number;
+  heightMm: number;
+}
+
+export const POSTER_PAPER_PRESETS: PaperPreset[] = (
+  ['a4', 'a3', 'a2', 'a1', 'a0'] as const
+).map((kind) => ({
+  kind,
+  widthMm: ISO_PAPER_SIZES_MM[kind][0],
+  heightMm: ISO_PAPER_SIZES_MM[kind][1],
+}));
+
 export function mmToPt(mm: number): number {
   return mm * PT_PER_MM;
 }
