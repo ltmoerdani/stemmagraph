@@ -19,6 +19,8 @@ scripts/fixtures-gedcom70/g7validation.json
 scripts/.verify-work/
 # Verify script debug scratch (S-06 typecheck experiment output)
 scripts/.verify-debug/
+# Canvas scale harness scratch (S-09 AC6 bundled layout under test)
+scripts/.verify-canvas-work/
 
 # TypeScript incremental build cache (safety net; current build emits none)
 tsconfig.app.tsbuildinfo
