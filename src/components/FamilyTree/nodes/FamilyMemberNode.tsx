@@ -19,7 +19,7 @@ export type FamilyMemberNodeData = {
   onDelete?: (memberId: string) => void;
   onAddChild: (parentId: string) => void;
   onAddSpouse: (memberId: string) => void;
-  /** Optional fields stamped by the tier layout pass (tierLayoutManager). */
+  /** Optional fields stamped by the tier layout pass (layout/tierLayout). */
   tier?: number;
   generationY?: number;
   familyGroup?: string;

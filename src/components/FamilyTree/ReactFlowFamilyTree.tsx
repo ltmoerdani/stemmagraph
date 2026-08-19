@@ -14,12 +14,10 @@ import {
   ReactFlowProvider,
   useReactFlow,
   Panel,
-  Position,
   BackgroundVariant,
   NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import dagre from 'dagre';
 import type { FamilyMember } from '../../types/family';
 import { FamilyMemberNode, type FamilyMemberFlowNode } from './nodes/FamilyMemberNode';
 import { MarriageEdge } from './edges/MarriageEdge';
@@ -28,7 +26,8 @@ import { SiblingEdge } from './edges/SiblingEdge';
 import { ExportControls } from './controls/ExportControls';
 import { FamilyTreeControls } from './controls/FamilyTreeControls';
 import { MemberEditModal } from './modals/MemberEditModal';
-import { calculateTierLayout, constrainNodeMovement, TierLayout } from './utils/tierLayoutManager';
+import { constrainNodeMovement } from './layout/tierLayout';
+import { dagreTierEngine, getSnapGrid, type TierLayout } from './layout';
 
 // Define custom node and edge types
 const nodeTypes: NodeTypes = {
@@ -41,12 +40,9 @@ const edgeTypes: EdgeTypes = {
   sibling: SiblingEdge,
 };
 
-// Dagre layout configuration
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-const nodeWidth = 200;
-const nodeHeight = 140; // Increased for better bracket spacing
+// Layout engine diinjeksi via interface (S-09 AC1): komponen tidak
+// mengimpor dagre langsung, semua compute ada di ./layout.
+const layoutEngine = dagreTierEngine;
 
 interface ReactFlowFamilyTreeProps {
   members: FamilyMember[];
@@ -54,63 +50,6 @@ interface ReactFlowFamilyTreeProps {
   onMemberAdd?: (member: Partial<FamilyMember>) => void;
   onMemberDelete?: (memberId: string) => void;
 }
-
-/**
- * Converts family members to React Flow nodes with proper positioning
- */
-const getLayoutedElements = (
-  nodes: FamilyMemberFlowNode[],
-  edges: Edge[],
-  direction = 'TB'
-): { nodes: FamilyMemberFlowNode[]; edges: Edge[] } => {
-  const isHorizontal = direction === 'LR';
-  
-  // Configure dagre for bracket-style layout with professional spacing
-  dagreGraph.setGraph({ 
-    rankdir: direction,
-    nodesep: 150, // Enhanced professional spacing between nodes
-    ranksep: 280, // Optimal spacing between generations for brackets
-    marginx: 80,
-    marginy: 80,
-  });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    const newNode = {
-      ...node,
-      targetPosition: isHorizontal ? Position.Left : Position.Top,
-      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
-      position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      },
-    };
-
-    return newNode;
-  });
-
-  return { nodes: layoutedNodes, edges };
-};
-
-/**
- * Converts family members to React Flow nodes with tier-based positioning
- */
-const getTierLayoutedElements = (
-  nodes: FamilyMemberFlowNode[]
-): { nodes: FamilyMemberFlowNode[]; edges: Edge[]; tiers: TierLayout[] } => {
-  const { layoutedNodes, tiers } = calculateTierLayout(nodes);
-  return { nodes: layoutedNodes, edges: [], tiers };
-};
 
 /**
  * Converts family members to React Flow nodes
@@ -259,27 +198,14 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
 
   // Apply tier layout when members change
   useEffect(() => {
-    if (layoutDirection === 'TB') {
-      // Use tier-based layout for vertical arrangement
-      const { nodes: layoutedNodes, tiers: calculatedTiers } = getTierLayoutedElements(
-        initialNodes
-      );
+    // Semua algoritma layout (tier TB / dagre LR) berada di engine.
+    const result = layoutEngine.layout(initialNodes, initialEdges, {
+      direction: layoutDirection,
+    });
 
-      setNodes(layoutedNodes);
-      setEdges(initialEdges); // Use original edges instead of empty array
-      setTiers(calculatedTiers);
-    } else {
-      // Use dagre layout for horizontal arrangement
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        initialNodes,
-        initialEdges,
-        layoutDirection
-      );
-
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
-      setTiers([]);
-    }
+    setNodes(result.nodes);
+    setEdges(layoutDirection === 'TB' ? initialEdges : result.edges);
+    setTiers(result.tiers);
 
     setTimeout(() => {
       fitView({ padding: 0.2 });
@@ -319,24 +245,13 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   }, []);
 
   const handleAutoLayout = useCallback(() => {
-    if (layoutDirection === 'TB') {
-      const { nodes: layoutedNodes, tiers: calculatedTiers } = getTierLayoutedElements(
-        getNodes()
-      );
+    const result = layoutEngine.layout(getNodes(), getEdges(), {
+      direction: layoutDirection,
+    });
 
-      setNodes(layoutedNodes);
-      setEdges(getEdges()); // Keep existing edges
-      setTiers(calculatedTiers);
-    } else {
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        getNodes(),
-        getEdges(),
-        layoutDirection
-      );
-
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
-    }
+    setNodes(result.nodes);
+    setEdges(layoutDirection === 'TB' ? getEdges() : result.edges);
+    setTiers(result.tiers);
 
     setTimeout(() => {
       fitView({ padding: 0.2 });
@@ -402,8 +317,8 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
         minZoom={0.1}
         maxZoom={2}
         defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
-        snapToGrid={layoutDirection === 'TB'}
-        snapGrid={[25, 50]}
+        snapToGrid={getSnapGrid(layoutDirection).snapToGrid}
+        snapGrid={getSnapGrid(layoutDirection).snapGrid}
         proOptions={{
           hideAttribution: true // Hide React Flow attribution if using Pro
         }}
