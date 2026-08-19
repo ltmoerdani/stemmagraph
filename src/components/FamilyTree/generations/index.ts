@@ -8,6 +8,7 @@ export {
   applyGenerationLimit,
   buildChildMap,
   collapseToDefaultLimit,
+  countGenerationSpan,
   expandAllGenerations,
   expandBranch,
   findRootGeneration,

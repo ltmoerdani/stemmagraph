@@ -136,6 +136,7 @@
     "expandBranch": "Buka {{count}} keturunan",
     "expandAll": "Tampilkan semua generasi",
     "expandAllWarning": "Seluruh pohon akan dirender penuh ({{count}} individu) dan bisa berat pada perangkat lambat. Lanjutkan?",
-    "collapse": "Kembalikan batas generasi"
+    "collapse": "Kembalikan batas generasi",
+    "tierIndicator": "{{count}} generasi • Geser horizontal saja"
   }
 }

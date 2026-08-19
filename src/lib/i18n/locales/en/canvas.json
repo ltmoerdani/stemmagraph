@@ -136,6 +136,7 @@
     "expandBranch": "Expand {{count}} descendants",
     "expandAll": "Show all generations",
     "expandAllWarning": "The whole tree will be rendered ({{count}} individuals) and may be heavy on slow devices. Continue?",
-    "collapse": "Restore generation limit"
+    "collapse": "Restore generation limit",
+    "tierIndicator": "{{count}} generations • Drag horizontally only"
   }
 }

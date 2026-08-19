@@ -64,6 +64,20 @@ export const findRootGeneration = (members: FamilyMember[]): number => {
   return Number.isFinite(root) ? root : 0;
 };
 
+/** Rentang generasi total pohon (max - min + 1), untuk label ukuran. */
+export const countGenerationSpan = (members: FamilyMember[]): number => {
+  if (members.length === 0) return 0;
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+  for (const member of members) {
+    const generation = member.generation ?? 0;
+    if (generation < min) min = generation;
+    if (generation > max) max = generation;
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return 0;
+  return max - min + 1;
+};
+
 /** Apakah member punya leluhur yang sedang diekspansi (cabang terbuka). */
 const hasExpandedAncestor = (
   member: FamilyMember,

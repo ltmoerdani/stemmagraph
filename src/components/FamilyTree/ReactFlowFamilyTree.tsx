@@ -33,6 +33,7 @@ import {
   DEFAULT_GENERATION_LIMIT_STATE,
   applyGenerationLimit,
   collapseToDefaultLimit,
+  countGenerationSpan,
   expandAllGenerations,
   expandBranch,
   groupMembersByGeneration,
@@ -240,6 +241,12 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
     [members, generationLimitState]
   );
   const visibleMembers = generationLimit.visibleMembers;
+  // S-09 AC7: rentang generasi total untuk label batas (satuan generasi,
+  // bukan jumlah individu).
+  const totalGenerations = useMemo(
+    () => countGenerationSpan(members),
+    [members]
+  );
 
   // S-09 AC2: kontrol cabang; ekspansi penuh lewat konfirmasi i18n.
   const handleExpandBranch = useCallback((memberId: string) => {
@@ -509,7 +516,7 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
         {layoutDirection === 'TB' && tiers.length > 0 && (
           <Panel position="top-center" className="pointer-events-none">
             <div className="text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
-              {tiers.length} Generations • Drag horizontally only
+              {t('generations.tierIndicator', { count: tiers.length })}
             </div>
           </Panel>
         )}
@@ -525,7 +532,7 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
                   ? t('generations.expandAll')
                   : t('generations.limitNotice', {
                       shown: generationLimitState.maxGenerations,
-                      total: members.length,
+                      total: totalGenerations,
                     })}
               </span>
               {!generationLimitState.fullExpand && (
