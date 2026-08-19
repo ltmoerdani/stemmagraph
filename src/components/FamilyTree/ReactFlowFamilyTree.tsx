@@ -181,6 +181,40 @@ const createFamilyEdgeSpecs = (
 
 type GridPatternType = 'dots' | 'lines' | 'cross';
 
+/**
+ * Helper grid murni (S-09 AC5): di-hoist keluar komponen supaya identitas
+ * fungsi stabil antar render.
+ */
+const convertToBackgroundVariant = (pattern: GridPatternType): BackgroundVariant => {
+  return pattern as BackgroundVariant;
+};
+
+const getGridBackgroundColor = (variant: BackgroundVariant): string => {
+  switch (variant) {
+    case 'dots':
+      return '#d1d5db';
+    case 'cross':
+      return '#e5e7eb';
+    default:
+      return '#e5e7eb';
+  }
+};
+
+const getGridGap = (variant: BackgroundVariant): number => {
+  return variant === 'lines' ? 25 : 30;
+};
+
+const getGridSize = (variant: BackgroundVariant): number => {
+  switch (variant) {
+    case 'dots':
+      return 1;
+    case 'cross':
+      return 0.5;
+    default:
+      return 0.5;
+  }
+};
+
 const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   members,
   onMemberUpdate,
@@ -378,44 +412,6 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
     fitView({ padding: 0.2, duration: 800 });
   }, [fitView]);
 
-  /**
-   * Safely converts grid pattern type to BackgroundVariant
-   * @param pattern - The grid pattern type
-   * @returns Valid BackgroundVariant
-   */
-  const convertToBackgroundVariant = (pattern: GridPatternType): BackgroundVariant => {
-    return pattern as BackgroundVariant;
-  };
-
-  // Helper function to get background color for grid
-  const getGridBackgroundColor = (variant: BackgroundVariant): string => {
-    switch (variant) {
-      case 'dots':
-        return '#d1d5db';
-      case 'cross':
-        return '#e5e7eb';
-      default:
-        return '#e5e7eb';
-    }
-  };
-
-  // Helper function to get background gap
-  const getGridGap = (variant: BackgroundVariant): number => {
-    const baseGap = variant === 'lines' ? 25 : 30;
-    return baseGap;
-  };
-
-  // Helper function to get background size
-  const getGridSize = (variant: BackgroundVariant): number => {
-    switch (variant) {
-      case 'dots':
-        return 1;
-      case 'cross':
-        return 0.5;
-      default:
-        return 0.5;
-    }
-  };
 
   return (
     <div className="w-full h-full relative">
