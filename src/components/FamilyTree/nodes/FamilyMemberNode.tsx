@@ -1,5 +1,5 @@
 import React, { memo, useState } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 import { 
   Edit, 
   Trash2, 
@@ -10,15 +10,25 @@ import {
 } from 'lucide-react';
 import type { FamilyMember } from '../../../types/family';
 
-interface FamilyMemberNodeData {
+// Type alias (bukan interface): React Flow v12 mensyaratkan data node memenuhi
+// Record<string, unknown>, yang hanya dipenuhi type alias via implicit index signature.
+export type FamilyMemberNodeData = {
   member: FamilyMember;
   onEdit: (member: FamilyMember) => void;
-  onDelete: (memberId: string) => void;
+  /** Optional: terpasang hanya bila host memberi prop onMemberDelete. */
+  onDelete?: (memberId: string) => void;
   onAddChild: (parentId: string) => void;
   onAddSpouse: (memberId: string) => void;
+  /** Optional fields stamped by the tier layout pass (tierLayoutManager). */
+  tier?: number;
+  generationY?: number;
+  familyGroup?: string;
 }
 
-export const FamilyMemberNode = memo<NodeProps<FamilyMemberNodeData>>(({ data, selected }) => {
+/** Custom node type for React Flow v12: Node<data, type> as required by NodeProps. */
+export type FamilyMemberFlowNode = Node<FamilyMemberNodeData, 'familyMember'>;
+
+export const FamilyMemberNode = memo(({ data, selected }: NodeProps<FamilyMemberFlowNode>) => {
   const { member, onEdit, onDelete, onAddChild, onAddSpouse } = data;
   const [showContextMenu, setShowContextMenu] = useState(false);
 
@@ -280,7 +290,7 @@ export const FamilyMemberNode = memo<NodeProps<FamilyMemberNodeData>>(({ data, s
             <button
               onClick={() => {
                 if (confirm('Are you sure you want to delete this family member?')) {
-                  onDelete(member.id);
+                  onDelete?.(member.id);
                 }
                 setShowContextMenu(false);
               }}

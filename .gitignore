@@ -17,6 +17,12 @@ dist-ssr
 scripts/fixtures-gedcom70/g7validation.json
 # Verify script scratch space (bundled mapper under test)
 scripts/.verify-work/
+# Verify script debug scratch (S-06 typecheck experiment output)
+scripts/.verify-debug/
+
+# TypeScript incremental build cache (safety net; current build emits none)
+tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo
 
 # Editor directories and files
 .vscode/*

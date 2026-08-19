@@ -19,6 +19,11 @@ import {
   AuthError,
 } from './types';
 
+// Server-side adapter: DATABASE_URL is read from the Node runtime. The app
+// tsconfig uses DOM libs without Node globals, so declare the narrow shape we
+// actually consume instead of pulling @types/node into the browser config.
+declare const process: { env: Record<string, string | undefined> };
+
 export class PrismaAdapter implements DataAdapter {
   readonly name = 'prisma';
   readonly version = '1.0.0';
