@@ -18,6 +18,7 @@ import {
   NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useTranslation } from 'react-i18next';
 import type { FamilyMember } from '../../types/family';
 import { FamilyMemberNode, type FamilyMemberFlowNode } from './nodes/FamilyMemberNode';
 import { MarriageEdge } from './edges/MarriageEdge';
@@ -28,6 +29,15 @@ import { FamilyTreeControls } from './controls/FamilyTreeControls';
 import { MemberEditModal } from './modals/MemberEditModal';
 import { constrainNodeMovement } from './layout/tierLayout';
 import { dagreTierEngine, getSnapGrid, type TierLayout } from './layout';
+import {
+  DEFAULT_GENERATION_LIMIT_STATE,
+  applyGenerationLimit,
+  collapseToDefaultLimit,
+  expandAllGenerations,
+  expandBranch,
+  type GenerationLimitState,
+} from './generations';
+import { shouldOnlyRenderVisibleElements } from './generations';
 
 // Define custom node and edge types
 const nodeTypes: NodeTypes = {
@@ -156,12 +166,36 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   const [tiers, setTiers] = useState<TierLayout[]>([]);
   const [gridType, setGridType] = useState<GridPatternType>('lines');
   const [showGrid, setShowGrid] = useState(true);
+  const [generationLimitState, setGenerationLimitState] = useState<GenerationLimitState>(
+    DEFAULT_GENERATION_LIMIT_STATE
+  );
+  const { t } = useTranslation('canvas');
+
+  // S-09 AC2: batas generasi (pure function, default-on)
+  const generationLimit = useMemo(
+    () => applyGenerationLimit(members, generationLimitState),
+    [members, generationLimitState]
+  );
+  const visibleMembers = generationLimit.visibleMembers;
+
+  // S-09 AC2: kontrol cabang; ekspansi penuh lewat konfirmasi i18n.
+  const handleExpandBranch = useCallback((memberId: string) => {
+    setGenerationLimitState((state) => expandBranch(state, memberId));
+  }, []);
+  const handleCollapseGenerations = useCallback(() => {
+    setGenerationLimitState((state) => collapseToDefaultLimit(state));
+  }, []);
+  const handleExpandAllGenerations = useCallback(() => {
+    if (window.confirm(t('generations.expandAllWarning', { count: members.length }))) {
+      setGenerationLimitState((state) => expandAllGenerations(state));
+    }
+  }, [t, members.length]);
 
   // Convert members to nodes and edges
   const { initialNodes, initialEdges } = useMemo(() => {
-    const rawNodes = convertMembersToNodes(members);
-    const rawEdges = createFamilyEdges(members);
-    
+    const rawNodes = convertMembersToNodes(visibleMembers);
+    const rawEdges = createFamilyEdges(visibleMembers);
+
     // Add event handlers to node data
     const nodesWithHandlers = rawNodes.map(node => ({
       ...node,
@@ -169,6 +203,10 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
         ...node.data,
         onEdit: setEditingMember,
         onDelete: onMemberDelete,
+        onExpandBranch: handleExpandBranch,
+        hiddenDescendantCount: generationLimit.hiddenDescendantCounts.get(
+          node.data.member.id
+        ),
         onAddChild: (parentId: string) => {
           if (onMemberAdd) {
             const parentMember = node.data.member;
@@ -194,7 +232,7 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
       initialNodes: nodesWithHandlers,
       initialEdges: rawEdges,
     };
-  }, [members, onMemberAdd, onMemberDelete]);
+  }, [visibleMembers, onMemberAdd, onMemberDelete, handleExpandBranch, generationLimit]);
 
   // Apply tier layout when members change
   useEffect(() => {
@@ -319,6 +357,7 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
         defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
         snapToGrid={getSnapGrid(layoutDirection).snapToGrid}
         snapGrid={getSnapGrid(layoutDirection).snapGrid}
+        onlyRenderVisibleElements={shouldOnlyRenderVisibleElements(nodes.length)}
         proOptions={{
           hideAttribution: true // Hide React Flow attribution if using Pro
         }}
@@ -397,6 +436,43 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
           <Panel position="top-center" className="pointer-events-none">
             <div className="text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
               {tiers.length} Generations • Drag horizontally only
+            </div>
+          </Panel>
+        )}
+
+        {/* S-09 AC2: kontrol batas generasi */}
+        {(generationLimitState.fullExpand ||
+          generationLimitState.expandedBranches.size > 0 ||
+          generationLimit.hiddenDescendantCounts.size > 0) && (
+          <Panel position="top-center" className="mt-10">
+            <div className="flex items-center gap-2 text-xs bg-white/90 border border-gray-200 px-2 py-1 rounded">
+              <span className="text-gray-600">
+                {generationLimitState.fullExpand
+                  ? t('generations.expandAll')
+                  : t('generations.limitNotice', {
+                      shown: generationLimitState.maxGenerations,
+                      total: members.length,
+                    })}
+              </span>
+              {!generationLimitState.fullExpand && (
+                <button
+                  type="button"
+                  className="px-2 py-0.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-100"
+                  onClick={handleExpandAllGenerations}
+                >
+                  {t('generations.expandAll')}
+                </button>
+              )}
+              {(generationLimitState.fullExpand ||
+                generationLimitState.expandedBranches.size > 0) && (
+                <button
+                  type="button"
+                  className="px-2 py-0.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-100"
+                  onClick={handleCollapseGenerations}
+                >
+                  {t('generations.collapse')}
+                </button>
+              )}
             </div>
           </Panel>
         )}

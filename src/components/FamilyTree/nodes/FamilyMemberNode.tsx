@@ -1,12 +1,14 @@
 import React, { memo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
-import { 
-  Edit, 
-  Trash2, 
-  UserPlus, 
-  Heart, 
+import {
+  Edit,
+  Trash2,
+  UserPlus,
+  Heart,
   MapPin,
-  Briefcase
+  Briefcase,
+  ChevronsDown
 } from 'lucide-react';
 import type { FamilyMember } from '../../../types/family';
 
@@ -23,6 +25,10 @@ export type FamilyMemberNodeData = {
   tier?: number;
   generationY?: number;
   familyGroup?: string;
+  /** S-09 AC2: jumlah keturunan tersembunyi di bawah cabang node ini. */
+  hiddenDescendantCount?: number;
+  /** S-09 AC2: buka cabang tersembunyi di bawah node ini. */
+  onExpandBranch?: (memberId: string) => void;
 }
 
 /** Custom node type for React Flow v12: Node<data, type> as required by NodeProps. */
@@ -30,6 +36,7 @@ export type FamilyMemberFlowNode = Node<FamilyMemberNodeData, 'familyMember'>;
 
 export const FamilyMemberNode = memo(({ data, selected }: NodeProps<FamilyMemberFlowNode>) => {
   const { member, onEdit, onDelete, onAddChild, onAddSpouse } = data;
+  const { t } = useTranslation('canvas');
   const [showContextMenu, setShowContextMenu] = useState(false);
 
   const calculateAge = () => {
@@ -235,6 +242,25 @@ export const FamilyMemberNode = memo(({ data, selected }: NodeProps<FamilyMember
           )}
         </div>
       </button>
+
+      {/* S-09 AC2: indikator keturunan tersembunyi + kontrol expand per cabang */}
+      {typeof data.hiddenDescendantCount === 'number' &&
+        data.hiddenDescendantCount > 0 &&
+        data.onExpandBranch && (
+          <button
+            type="button"
+            className="absolute -bottom-9 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-1 text-xs bg-white border border-gray-300 rounded-full text-gray-700 hover:bg-gray-100 z-20"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onExpandBranch?.(member.id);
+            }}
+            aria-label={t('generations.expandBranch', { count: data.hiddenDescendantCount })}
+            title={t('generations.hiddenDescendants', { count: data.hiddenDescendantCount })}
+          >
+            <ChevronsDown className="w-3 h-3" aria-hidden="true" />
+            {data.hiddenDescendantCount}
+          </button>
+        )}
 
       {/* Context menu */}
       {showContextMenu && (
