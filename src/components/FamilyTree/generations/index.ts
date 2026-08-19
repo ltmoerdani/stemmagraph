@@ -15,3 +15,10 @@ export {
   type GenerationLimitState,
 } from './generationLimit';
 export { shouldOnlyRenderVisibleElements } from './visibility';
+export {
+  groupMembersByGeneration,
+  hydrateStableByKey,
+  type HydrationOutput,
+  type HydrationSpec,
+  type StableHydrationEntry,
+} from './hydration';

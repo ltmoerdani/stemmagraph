@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   Edge,
@@ -35,7 +35,11 @@ import {
   collapseToDefaultLimit,
   expandAllGenerations,
   expandBranch,
+  groupMembersByGeneration,
+  hydrateStableByKey,
   type GenerationLimitState,
+  type HydrationSpec,
+  type StableHydrationEntry,
 } from './generations';
 import { shouldOnlyRenderVisibleElements } from './generations';
 
@@ -62,50 +66,64 @@ interface ReactFlowFamilyTreeProps {
 }
 
 /**
- * Converts family members to React Flow nodes
+ * Handler interaksi node; komponen menyuntikkan versi stabil (S-09 AC4+AC5).
  */
-const convertMembersToNodes = (members: FamilyMember[]): FamilyMemberFlowNode[] => {
-  return members.map((member) => ({
-    id: member.id,
-    type: 'familyMember',
-    position: { x: 0, y: 0 }, // Will be set by layout algorithm
-    data: {
-      member,
-      onEdit: () => {
-        // Handle edit - will be passed from parent
-      },
-      onDelete: () => {
-        // Handle delete - will be passed from parent
-      },
-      onAddChild: () => {
-        // Handle add child - will be passed from parent
-      },
-      onAddSpouse: () => {
-        // Handle add spouse - will be passed from parent
-      },
-    },
-    draggable: true,
-  }));
-};
+export interface MemberNodeHandlers {
+  onEdit: (member: FamilyMember) => void;
+  onDelete?: (memberId: string) => void;
+  onAddChild: (parentId: string) => void;
+  onAddSpouse: (memberId: string) => void;
+}
 
 /**
- * Creates edges between family members based on relationships
+ * Converts one family member to a React Flow node.
+ * Posisi {0,0}: akan diisi layout engine.
  */
-const createFamilyEdges = (members: FamilyMember[]): Edge[] => {
-  const edges: Edge[] = [];
-  const siblingsMap = new Map<string, string[]>();
+const createMemberNode = (
+  member: FamilyMember,
+  handlers: MemberNodeHandlers
+): FamilyMemberFlowNode => ({
+  id: member.id,
+  type: 'familyMember',
+  position: { x: 0, y: 0 }, // Will be set by layout algorithm
+  data: {
+    member,
+    onEdit: handlers.onEdit,
+    onDelete: handlers.onDelete,
+    onAddChild: handlers.onAddChild,
+    onAddSpouse: handlers.onAddSpouse,
+  },
+  draggable: true,
+});
+
+/**
+ * Creates edge hydration specs between family members (S-09 AC4).
+ * sources = objek member yang menjadi dasar edge; selama referensinya
+ * tidak berubah, edge lama dipakai ulang (tidak dibangun ulang).
+ */
+const createFamilyEdgeSpecs = (
+  members: FamilyMember[]
+): HydrationSpec<FamilyMember, Edge>[] => {
+  const specs: HydrationSpec<FamilyMember, Edge>[] = [];
+  const byId = new Map(members.map((member) => [member.id, member]));
+  const siblingsMap = new Map<string, FamilyMember[]>();
 
   members.forEach((member) => {
     // Create simple spouse connections (direct horizontal lines)
     if (member.spouseId) {
-      const spouse = members.find(m => m.id === member.spouseId);
-      if (spouse && member.id < spouse.id) { // Avoid duplicate edges
-        edges.push({
-          id: `spouse-${member.id}-${spouse.id}`,
-          source: member.id,
-          target: spouse.id,
-          type: 'marriage', // Uses simplified MarriageEdge
-          data: { relationship: 'spouse' },
+      const spouse = byId.get(member.spouseId);
+      if (spouse && member.id < spouse.id) {
+        // Avoid duplicate edges
+        specs.push({
+          key: `spouse-${member.id}-${spouse.id}`,
+          sources: [member, spouse],
+          build: () => ({
+            id: `spouse-${member.id}-${spouse.id}`,
+            source: member.id,
+            target: spouse.id,
+            type: 'marriage', // Uses simplified MarriageEdge
+            data: { relationship: 'spouse' },
+          }),
         });
       }
     }
@@ -113,12 +131,17 @@ const createFamilyEdges = (members: FamilyMember[]): Edge[] => {
     // Create parent-child edges (bracket style)
     if (member.parentIds && member.parentIds.length > 0) {
       member.parentIds.forEach((parentId) => {
-        edges.push({
-          id: `parent-${parentId}-${member.id}`,
-          source: parentId,
-          target: member.id,
-          type: 'parentChild',
-          data: { relationship: 'parentChild' },
+        const parent = byId.get(parentId);
+        specs.push({
+          key: `parent-${parentId}-${member.id}`,
+          sources: [member, parent ?? member],
+          build: () => ({
+            id: `parent-${parentId}-${member.id}`,
+            source: parentId,
+            target: member.id,
+            type: 'parentChild',
+            data: { relationship: 'parentChild' },
+          }),
         });
       });
 
@@ -128,7 +151,7 @@ const createFamilyEdges = (members: FamilyMember[]): Edge[] => {
       if (!siblingsMap.has(parentKey)) {
         siblingsMap.set(parentKey, []);
       }
-      siblingsMap.get(parentKey)?.push(member.id);
+      siblingsMap.get(parentKey)?.push(member);
     }
   });
 
@@ -136,18 +159,24 @@ const createFamilyEdges = (members: FamilyMember[]): Edge[] => {
   siblingsMap.forEach((siblings) => {
     if (siblings.length > 1) {
       for (let i = 0; i < siblings.length - 1; i++) {
-        edges.push({
-          id: `sibling-${siblings[i]}-${siblings[i + 1]}`,
-          source: siblings[i],
-          target: siblings[i + 1],
-          type: 'sibling',
-          data: { relationship: 'sibling' },
+        const left = siblings[i];
+        const right = siblings[i + 1];
+        specs.push({
+          key: `sibling-${left.id}-${right.id}`,
+          sources: [left, right],
+          build: () => ({
+            id: `sibling-${left.id}-${right.id}`,
+            source: left.id,
+            target: right.id,
+            type: 'sibling',
+            data: { relationship: 'sibling' },
+          }),
         });
       }
     }
   });
 
-  return edges;
+  return specs;
 };
 
 type GridPatternType = 'dots' | 'lines' | 'cross';
@@ -191,48 +220,97 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
     }
   }, [t, members.length]);
 
-  // Convert members to nodes and edges
-  const { initialNodes, initialEdges } = useMemo(() => {
-    const rawNodes = convertMembersToNodes(visibleMembers);
-    const rawEdges = createFamilyEdges(visibleMembers);
+  // S-09 AC5: handler interaksi hoist + delegasi ref. Node yang dipakai
+  // ulang oleh cache hidrasi memanggil handler lewat actionsRef, jadi
+  // tidak ada closure basi saat prop onMemberAdd/onMemberDelete berganti.
+  const membersRef = useRef(new Map<string, FamilyMember>());
+  membersRef.current = new Map(members.map((member) => [member.id, member]));
 
-    // Add event handlers to node data
-    const nodesWithHandlers = rawNodes.map(node => ({
-      ...node,
-      data: {
-        ...node.data,
-        onEdit: setEditingMember,
-        onDelete: onMemberDelete,
-        onExpandBranch: handleExpandBranch,
-        hiddenDescendantCount: generationLimit.hiddenDescendantCounts.get(
-          node.data.member.id
-        ),
-        onAddChild: (parentId: string) => {
-          if (onMemberAdd) {
-            const parentMember = node.data.member;
-            onMemberAdd({
-              parentIds: [parentId],
-              generation: (parentMember?.generation ?? 0) + 1,
-            });
-          }
+  const actionsRef = useRef<MemberNodeHandlers>({
+    onEdit: setEditingMember,
+    onDelete: onMemberDelete,
+    onAddChild: () => undefined,
+    onAddSpouse: () => undefined,
+  });
+  actionsRef.current = {
+    onEdit: setEditingMember,
+    onDelete: onMemberDelete,
+    onAddChild: (parentId: string) => {
+      if (onMemberAdd) {
+        const parentMember = membersRef.current.get(parentId);
+        onMemberAdd({
+          parentIds: [parentId],
+          generation: (parentMember?.generation ?? 0) + 1,
+        });
+      }
+    },
+    onAddSpouse: (memberId: string) => {
+      if (onMemberAdd) {
+        const selfMember = membersRef.current.get(memberId);
+        onMemberAdd({
+          spouseId: memberId,
+          generation: selfMember?.generation ?? 0,
+        });
+      }
+    },
+  };
+
+  // Factory node stabil: hanya bergantung handler expand yang useCallback.
+  const buildMemberNode = useCallback(
+    (member: FamilyMember, hiddenDescendantCount: number | undefined) => {
+      const base = createMemberNode(member, {
+        onEdit: (m) => actionsRef.current.onEdit(m),
+        onDelete: (id) => actionsRef.current.onDelete?.(id),
+        onAddChild: (id) => actionsRef.current.onAddChild(id),
+        onAddSpouse: (id) => actionsRef.current.onAddSpouse(id),
+      });
+      return {
+        ...base,
+        data: {
+          ...base.data,
+          onExpandBranch: handleExpandBranch,
+          hiddenDescendantCount,
         },
-        onAddSpouse: (memberId: string) => {
-          if (onMemberAdd) {
-            const parentMember = node.data.member;
-            onMemberAdd({
-              spouseId: memberId,
-              generation: parentMember?.generation ?? 0,
-            });
-          }
-        },
-      },
-    }));
+      };
+    },
+    [handleExpandBranch]
+  );
+
+  // S-09 AC4: konstruksi nodes/edges memo per lingkup generasi dengan
+  // cache referensi; expand satu cabang hanya membangun node baru pada
+  // cabang itu, node lama dipakai ulang dengan referensi identik.
+  const nodesCacheRef = useRef<Map<string, StableHydrationEntry<FamilyMember | number, FamilyMemberFlowNode>>>(
+    new Map()
+  );
+  const edgesCacheRef = useRef<Map<string, StableHydrationEntry<FamilyMember, Edge>>>(
+    new Map()
+  );
+
+  const { initialNodes, initialEdges } = useMemo(() => {
+    const nodeSpecs: HydrationSpec<FamilyMember | number, FamilyMemberFlowNode>[] = [];
+    const byGeneration = groupMembersByGeneration(visibleMembers);
+    for (const generationMembers of byGeneration.values()) {
+      for (const member of generationMembers) {
+        const hiddenCount = generationLimit.hiddenDescendantCounts.get(member.id);
+        nodeSpecs.push({
+          key: member.id,
+          sources: [member, hiddenCount ?? 0],
+          build: () => buildMemberNode(member, hiddenCount),
+        });
+      }
+    }
+    const hydratedNodes = hydrateStableByKey(nodesCacheRef.current, nodeSpecs);
+    nodesCacheRef.current = hydratedNodes.cache;
+
+    const edgeSpecs = createFamilyEdgeSpecs(visibleMembers);
+    const hydratedEdges = hydrateStableByKey(edgesCacheRef.current, edgeSpecs);
+    edgesCacheRef.current = hydratedEdges.cache;
 
     return {
-      initialNodes: nodesWithHandlers,
-      initialEdges: rawEdges,
+      initialNodes: hydratedNodes.values,
+      initialEdges: hydratedEdges.values,
     };
-  }, [visibleMembers, onMemberAdd, onMemberDelete, handleExpandBranch, generationLimit]);
+  }, [visibleMembers, generationLimit, buildMemberNode]);
 
   // Apply tier layout when members change
   useEffect(() => {
