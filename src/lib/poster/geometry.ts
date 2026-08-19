@@ -113,11 +113,18 @@ export interface PagePlacement {
 export function computePlacement(
   paper: PosterPaper,
   content: LayoutBox,
-  options?: { marginMm?: number; bleedMm?: number; gapMm?: number }
+  options?: {
+    marginMm?: number;
+    bleedMm?: number;
+    gapMm?: number;
+    /** Extra clear space above content, e.g. for the poster title. */
+    extraTopMm?: number;
+  }
 ): PagePlacement {
   const marginMm = options?.marginMm ?? SAFE_MARGIN_MM;
   const bleedMm = options?.bleedMm ?? BLEED_MM;
   const gapMm = options?.gapMm ?? 2;
+  const extraTopPt = mmToPt(options?.extraTopMm ?? 0);
   if (content.width <= 0 || content.height <= 0) {
     throw new Error('Layout bounding box must have positive width and height');
   }
@@ -127,7 +134,7 @@ export function computePlacement(
   const chromePt = mmToPt(marginMm + bleedMm);
   const gapPt = mmToPt(gapMm);
   const availW = pageWidthPt - 2 * chromePt - 2 * gapPt;
-  const availH = pageHeightPt - 2 * chromePt - 2 * gapPt;
+  const availH = pageHeightPt - 2 * chromePt - 2 * gapPt - extraTopPt;
   if (availW <= 0 || availH <= 0) {
     throw new Error('Paper too small for bleed plus safe margin');
   }
@@ -155,13 +162,19 @@ export function computePlacement(
   };
 }
 
-/** Maps a layout-space point to page-space points (Y grows upward). */
+/** Maps a layout-space X to page-space points. */
 export function layoutToPageX(x: number, placement: PagePlacement): number {
   return placement.offsetXPt + x * placement.scale;
 }
 
+/**
+ * Maps a layout-space Y to page-space points.
+ *
+ * Layout space is screen-like: Y grows downward (generation 1 at the top),
+ * while PDF page space grows upward from the bottom-left corner.
+ */
 export function layoutToPageY(y: number, placement: PagePlacement): number {
-  return placement.offsetYPt + y * placement.scale;
+  return placement.pageHeightPt - (placement.offsetYPt + y * placement.scale);
 }
 
 export function layoutScale(v: number, placement: PagePlacement): number {
@@ -209,3 +222,4 @@ export function fitNameFont(
   const overflow = measure(text, sizePt) > boxWidthPt;
   return { sizePt: overflow ? minPt : sizePt, clamped, overflow };
 }
+
