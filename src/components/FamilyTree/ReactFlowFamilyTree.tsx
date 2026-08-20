@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   Edge,
@@ -14,12 +14,11 @@ import {
   ReactFlowProvider,
   useReactFlow,
   Panel,
-  Position,
   BackgroundVariant,
   NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import dagre from 'dagre';
+import { useTranslation } from 'react-i18next';
 import type { FamilyMember } from '../../types/family';
 import { FamilyMemberNode, type FamilyMemberFlowNode } from './nodes/FamilyMemberNode';
 import { MarriageEdge } from './edges/MarriageEdge';
@@ -28,7 +27,22 @@ import { SiblingEdge } from './edges/SiblingEdge';
 import { ExportControls } from './controls/ExportControls';
 import { FamilyTreeControls } from './controls/FamilyTreeControls';
 import { MemberEditModal } from './modals/MemberEditModal';
-import { calculateTierLayout, constrainNodeMovement, TierLayout } from './utils/tierLayoutManager';
+import { constrainNodeMovement } from './layout/tierLayout';
+import { dagreTierEngine, getSnapGrid, type TierLayout } from './layout';
+import {
+  DEFAULT_GENERATION_LIMIT_STATE,
+  applyGenerationLimit,
+  collapseToDefaultLimit,
+  countGenerationSpan,
+  expandAllGenerations,
+  expandBranch,
+  groupMembersByGeneration,
+  hydrateStableByKey,
+  type GenerationLimitState,
+  type HydrationSpec,
+  type StableHydrationEntry,
+} from './generations';
+import { shouldOnlyRenderVisibleElements } from './generations';
 
 // Define custom node and edge types
 const nodeTypes: NodeTypes = {
@@ -41,12 +55,9 @@ const edgeTypes: EdgeTypes = {
   sibling: SiblingEdge,
 };
 
-// Dagre layout configuration
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-const nodeWidth = 200;
-const nodeHeight = 140; // Increased for better bracket spacing
+// Layout engine diinjeksi via interface (S-09 AC1): komponen tidak
+// mengimpor dagre langsung, semua compute ada di ./layout.
+const layoutEngine = dagreTierEngine;
 
 interface ReactFlowFamilyTreeProps {
   members: FamilyMember[];
@@ -56,107 +67,64 @@ interface ReactFlowFamilyTreeProps {
 }
 
 /**
- * Converts family members to React Flow nodes with proper positioning
+ * Handler interaksi node; komponen menyuntikkan versi stabil (S-09 AC4+AC5).
  */
-const getLayoutedElements = (
-  nodes: FamilyMemberFlowNode[],
-  edges: Edge[],
-  direction = 'TB'
-): { nodes: FamilyMemberFlowNode[]; edges: Edge[] } => {
-  const isHorizontal = direction === 'LR';
-  
-  // Configure dagre for bracket-style layout with professional spacing
-  dagreGraph.setGraph({ 
-    rankdir: direction,
-    nodesep: 150, // Enhanced professional spacing between nodes
-    ranksep: 280, // Optimal spacing between generations for brackets
-    marginx: 80,
-    marginy: 80,
-  });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    const newNode = {
-      ...node,
-      targetPosition: isHorizontal ? Position.Left : Position.Top,
-      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
-      position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      },
-    };
-
-    return newNode;
-  });
-
-  return { nodes: layoutedNodes, edges };
-};
+export interface MemberNodeHandlers {
+  onEdit: (member: FamilyMember) => void;
+  onDelete?: (memberId: string) => void;
+  onAddChild: (parentId: string) => void;
+  onAddSpouse: (memberId: string) => void;
+}
 
 /**
- * Converts family members to React Flow nodes with tier-based positioning
+ * Converts one family member to a React Flow node.
+ * Posisi {0,0}: akan diisi layout engine.
  */
-const getTierLayoutedElements = (
-  nodes: FamilyMemberFlowNode[]
-): { nodes: FamilyMemberFlowNode[]; edges: Edge[]; tiers: TierLayout[] } => {
-  const { layoutedNodes, tiers } = calculateTierLayout(nodes);
-  return { nodes: layoutedNodes, edges: [], tiers };
-};
+const createMemberNode = (
+  member: FamilyMember,
+  handlers: MemberNodeHandlers
+): FamilyMemberFlowNode => ({
+  id: member.id,
+  type: 'familyMember',
+  position: { x: 0, y: 0 }, // Will be set by layout algorithm
+  data: {
+    member,
+    onEdit: handlers.onEdit,
+    onDelete: handlers.onDelete,
+    onAddChild: handlers.onAddChild,
+    onAddSpouse: handlers.onAddSpouse,
+  },
+  draggable: true,
+});
 
 /**
- * Converts family members to React Flow nodes
+ * Creates edge hydration specs between family members (S-09 AC4).
+ * sources = objek member yang menjadi dasar edge; selama referensinya
+ * tidak berubah, edge lama dipakai ulang (tidak dibangun ulang).
  */
-const convertMembersToNodes = (members: FamilyMember[]): FamilyMemberFlowNode[] => {
-  return members.map((member) => ({
-    id: member.id,
-    type: 'familyMember',
-    position: { x: 0, y: 0 }, // Will be set by layout algorithm
-    data: {
-      member,
-      onEdit: () => {
-        // Handle edit - will be passed from parent
-      },
-      onDelete: () => {
-        // Handle delete - will be passed from parent
-      },
-      onAddChild: () => {
-        // Handle add child - will be passed from parent
-      },
-      onAddSpouse: () => {
-        // Handle add spouse - will be passed from parent
-      },
-    },
-    draggable: true,
-  }));
-};
-
-/**
- * Creates edges between family members based on relationships
- */
-const createFamilyEdges = (members: FamilyMember[]): Edge[] => {
-  const edges: Edge[] = [];
-  const siblingsMap = new Map<string, string[]>();
+const createFamilyEdgeSpecs = (
+  members: FamilyMember[]
+): HydrationSpec<FamilyMember, Edge>[] => {
+  const specs: HydrationSpec<FamilyMember, Edge>[] = [];
+  const byId = new Map(members.map((member) => [member.id, member]));
+  const siblingsMap = new Map<string, FamilyMember[]>();
 
   members.forEach((member) => {
     // Create simple spouse connections (direct horizontal lines)
     if (member.spouseId) {
-      const spouse = members.find(m => m.id === member.spouseId);
-      if (spouse && member.id < spouse.id) { // Avoid duplicate edges
-        edges.push({
-          id: `spouse-${member.id}-${spouse.id}`,
-          source: member.id,
-          target: spouse.id,
-          type: 'marriage', // Uses simplified MarriageEdge
-          data: { relationship: 'spouse' },
+      const spouse = byId.get(member.spouseId);
+      if (spouse && member.id < spouse.id) {
+        // Avoid duplicate edges
+        specs.push({
+          key: `spouse-${member.id}-${spouse.id}`,
+          sources: [member, spouse],
+          build: () => ({
+            id: `spouse-${member.id}-${spouse.id}`,
+            source: member.id,
+            target: spouse.id,
+            type: 'marriage', // Uses simplified MarriageEdge
+            data: { relationship: 'spouse' },
+          }),
         });
       }
     }
@@ -164,12 +132,17 @@ const createFamilyEdges = (members: FamilyMember[]): Edge[] => {
     // Create parent-child edges (bracket style)
     if (member.parentIds && member.parentIds.length > 0) {
       member.parentIds.forEach((parentId) => {
-        edges.push({
-          id: `parent-${parentId}-${member.id}`,
-          source: parentId,
-          target: member.id,
-          type: 'parentChild',
-          data: { relationship: 'parentChild' },
+        const parent = byId.get(parentId);
+        specs.push({
+          key: `parent-${parentId}-${member.id}`,
+          sources: [member, parent ?? member],
+          build: () => ({
+            id: `parent-${parentId}-${member.id}`,
+            source: parentId,
+            target: member.id,
+            type: 'parentChild',
+            data: { relationship: 'parentChild' },
+          }),
         });
       });
 
@@ -179,7 +152,7 @@ const createFamilyEdges = (members: FamilyMember[]): Edge[] => {
       if (!siblingsMap.has(parentKey)) {
         siblingsMap.set(parentKey, []);
       }
-      siblingsMap.get(parentKey)?.push(member.id);
+      siblingsMap.get(parentKey)?.push(member);
     }
   });
 
@@ -187,21 +160,61 @@ const createFamilyEdges = (members: FamilyMember[]): Edge[] => {
   siblingsMap.forEach((siblings) => {
     if (siblings.length > 1) {
       for (let i = 0; i < siblings.length - 1; i++) {
-        edges.push({
-          id: `sibling-${siblings[i]}-${siblings[i + 1]}`,
-          source: siblings[i],
-          target: siblings[i + 1],
-          type: 'sibling',
-          data: { relationship: 'sibling' },
+        const left = siblings[i];
+        const right = siblings[i + 1];
+        specs.push({
+          key: `sibling-${left.id}-${right.id}`,
+          sources: [left, right],
+          build: () => ({
+            id: `sibling-${left.id}-${right.id}`,
+            source: left.id,
+            target: right.id,
+            type: 'sibling',
+            data: { relationship: 'sibling' },
+          }),
         });
       }
     }
   });
 
-  return edges;
+  return specs;
 };
 
 type GridPatternType = 'dots' | 'lines' | 'cross';
+
+/**
+ * Helper grid murni (S-09 AC5): di-hoist keluar komponen supaya identitas
+ * fungsi stabil antar render.
+ */
+const convertToBackgroundVariant = (pattern: GridPatternType): BackgroundVariant => {
+  return pattern as BackgroundVariant;
+};
+
+const getGridBackgroundColor = (variant: BackgroundVariant): string => {
+  switch (variant) {
+    case 'dots':
+      return '#d1d5db';
+    case 'cross':
+      return '#e5e7eb';
+    default:
+      return '#e5e7eb';
+  }
+};
+
+const getGridGap = (variant: BackgroundVariant): number => {
+  return variant === 'lines' ? 25 : 30;
+};
+
+const getGridSize = (variant: BackgroundVariant): number => {
+  switch (variant) {
+    case 'dots':
+      return 1;
+    case 'cross':
+      return 0.5;
+    default:
+      return 0.5;
+  }
+};
 
 const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   members,
@@ -217,69 +230,139 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   const [tiers, setTiers] = useState<TierLayout[]>([]);
   const [gridType, setGridType] = useState<GridPatternType>('lines');
   const [showGrid, setShowGrid] = useState(true);
+  const [generationLimitState, setGenerationLimitState] = useState<GenerationLimitState>(
+    DEFAULT_GENERATION_LIMIT_STATE
+  );
+  const { t } = useTranslation('canvas');
 
-  // Convert members to nodes and edges
+  // S-09 AC2: batas generasi (pure function, default-on)
+  const generationLimit = useMemo(
+    () => applyGenerationLimit(members, generationLimitState),
+    [members, generationLimitState]
+  );
+  const visibleMembers = generationLimit.visibleMembers;
+  // S-09 AC7: rentang generasi total untuk label batas (satuan generasi,
+  // bukan jumlah individu).
+  const totalGenerations = useMemo(
+    () => countGenerationSpan(members),
+    [members]
+  );
+
+  // S-09 AC2: kontrol cabang; ekspansi penuh lewat konfirmasi i18n.
+  const handleExpandBranch = useCallback((memberId: string) => {
+    setGenerationLimitState((state) => expandBranch(state, memberId));
+  }, []);
+  const handleCollapseGenerations = useCallback(() => {
+    setGenerationLimitState((state) => collapseToDefaultLimit(state));
+  }, []);
+  const handleExpandAllGenerations = useCallback(() => {
+    if (window.confirm(t('generations.expandAllWarning', { count: members.length }))) {
+      setGenerationLimitState((state) => expandAllGenerations(state));
+    }
+  }, [t, members.length]);
+
+  // S-09 AC5: handler interaksi hoist + delegasi ref. Node yang dipakai
+  // ulang oleh cache hidrasi memanggil handler lewat actionsRef, jadi
+  // tidak ada closure basi saat prop onMemberAdd/onMemberDelete berganti.
+  const membersRef = useRef(new Map<string, FamilyMember>());
+  membersRef.current = new Map(members.map((member) => [member.id, member]));
+
+  const actionsRef = useRef<MemberNodeHandlers>({
+    onEdit: setEditingMember,
+    onDelete: onMemberDelete,
+    onAddChild: () => undefined,
+    onAddSpouse: () => undefined,
+  });
+  actionsRef.current = {
+    onEdit: setEditingMember,
+    onDelete: onMemberDelete,
+    onAddChild: (parentId: string) => {
+      if (onMemberAdd) {
+        const parentMember = membersRef.current.get(parentId);
+        onMemberAdd({
+          parentIds: [parentId],
+          generation: (parentMember?.generation ?? 0) + 1,
+        });
+      }
+    },
+    onAddSpouse: (memberId: string) => {
+      if (onMemberAdd) {
+        const selfMember = membersRef.current.get(memberId);
+        onMemberAdd({
+          spouseId: memberId,
+          generation: selfMember?.generation ?? 0,
+        });
+      }
+    },
+  };
+
+  // Factory node stabil: hanya bergantung handler expand yang useCallback.
+  const buildMemberNode = useCallback(
+    (member: FamilyMember, hiddenDescendantCount: number | undefined) => {
+      const base = createMemberNode(member, {
+        onEdit: (m) => actionsRef.current.onEdit(m),
+        onDelete: (id) => actionsRef.current.onDelete?.(id),
+        onAddChild: (id) => actionsRef.current.onAddChild(id),
+        onAddSpouse: (id) => actionsRef.current.onAddSpouse(id),
+      });
+      return {
+        ...base,
+        data: {
+          ...base.data,
+          onExpandBranch: handleExpandBranch,
+          hiddenDescendantCount,
+        },
+      };
+    },
+    [handleExpandBranch]
+  );
+
+  // S-09 AC4: konstruksi nodes/edges memo per lingkup generasi dengan
+  // cache referensi; expand satu cabang hanya membangun node baru pada
+  // cabang itu, node lama dipakai ulang dengan referensi identik.
+  const nodesCacheRef = useRef<Map<string, StableHydrationEntry<FamilyMember | number, FamilyMemberFlowNode>>>(
+    new Map()
+  );
+  const edgesCacheRef = useRef<Map<string, StableHydrationEntry<FamilyMember, Edge>>>(
+    new Map()
+  );
+
   const { initialNodes, initialEdges } = useMemo(() => {
-    const rawNodes = convertMembersToNodes(members);
-    const rawEdges = createFamilyEdges(members);
-    
-    // Add event handlers to node data
-    const nodesWithHandlers = rawNodes.map(node => ({
-      ...node,
-      data: {
-        ...node.data,
-        onEdit: setEditingMember,
-        onDelete: onMemberDelete,
-        onAddChild: (parentId: string) => {
-          if (onMemberAdd) {
-            const parentMember = node.data.member;
-            onMemberAdd({
-              parentIds: [parentId],
-              generation: (parentMember?.generation ?? 0) + 1,
-            });
-          }
-        },
-        onAddSpouse: (memberId: string) => {
-          if (onMemberAdd) {
-            const parentMember = node.data.member;
-            onMemberAdd({
-              spouseId: memberId,
-              generation: parentMember?.generation ?? 0,
-            });
-          }
-        },
-      },
-    }));
+    const nodeSpecs: HydrationSpec<FamilyMember | number, FamilyMemberFlowNode>[] = [];
+    const byGeneration = groupMembersByGeneration(visibleMembers);
+    for (const generationMembers of byGeneration.values()) {
+      for (const member of generationMembers) {
+        const hiddenCount = generationLimit.hiddenDescendantCounts.get(member.id);
+        nodeSpecs.push({
+          key: member.id,
+          sources: [member, hiddenCount ?? 0],
+          build: () => buildMemberNode(member, hiddenCount),
+        });
+      }
+    }
+    const hydratedNodes = hydrateStableByKey(nodesCacheRef.current, nodeSpecs);
+    nodesCacheRef.current = hydratedNodes.cache;
+
+    const edgeSpecs = createFamilyEdgeSpecs(visibleMembers);
+    const hydratedEdges = hydrateStableByKey(edgesCacheRef.current, edgeSpecs);
+    edgesCacheRef.current = hydratedEdges.cache;
 
     return {
-      initialNodes: nodesWithHandlers,
-      initialEdges: rawEdges,
+      initialNodes: hydratedNodes.values,
+      initialEdges: hydratedEdges.values,
     };
-  }, [members, onMemberAdd, onMemberDelete]);
+  }, [visibleMembers, generationLimit, buildMemberNode]);
 
   // Apply tier layout when members change
   useEffect(() => {
-    if (layoutDirection === 'TB') {
-      // Use tier-based layout for vertical arrangement
-      const { nodes: layoutedNodes, tiers: calculatedTiers } = getTierLayoutedElements(
-        initialNodes
-      );
+    // Semua algoritma layout (tier TB / dagre LR) berada di engine.
+    const result = layoutEngine.layout(initialNodes, initialEdges, {
+      direction: layoutDirection,
+    });
 
-      setNodes(layoutedNodes);
-      setEdges(initialEdges); // Use original edges instead of empty array
-      setTiers(calculatedTiers);
-    } else {
-      // Use dagre layout for horizontal arrangement
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        initialNodes,
-        initialEdges,
-        layoutDirection
-      );
-
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
-      setTiers([]);
-    }
+    setNodes(result.nodes);
+    setEdges(layoutDirection === 'TB' ? initialEdges : result.edges);
+    setTiers(result.tiers);
 
     setTimeout(() => {
       fitView({ padding: 0.2 });
@@ -319,24 +402,13 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   }, []);
 
   const handleAutoLayout = useCallback(() => {
-    if (layoutDirection === 'TB') {
-      const { nodes: layoutedNodes, tiers: calculatedTiers } = getTierLayoutedElements(
-        getNodes()
-      );
+    const result = layoutEngine.layout(getNodes(), getEdges(), {
+      direction: layoutDirection,
+    });
 
-      setNodes(layoutedNodes);
-      setEdges(getEdges()); // Keep existing edges
-      setTiers(calculatedTiers);
-    } else {
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        getNodes(),
-        getEdges(),
-        layoutDirection
-      );
-
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
-    }
+    setNodes(result.nodes);
+    setEdges(layoutDirection === 'TB' ? getEdges() : result.edges);
+    setTiers(result.tiers);
 
     setTimeout(() => {
       fitView({ padding: 0.2 });
@@ -347,44 +419,6 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
     fitView({ padding: 0.2, duration: 800 });
   }, [fitView]);
 
-  /**
-   * Safely converts grid pattern type to BackgroundVariant
-   * @param pattern - The grid pattern type
-   * @returns Valid BackgroundVariant
-   */
-  const convertToBackgroundVariant = (pattern: GridPatternType): BackgroundVariant => {
-    return pattern as BackgroundVariant;
-  };
-
-  // Helper function to get background color for grid
-  const getGridBackgroundColor = (variant: BackgroundVariant): string => {
-    switch (variant) {
-      case 'dots':
-        return '#d1d5db';
-      case 'cross':
-        return '#e5e7eb';
-      default:
-        return '#e5e7eb';
-    }
-  };
-
-  // Helper function to get background gap
-  const getGridGap = (variant: BackgroundVariant): number => {
-    const baseGap = variant === 'lines' ? 25 : 30;
-    return baseGap;
-  };
-
-  // Helper function to get background size
-  const getGridSize = (variant: BackgroundVariant): number => {
-    switch (variant) {
-      case 'dots':
-        return 1;
-      case 'cross':
-        return 0.5;
-      default:
-        return 0.5;
-    }
-  };
 
   return (
     <div className="w-full h-full relative">
@@ -402,8 +436,9 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
         minZoom={0.1}
         maxZoom={2}
         defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
-        snapToGrid={layoutDirection === 'TB'}
-        snapGrid={[25, 50]}
+        snapToGrid={getSnapGrid(layoutDirection).snapToGrid}
+        snapGrid={getSnapGrid(layoutDirection).snapGrid}
+        onlyRenderVisibleElements={shouldOnlyRenderVisibleElements(nodes.length)}
         proOptions={{
           hideAttribution: true // Hide React Flow attribution if using Pro
         }}
@@ -481,7 +516,44 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
         {layoutDirection === 'TB' && tiers.length > 0 && (
           <Panel position="top-center" className="pointer-events-none">
             <div className="text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
-              {tiers.length} Generations • Drag horizontally only
+              {t('generations.tierIndicator', { count: tiers.length })}
+            </div>
+          </Panel>
+        )}
+
+        {/* S-09 AC2: kontrol batas generasi */}
+        {(generationLimitState.fullExpand ||
+          generationLimitState.expandedBranches.size > 0 ||
+          generationLimit.hiddenDescendantCounts.size > 0) && (
+          <Panel position="top-center" className="mt-10">
+            <div className="flex items-center gap-2 text-xs bg-white/90 border border-gray-200 px-2 py-1 rounded">
+              <span className="text-gray-600">
+                {generationLimitState.fullExpand
+                  ? t('generations.expandAll')
+                  : t('generations.limitNotice', {
+                      shown: generationLimitState.maxGenerations,
+                      total: totalGenerations,
+                    })}
+              </span>
+              {!generationLimitState.fullExpand && (
+                <button
+                  type="button"
+                  className="px-2 py-0.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-100"
+                  onClick={handleExpandAllGenerations}
+                >
+                  {t('generations.expandAll')}
+                </button>
+              )}
+              {(generationLimitState.fullExpand ||
+                generationLimitState.expandedBranches.size > 0) && (
+                <button
+                  type="button"
+                  className="px-2 py-0.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-100"
+                  onClick={handleCollapseGenerations}
+                >
+                  {t('generations.collapse')}
+                </button>
+              )}
             </div>
           </Panel>
         )}

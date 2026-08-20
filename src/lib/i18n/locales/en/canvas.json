@@ -128,5 +128,15 @@
         "description": "Add great-grandchild"
       }
     }
+  },
+  "generations": {
+    "limitNotice": "Generation limit active: first {{shown}} of {{total}} generations",
+    "hiddenDescendants_one": "{{count}} descendant hidden",
+    "hiddenDescendants_other": "{{count}} descendants hidden",
+    "expandBranch": "Expand {{count}} descendants",
+    "expandAll": "Show all generations",
+    "expandAllWarning": "The whole tree will be rendered ({{count}} individuals) and may be heavy on slow devices. Continue?",
+    "collapse": "Restore generation limit",
+    "tierIndicator": "{{count}} generations • Drag horizontally only"
   }
 }

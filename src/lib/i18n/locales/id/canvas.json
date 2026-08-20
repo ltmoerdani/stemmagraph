@@ -128,5 +128,15 @@
         "description": "Tambahkan cicit"
       }
     }
+  },
+  "generations": {
+    "limitNotice": "Batas generasi aktif: {{shown}} generasi pertama dari {{total}}",
+    "hiddenDescendants_one": "{{count}} keturunan tersembunyi",
+    "hiddenDescendants_other": "{{count}} keturunan tersembunyi",
+    "expandBranch": "Buka {{count}} keturunan",
+    "expandAll": "Tampilkan semua generasi",
+    "expandAllWarning": "Seluruh pohon akan dirender penuh ({{count}} individu) dan bisa berat pada perangkat lambat. Lanjutkan?",
+    "collapse": "Kembalikan batas generasi",
+    "tierIndicator": "{{count}} generasi • Geser horizontal saja"
   }
 }

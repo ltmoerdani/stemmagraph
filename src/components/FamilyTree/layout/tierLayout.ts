@@ -73,15 +73,25 @@ export const calculateTierLayout = (
     // Position nodes with enhanced family grouping
     sortedNodes.forEach((node, index) => {
       const x = startX + (index * (NODE_WIDTH + HORIZONTAL_SPACING));
-      
+
+      // S-09 AC4: objek data lama dipakai ulang bila stamp tier tidak
+      // berubah, supaya referensi node stabil untuk bagian tak berubah.
+      const familyGroup = getFamilyGroupId(node.data.member);
+      const dataUnchanged =
+        node.data.tier === tierIndex &&
+        node.data.generationY === y &&
+        node.data.familyGroup === familyGroup;
+
       layoutedNodes.push({
         ...node,
         position: { x, y },
-        data: {
+        data: dataUnchanged
+      ? node.data
+      : {
           ...node.data,
           tier: tierIndex,
           generationY: y,
-          familyGroup: getFamilyGroupId(node.data.member),
+          familyGroup,
         }
       });
     });
