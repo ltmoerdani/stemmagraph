@@ -119,9 +119,6 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       const memberData: Partial<FamilyMember> = {
         name: formData.name.trim(),
         nickname: formData.nickname.trim() || undefined,
@@ -134,7 +131,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
 
       if (editingMember) {
         // Update existing member
-        updateMember(editingMember.id, memberData);
+        await updateMember(editingMember.id, memberData);
       } else {
         // Add new member with proper generation logic for new family trees
         const newMember: FamilyMember = {
@@ -150,7 +147,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           generation: isFirstMember ? getGenerationFromRole(formData.role) : 1,
           maritalStatus: 'single' // Default marital status
         };
-        addMember(newMember);
+        await addMember(newMember);
       }
       
       // Close modal and reset form
@@ -158,7 +155,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       
     } catch (err) {
       console.error('Error saving member:', err);
-      setError('Failed to save member data. Please try again.');
+      setError(err instanceof Error && err.message ? err.message : 'Failed to save member data. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
