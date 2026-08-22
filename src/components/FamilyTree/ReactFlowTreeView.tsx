@@ -13,6 +13,8 @@ export const ReactFlowTreeView: React.FC = () => {
   const { members, updateMember, deleteMember } = useFamilyStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [addContext, setAddContext] = useState<AddMemberContext | undefined>(undefined);
+  // S-14 U3: id anggota terakhir yang wajib terlihat pasca simpan.
+  const [revealMemberId, setRevealMemberId] = useState<string | null>(null);
 
   const handleMemberUpdate = (updatedMember: FamilyMember) => {
     updateMember(updatedMember.id, updatedMember);
@@ -49,6 +51,8 @@ export const ReactFlowTreeView: React.FC = () => {
         onMemberUpdate={handleMemberUpdate}
         onMemberAdd={handleMemberAdd}
         onMemberDelete={handleMemberDelete}
+        revealMemberId={revealMemberId}
+        onMemberRevealed={() => setRevealMemberId(null)}
       />
       <UnifiedMemberModal
         isOpen={showAddModal}
@@ -57,6 +61,7 @@ export const ReactFlowTreeView: React.FC = () => {
           setAddContext(undefined);
         }}
         relationshipContext={addContext}
+        onMemberAdded={(id) => setRevealMemberId(id)}
       />
     </div>
   );

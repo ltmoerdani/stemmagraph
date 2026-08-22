@@ -29,6 +29,8 @@ interface UnifiedMemberModalProps {
   familyTreeName?: string;
   isFirstMember?: boolean;
   relationshipContext?: RelationshipContext;
+  /** S-14 U3: beri tahu pemanggil id anggota baru untuk reveal di canvas. */
+  onMemberAdded?: (memberId: string) => void;
 }
 
 interface FormData {
@@ -59,7 +61,8 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   editingMember,
   familyTreeName,
   isFirstMember = false,
-  relationshipContext
+  relationshipContext,
+  onMemberAdded
 }) => {
   const { addMember, updateMember, addMemberWithRelationship } = useFamilyStore();
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -166,6 +169,8 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
         } else {
           await addMember(newMember);
         }
+        // S-14 U3: id dibuat lokal di atas, lapor agar canvas bisa reveal.
+        onMemberAdded?.(newMember.id);
       }
       
       // Close modal and reset form

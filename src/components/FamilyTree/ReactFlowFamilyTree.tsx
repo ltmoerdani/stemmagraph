@@ -64,6 +64,10 @@ interface ReactFlowFamilyTreeProps {
   onMemberUpdate?: (member: FamilyMember) => void;
   onMemberAdd?: (member: Partial<FamilyMember>) => void;
   onMemberDelete?: (memberId: string) => void;
+  /** S-14 U3: id anggota yang wajib dibuat terlihat (expand + fitView). */
+  revealMemberId?: string | null;
+  /** S-14 U3: dipanggil setelah viewport dipusatkan ke anggota reveal. */
+  onMemberRevealed?: () => void;
 }
 
 /**
@@ -221,6 +225,8 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   onMemberUpdate,
   onMemberAdd,
   onMemberDelete,
+  revealMemberId,
+  onMemberRevealed,
 }) => {
   const { fitView, getNodes, getEdges } = useReactFlow<FamilyMemberFlowNode, Edge>();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyMemberFlowNode>([]);
@@ -368,6 +374,33 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
       fitView({ padding: 0.2 });
     }, 100);
   }, [initialNodes, initialEdges, layoutDirection, setNodes, setEdges, fitView]);
+
+  // S-14 U3: anggota baru wajib terlihat pasca simpan. Bila id berada di
+  // luar jendela generasi, buka cabang leluhurnya; begitu nodenya sudah
+  // ada di canvas, pusatkan viewport ke node itu (delay 220ms agar
+  // mengalahkan fitView generik pasca-layout).
+  useEffect(() => {
+    if (!revealMemberId) return;
+    if (!membersRef.current.has(revealMemberId)) return;
+    if (!visibleMembers.some((m) => m.id === revealMemberId)) {
+      const member = membersRef.current.get(revealMemberId);
+      const parentId =
+        member?.parentIds && member.parentIds.length > 0 ? member.parentIds[0] : undefined;
+      setGenerationLimitState((state) =>
+        parentId ? expandBranch(state, parentId) : expandAllGenerations(state)
+      );
+      return;
+    }
+    const node = nodes.find((n) => n.id === revealMemberId);
+    if (node) {
+      const targetId = revealMemberId;
+      const timer = setTimeout(() => {
+        fitView({ nodes: [targetId], padding: 0.35, duration: 400, maxZoom: 1.25 });
+        onMemberRevealed?.();
+      }, 220);
+      return () => clearTimeout(timer);
+    }
+  }, [revealMemberId, visibleMembers, nodes, fitView, onMemberRevealed]);
 
   // Custom node change handler to constrain movement
   const handleNodesChange = useCallback((changes: NodeChange<FamilyMemberFlowNode>[]) => {
