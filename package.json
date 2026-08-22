@@ -22,6 +22,8 @@
     "prebuild": "node scripts/guard-pure-core.mjs",
     "guard:pure-core": "node scripts/guard-pure-core.mjs",
     "lint": "eslint .",
+    "verify": "node scripts/run-verify-all.mjs",
+    "test": "vitest run",
     "preview": "vite preview",
     "db:seed": "npx prisma db seed",
     "db:migrate": "npx prisma migrate dev",
@@ -74,6 +76,7 @@
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.61.1",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^4.1.11"
   }
 }

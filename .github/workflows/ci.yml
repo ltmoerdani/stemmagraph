@@ -39,3 +39,6 @@ jobs:
 
       - name: Build (local mode)
         run: npm run build
+
+      - name: Verify (7 harness, tanpa DATABASE_URL)
+        run: npm run verify
