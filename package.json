@@ -22,6 +22,7 @@
     "prebuild": "node scripts/guard-pure-core.mjs",
     "guard:pure-core": "node scripts/guard-pure-core.mjs",
     "lint": "eslint .",
+    "verify": "node scripts/run-verify-all.mjs",
     "preview": "vite preview",
     "db:seed": "npx prisma db seed",
     "db:migrate": "npx prisma migrate dev",
