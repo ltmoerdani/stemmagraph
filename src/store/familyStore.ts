@@ -19,9 +19,14 @@ function hydrateMembers(
     // QA put-1 Temuan-3: kumpulkan SEMUA rel spouse, bukan cuma find()
     // pertama, agar anggota berpasangan ganda tidak memegang pasangan lama
     // saja. spouseId legacy tetap diisi pasangan pertama demi kompatibilitas.
-    const spouseIds = rels
-      .filter((rel) => rel.type === 'spouse')
-      .map((rel) => (rel.memberId === r.id ? rel.relatedId : rel.memberId));
+    // Seed mock menyimpan rel spouse dua arah, jadi dedup sambil jaga urutan.
+    const spouseIds = [
+      ...new Set(
+        rels
+          .filter((rel) => rel.type === 'spouse')
+          .map((rel) => (rel.memberId === r.id ? rel.relatedId : rel.memberId)),
+      ),
+    ];
 
     const parentIds = rels
       .filter((rel) => rel.type === 'parent' && rel.relatedId === r.id)
