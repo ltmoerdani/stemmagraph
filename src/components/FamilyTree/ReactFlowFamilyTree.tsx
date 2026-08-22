@@ -64,6 +64,10 @@ interface ReactFlowFamilyTreeProps {
   onMemberUpdate?: (member: FamilyMember) => void;
   onMemberAdd?: (member: Partial<FamilyMember>) => void;
   onMemberDelete?: (memberId: string) => void;
+  /** S-14 U3: id anggota yang wajib dibuat terlihat (expand + fitView). */
+  revealMemberId?: string | null;
+  /** S-14 U3: dipanggil setelah viewport dipusatkan ke anggota reveal. */
+  onMemberRevealed?: () => void;
 }
 
 /**
@@ -108,26 +112,33 @@ const createFamilyEdgeSpecs = (
   const specs: HydrationSpec<FamilyMember, Edge>[] = [];
   const byId = new Map(members.map((member) => [member.id, member]));
   const siblingsMap = new Map<string, FamilyMember[]>();
+  // QA put-1 Temuan-3: dedup edge marriage per pasangan. Kunci = id pasangan
+  // terurut leksikografis, menggantikan banding member.id < spouse.id yang
+  // gagal saat id baru lebih besar secara leksikografis.
+  const marriageSeen = new Set<string>();
 
   members.forEach((member) => {
-    // Create simple spouse connections (direct horizontal lines)
-    if (member.spouseId) {
-      const spouse = byId.get(member.spouseId);
-      if (spouse && member.id < spouse.id) {
-        // Avoid duplicate edges
-        specs.push({
-          key: `spouse-${member.id}-${spouse.id}`,
-          sources: [member, spouse],
-          build: () => ({
-            id: `spouse-${member.id}-${spouse.id}`,
-            source: member.id,
-            target: spouse.id,
-            type: 'marriage', // Uses simplified MarriageEdge
-            data: { relationship: 'spouse' },
-          }),
-        });
-      }
-    }
+    // Create spouse connections (direct horizontal lines), satu edge per pasangan
+    const spouseList = member.spouseIds ?? (member.spouseId ? [member.spouseId] : []);
+    spouseList.forEach((rawSpouseId) => {
+      const spouse = byId.get(rawSpouseId);
+      if (!spouse) return;
+      const [left, right] = member.id < spouse.id ? [member, spouse] : [spouse, member];
+      const pairKey = `${left.id}|${right.id}`;
+      if (marriageSeen.has(pairKey)) return;
+      marriageSeen.add(pairKey);
+      specs.push({
+        key: `spouse-${left.id}-${right.id}`,
+        sources: [left, right],
+        build: () => ({
+          id: `spouse-${left.id}-${right.id}`,
+          source: left.id,
+          target: right.id,
+          type: 'marriage', // Uses simplified MarriageEdge
+          data: { relationship: 'spouse' },
+        }),
+      });
+    });
 
     // Create parent-child edges (bracket style)
     if (member.parentIds && member.parentIds.length > 0) {
@@ -221,6 +232,8 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   onMemberUpdate,
   onMemberAdd,
   onMemberDelete,
+  revealMemberId,
+  onMemberRevealed,
 }) => {
   const { fitView, getNodes, getEdges } = useReactFlow<FamilyMemberFlowNode, Edge>();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyMemberFlowNode>([]);
@@ -368,6 +381,33 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
       fitView({ padding: 0.2 });
     }, 100);
   }, [initialNodes, initialEdges, layoutDirection, setNodes, setEdges, fitView]);
+
+  // S-14 U3: anggota baru wajib terlihat pasca simpan. Bila id berada di
+  // luar jendela generasi, buka cabang leluhurnya; begitu nodenya sudah
+  // ada di canvas, pusatkan viewport ke node itu (delay 220ms agar
+  // mengalahkan fitView generik pasca-layout).
+  useEffect(() => {
+    if (!revealMemberId) return;
+    if (!membersRef.current.has(revealMemberId)) return;
+    if (!visibleMembers.some((m) => m.id === revealMemberId)) {
+      const member = membersRef.current.get(revealMemberId);
+      const parentId =
+        member?.parentIds && member.parentIds.length > 0 ? member.parentIds[0] : undefined;
+      setGenerationLimitState((state) =>
+        parentId ? expandBranch(state, parentId) : expandAllGenerations(state)
+      );
+      return;
+    }
+    const node = nodes.find((n) => n.id === revealMemberId);
+    if (node) {
+      const targetId = revealMemberId;
+      const timer = setTimeout(() => {
+        fitView({ nodes: [{ id: targetId }], padding: 0.35, duration: 400, maxZoom: 1.25 });
+        onMemberRevealed?.();
+      }, 220);
+      return () => clearTimeout(timer);
+    }
+  }, [revealMemberId, visibleMembers, nodes, fitView, onMemberRevealed]);
 
   // Custom node change handler to constrain movement
   const handleNodesChange = useCallback((changes: NodeChange<FamilyMemberFlowNode>[]) => {

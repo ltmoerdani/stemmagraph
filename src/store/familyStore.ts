@@ -16,12 +16,17 @@ function hydrateMembers(
   return records.map((r) => {
     const rels = relationships.filter((rel) => rel.memberId === r.id || rel.relatedId === r.id);
 
-    const spouseRel = rels.find((rel) => rel.type === 'spouse');
-    const spouseId = spouseRel
-      ? spouseRel.memberId === r.id
-        ? spouseRel.relatedId
-        : spouseRel.memberId
-      : undefined;
+    // QA put-1 Temuan-3: kumpulkan SEMUA rel spouse, bukan cuma find()
+    // pertama, agar anggota berpasangan ganda tidak memegang pasangan lama
+    // saja. spouseId legacy tetap diisi pasangan pertama demi kompatibilitas.
+    // Seed mock menyimpan rel spouse dua arah, jadi dedup sambil jaga urutan.
+    const spouseIds = [
+      ...new Set(
+        rels
+          .filter((rel) => rel.type === 'spouse')
+          .map((rel) => (rel.memberId === r.id ? rel.relatedId : rel.memberId)),
+      ),
+    ];
 
     const parentIds = rels
       .filter((rel) => rel.type === 'parent' && rel.relatedId === r.id)
@@ -47,7 +52,8 @@ function hydrateMembers(
       education: r.education,
       gender: r.gender as 'male' | 'female',
       photoUrl: r.photoUrl,
-      spouseId,
+      spouseId: spouseIds[0],
+      spouseIds: spouseIds.length ? spouseIds : undefined,
       parentIds: parentIds.length ? parentIds : undefined,
       childrenIds: childrenIds.length ? childrenIds : undefined,
       siblingIds: siblingIds.length ? siblingIds : undefined,
@@ -89,10 +95,11 @@ interface FamilyStore {
   setHasUnsavedChanges: (hasChanges: boolean) => void;
   setCurrentFamilyTreeId: (id: string | null) => void;
   updateStats: () => void;
-  addMember: (member: FamilyMember) => Promise<void>;
+  addMember: (member: FamilyMember) => Promise<string>;
   updateMember: (id: string, updates: Partial<FamilyMember>) => Promise<void>;
   deleteMember: (id: string) => Promise<void>;
-  addMemberWithRelationship: (member: FamilyMember, relationshipType: string, targetMemberId: string) => Promise<void>;
+  /** S-14 fix: balikan id record dari adapter (bukan id lokal caller). */
+  addMemberWithRelationship: (member: FamilyMember, relationshipType: string, targetMemberId: string) => Promise<string>;
 }
 
 function mapRelationshipType(uiType: string): MemberRelationship['type'] | null {
@@ -243,9 +250,12 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   addMember: async (newMember: FamilyMember) => {
     const adapter = getAdapter();
     const treeId = get().currentFamilyTreeId;
-    if (!treeId) return;
+    // S-14 U4: no active tree is a real save error, never a silent drop.
+    if (!treeId) throw new Error('No active family tree. Please open or create a family tree first, then add the member again.');
 
-    await adapter.createMember(treeId, {
+    // S-14 fix (QA put-1 T1): id canonical hanya yang dibuat adapter.
+    // Kembalikan agar pemanggil (modal reveal) memakai id yang sama dengan store.
+    const record = await adapter.createMember(treeId, {
       name: newMember.name,
       nickname: newMember.nickname,
       gender: (newMember.gender as 'male' | 'female' | 'other') || 'male',
@@ -259,6 +269,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
 
     // Re-fetch to get hydrated members with relationships
     await get().fetchMembers(treeId);
+    return record.id;
   },
 
   updateMember: async (id: string, updates: Partial<FamilyMember>) => {
@@ -299,11 +310,18 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   addMemberWithRelationship: async (member, relationshipType, targetMemberId) => {
     const adapter = getAdapter();
     const treeId = get().currentFamilyTreeId;
-    if (!treeId) return;
+    // S-14 U4: no active tree is a real save error, never a silent drop.
+    if (!treeId) throw new Error('No active family tree. Please open or create a family tree first, then add the member again.');
 
     const { members } = get();
     const targetMember = members.find((m) => m.id === targetMemberId);
-    if (!targetMember) return;
+    // QA put-1 Temuan-4: target hilang adalah error nyata, jangan senyap.
+    // Sebut nama dan id target agar mudah dilacak dari UI maupun log.
+    if (!targetMember) {
+      throw new Error(
+        `Target member for the relationship was not found (id: ${targetMemberId}). Refresh the family tree and try again.`,
+      );
+    }
 
     // Calculate generation based on relationship type
     let newGeneration = targetMember.generation;
@@ -343,11 +361,21 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
 
     // Create relationship via adapter
     const relType = mapRelationshipType(relationshipType);
-    if (relType) {
+    if (relType === 'child') {
+      // QA put-1 Temuan-2 (OPSI-1): arah relasi anak disimpan sebagai edge
+      // parent (memberId = ortu, relatedId = anak) konsisten konvensi seed
+      // mock.adapter dan pembaca hydrateMembers yang hanya memahami
+      // type 'parent' dengan relatedId === anggota. Tanpa ini edge
+      // parentChild tidak pernah terbentuk setelah hidrasi ulang.
+      await adapter.createRelationship(treeId, targetMemberId, record.id, 'parent');
+    } else if (relType) {
       await adapter.createRelationship(treeId, record.id, targetMemberId, relType);
     }
 
     // Re-fetch to get consistent state
     await get().fetchMembers(treeId);
+    // S-14 fix (QA put-1 T1): kembalikan id record adapter, bukan id lokal
+    // member payload. Rantai reveal modal bergantung pada nilai ini.
+    return record.id;
   },
 }));

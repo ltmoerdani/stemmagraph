@@ -17,12 +17,20 @@ const buildInitialFormData = (editingMember?: FamilyMember): FormData => {
   };
 };
 
+interface RelationshipContext {
+  relationshipType: string;
+  targetMemberId: string;
+}
+
 interface UnifiedMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingMember?: FamilyMember;
   familyTreeName?: string;
   isFirstMember?: boolean;
+  relationshipContext?: RelationshipContext;
+  /** S-14 U3: beri tahu pemanggil id anggota baru untuk reveal di canvas. */
+  onMemberAdded?: (memberId: string) => void;
 }
 
 interface FormData {
@@ -52,9 +60,11 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   onClose,
   editingMember,
   familyTreeName,
-  isFirstMember = false
+  isFirstMember = false,
+  relationshipContext,
+  onMemberAdded
 }) => {
-  const { addMember, updateMember } = useFamilyStore();
+  const { addMember, updateMember, addMemberWithRelationship } = useFamilyStore();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,9 +129,6 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       const memberData: Partial<FamilyMember> = {
         name: formData.name.trim(),
         nickname: formData.nickname.trim() || undefined,
@@ -134,7 +141,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
 
       if (editingMember) {
         // Update existing member
-        updateMember(editingMember.id, memberData);
+        await updateMember(editingMember.id, memberData);
       } else {
         // Add new member with proper generation logic for new family trees
         const newMember: FamilyMember = {
@@ -150,7 +157,23 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           generation: isFirstMember ? getGenerationFromRole(formData.role) : 1,
           maritalStatus: 'single' // Default marital status
         };
-        addMember(newMember);
+        let addedId: string | undefined;
+        if (relationshipContext) {
+          // S-14 U2: route through the relationship path so the parent or
+          // spouse edge is really created; generation is recomputed by the
+          // store from the target member.
+          addedId = await addMemberWithRelationship(
+            newMember,
+            relationshipContext.relationshipType,
+            relationshipContext.targetMemberId,
+          );
+        } else {
+          addedId = await addMember(newMember);
+        }
+        // S-14 fix (QA put-1 T1): pakai id balikan store (id adapter) agar
+        // effect reveal menemukan anggota di store; id lokal newMember tidak
+        // pernah ada di store dan memutus rantai reveal.
+        if (addedId) onMemberAdded?.(addedId);
       }
       
       // Close modal and reset form
@@ -158,7 +181,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       
     } catch (err) {
       console.error('Error saving member:', err);
-      setError('Failed to save member data. Please try again.');
+      setError(err instanceof Error && err.message ? err.message : 'Failed to save member data. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
