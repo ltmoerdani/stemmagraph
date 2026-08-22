@@ -1,0 +1,17 @@
+{
+  "export": {
+    "button": "Poster PDF (beta)",
+    "busy": "Merender poster...",
+    "empty": "Belum ada anggota keluarga untuk dibuat poster.",
+    "failed": "Gagal membuat poster PDF. Coba lagi."
+  },
+  "paper": {
+    "label": "Ukuran kertas",
+    "a4": "A4 (210 × 297 mm)",
+    "a3": "A3 (297 × 420 mm)",
+    "a2": "A2 (420 × 594 mm)",
+    "a1": "A1 (594 × 841 mm)",
+    "a0": "A0 (841 × 1189 mm)"
+  },
+  "notice": "Poster vektor satu lembar, dibuat otomatis dari tata letak pohon."
+}
