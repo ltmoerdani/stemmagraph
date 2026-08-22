@@ -310,7 +310,13 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
 
     const { members } = get();
     const targetMember = members.find((m) => m.id === targetMemberId);
-    if (!targetMember) return;
+    // QA put-1 Temuan-4: target hilang adalah error nyata, jangan senyap.
+    // Sebut nama dan id target agar mudah dilacak dari UI maupun log.
+    if (!targetMember) {
+      throw new Error(
+        `Target member for the relationship was not found (id: ${targetMemberId}). Refresh the family tree and try again.`,
+      );
+    }
 
     // Calculate generation based on relationship type
     let newGeneration = targetMember.generation;
