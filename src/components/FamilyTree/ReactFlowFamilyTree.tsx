@@ -395,7 +395,7 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
     if (node) {
       const targetId = revealMemberId;
       const timer = setTimeout(() => {
-        fitView({ nodes: [targetId], padding: 0.35, duration: 400, maxZoom: 1.25 });
+        fitView({ nodes: [{ id: targetId }], padding: 0.35, duration: 400, maxZoom: 1.25 });
         onMemberRevealed?.();
       }, 220);
       return () => clearTimeout(timer);
