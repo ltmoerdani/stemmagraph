@@ -17,12 +17,18 @@ const buildInitialFormData = (editingMember?: FamilyMember): FormData => {
   };
 };
 
+interface RelationshipContext {
+  relationshipType: string;
+  targetMemberId: string;
+}
+
 interface UnifiedMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingMember?: FamilyMember;
   familyTreeName?: string;
   isFirstMember?: boolean;
+  relationshipContext?: RelationshipContext;
 }
 
 interface FormData {
@@ -52,9 +58,10 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   onClose,
   editingMember,
   familyTreeName,
-  isFirstMember = false
+  isFirstMember = false,
+  relationshipContext
 }) => {
-  const { addMember, updateMember } = useFamilyStore();
+  const { addMember, updateMember, addMemberWithRelationship } = useFamilyStore();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -147,7 +154,18 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           generation: isFirstMember ? getGenerationFromRole(formData.role) : 1,
           maritalStatus: 'single' // Default marital status
         };
-        await addMember(newMember);
+        if (relationshipContext) {
+          // S-14 U2: route through the relationship path so the parent or
+          // spouse edge is really created; generation is recomputed by the
+          // store from the target member.
+          await addMemberWithRelationship(
+            newMember,
+            relationshipContext.relationshipType,
+            relationshipContext.targetMemberId,
+          );
+        } else {
+          await addMember(newMember);
+        }
       }
       
       // Close modal and reset form

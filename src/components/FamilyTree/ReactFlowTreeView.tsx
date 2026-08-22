@@ -1,27 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ReactFlowFamilyTree } from './ReactFlowFamilyTree';
+import { UnifiedMemberModal } from '../Forms/UnifiedMemberModal';
 import { useFamilyStore } from '../../store/familyStore';
 import type { FamilyMember } from '../../types/family';
 
+interface AddMemberContext {
+  relationshipType: string;
+  targetMemberId: string;
+}
+
 export const ReactFlowTreeView: React.FC = () => {
-  const { members, addMember, updateMember, deleteMember } = useFamilyStore();
+  const { members, updateMember, deleteMember } = useFamilyStore();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addContext, setAddContext] = useState<AddMemberContext | undefined>(undefined);
 
   const handleMemberUpdate = (updatedMember: FamilyMember) => {
     updateMember(updatedMember.id, updatedMember);
   };
 
+  // S-14 U2: the +child/+spouse context now reaches the modal instead of
+  // silently creating an orphan placeholder; the edge itself is created by
+  // addMemberWithRelationship inside the modal submit path.
   const handleMemberAdd = (newMember: Partial<FamilyMember>) => {
-    const member = {
-      id: `member-${Date.now()}`,
-      name: 'New Member',
-      birthDate: new Date().toISOString().split('T')[0],
-      gender: 'male' as const,
-      isAlive: true,
-      generation: 1,
-      maritalStatus: 'single' as const,
-      ...newMember,
-    };
-    addMember(member);
+    if (newMember.parentIds && newMember.parentIds.length > 0) {
+      setAddContext({
+        relationshipType: 'biological_child',
+        targetMemberId: newMember.parentIds[0],
+      });
+    } else if (newMember.spouseId) {
+      setAddContext({
+        relationshipType: 'partner',
+        targetMemberId: newMember.spouseId,
+      });
+    } else {
+      setAddContext(undefined);
+    }
+    setShowAddModal(true);
   };
 
   const handleMemberDelete = (memberId: string) => {
@@ -35,6 +49,14 @@ export const ReactFlowTreeView: React.FC = () => {
         onMemberUpdate={handleMemberUpdate}
         onMemberAdd={handleMemberAdd}
         onMemberDelete={handleMemberDelete}
+      />
+      <UnifiedMemberModal
+        isOpen={showAddModal}
+        onClose={() => {
+          setShowAddModal(false);
+          setAddContext(undefined);
+        }}
+        relationshipContext={addContext}
       />
     </div>
   );
