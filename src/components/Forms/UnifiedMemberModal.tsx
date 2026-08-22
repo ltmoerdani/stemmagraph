@@ -157,20 +157,23 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           generation: isFirstMember ? getGenerationFromRole(formData.role) : 1,
           maritalStatus: 'single' // Default marital status
         };
+        let addedId: string | undefined;
         if (relationshipContext) {
           // S-14 U2: route through the relationship path so the parent or
           // spouse edge is really created; generation is recomputed by the
           // store from the target member.
-          await addMemberWithRelationship(
+          addedId = await addMemberWithRelationship(
             newMember,
             relationshipContext.relationshipType,
             relationshipContext.targetMemberId,
           );
         } else {
-          await addMember(newMember);
+          addedId = await addMember(newMember);
         }
-        // S-14 U3: id dibuat lokal di atas, lapor agar canvas bisa reveal.
-        onMemberAdded?.(newMember.id);
+        // S-14 fix (QA put-1 T1): pakai id balikan store (id adapter) agar
+        // effect reveal menemukan anggota di store; id lokal newMember tidak
+        // pernah ada di store dan memutus rantai reveal.
+        if (addedId) onMemberAdded?.(addedId);
       }
       
       // Close modal and reset form

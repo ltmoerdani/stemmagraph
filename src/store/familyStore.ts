@@ -89,10 +89,11 @@ interface FamilyStore {
   setHasUnsavedChanges: (hasChanges: boolean) => void;
   setCurrentFamilyTreeId: (id: string | null) => void;
   updateStats: () => void;
-  addMember: (member: FamilyMember) => Promise<void>;
+  addMember: (member: FamilyMember) => Promise<string>;
   updateMember: (id: string, updates: Partial<FamilyMember>) => Promise<void>;
   deleteMember: (id: string) => Promise<void>;
-  addMemberWithRelationship: (member: FamilyMember, relationshipType: string, targetMemberId: string) => Promise<void>;
+  /** S-14 fix: balikan id record dari adapter (bukan id lokal caller). */
+  addMemberWithRelationship: (member: FamilyMember, relationshipType: string, targetMemberId: string) => Promise<string>;
 }
 
 function mapRelationshipType(uiType: string): MemberRelationship['type'] | null {
@@ -246,7 +247,9 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     // S-14 U4: no active tree is a real save error, never a silent drop.
     if (!treeId) throw new Error('No active family tree. Please open or create a family tree first, then add the member again.');
 
-    await adapter.createMember(treeId, {
+    // S-14 fix (QA put-1 T1): id canonical hanya yang dibuat adapter.
+    // Kembalikan agar pemanggil (modal reveal) memakai id yang sama dengan store.
+    const record = await adapter.createMember(treeId, {
       name: newMember.name,
       nickname: newMember.nickname,
       gender: (newMember.gender as 'male' | 'female' | 'other') || 'male',
@@ -260,6 +263,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
 
     // Re-fetch to get hydrated members with relationships
     await get().fetchMembers(treeId);
+    return record.id;
   },
 
   updateMember: async (id: string, updates: Partial<FamilyMember>) => {
@@ -351,5 +355,8 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
 
     // Re-fetch to get consistent state
     await get().fetchMembers(treeId);
+    // S-14 fix (QA put-1 T1): kembalikan id record adapter, bukan id lokal
+    // member payload. Rantai reveal modal bergantung pada nilai ini.
+    return record.id;
   },
 }));
