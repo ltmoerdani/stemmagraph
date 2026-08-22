@@ -1,0 +1,17 @@
+{
+  "export": {
+    "button": "Poster PDF (beta)",
+    "busy": "Rendering poster...",
+    "empty": "No family members yet to build a poster from.",
+    "failed": "Failed to create the poster PDF. Please try again."
+  },
+  "paper": {
+    "label": "Paper size",
+    "a4": "A4 (210 × 297 mm)",
+    "a3": "A3 (297 × 420 mm)",
+    "a2": "A2 (420 × 594 mm)",
+    "a1": "A1 (594 × 841 mm)",
+    "a0": "A0 (841 × 1189 mm)"
+  },
+  "notice": "Single-sheet vector poster, generated automatically from the tree layout."
+}

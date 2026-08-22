@@ -5,6 +5,7 @@ import {
   FileImage,
   FileJson,
   FileText,
+  Presentation,
   Printer,
   ChevronDown
 } from 'lucide-react';
@@ -16,6 +17,14 @@ import { getAdapter } from '../../../lib/adapters';
 import { exportGedcom70, type ExportPrivacyMode } from '../../../lib/gedcom/exportGedcom70';
 import { exportGedzip } from '../../../lib/gedcom/exportGedzip';
 import { buildExportPrivacyReport } from '../../../lib/privacy/exportPrivacyGate';
+import { buildPosterSpec } from '../../../lib/poster/buildSpec';
+import { renderPosterPdf } from '../../../lib/poster/renderer';
+import {
+  DEFAULT_PAPER_KIND,
+  POSTER_PAPER_PRESETS,
+  resolvePaper,
+  type PaperPreset,
+} from '../../../lib/poster/geometry';
 
 /** MIME type used when saving .ged downloads (de facto standard). */
 const GEDCOM_MIME = 'application/x-gedcom';
@@ -60,12 +69,21 @@ export const ExportControls: React.FC = () => {
   // checkbox confirmation before its download buttons unlock.
   const [privacyMode, setPrivacyMode] = useState<ExportPrivacyMode>('clean');
   const [confirmFullArchive, setConfirmFullArchive] = useState(false);
-  const { t } = useTranslation();
+  // Poster paper choice (S-10). State stays on the preset kind so the
+  // select stays controlled even while a render is in flight.
+  const [posterPaperKind, setPosterPaperKind] =
+    useState<PaperPreset['kind']>(DEFAULT_PAPER_KIND);
+  const [isPosterBusy, setIsPosterBusy] = useState(false);
+  const [posterError, setPosterError] = useState(false);
+  const { t } = useTranslation(['poster', 'common']);
   // Canonical adapter-layer data (not the legacy merged UI shape) so the
   // GEDCOM export reads exactly what the backend stores.
   const records = useFamilyStore((s) => s.records);
   const relationships = useFamilyStore((s) => s.relationships);
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
+  // Merged members feed the poster builder: it needs generation numbers
+  // plus parent/child links, which only exist on the hydrated shape.
+  const members = useFamilyStore((s) => s.members);
 
   // Gate report computed from the same records the export will read, so
   // the counts the user sees before downloading match the output.
@@ -195,6 +213,42 @@ export const ExportControls: React.FC = () => {
     } catch (error) {
       console.error('PDF export failed:', error);
     } finally {
+      setIsExporting(false);
+    }
+  };
+
+  /**
+   * Poster PDF (beta, S-10): builds a true vector single-sheet poster
+   * from the current family state. Node positions are derived
+   * automatically by the poster builder (auto-from-layout decision),
+   * so no DOM measurement is involved. The dropdown stays open on
+   * failure so the error line stays visible; success closes it.
+   */
+  const exportPosterPdf = async () => {
+    setPosterError(false);
+    setIsPosterBusy(true);
+    setIsExporting(true);
+    try {
+      const treeName = await resolveTreeName();
+      const paper = resolvePaper(posterPaperKind);
+      const spec = buildPosterSpec({ members, paper, title: treeName });
+      const { pdfBytes, warnings } = await renderPosterPdf(spec);
+      // Warnings (clamped names, overflow) are print-quality hints, not
+      // failures; surface them in the console for follow-up.
+      if (warnings.length > 0) {
+        console.info('Poster render warnings:', warnings);
+      }
+      // Copy into a plain ArrayBuffer-backed view: TS lib dom types only
+      // accept Uint8Array<ArrayBuffer> as a BlobPart.
+      const bytes = new Uint8Array(pdfBytes);
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      downloadBlob(blob, gedcomFileName(treeName, new Date(), '-poster.pdf'));
+      handleDropdownClose();
+    } catch (error) {
+      console.error('Poster export failed:', error);
+      setPosterError(true);
+    } finally {
+      setIsPosterBusy(false);
       setIsExporting(false);
     }
   };
@@ -384,7 +438,84 @@ export const ExportControls: React.FC = () => {
               <FileArchive className="w-4 h-4" />
               <span>Export as GEDZIP (.gedzip)</span>
             </button>
-            
+
+            {/* Poster PDF (beta, S-10): vector single-sheet poster with a
+                paper size choice. Renders from family state directly, no
+                canvas screenshot. The menu stays open while rendering so
+                busy and error feedback stay visible. */}
+            <div
+              className="mt-2 mx-2 px-2 py-2 border-t border-gray-100"
+              role="group"
+              aria-label={t('poster:export.button')}
+            >
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {t('poster:export.button')}
+              </p>
+
+              <label
+                className="block mt-2 text-xs text-gray-600"
+                htmlFor="poster-paper-kind"
+              >
+                {t('poster:paper.label')}
+              </label>
+              <select
+                id="poster-paper-kind"
+                value={posterPaperKind}
+                onChange={(e) =>
+                  setPosterPaperKind(e.target.value as PaperPreset['kind'])
+                }
+                disabled={isPosterBusy || isExporting}
+                className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700"
+                data-testid="poster-paper-kind"
+              >
+                {POSTER_PAPER_PRESETS.map((preset) => (
+                  <option key={preset.kind} value={preset.kind}>
+                    {t(`poster:paper.${preset.kind}`)}
+                  </option>
+                ))}
+              </select>
+
+              <p className="mt-2 text-xs text-gray-500" data-testid="poster-notice">
+                {t('poster:notice')}
+              </p>
+              {members.length === 0 && (
+                <p
+                  className="mt-1 text-xs text-gray-500"
+                  data-testid="poster-empty-note"
+                >
+                  {t('poster:export.empty')}
+                </p>
+              )}
+
+              <button
+                onClick={exportPosterPdf}
+                disabled={
+                  isPosterBusy || isExporting || members.length === 0
+                }
+                className="mt-2 w-full text-left px-3 py-2 text-sm rounded border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                role="menuitem"
+                aria-busy={isPosterBusy}
+                data-testid="poster-export-button"
+              >
+                <Presentation className="w-4 h-4" />
+                <span>
+                  {isPosterBusy
+                    ? t('poster:export.busy')
+                    : t('poster:export.button')}
+                </span>
+              </button>
+
+              {posterError && (
+                <p
+                  className="mt-2 text-xs text-red-600"
+                  role="alert"
+                  data-testid="poster-error"
+                >
+                  {t('poster:export.failed')}
+                </p>
+              )}
+            </div>
+
             <hr className="my-2" />
             
             <button
