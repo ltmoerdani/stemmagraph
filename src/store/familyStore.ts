@@ -349,7 +349,14 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
 
     // Create relationship via adapter
     const relType = mapRelationshipType(relationshipType);
-    if (relType) {
+    if (relType === 'child') {
+      // QA put-1 Temuan-2 (OPSI-1): arah relasi anak disimpan sebagai edge
+      // parent (memberId = ortu, relatedId = anak) konsisten konvensi seed
+      // mock.adapter dan pembaca hydrateMembers yang hanya memahami
+      // type 'parent' dengan relatedId === anggota. Tanpa ini edge
+      // parentChild tidak pernah terbentuk setelah hidrasi ulang.
+      await adapter.createRelationship(treeId, targetMemberId, record.id, 'parent');
+    } else if (relType) {
       await adapter.createRelationship(treeId, record.id, targetMemberId, relType);
     }
 
