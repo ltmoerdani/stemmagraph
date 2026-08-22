@@ -112,26 +112,33 @@ const createFamilyEdgeSpecs = (
   const specs: HydrationSpec<FamilyMember, Edge>[] = [];
   const byId = new Map(members.map((member) => [member.id, member]));
   const siblingsMap = new Map<string, FamilyMember[]>();
+  // QA put-1 Temuan-3: dedup edge marriage per pasangan. Kunci = id pasangan
+  // terurut leksikografis, menggantikan banding member.id < spouse.id yang
+  // gagal saat id baru lebih besar secara leksikografis.
+  const marriageSeen = new Set<string>();
 
   members.forEach((member) => {
-    // Create simple spouse connections (direct horizontal lines)
-    if (member.spouseId) {
-      const spouse = byId.get(member.spouseId);
-      if (spouse && member.id < spouse.id) {
-        // Avoid duplicate edges
-        specs.push({
-          key: `spouse-${member.id}-${spouse.id}`,
-          sources: [member, spouse],
-          build: () => ({
-            id: `spouse-${member.id}-${spouse.id}`,
-            source: member.id,
-            target: spouse.id,
-            type: 'marriage', // Uses simplified MarriageEdge
-            data: { relationship: 'spouse' },
-          }),
-        });
-      }
-    }
+    // Create spouse connections (direct horizontal lines), satu edge per pasangan
+    const spouseList = member.spouseIds ?? (member.spouseId ? [member.spouseId] : []);
+    spouseList.forEach((rawSpouseId) => {
+      const spouse = byId.get(rawSpouseId);
+      if (!spouse) return;
+      const [left, right] = member.id < spouse.id ? [member, spouse] : [spouse, member];
+      const pairKey = `${left.id}|${right.id}`;
+      if (marriageSeen.has(pairKey)) return;
+      marriageSeen.add(pairKey);
+      specs.push({
+        key: `spouse-${left.id}-${right.id}`,
+        sources: [left, right],
+        build: () => ({
+          id: `spouse-${left.id}-${right.id}`,
+          source: left.id,
+          target: right.id,
+          type: 'marriage', // Uses simplified MarriageEdge
+          data: { relationship: 'spouse' },
+        }),
+      });
+    });
 
     // Create parent-child edges (bracket style)
     if (member.parentIds && member.parentIds.length > 0) {

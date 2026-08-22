@@ -16,12 +16,12 @@ function hydrateMembers(
   return records.map((r) => {
     const rels = relationships.filter((rel) => rel.memberId === r.id || rel.relatedId === r.id);
 
-    const spouseRel = rels.find((rel) => rel.type === 'spouse');
-    const spouseId = spouseRel
-      ? spouseRel.memberId === r.id
-        ? spouseRel.relatedId
-        : spouseRel.memberId
-      : undefined;
+    // QA put-1 Temuan-3: kumpulkan SEMUA rel spouse, bukan cuma find()
+    // pertama, agar anggota berpasangan ganda tidak memegang pasangan lama
+    // saja. spouseId legacy tetap diisi pasangan pertama demi kompatibilitas.
+    const spouseIds = rels
+      .filter((rel) => rel.type === 'spouse')
+      .map((rel) => (rel.memberId === r.id ? rel.relatedId : rel.memberId));
 
     const parentIds = rels
       .filter((rel) => rel.type === 'parent' && rel.relatedId === r.id)
@@ -47,7 +47,8 @@ function hydrateMembers(
       education: r.education,
       gender: r.gender as 'male' | 'female',
       photoUrl: r.photoUrl,
-      spouseId,
+      spouseId: spouseIds[0],
+      spouseIds: spouseIds.length ? spouseIds : undefined,
       parentIds: parentIds.length ? parentIds : undefined,
       childrenIds: childrenIds.length ? childrenIds : undefined,
       siblingIds: siblingIds.length ? siblingIds : undefined,
