@@ -243,7 +243,8 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   addMember: async (newMember: FamilyMember) => {
     const adapter = getAdapter();
     const treeId = get().currentFamilyTreeId;
-    if (!treeId) return;
+    // S-14 U4: no active tree is a real save error, never a silent drop.
+    if (!treeId) throw new Error('No active family tree. Please open or create a family tree first, then add the member again.');
 
     await adapter.createMember(treeId, {
       name: newMember.name,
@@ -299,7 +300,8 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   addMemberWithRelationship: async (member, relationshipType, targetMemberId) => {
     const adapter = getAdapter();
     const treeId = get().currentFamilyTreeId;
-    if (!treeId) return;
+    // S-14 U4: no active tree is a real save error, never a silent drop.
+    if (!treeId) throw new Error('No active family tree. Please open or create a family tree first, then add the member again.');
 
     const { members } = get();
     const targetMember = members.find((m) => m.id === targetMemberId);
