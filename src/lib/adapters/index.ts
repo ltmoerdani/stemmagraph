@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter } from './types';
+import { DataAdapter, AccountAdminApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -73,6 +73,18 @@ export function resetAdapter(): void {
   _adapter = null;
 }
 
+// ─── Account Administration (P2-1) ────────────────────────
+
+/**
+ * Returns the account admin surface of the active adapter, or null when the
+ * adapter has no server-backed accounts (mock, supabase). The UI hides the
+ * notification menu and admin panel for null instead of crashing.
+ */
+export function getAccountAdminApi(): AccountAdminApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 /**
  * Override adapter with a custom implementation (useful for testing).
  */
@@ -93,6 +105,13 @@ export type {
   FamilyMemberRecord,
   CreateMemberInput,
   MemberRelationship,
+  AccountAdminApi,
+  AdminAccount,
+  AdminAccountStatus,
+  AdminAccountRole,
+  AccountStatusAction,
+  AppNotification,
+  NotificationsPage,
 } from './types';
 
 export {

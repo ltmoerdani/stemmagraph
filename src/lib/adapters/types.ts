@@ -10,6 +10,10 @@ export interface AuthUser {
   name: string;
   familyName?: string;
   avatar?: string;
+  /** Account state from the server (ADR 0002). Absent on adapters without accounts. */
+  status?: 'pending' | 'active' | 'disabled';
+  /** Installation-level role from the server. Absent on adapters without accounts. */
+  role?: 'owner' | 'member';
   createdAt: string;
 }
 
@@ -134,6 +138,47 @@ export interface DataAdapter {
   listRelationships(treeId: string): Promise<MemberRelationship[]>;
   createRelationship(treeId: string, memberId: string, relatedId: string, type: MemberRelationship['type']): Promise<MemberRelationship>;
   deleteRelationship(id: string): Promise<void>;
+}
+
+// ─── Account Administration (P2-1) ────────────────────────
+// Server-backed adapters (rest) implement this surface; mock and supabase
+// adapters do not, and `getAccountAdminApi` returns null for them so the UI
+// can hide the admin panel and notification menu instead of crashing.
+
+export type AdminAccountStatus = 'pending' | 'active' | 'disabled';
+export type AdminAccountRole = 'owner' | 'member';
+export type AccountStatusAction = 'activate' | 'disable' | 'enable';
+
+export interface AdminAccount {
+  id: string;
+  email: string;
+  name: string;
+  familyName: string | null;
+  avatar: string | null;
+  role: AdminAccountRole;
+  status: AdminAccountStatus;
+  createdAt: string;
+}
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  payload: Record<string, unknown> | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationsPage {
+  notifications: AppNotification[];
+  unreadCount: number;
+}
+
+export interface AccountAdminApi {
+  listNotifications(): Promise<NotificationsPage>;
+  markNotificationRead(id: string): Promise<AppNotification>;
+  markAllNotificationsRead(): Promise<number>;
+  listAccounts(): Promise<AdminAccount[]>;
+  setAccountStatus(id: string, action: AccountStatusAction): Promise<AdminAccount>;
 }
 
 // ─── Error Types ──────────────────────────────────────────
