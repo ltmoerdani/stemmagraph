@@ -29,6 +29,8 @@ model User {
   updatedAt  DateTime @updatedAt
 
   notifications Notification[]
+  treeMemberships TreeMember[]
+  createdInvitations Invitation[] @relation("InvitationCreator")
 }
 
 // ─── Notification (in-app, P2-1) ─────────────────────────
@@ -84,6 +86,8 @@ model FamilyTree {
   updatedAt       DateTime             @updatedAt
   members         FamilyMember[]
   relationships   FamilyRelationship[]
+  treeMembers     TreeMember[]
+  invitations     Invitation[]
 }
 
 // ─── Family Member ────────────────────────────────────────
@@ -138,4 +142,53 @@ model FamilyRelationship {
 
   @@unique([memberId, relatedId, type])
   @@index([treeId])
+}
+
+// ─── Tree Member (per-tree membership, P2-3) ─────────────
+// A user's role on one tree (ADR 0002 matrix): "owner" | "editor" | "viewer".
+// Membership is granted through invitations only; the tree creator is born
+// owner. The pair (treeId, userId) is unique: one row is one membership.
+
+model TreeMember {
+  id        String   @id @default(uuid())
+  treeId    String
+  userId    String
+  role      String   @default("viewer")
+  createdAt DateTime @default(now())
+
+  tree FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([treeId, userId])
+  @@index([userId])
+}
+
+// ─── Invitation (P2-3) ────────────────────────────────────
+// Two types (ADR 0004): "personal" (single use, TTL 48h) and "family"
+// (multi-use, TTL 7 days, maxUses clamped 1..100 at creation, default 20).
+// The token is >= 128-bit entropy, URL-safe, generated per row; it is shown
+// once in the creation response and masked everywhere else. channel records
+// how the owner intends to hand the link over ("manual" | "wa" | "email"),
+// it is data only: no outbound transport exists in this server.
+
+model Invitation {
+  id          String    @id @default(uuid())
+  token       String    @unique
+  type        String
+  treeId      String
+  createdById String
+  grantedRole String    @default("viewer")
+  maxUses     Int
+  usedCount   Int       @default(0)
+  channel     String?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  tree      FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  createdBy User       @relation("InvitationCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([treeId])
+  @@index([createdById])
 }
