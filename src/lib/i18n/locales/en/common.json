@@ -188,5 +188,75 @@
       "enable": "Enable"
     },
     "loadError": "Failed to load the account list."
+  },
+  "invite": {
+    "contextTitle": "You are invited to {{treeName}}",
+    "contextBody": "{{inviterName}} invites you to join as a {{type}} invitation participant. Link valid until {{expiresAt}}.",
+    "contextUses": "{{count}} use(s) remaining on this link.",
+    "consent": "Joining gives limited access set by the inviter, not the whole tree. Data you enter here may be seen by members of this tree according to your role. The app sends nothing on your behalf.",
+    "type": {
+      "personal": "personal",
+      "family": "family"
+    },
+    "deadTitle": "This invitation link is no longer usable",
+    "deadBody": "You can still create an account without the link, or ask the inviter for a new link.",
+    "deadLink": "This invitation link is no longer usable.",
+    "infoUnavailable": "Invitation details cannot be loaded in this mode."
+  },
+  "invitePanel": {
+    "open": "Invitations and members",
+    "title": "Sharing: {{treeName}}",
+    "close": "Close",
+    "refresh": "Refresh",
+    "unavailable": "Invitations need the REST backend (VITE_API_BASE_URL).",
+    "createTitle": "Create invitation link",
+    "fieldType": "Type",
+    "fieldRole": "Granted role",
+    "fieldChannel": "Delivery channel (record only)",
+    "fieldMaxUses": "Max uses (1-100)",
+    "role": {
+      "owner": "owner",
+      "editor": "editor",
+      "viewer": "viewer"
+    },
+    "channel": {
+      "manual": "manual (in person)",
+      "wa": "WhatsApp (you send it)",
+      "email": "email (you send it)"
+    },
+    "createHint": "The app never sends messages. Copy the link yourself and send it through your own channel.",
+    "createAction": "Create link",
+    "creating": "Creating...",
+    "createdOnce": "Link created. Shown once; copy it now.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "shareHint": "Anyone opening this link can register and join this tree with the role above.",
+    "listTitle": "Invitation links",
+    "empty": "No invitations yet.",
+    "loading": "Loading...",
+    "loadFailed": "Could not load invitations. Check your role and try again.",
+    "uses": "{{used}}/{{max}} used",
+    "expires": "expires {{date}}",
+    "state": {
+      "active": "active",
+      "expired": "expired",
+      "exhausted": "no uses left",
+      "revoked": "revoked",
+      "consumed": "used"
+    },
+    "revoke": "Revoke",
+    "revokeFailed": "Revoking the invitation failed.",
+    "createFailed": "Creating the invitation failed.",
+    "membersTitle": "Tree members",
+    "changeRole": "Change role",
+    "removeMember": "Remove member",
+    "remove": "Remove",
+    "memberUpdateFailed": "Updating the member failed.",
+    "membersHint": "Demoting or removing the last active owner is refused (409 TREE_LAST_OWNER_GUARD).",
+    "userStatus": {
+      "pending": "pending",
+      "active": "active",
+      "disabled": "disabled"
+    }
   }
 }

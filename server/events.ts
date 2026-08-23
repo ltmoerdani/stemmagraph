@@ -26,7 +26,7 @@ export async function appendEvent(
   if (!isEventType(type)) {
     throw new Error(`unknown event type: ${String(type)}`);
   }
-  const validation = validateEventPayload(payload);
+  const validation = validateEventPayload(type, payload);
   if (!validation.ok) {
     throw new Error(validation.reason);
   }

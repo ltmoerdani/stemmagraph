@@ -25,7 +25,13 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Node types for src files that run under vitest/node (P2-3: the
+       invitation token generator in src/lib/invitations/token.ts is the
+       only src import of node:crypto; TypeScript 6 no longer pulls
+       @types/node into a program implicitly). */
+    "types": ["node"]
   },
   "include": ["src"]
 }

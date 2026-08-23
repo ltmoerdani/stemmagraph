@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine } from 'lucide-react';
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
+import { InvitationsPanel } from './InvitationsPanel';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { navigate } from '../../utils/routing';
@@ -12,6 +13,8 @@ export const Dashboard: React.FC = () => {
   const { familyTrees, viewMode, setViewMode } = useDashboardStore();
   const { t, i18n } = useTranslation();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  // Tree whose invitations/membership panel is open (P2-3 AC-6).
+  const [sharingTreeId, setSharingTreeId] = useState<string | null>(null);
 
   const currentMemberCount = familyTrees.reduce((total, tree) => total + tree.memberCount, 0);
 
@@ -190,7 +193,12 @@ export const Dashboard: React.FC = () => {
                       >
                         {t('dashboard.open')}
                       </button>
-                      <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                      <button
+                        onClick={() => setSharingTreeId(tree.id)}
+                        className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        title={t('invitePanel.open')}
+                        aria-label={t('invitePanel.open')}
+                      >
                         <Settings className="w-4 h-4 text-gray-600" />
                       </button>
                     </div>
@@ -243,7 +251,12 @@ export const Dashboard: React.FC = () => {
                             >
                               {t('dashboard.open')}
                             </button>
-                            <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button
+                              onClick={() => setSharingTreeId(tree.id)}
+                              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                              title={t('invitePanel.open')}
+                              aria-label={t('invitePanel.open')}
+                            >
                               <Settings className="w-4 h-4 text-gray-600" />
                             </button>
                           </div>
@@ -277,6 +290,15 @@ export const Dashboard: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       />
+
+      {/* Invitations and membership panel (P2-3) */}
+      {sharingTreeId !== null && (
+        <InvitationsPanel
+          treeId={sharingTreeId}
+          treeName={familyTrees.find((tree) => tree.id === sharingTreeId)?.name ?? ''}
+          onClose={() => setSharingTreeId(null)}
+        />
+      )}
     </div>
   );
 };
