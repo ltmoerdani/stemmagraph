@@ -14,6 +14,7 @@
     "close": "Tutup menu pengguna",
     "profile": "Profil",
     "settings": "Pengaturan",
+    "admin": "Kelola Akun",
     "signOut": "Keluar"
   },
   "bottomNav": {
@@ -102,5 +103,90 @@
     "cancel": "BATAL",
     "creating": "MEMBUAT...",
     "create": "BUAT"
+  },
+  "auth": {
+    "signinTitle": "Masuk ke Silsilah Keluarga Anda",
+    "signupTitle": "Buat Akun Baru",
+    "signinSubtitle": "Kelola dan jelajahi silsilah keluarga Anda",
+    "signupSubtitle": "Daftar untuk mulai menyusun silsilah keluarga Anda",
+    "name": "Nama",
+    "namePlaceholder": "Nama lengkap Anda",
+    "nameRequired": "Nama wajib diisi",
+    "email": "Email",
+    "emailPlaceholder": "nama@email.com",
+    "emailRequired": "Email wajib diisi",
+    "emailInvalid": "Format email tidak valid",
+    "password": "Kata Sandi",
+    "passwordPlaceholder": "Masukkan kata sandi Anda",
+    "passwordRequired": "Kata sandi wajib diisi",
+    "passwordMin": "Kata sandi minimal 6 karakter",
+    "forgot": "Lupa kata sandi?",
+    "signin": "Masuk",
+    "signup": "Daftar",
+    "noAccount": "Belum punya akun?",
+    "signupHere": "Daftar di sini",
+    "haveAccount": "Sudah punya akun?",
+    "signinHere": "Masuk di sini",
+    "demoTitle": "Akun demo:",
+    "demoEmail": "Email",
+    "demoPassword": "Kata sandi",
+    "footer": "© 2024 Family Tree App. Kelola silsilah keluarga Anda dengan mudah dan aman.",
+    "forgotTitle": "Lupa Kata Sandi",
+    "forgotSubtitle": "Masukkan email Anda untuk mengatur ulang kata sandi",
+    "forgotSubmit": "Kirim Tautan Reset",
+    "forgotRequired": "Isi email Anda untuk mengatur ulang kata sandi",
+    "forgotSuccess": "Tautan pengaturan ulang kata sandi sudah dikirim ke email Anda.",
+    "backToLogin": "Kembali ke Halaman Masuk",
+    "pendingTitle": "Pendaftaran diterima",
+    "pendingBody": "Akun {{email}} sudah dicatat dan menunggu aktivasi oleh pemilik instalasi. Setelah diaktifkan, Anda bisa masuk dengan email dan kata sandi ini.",
+    "loginPendingTitle": "Akun menunggu aktivasi",
+    "loginPendingBody": "Akun ini sudah terdaftar, tetapi belum diaktifkan oleh pemilik instalasi. Coba masuk lagi setelah akun Anda diaktifkan.",
+    "loginDisabledTitle": "Akun dinonaktifkan",
+    "loginDisabledBody": "Pemilik instalasi menonaktifkan akun ini. Hubungi pemilik bila Anda merasa ini keliru."
+  },
+  "notifications": {
+    "ariaLabel": "Notifikasi ({{count}} belum dibaca)",
+    "title": "Notifikasi",
+    "close": "Tutup notifikasi",
+    "refresh": "Muat ulang notifikasi",
+    "markAllRead": "Tandai semua dibaca",
+    "empty": "Tidak ada notifikasi",
+    "loadError": "Gagal memuat notifikasi.",
+    "items": {
+      "pendingCreated": "{{name}} ({{email}}) mendaftar dan menunggu aktivasi.",
+      "activated": "Akun Anda sudah diaktifkan. Selamat menyusun silsilah.",
+      "unknown": "Notifikasi baru: {{type}}"
+    }
+  },
+  "admin": {
+    "title": "Kelola Akun",
+    "subtitle": "Aktifkan pendaftaran baru, nonaktifkan, atau pulihkan akun sesuai statusnya.",
+    "close": "Tutup panel kelola akun",
+    "refresh": "Muat ulang daftar akun",
+    "accounts_one": "{{count}} akun",
+    "accounts_other": "{{count}} akun",
+    "table": {
+      "name": "Nama",
+      "email": "Email",
+      "role": "Peran",
+      "status": "Status",
+      "createdAt": "Dibuat",
+      "actions": "Aksi"
+    },
+    "role": {
+      "owner": "Pemilik",
+      "member": "Anggota"
+    },
+    "status": {
+      "pending": "Menunggu",
+      "active": "Aktif",
+      "disabled": "Nonaktif"
+    },
+    "action": {
+      "activate": "Aktifkan",
+      "disable": "Nonaktifkan",
+      "enable": "Pulihkan"
+    },
+    "loadError": "Gagal memuat daftar akun."
   }
 }
