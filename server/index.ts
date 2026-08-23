@@ -8,7 +8,16 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '../generated/prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import type { FamilyTree, FamilyMember, FamilyRelationship, User } from '../generated/prisma/client';
+import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification } from '../generated/prisma/client';
+import {
+  bootstrapAccountState,
+  buildAccountActivatedNotification,
+  buildAccountPendingCreatedNotification,
+  canTransition,
+  reviewDisableAction,
+  type AccountRole,
+  type AccountStatus,
+} from '../src/lib/account-states';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -31,7 +40,7 @@ app.use(express.json());
 
 // ─── Types ───────────────────────────────────────────────
 
-interface AuthenticatedRequest extends express.Request {
+interface AuthenticatedRequest<P = Record<string, string>> extends express.Request<P> {
   userId?: string;
 }
 
@@ -41,6 +50,8 @@ interface PublicUser {
   name: string;
   familyName: string | null;
   avatar: string | null;
+  status: AccountStatus;
+  role: AccountRole;
   createdAt: string;
 }
 
@@ -57,6 +68,8 @@ function toPublicUser(user: User): PublicUser {
     name: user.name,
     familyName: user.familyName,
     avatar: user.avatar,
+    status: user.status as AccountStatus,
+    role: user.role as AccountRole,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -64,9 +77,16 @@ function toPublicUser(user: User): PublicUser {
 /**
  * Express middleware — verifies JWT from Authorization header.
  * Attaches `userId` to request on success.
- * Returns 401 for missing/invalid tokens.
+ *
+ * Per-request account state check (P2-1): JWTs are stateless with 7 day
+ * expiry, so the token alone cannot prove the account is still usable.
+ * Every request re-reads the account from the database:
+ *   - disabled -> 401 ACCOUNT_DISABLED (this is what "disable cuts all
+ *     sessions" means in practice: every outstanding token stops working
+ *     on its next request)
+ *   - pending  -> 403 ACCOUNT_PENDING
  */
-function requireAuth(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction): void {
+async function requireAuth(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ code: 'UNAUTHORIZED', message: 'Missing or invalid Authorization header' });
@@ -79,11 +99,41 @@ function requireAuth(req: AuthenticatedRequest, res: express.Response, next: exp
       res.status(401).json({ code: 'UNAUTHORIZED', message: 'Invalid token payload' });
       return;
     }
-    req.userId = payload.sub;
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) {
+      res.status(401).json({ code: 'UNAUTHORIZED', message: 'Account no longer exists' });
+      return;
+    }
+    if (user.status === 'disabled') {
+      res.status(401).json({ code: 'ACCOUNT_DISABLED', message: 'This account has been disabled' });
+      return;
+    }
+    if (user.status === 'pending') {
+      res.status(403).json({ code: 'ACCOUNT_PENDING', message: 'This account is waiting for activation by an owner' });
+      return;
+    }
+    req.userId = user.id;
     next();
   } catch {
     res.status(401).json({ code: 'UNAUTHORIZED', message: 'Token expired or invalid' });
   }
+}
+
+/**
+ * Admin gate (P2-1): the caller must hold role 'owner' AND status 'active'.
+ * Runs after requireAuth; re-reads the account so the check is per-request
+ * honest even if a role changed mid-session.
+ */
+async function requireOwner(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId! },
+    select: { role: true, status: true },
+  });
+  if (!user || user.role !== 'owner' || user.status !== 'active') {
+    res.status(403).json({ code: 'OWNER_REQUIRED', message: 'This action requires an active owner account' });
+    return;
+  }
+  next();
 }
 
 // ─── Auth Routes ─────────────────────────────────────────
@@ -103,13 +153,38 @@ app.post('/api/v1/auth/register', async (req, res) => {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(409).json({ code: 'EMAIL_EXISTS', message: 'Email is already registered' });
 
+    // Bootstrap rule (ADR 0002): the first account on an empty user table is
+    // born active with role owner so a fresh install can administer itself.
+    // Every later registration is born pending and waits for owner approval.
+    const bootstrap = bootstrapAccountState(await prisma.user.count());
+
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { email, password: passwordHash, name, familyName },
+      data: { email, password: passwordHash, name, familyName, status: bootstrap.status, role: bootstrap.role },
     });
 
-    const token = signToken(user.id);
-    res.status(201).json({ user: toPublicUser(user), token });
+    if (bootstrap.status === 'active') {
+      const token = signToken(user.id);
+      return res.status(201).json({ user: toPublicUser(user), token });
+    }
+
+    // Pending registration: no token is issued. Tell the truth about the
+    // account state so the UI can show a "waiting for activation" screen.
+    const activeOwners = await prisma.user.findMany({
+      where: { role: 'owner', status: 'active' },
+      select: { id: true },
+    });
+    if (activeOwners.length > 0) {
+      await prisma.notification.createMany({
+        data: activeOwners.map((owner) =>
+          buildAccountPendingCreatedNotification(owner.id, { id: user.id, email: user.email, name: user.name }),
+        ),
+      });
+    }
+    res.status(202).json({
+      user: toPublicUser(user),
+      message: 'Account created. It is waiting for activation by an owner before you can sign in.',
+    });
   } catch (e) {
     res.status(500).json({ code: 'AUTH_ERROR', message: (e as Error).message });
   }
@@ -132,6 +207,15 @@ app.post('/api/v1/auth/login', async (req, res) => {
       return res.status(401).json({ code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' });
     }
 
+    // Account state gate (P2-1): pending accounts never receive a token;
+    // disabled accounts are refused outright.
+    if (user.status === 'pending') {
+      return res.status(403).json({ code: 'ACCOUNT_PENDING', message: 'This account is waiting for activation by an owner' });
+    }
+    if (user.status === 'disabled') {
+      return res.status(403).json({ code: 'ACCOUNT_DISABLED', message: 'This account has been disabled' });
+    }
+
     const token = signToken(user.id);
     res.json({ user: toPublicUser(user), token });
   } catch (e) {
@@ -150,6 +234,167 @@ app.get('/api/v1/auth/session', requireAuth, async (req: AuthenticatedRequest, r
 });
 
 app.post('/api/v1/auth/logout', (_req, res) => res.status(204).send());
+
+// ─── Admin: Account Management (P2-1) ────────────────────
+// All routes require an active owner. The state machine and the
+// last-owner guard live in src/lib/account-states (pure, unit tested).
+
+function formatAccount(user: User) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    familyName: user.familyName,
+    avatar: user.avatar,
+    role: user.role,
+    status: user.status,
+    createdAt: user.createdAt.toISOString(),
+  };
+}
+
+app.get('/api/v1/admin/accounts', requireAuth, requireOwner, async (_req: AuthenticatedRequest, res) => {
+  try {
+    const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json({ accounts: users.map(formatAccount) });
+  } catch (e) {
+    res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/admin/accounts/:id/activate', requireAuth, requireOwner, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) return res.status(404).json({ code: 'NOT_FOUND', message: 'Account not found' });
+    if (!canTransition(target.status as AccountStatus, 'active')) {
+      return res.status(409).json({ code: 'INVALID_TRANSITION', message: `Cannot activate an account in status '${target.status}'` });
+    }
+
+    const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'active' } });
+    // Notify the user that their account is now usable (R-74.7).
+    await prisma.notification.create({ data: buildAccountActivatedNotification(updated.id) });
+    res.json({ account: formatAccount(updated) });
+  } catch (e) {
+    res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/admin/accounts/:id/disable', requireAuth, requireOwner, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) return res.status(404).json({ code: 'NOT_FOUND', message: 'Account not found' });
+    if (!canTransition(target.status as AccountStatus, 'disabled')) {
+      return res.status(409).json({ code: 'INVALID_TRANSITION', message: `Cannot disable an account in status '${target.status}'` });
+    }
+
+    // Last-owner guard (R-73.5) + self-disable refusal, pure logic.
+    const otherActiveOwnerCount = await prisma.user.count({
+      where: { role: 'owner', status: 'active', id: { not: target.id } },
+    });
+    const decision = reviewDisableAction({
+      actorId: req.userId!,
+      targetId: target.id,
+      targetRole: target.role as AccountRole,
+      targetStatus: target.status as AccountStatus,
+      otherActiveOwnerCount,
+    });
+    if (!decision.allowed) {
+      const message =
+        decision.code === 'LAST_OWNER_GUARD'
+          ? 'Cannot disable the last active owner. Promote another owner first.'
+          : 'You cannot disable your own account.';
+      return res.status(403).json({ code: decision.code, message });
+    }
+
+    const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'disabled' } });
+    res.json({ account: formatAccount(updated) });
+  } catch (e) {
+    res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/admin/accounts/:id/enable', requireAuth, requireOwner, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) return res.status(404).json({ code: 'NOT_FOUND', message: 'Account not found' });
+    if (target.status !== 'disabled') {
+      return res.status(409).json({ code: 'INVALID_TRANSITION', message: `Cannot enable an account in status '${target.status}'` });
+    }
+
+    const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'active' } });
+    await prisma.notification.create({ data: buildAccountActivatedNotification(updated.id) });
+    res.json({ account: formatAccount(updated) });
+  } catch (e) {
+    res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Notifications (in-app, P2-1) ────────────────────────
+// Delivery stays inside this server: no email, no external push.
+// Known types: ACCOUNT_PENDING_CREATED, ACCOUNT_ACTIVATED.
+
+function formatNotification(n: Notification) {
+  let payload: unknown = null;
+  try {
+    payload = JSON.parse(n.payloadJson);
+  } catch {
+    payload = null;
+  }
+  return {
+    id: n.id,
+    type: n.type,
+    payload,
+    readAt: n.readAt ? n.readAt.toISOString() : null,
+    createdAt: n.createdAt.toISOString(),
+  };
+}
+
+app.get('/api/v1/notifications', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const [notifications, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where: { userId: req.userId! },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+      prisma.notification.count({ where: { userId: req.userId!, readAt: null } }),
+    ]);
+    res.json({ notifications: notifications.map(formatNotification), unreadCount });
+  } catch (e) {
+    res.status(500).json({ code: 'NOTIFICATION_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/notifications/:id/read', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    // Ownership is part of the lookup: one account can never mark or even
+    // probe another account's notifications.
+    const notification = await prisma.notification.findFirst({
+      where: { id: req.params.id, userId: req.userId! },
+    });
+    if (!notification) return res.status(404).json({ code: 'NOT_FOUND', message: 'Notification not found' });
+
+    const updated = await prisma.notification.update({
+      where: { id: notification.id },
+      // Keep the original readAt when already read (idempotent).
+      data: { readAt: notification.readAt ?? new Date() },
+    });
+    res.json({ notification: formatNotification(updated) });
+  } catch (e) {
+    res.status(500).json({ code: 'NOTIFICATION_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/notifications/read-all', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const result = await prisma.notification.updateMany({
+      where: { userId: req.userId!, readAt: null },
+      data: { readAt: new Date() },
+    });
+    res.json({ updated: result.count });
+  } catch (e) {
+    res.status(500).json({ code: 'NOTIFICATION_ERROR', message: (e as Error).message });
+  }
+});
 
 // ─── Family Trees ────────────────────────────────────────
 
