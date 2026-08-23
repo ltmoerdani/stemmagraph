@@ -20,8 +20,32 @@ model User {
   name       String
   familyName String?
   avatar     String?
+  // P2-1 account states. Application domain values:
+  // status: "pending" | "active" | "disabled" (see src/lib/account-states)
+  // role:   "owner" | "member"
+  status     String   @default("pending")
+  role       String   @default("member")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  notifications Notification[]
+}
+
+// ─── Notification (in-app, P2-1) ─────────────────────────
+// Deliveries stay inside the server: no email, no external push.
+// Known types: "ACCOUNT_PENDING_CREATED" | "ACCOUNT_ACTIVATED".
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  type        String
+  payloadJson String
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 // ─── Family Tree ──────────────────────────────────────────
