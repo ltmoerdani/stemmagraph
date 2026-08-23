@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Menu, TreePine } from 'lucide-react';
 import { useFamilyStore } from '../../store/familyStore';
 import { UserMenu } from './UserMenu';
+import { NotificationMenu } from './NotificationMenu';
 import { useTranslation } from 'react-i18next';
 import { changeAppLanguage, SUPPORTED_LANGUAGES, type AppLanguage } from '../../lib/i18n';
 
@@ -87,6 +88,8 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, familyName }) => {
             className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+
+        <NotificationMenu />
 
         <UserMenu />
       </div>

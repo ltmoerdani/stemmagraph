@@ -31,8 +31,20 @@ import {
   FamilyMemberRecord,
   CreateMemberInput,
   MemberRelationship,
+  AccountAdminApi,
+  AdminAccount,
+  AccountStatusAction,
+  AppNotification,
+  NotificationsPage,
   AdapterError,
+  AuthError,
 } from './types';
+
+/**
+ * P2-1 (ADR 0002): server error codes that describe an unusable account
+ * state rather than bad credentials. Login surfaces them as AuthError.
+ */
+const ACCOUNT_STATE_ERROR_CODES = new Set(['ACCOUNT_PENDING', 'ACCOUNT_DISABLED']);
 
 interface RestAdapterOptions {
   baseUrl: string;
@@ -41,7 +53,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter {
+export class RestAdapter implements DataAdapter, AccountAdminApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -108,15 +120,36 @@ export class RestAdapter implements DataAdapter {
   // ── Auth ────────────────────────────────────────────────
 
   async login(credentials: AuthCredentials): Promise<AuthSession> {
-    const session = await this.request<AuthSession>('POST', '/auth/login', credentials);
-    this.token = session.token ?? null;
-    return session;
+    try {
+      const session = await this.request<AuthSession>('POST', '/auth/login', credentials);
+      this.token = session.token ?? null;
+      return session;
+    } catch (e) {
+      // P2-1: a pending or disabled account is a typed auth state, not a
+      // generic API failure. request() only knows AdapterError, so rethrow
+      // the state codes as AuthError for the login screen to branch on.
+      if (e instanceof AdapterError && ACCOUNT_STATE_ERROR_CODES.has(e.code)) {
+        throw new AuthError(e.message, e.code, e.statusCode);
+      }
+      throw e;
+    }
   }
 
   async register(input: RegisterInput): Promise<AuthSession> {
-    const session = await this.request<AuthSession>('POST', '/auth/register', input);
-    this.token = session.token ?? null;
-    return session;
+    const body = await this.request<AuthSession & { message?: string }>('POST', '/auth/register', input);
+    // P2-1: a later registration is born pending and gets no token. The
+    // server answers 202 with the user and an honest message; surface that
+    // as a typed error so the auth store can show the waiting screen
+    // instead of pretending the user signed in.
+    if (!body.token && body.user?.status === 'pending') {
+      throw new AuthError(
+        body.message ?? 'Account created, waiting for activation',
+        'ACCOUNT_PENDING',
+        202,
+      );
+    }
+    this.token = body.token ?? null;
+    return body;
   }
 
   async logout(): Promise<void> {
@@ -218,5 +251,46 @@ export class RestAdapter implements DataAdapter {
 
   async deleteRelationship(id: string): Promise<void> {
     await this.request<void>('DELETE', `/relationships/${id}`);
+  }
+
+  // ── Account Administration (P2-1) ───────────────────────
+  // Mirrors server/index.ts: notifications belong to the caller; account
+  // management is owner-gated server side. The adapter only routes calls.
+
+  async listNotifications(): Promise<NotificationsPage> {
+    const body = await this.request<{ notifications: AppNotification[]; unreadCount: number }>(
+      'GET',
+      '/notifications',
+    );
+    return {
+      notifications: body.notifications ?? [],
+      unreadCount: body.unreadCount ?? 0,
+    };
+  }
+
+  async markNotificationRead(id: string): Promise<AppNotification> {
+    const body = await this.request<{ notification: AppNotification }>(
+      'POST',
+      `/notifications/${id}/read`,
+    );
+    return body.notification;
+  }
+
+  async markAllNotificationsRead(): Promise<number> {
+    const body = await this.request<{ updated: number }>('POST', '/notifications/read-all');
+    return body.updated ?? 0;
+  }
+
+  async listAccounts(): Promise<AdminAccount[]> {
+    const body = await this.request<{ accounts: AdminAccount[] }>('GET', '/admin/accounts');
+    return body.accounts ?? [];
+  }
+
+  async setAccountStatus(id: string, action: AccountStatusAction): Promise<AdminAccount> {
+    const body = await this.request<{ account: AdminAccount }>(
+      'POST',
+      `/admin/accounts/${id}/${action}`,
+    );
+    return body.account;
   }
 }

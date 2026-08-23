@@ -14,6 +14,7 @@
     "close": "Close user menu",
     "profile": "Profile",
     "settings": "Settings",
+    "admin": "Manage Accounts",
     "signOut": "Sign Out"
   },
   "bottomNav": {
@@ -102,5 +103,90 @@
     "cancel": "CANCEL",
     "creating": "CREATING...",
     "create": "CREATE"
+  },
+  "auth": {
+    "signinTitle": "Sign In to Your Family Tree",
+    "signupTitle": "Create a New Account",
+    "signinSubtitle": "Manage and explore your family tree",
+    "signupSubtitle": "Sign up to start building your family tree",
+    "name": "Name",
+    "namePlaceholder": "Your full name",
+    "nameRequired": "Name is required",
+    "email": "Email",
+    "emailPlaceholder": "name@email.com",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email format",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "passwordRequired": "Password is required",
+    "passwordMin": "Password must be at least 6 characters",
+    "forgot": "Forgot password?",
+    "signin": "Sign In",
+    "signup": "Sign Up",
+    "noAccount": "Don't have an account?",
+    "signupHere": "Sign up now",
+    "haveAccount": "Already have an account?",
+    "signinHere": "Sign in here",
+    "demoTitle": "Demo Credentials:",
+    "demoEmail": "Email",
+    "demoPassword": "Password",
+    "footer": "© 2024 Family Tree App. Manage your family tree easily and securely.",
+    "forgotTitle": "Forgot Password",
+    "forgotSubtitle": "Enter your email to reset your password",
+    "forgotSubmit": "Send Reset Link",
+    "forgotRequired": "Enter your email to reset your password",
+    "forgotSuccess": "A password reset link has been sent to your email.",
+    "backToLogin": "Back to Login",
+    "pendingTitle": "Registration received",
+    "pendingBody": "The account {{email}} is recorded and waiting for activation by the installation owner. Once activated, you can sign in with this email and password.",
+    "loginPendingTitle": "Account waiting for activation",
+    "loginPendingBody": "This account is registered but has not been activated by the installation owner yet. Try signing in again after your account is activated.",
+    "loginDisabledTitle": "Account disabled",
+    "loginDisabledBody": "The installation owner disabled this account. Contact the owner if you believe this is a mistake."
+  },
+  "notifications": {
+    "ariaLabel": "Notifications ({{count}} unread)",
+    "title": "Notifications",
+    "close": "Close notifications",
+    "refresh": "Reload notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications",
+    "loadError": "Failed to load notifications.",
+    "items": {
+      "pendingCreated": "{{name}} ({{email}}) registered and is waiting for activation.",
+      "activated": "Your account has been activated. Enjoy building your family tree.",
+      "unknown": "New notification: {{type}}"
+    }
+  },
+  "admin": {
+    "title": "Manage Accounts",
+    "subtitle": "Activate pending registrations, disable, or restore accounts according to their status.",
+    "close": "Close account management panel",
+    "refresh": "Reload account list",
+    "accounts_one": "{{count}} account",
+    "accounts_other": "{{count}} accounts",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "createdAt": "Created",
+      "actions": "Actions"
+    },
+    "role": {
+      "owner": "Owner",
+      "member": "Member"
+    },
+    "status": {
+      "pending": "Pending",
+      "active": "Active",
+      "disabled": "Disabled"
+    },
+    "action": {
+      "activate": "Activate",
+      "disable": "Disable",
+      "enable": "Enable"
+    },
+    "loadError": "Failed to load the account list."
   }
 }

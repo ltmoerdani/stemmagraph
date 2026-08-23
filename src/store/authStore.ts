@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getAdapter } from '@/lib/adapters';
+import { getAdapter, AuthError } from '@/lib/adapters';
 import type { AuthUser } from '@/lib/adapters';
 
 interface AuthState {
@@ -85,6 +85,13 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error) {
+          if (error instanceof AuthError && error.code === 'ACCOUNT_PENDING') {
+            // A 202 pending registration is a success as far as the account
+            // goes: keep it out of the red error slot and let the login page
+            // hold the waiting-for-activation panel from its own form state.
+            set({ isLoading: false, error: null });
+            throw error;
+          }
           const message = error instanceof Error ? error.message : 'Registration failed';
           set({ isLoading: false, error: message });
           throw error;
