@@ -10,8 +10,8 @@ import {
   ACCOUNT_STATUS_TRANSITIONS,
   type AccountStatus,
   type AccountRole,
-  type AccountStatusAction,
 } from './index';
+import type { AccountStatusAction } from '../adapters/types';
 
 // ─── Admin action derivation ─────────────────────────────
 //
@@ -30,9 +30,16 @@ const TARGET_ACTION: Readonly<
 /**
  * Actions the admin panel may offer for an account in the given status,
  * derived from the shared state machine so UI and server cannot drift.
+ * Table gaps fall through silently here but fail the exact-array unit
+ * tests, so the two cannot drift apart unnoticed.
  */
 export function actionsForStatus(from: AccountStatus): AccountStatusAction[] {
-  return ACCOUNT_STATUS_TRANSITIONS[from].map((to) => TARGET_ACTION[from][to]);
+  const actions: AccountStatusAction[] = [];
+  for (const to of ACCOUNT_STATUS_TRANSITIONS[from]) {
+    const action = TARGET_ACTION[from][to];
+    if (action !== undefined) actions.push(action);
+  }
+  return actions;
 }
 
 // ─── Admin visibility gate (AC-5d) ───────────────────────
