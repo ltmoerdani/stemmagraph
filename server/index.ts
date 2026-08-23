@@ -6,7 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification } from '../generated/prisma/client';
+import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event } from '../generated/prisma/client';
 import { prisma } from './db';
 import {
   bootstrapAccountState,
@@ -20,6 +20,7 @@ import {
   buildAccountDisabledEvent,
   buildAccountEnabledEvent,
   buildAccountPendingCreatedEvent,
+  isEventType,
   projectAccountActivatedNotification,
   projectPendingCreatedNotifications,
 } from '../src/lib/events';
@@ -344,6 +345,44 @@ app.post('/api/v1/admin/accounts/:id/enable', requireAuth, requireOwner, async (
     await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
     await prisma.notification.create({ data: projectAccountActivatedNotification(event) });
     res.json({ account: formatAccount(updated) });
+  } catch (e) {
+    res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Event store (read-only, P2-2) ───────────────────────
+// Append-only audit surface for owners: the 50 most recent events, with an
+// optional exact type filter. There is deliberately no UI, no update
+// endpoint, and no delete endpoint.
+
+function formatEvent(e: Event) {
+  let payload: unknown = null;
+  try {
+    payload = JSON.parse(e.payloadJson);
+  } catch {
+    payload = null;
+  }
+  return {
+    type: e.type,
+    actorUserId: e.actorUserId,
+    familyTreeId: e.familyTreeId,
+    createdAt: e.createdAt,
+    payload,
+  };
+}
+
+app.get('/api/v1/admin/events', requireAuth, requireOwner, async (req: AuthenticatedRequest, res) => {
+  try {
+    const requestedType = req.query['type'];
+    if (requestedType !== undefined && (typeof requestedType !== 'string' || !isEventType(requestedType))) {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'Unknown event type filter' });
+    }
+    const events = await prisma.event.findMany({
+      where: requestedType !== undefined ? { type: requestedType } : undefined,
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    res.json({ events: events.map(formatEvent) });
   } catch (e) {
     res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
   }
