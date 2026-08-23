@@ -6,18 +6,25 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '../generated/prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification } from '../generated/prisma/client';
+import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event } from '../generated/prisma/client';
+import { prisma } from './db';
 import {
   bootstrapAccountState,
-  buildAccountActivatedNotification,
-  buildAccountPendingCreatedNotification,
   canTransition,
   reviewDisableAction,
   type AccountRole,
   type AccountStatus,
 } from '../src/lib/account-states';
+import {
+  buildAccountActivatedEvent,
+  buildAccountDisabledEvent,
+  buildAccountEnabledEvent,
+  buildAccountPendingCreatedEvent,
+  isEventType,
+  projectAccountActivatedNotification,
+  projectPendingCreatedNotifications,
+} from '../src/lib/events';
+import { appendEvent } from './events';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -30,10 +37,6 @@ if (process.env['NODE_ENV'] === 'production' && JWT_SECRET === 'dev-only-insecur
   console.error('❌ FATAL: JWT_SECRET must be set in production. Set the JWT_SECRET env variable.');
   process.exit(1);
 }
-
-const prisma = new PrismaClient({
-  adapter: new PrismaBetterSqlite3({ url: process.env['DATABASE_URL'] || 'file:./prisma/dev.db' }),
-});
 
 app.use(cors());
 app.use(express.json());
@@ -170,15 +173,23 @@ app.post('/api/v1/auth/register', async (req, res) => {
 
     // Pending registration: no token is issued. Tell the truth about the
     // account state so the UI can show a "waiting for activation" screen.
+    // Audit fact first (P2-2): the event is written before any projection.
+    const event = buildAccountPendingCreatedEvent(user.id);
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+
+    // In-app notifications are a projection of the emitted event (P2-1
+    // behavior unchanged: one notification per active owner).
     const activeOwners = await prisma.user.findMany({
       where: { role: 'owner', status: 'active' },
       select: { id: true },
     });
     if (activeOwners.length > 0) {
       await prisma.notification.createMany({
-        data: activeOwners.map((owner) =>
-          buildAccountPendingCreatedNotification(owner.id, { id: user.id, email: user.email, name: user.name }),
-        ),
+        data: projectPendingCreatedNotifications(event, activeOwners, {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        }),
       });
     }
     res.status(202).json({
@@ -270,8 +281,11 @@ app.post('/api/v1/admin/accounts/:id/activate', requireAuth, requireOwner, async
     }
 
     const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'active' } });
-    // Notify the user that their account is now usable (R-74.7).
-    await prisma.notification.create({ data: buildAccountActivatedNotification(updated.id) });
+    // Fact first, then the projection: notify the user that their account
+    // is now usable (R-74.7) with a row derived from the emitted event.
+    const event = buildAccountActivatedEvent(req.userId!, updated.id);
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+    await prisma.notification.create({ data: projectAccountActivatedNotification(event) });
     res.json({ account: formatAccount(updated) });
   } catch (e) {
     res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
@@ -306,6 +320,10 @@ app.post('/api/v1/admin/accounts/:id/disable', requireAuth, requireOwner, async 
     }
 
     const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'disabled' } });
+    // Fact only: P2-1 sends no notification on disable, and that external
+    // behavior stays unchanged; the audit event is still recorded.
+    const event = buildAccountDisabledEvent(req.userId!, updated.id);
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
     res.json({ account: formatAccount(updated) });
   } catch (e) {
     res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
@@ -321,8 +339,50 @@ app.post('/api/v1/admin/accounts/:id/enable', requireAuth, requireOwner, async (
     }
 
     const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'active' } });
-    await prisma.notification.create({ data: buildAccountActivatedNotification(updated.id) });
+    // Fact first, then the projection: enabling reuses the P2-1 activated
+    // notification, now derived from the emitted event.
+    const event = buildAccountEnabledEvent(req.userId!, updated.id);
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+    await prisma.notification.create({ data: projectAccountActivatedNotification(event) });
     res.json({ account: formatAccount(updated) });
+  } catch (e) {
+    res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Event store (read-only, P2-2) ───────────────────────
+// Append-only audit surface for owners: the 50 most recent events, with an
+// optional exact type filter. There is deliberately no UI, no update
+// endpoint, and no delete endpoint.
+
+function formatEvent(e: Event) {
+  let payload: unknown = null;
+  try {
+    payload = JSON.parse(e.payloadJson);
+  } catch {
+    payload = null;
+  }
+  return {
+    type: e.type,
+    actorUserId: e.actorUserId,
+    familyTreeId: e.familyTreeId,
+    createdAt: e.createdAt,
+    payload,
+  };
+}
+
+app.get('/api/v1/admin/events', requireAuth, requireOwner, async (req: AuthenticatedRequest, res) => {
+  try {
+    const requestedType = req.query['type'];
+    if (requestedType !== undefined && (typeof requestedType !== 'string' || !isEventType(requestedType))) {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'Unknown event type filter' });
+    }
+    const events = await prisma.event.findMany({
+      where: requestedType !== undefined ? { type: requestedType } : undefined,
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    res.json({ events: events.map(formatEvent) });
   } catch (e) {
     res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
   }

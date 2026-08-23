@@ -48,6 +48,29 @@ model Notification {
   @@index([userId, createdAt])
 }
 
+// ─── Event (append-only store, P2-2) ─────────────────────
+// Immutable audit log of meaningful account actions (ADR 0003).
+// Append-only by convention: the server has exactly one writer
+// (appendEvent in src/lib/events) and no update/delete route exists.
+// actorUserId is NULL for system-initiated actions.
+// familyTreeId is NULL for events not scoped to one tree.
+// No foreign keys on purpose: the store must outlive referenced rows
+// (records survive account deletion) and migrations stay additive.
+
+model Event {
+  id           String   @id @default(cuid())
+  type         String
+  actorUserId  String?
+  familyTreeId String?
+  payloadJson  String
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([familyTreeId, createdAt])
+}
+
 // ─── Family Tree ──────────────────────────────────────────
 
 model FamilyTree {
