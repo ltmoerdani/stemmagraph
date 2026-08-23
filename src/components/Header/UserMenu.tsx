@@ -1,18 +1,31 @@
 import React, { useState } from 'react';
-import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { User, LogOut, Settings, ChevronDown, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from 'react-i18next';
+import { getAccountAdminApi } from '../../lib/adapters';
+import { isAdminUser } from '../../lib/account-states/adminView';
+import { AdminPanel } from '../Admin/AdminPanel';
 
 export const UserMenu: React.FC = () => {
   const { user, logout } = useAuthStore();
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   if (!user) return null;
+
+  // AC-5d: the admin entry exists only for an active owner on an adapter
+  // with server-backed accounts. Everyone else never sees the surface.
+  const canAdmin = getAccountAdminApi() !== null && isAdminUser(user);
 
   const handleLogout = () => {
     logout();
     setIsOpen(false);
+  };
+
+  const openAdminPanel = () => {
+    setIsOpen(false);
+    setIsAdminOpen(true);
   };
 
   return (
@@ -76,7 +89,17 @@ export const UserMenu: React.FC = () => {
                 <Settings className="w-4 h-4" />
                 <span>{t('userMenu.settings')}</span>
               </button>
-              
+
+              {canAdmin && (
+                <button
+                  onClick={openAdminPanel}
+                  className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>{t('userMenu.admin')}</span>
+                </button>
+              )}
+
               <hr className="my-2" />
               
               <button
@@ -90,6 +113,8 @@ export const UserMenu: React.FC = () => {
           </div>
         </>
       )}
+
+      {isAdminOpen && <AdminPanel onClose={() => setIsAdminOpen(false)} />}
     </div>
   );
 };
