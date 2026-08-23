@@ -14,7 +14,7 @@ interface AuthState {
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, invitationToken?: string) => Promise<void>;
   clearError: () => void;
   updateUser: (updates: Partial<AuthUser>) => void;
 }
@@ -73,11 +73,11 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (email: string, password: string, name: string) => {
+      register: async (email: string, password: string, name: string, invitationToken?: string) => {
         set({ isLoading: true, error: null });
         try {
           const adapter = getAdapter();
-          const session = await adapter.register({ email, password, name });
+          const session = await adapter.register({ email, password, name, invitationToken });
           set({
             user: session.user,
             isAuthenticated: true,

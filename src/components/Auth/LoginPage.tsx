@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, TreePine, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Eye, EyeOff, TreePine, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle, Clock, Link2 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from 'react-i18next';
-import { AuthError } from '../../lib/adapters';
+import { AuthError, getInvitationAdminApi } from '../../lib/adapters';
+import type { InvitationContextInfo } from '../../lib/adapters';
+import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 
 interface LoginFormData {
   name: string;
@@ -26,7 +28,7 @@ interface LoginErrors {
  */
 export const LoginPage: React.FC = () => {
   const { login, register, isLoading, error } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formData, setFormData] = useState<LoginFormData>({
     name: '',
     email: '',
@@ -41,6 +43,44 @@ export const LoginPage: React.FC = () => {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   // Blocked login reason mapped from the server error code.
   const [loginBlock, setLoginBlock] = useState<'pending' | 'disabled' | null>(null);
+
+  // Invitation link context (P2-3 AC-6): /register?invite=<token> loads the
+  // public info before submit so the registrant knows what they are joining.
+  // The token is only sent on signup when the info loaded successfully; a
+  // dead link (404/410) shows the honest server message and never travels.
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteInfo, setInviteInfo] = useState<InvitationContextInfo | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('invite');
+    if (!token) return;
+    setInviteToken(token);
+    const api = getInvitationAdminApi();
+    if (!api) {
+      setInviteError(t('invite.infoUnavailable'));
+      return;
+    }
+    let cancelled = false;
+    api
+      .getInvitationInfo(token)
+      .then((info) => {
+        if (!cancelled) setInviteInfo(info);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setInviteInfo(null);
+        // The server message is already the honest dead-link explanation
+        // (expired, revoked, exhausted, or unknown token).
+        const message = err instanceof Error && err.message !== '' ? err.message : t('invite.deadLink');
+        setInviteError(message);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Runs once on mount; t is stable enough for a one-shot fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: LoginErrors = {};
@@ -76,7 +116,8 @@ export const LoginPage: React.FC = () => {
       try {
         // A working session (first account: active owner) routes straight
         // into the app via the auth store. Everything else lands in catch.
-        await register(formData.email, formData.password, formData.name.trim());
+        // The invitation token rides along only when its info loaded.
+        await register(formData.email, formData.password, formData.name.trim(), inviteInfo ? inviteToken ?? undefined : undefined);
       } catch (err) {
         if (err instanceof AuthError && err.code === 'ACCOUNT_PENDING') {
           setPendingEmail(formData.email);
@@ -217,6 +258,43 @@ export const LoginPage: React.FC = () => {
               {isSignUp ? t('auth.signupSubtitle') : t('auth.signinSubtitle')}
             </p>
           </div>
+
+          {/* Invitation context (P2-3): shown before submit so the registrant
+              knows which tree invited them. The consent line deliberately
+              promises no full tree access (R-74.6). */}
+          {inviteInfo && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg" data-testid="invite-context">
+              <div className="flex items-start space-x-3">
+                <Link2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="text-blue-900 font-medium">
+                    {t('invite.contextTitle', { treeName: inviteInfo.treeName })}
+                  </p>
+                  <p className="text-blue-800 mt-1">
+                    {t('invite.contextBody', {
+                      inviterName: inviteInfo.inviterName,
+                      type: t(`invite.type.${inviteInfo.type}`),
+                      expiresAt: formatDateWithLocale(inviteInfo.expiresAt, i18n.language),
+                    })}
+                  </p>
+                  <p className="text-blue-700 mt-1">
+                    {t('invite.contextUses', { count: inviteInfo.remainingUses })}
+                  </p>
+                  <p className="text-blue-700 mt-2 text-xs">{t('invite.consent')}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {inviteError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3" data-testid="invite-error">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="text-red-900 font-medium">{t('invite.deadTitle')}</p>
+                <p className="text-red-800 mt-1">{inviteError}</p>
+                <p className="text-red-700 mt-1 text-xs">{t('invite.deadBody')}</p>
+              </div>
+            </div>
+          )}
 
           {/* Pending registration: the server accepted the account (202)
               but no session exists until an owner activates it. */}

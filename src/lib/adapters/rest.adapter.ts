@@ -36,6 +36,13 @@ import {
   AccountStatusAction,
   AppNotification,
   NotificationsPage,
+  InvitationAdminApi,
+  InvitationContextInfo,
+  InvitationRecord,
+  CreatedInvitation,
+  CreateInvitationInput,
+  TreeMembershipRecord,
+  TreeRoleValue,
   AdapterError,
   AuthError,
 } from './types';
@@ -53,7 +60,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -292,5 +299,64 @@ export class RestAdapter implements DataAdapter, AccountAdminApi {
       `/admin/accounts/${id}/${action}`,
     );
     return body.account;
+  }
+
+  // ── Invitations and tree membership (P2-3) ──────────────
+  // Pure routing: every authorization decision lives in the server
+  // (FORBIDDEN_TREE, TREE_LAST_OWNER_GUARD, INVITATION_* codes).
+
+  async getInvitationInfo(token: string): Promise<InvitationContextInfo> {
+    // Public endpoint; works with or without a session token.
+    return this.request<InvitationContextInfo>('GET', `/invitations/${token}/info`);
+  }
+
+  async listInvitations(treeId: string): Promise<InvitationRecord[]> {
+    const body = await this.request<{ invitations: InvitationRecord[] }>(
+      'GET',
+      `/trees/${treeId}/invitations`,
+    );
+    return body.invitations ?? [];
+  }
+
+  async createInvitation(treeId: string, input: CreateInvitationInput): Promise<CreatedInvitation> {
+    const body = await this.request<{ invitation: CreatedInvitation }>(
+      'POST',
+      `/trees/${treeId}/invitations`,
+      input,
+    );
+    return body.invitation;
+  }
+
+  async revokeInvitation(invitationId: string): Promise<InvitationRecord> {
+    const body = await this.request<{ invitation: InvitationRecord }>(
+      'POST',
+      `/invitations/${invitationId}/revoke`,
+    );
+    return body.invitation;
+  }
+
+  async listTreeMembership(treeId: string): Promise<TreeMembershipRecord[]> {
+    const body = await this.request<{ members: TreeMembershipRecord[] }>(
+      'GET',
+      `/trees/${treeId}/membership`,
+    );
+    return body.members ?? [];
+  }
+
+  async updateTreeMembershipRole(
+    treeId: string,
+    membershipId: string,
+    role: TreeRoleValue,
+  ): Promise<TreeMembershipRecord> {
+    const body = await this.request<{ membership: TreeMembershipRecord }>(
+      'PUT',
+      `/trees/${treeId}/membership/${membershipId}`,
+      { role },
+    );
+    return body.membership;
+  }
+
+  async removeTreeMembership(treeId: string, membershipId: string): Promise<void> {
+    await this.request<void>('DELETE', `/trees/${treeId}/membership/${membershipId}`);
   }
 }

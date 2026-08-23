@@ -33,6 +33,8 @@ export interface RegisterInput {
   password: string;
   name: string;
   familyName?: string;
+  /** Invitation token from a /register?invite= link (P2-3, optional). */
+  invitationToken?: string;
 }
 
 // ─── Family Tree Types ────────────────────────────────────
@@ -179,6 +181,81 @@ export interface AccountAdminApi {
   markAllNotificationsRead(): Promise<number>;
   listAccounts(): Promise<AdminAccount[]>;
   setAccountStatus(id: string, action: AccountStatusAction): Promise<AdminAccount>;
+}
+
+// ─── Invitations and tree membership (P2-3) ───────────────
+// Server-backed adapters (rest) implement this surface; mock and supabase
+// adapters do not, and `getInvitationAdminApi` returns null for them so the
+// UI can hide the invitations panel instead of crashing.
+
+/** Public, PII-minimal context a registration link carries (GET /invitations/:token/info). */
+export interface InvitationContextInfo {
+  type: 'personal' | 'family';
+  treeName: string;
+  inviterName: string;
+  expiresAt: string;
+  remainingUses: number;
+}
+
+export type InvitationState = 'active' | 'expired' | 'exhausted' | 'revoked' | 'consumed';
+export type InvitationTypeValue = 'personal' | 'family';
+export type InvitationChannel = 'manual' | 'wa' | 'email';
+export type TreeRoleValue = 'owner' | 'editor' | 'viewer';
+
+/** Invitation as shown on every surface after creation: token masked. */
+export interface InvitationRecord {
+  id: string;
+  treeId: string;
+  type: InvitationTypeValue;
+  grantedRole: TreeRoleValue;
+  channel: string | null;
+  state: InvitationState;
+  failureCode: string | null;
+  usedCount: number;
+  maxUses: number;
+  remainingUses: number;
+  tokenMasked: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  lastUsedAt: string | null;
+  createdAt: string;
+}
+
+/** Creation response: the only surface where the full token and URL appear. */
+export interface CreatedInvitation extends InvitationRecord {
+  token: string;
+  url: string;
+}
+
+export interface CreateInvitationInput {
+  type: InvitationTypeValue;
+  grantedRole: TreeRoleValue;
+  channel?: InvitationChannel;
+  /** Family invitations only; the server clamps it to 1..100 (default 20). */
+  maxUses?: number;
+}
+
+/** A user's membership row on one tree, with display columns for owners. */
+export interface TreeMembershipRecord {
+  id: string;
+  treeId: string;
+  userId: string;
+  role: TreeRoleValue;
+  email: string;
+  name: string;
+  userStatus: string;
+  createdAt: string;
+}
+
+export interface InvitationAdminApi {
+  /** Public fetch, no session needed; throws AdapterError on 404/410 dead links. */
+  getInvitationInfo(token: string): Promise<InvitationContextInfo>;
+  listInvitations(treeId: string): Promise<InvitationRecord[]>;
+  createInvitation(treeId: string, input: CreateInvitationInput): Promise<CreatedInvitation>;
+  revokeInvitation(invitationId: string): Promise<InvitationRecord>;
+  listTreeMembership(treeId: string): Promise<TreeMembershipRecord[]>;
+  updateTreeMembershipRole(treeId: string, membershipId: string, role: TreeRoleValue): Promise<TreeMembershipRecord>;
+  removeTreeMembership(treeId: string, membershipId: string): Promise<void>;
 }
 
 // ─── Error Types ──────────────────────────────────────────

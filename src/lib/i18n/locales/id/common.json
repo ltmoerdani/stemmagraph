@@ -188,5 +188,75 @@
       "enable": "Pulihkan"
     },
     "loadError": "Gagal memuat daftar akun."
+  },
+  "invite": {
+    "contextTitle": "Anda diundang ke {{treeName}}",
+    "contextBody": "{{inviterName}} mengundang Anda melalui undangan {{type}}. Tautan berlaku sampai {{expiresAt}}.",
+    "contextUses": "Sisa pemakaian tautan ini: {{count}}.",
+    "consent": "Bergabung memberi akses terbatas sesuai pilihan pengundang, bukan seluruh silsilah. Data yang Anda isi dapat dilihat anggota silsilah ini sesuai peran Anda. Aplikasi tidak mengirim apa pun atas nama Anda.",
+    "type": {
+      "personal": "personal",
+      "family": "keluarga"
+    },
+    "deadTitle": "Tautan undangan ini sudah tidak bisa dipakai",
+    "deadBody": "Anda tetap bisa membuat akun tanpa tautan, atau minta tautan baru kepada pengundang.",
+    "deadLink": "Tautan undangan ini sudah tidak bisa dipakai.",
+    "infoUnavailable": "Detail undangan tidak bisa dimuat pada mode ini."
+  },
+  "invitePanel": {
+    "open": "Undangan dan anggota",
+    "title": "Berbagi: {{treeName}}",
+    "close": "Tutup",
+    "refresh": "Muat ulang",
+    "unavailable": "Fitur undangan memerlukan backend REST (VITE_API_BASE_URL).",
+    "createTitle": "Buat tautan undangan",
+    "fieldType": "Jenis",
+    "fieldRole": "Peran yang diberikan",
+    "fieldChannel": "Saluran penyerahan (hanya catatan)",
+    "fieldMaxUses": "Batas pemakaian (1-100)",
+    "role": {
+      "owner": "pemilik",
+      "editor": "penyunting",
+      "viewer": "pembaca"
+    },
+    "channel": {
+      "manual": "manual (langsung)",
+      "wa": "WhatsApp (Anda kirim)",
+      "email": "email (Anda kirim)"
+    },
+    "createHint": "Aplikasi tidak mengirim pesan apa pun. Salin tautannya dan kirim sendiri lewat saluran Anda.",
+    "createAction": "Buat tautan",
+    "creating": "Membuat...",
+    "createdOnce": "Tautan dibuat. Hanya ditampilkan sekali, salin sekarang.",
+    "copy": "Salin",
+    "copied": "Tersalin",
+    "shareHint": "Pemegang tautan ini dapat mendaftar dan bergabung ke silsilah ini dengan peran di atas.",
+    "listTitle": "Tautan undangan",
+    "empty": "Belum ada undangan.",
+    "loading": "Memuat...",
+    "loadFailed": "Gagal memuat undangan. Periksa peran Anda lalu coba lagi.",
+    "uses": "terpakai {{used}}/{{max}}",
+    "expires": "berakhir {{date}}",
+    "state": {
+      "active": "aktif",
+      "expired": "kedaluwarsa",
+      "exhausted": "habis terpakai",
+      "revoked": "dicabut",
+      "consumed": "sudah dipakai"
+    },
+    "revoke": "Cabut",
+    "revokeFailed": "Gagal mencabut undangan.",
+    "createFailed": "Gagal membuat undangan.",
+    "membersTitle": "Anggota silsilah",
+    "changeRole": "Ubah peran",
+    "removeMember": "Keluarkan anggota",
+    "remove": "Keluarkan",
+    "memberUpdateFailed": "Gagal memperbarui anggota.",
+    "membersHint": "Menurunkan atau mengeluarkan pemilik aktif terakhir ditolak (409 TREE_LAST_OWNER_GUARD).",
+    "userStatus": {
+      "pending": "menunggu",
+      "active": "aktif",
+      "disabled": "nonaktif"
+    }
   }
 }

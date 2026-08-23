@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -85,6 +85,18 @@ export function getAccountAdminApi(): AccountAdminApi | null {
   return adapter instanceof RestAdapter ? adapter : null;
 }
 
+// ─── Invitations and tree membership (P2-3) ───────────────
+
+/**
+ * Returns the invitation and membership surface of the active adapter, or
+ * null when the adapter has no server backend (mock, supabase). The UI
+ * hides the invitations panel for null instead of crashing.
+ */
+export function getInvitationAdminApi(): InvitationAdminApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 /**
  * Override adapter with a custom implementation (useful for testing).
  */
@@ -106,6 +118,16 @@ export type {
   CreateMemberInput,
   MemberRelationship,
   AccountAdminApi,
+  InvitationAdminApi,
+  InvitationContextInfo,
+  InvitationRecord,
+  InvitationState,
+  InvitationTypeValue,
+  InvitationChannel,
+  CreatedInvitation,
+  CreateInvitationInput,
+  TreeMembershipRecord,
+  TreeRoleValue,
   AdminAccount,
   AdminAccountStatus,
   AdminAccountRole,
