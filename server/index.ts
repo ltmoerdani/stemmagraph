@@ -10,13 +10,20 @@ import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification }
 import { prisma } from './db';
 import {
   bootstrapAccountState,
-  buildAccountActivatedNotification,
-  buildAccountPendingCreatedNotification,
   canTransition,
   reviewDisableAction,
   type AccountRole,
   type AccountStatus,
 } from '../src/lib/account-states';
+import {
+  buildAccountActivatedEvent,
+  buildAccountDisabledEvent,
+  buildAccountEnabledEvent,
+  buildAccountPendingCreatedEvent,
+  projectAccountActivatedNotification,
+  projectPendingCreatedNotifications,
+} from '../src/lib/events';
+import { appendEvent } from './events';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -165,15 +172,23 @@ app.post('/api/v1/auth/register', async (req, res) => {
 
     // Pending registration: no token is issued. Tell the truth about the
     // account state so the UI can show a "waiting for activation" screen.
+    // Audit fact first (P2-2): the event is written before any projection.
+    const event = buildAccountPendingCreatedEvent(user.id);
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+
+    // In-app notifications are a projection of the emitted event (P2-1
+    // behavior unchanged: one notification per active owner).
     const activeOwners = await prisma.user.findMany({
       where: { role: 'owner', status: 'active' },
       select: { id: true },
     });
     if (activeOwners.length > 0) {
       await prisma.notification.createMany({
-        data: activeOwners.map((owner) =>
-          buildAccountPendingCreatedNotification(owner.id, { id: user.id, email: user.email, name: user.name }),
-        ),
+        data: projectPendingCreatedNotifications(event, activeOwners, {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        }),
       });
     }
     res.status(202).json({
@@ -265,8 +280,11 @@ app.post('/api/v1/admin/accounts/:id/activate', requireAuth, requireOwner, async
     }
 
     const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'active' } });
-    // Notify the user that their account is now usable (R-74.7).
-    await prisma.notification.create({ data: buildAccountActivatedNotification(updated.id) });
+    // Fact first, then the projection: notify the user that their account
+    // is now usable (R-74.7) with a row derived from the emitted event.
+    const event = buildAccountActivatedEvent(req.userId!, updated.id);
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+    await prisma.notification.create({ data: projectAccountActivatedNotification(event) });
     res.json({ account: formatAccount(updated) });
   } catch (e) {
     res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
@@ -301,6 +319,10 @@ app.post('/api/v1/admin/accounts/:id/disable', requireAuth, requireOwner, async 
     }
 
     const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'disabled' } });
+    // Fact only: P2-1 sends no notification on disable, and that external
+    // behavior stays unchanged; the audit event is still recorded.
+    const event = buildAccountDisabledEvent(req.userId!, updated.id);
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
     res.json({ account: formatAccount(updated) });
   } catch (e) {
     res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
@@ -316,7 +338,11 @@ app.post('/api/v1/admin/accounts/:id/enable', requireAuth, requireOwner, async (
     }
 
     const updated = await prisma.user.update({ where: { id: target.id }, data: { status: 'active' } });
-    await prisma.notification.create({ data: buildAccountActivatedNotification(updated.id) });
+    // Fact first, then the projection: enabling reuses the P2-1 activated
+    // notification, now derived from the emitted event.
+    const event = buildAccountEnabledEvent(req.userId!, updated.id);
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+    await prisma.notification.create({ data: projectAccountActivatedNotification(event) });
     res.json({ account: formatAccount(updated) });
   } catch (e) {
     res.status(500).json({ code: 'ADMIN_ERROR', message: (e as Error).message });
