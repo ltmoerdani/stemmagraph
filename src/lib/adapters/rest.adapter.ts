@@ -40,6 +40,12 @@ import {
   AuthError,
 } from './types';
 
+/**
+ * P2-1 (ADR 0002): server error codes that describe an unusable account
+ * state rather than bad credentials. Login surfaces them as AuthError.
+ */
+const ACCOUNT_STATE_ERROR_CODES = new Set(['ACCOUNT_PENDING', 'ACCOUNT_DISABLED']);
+
 interface RestAdapterOptions {
   baseUrl: string;
   headers?: Record<string, string>;
@@ -114,9 +120,19 @@ export class RestAdapter implements DataAdapter, AccountAdminApi {
   // ── Auth ────────────────────────────────────────────────
 
   async login(credentials: AuthCredentials): Promise<AuthSession> {
-    const session = await this.request<AuthSession>('POST', '/auth/login', credentials);
-    this.token = session.token ?? null;
-    return session;
+    try {
+      const session = await this.request<AuthSession>('POST', '/auth/login', credentials);
+      this.token = session.token ?? null;
+      return session;
+    } catch (e) {
+      // P2-1: a pending or disabled account is a typed auth state, not a
+      // generic API failure. request() only knows AdapterError, so rethrow
+      // the state codes as AuthError for the login screen to branch on.
+      if (e instanceof AdapterError && ACCOUNT_STATE_ERROR_CODES.has(e.code)) {
+        throw new AuthError(e.message, e.code, e.statusCode);
+      }
+      throw e;
+    }
   }
 
   async register(input: RegisterInput): Promise<AuthSession> {
