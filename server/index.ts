@@ -6,7 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event } from '../generated/prisma/client';
+import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event, Invitation } from '../generated/prisma/client';
 import { prisma } from './db';
 import {
   bootstrapAccountState,
@@ -20,10 +20,29 @@ import {
   buildAccountDisabledEvent,
   buildAccountEnabledEvent,
   buildAccountPendingCreatedEvent,
+  buildInvitationCreatedEvent,
+  buildInvitationRevokedEvent,
+  buildInvitationUsedEvent,
   isEventType,
   projectAccountActivatedNotification,
   projectPendingCreatedNotifications,
 } from '../src/lib/events';
+import {
+  buildInvitationContext,
+  canPerformTreeAction,
+  computeExpiresAt,
+  initialMaxUses,
+  invitationFailureCode,
+  invitationState,
+  isInvitationType,
+  isValidGrantedRole,
+  maskInvitationToken,
+  remainingUses,
+  type InvitationType,
+  type TreeAction,
+  type TreeRole,
+} from '../src/lib/invitations';
+import { generateInvitationToken } from '../src/lib/invitations/token';
 import { appendEvent } from './events';
 
 // ─── Config ──────────────────────────────────────────────
@@ -144,6 +163,10 @@ async function requireOwner(req: AuthenticatedRequest, res: express.Response, ne
 app.post('/api/v1/auth/register', async (req, res) => {
   try {
     const { email, password, name, familyName } = req.body;
+    const invitationToken =
+      typeof req.body?.invitationToken === 'string' && req.body.invitationToken !== ''
+        ? req.body.invitationToken.trim()
+        : undefined;
 
     // Input validation
     if (!email || !password || !name) {
@@ -153,27 +176,100 @@ app.post('/api/v1/auth/register', async (req, res) => {
       return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'Password must be at least 8 characters' });
     }
 
+    // Invitation gate (P2-3, fail-closed): when a registration carries an
+    // invitation token, a dead or unknown token blocks account creation
+    // outright. The account is only created for a live invitation, so a
+    // rejected link can never mint a session or a membership row.
+    let invitation: Invitation | null = null;
+    if (invitationToken !== undefined) {
+      invitation = await prisma.invitation.findUnique({ where: { token: invitationToken } });
+      if (!invitation) {
+        // Unknown token: no invitation row exists, so there is no fact to
+        // append; the honest answer is 404 and no account is created.
+        return res.status(404).json({ code: 'INVITATION_NOT_FOUND', message: 'Invitation not found' });
+      }
+      const failureCode = invitationFailureCode(invitationState(invitation, new Date()));
+      if (failureCode !== null) {
+        const messages: Record<string, string> = {
+          INVITATION_EXPIRED: 'This invitation link has expired',
+          INVITATION_REVOKED: 'This invitation link has been revoked',
+          INVITATION_EXHAUSTED: 'This invitation link has no uses left',
+        };
+        // Audit the failed attempt (P2-2 funnel): no actor account exists,
+        // subjectUserId stays null because no account was created.
+        const usedEvent = buildInvitationUsedEvent({
+          actorUserId: null,
+          familyTreeId: invitation.treeId,
+          invitationId: invitation.id,
+          invitationType: invitation.type as InvitationType,
+          result: 'failure',
+          reason: failureCode,
+          subjectUserId: null,
+        });
+        await appendEvent(usedEvent.type, usedEvent.actorUserId, usedEvent.familyTreeId, usedEvent.payload);
+        return res.status(410).json({ code: failureCode, message: messages[failureCode] });
+      }
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(409).json({ code: 'EMAIL_EXISTS', message: 'Email is already registered' });
 
     // Bootstrap rule (ADR 0002): the first account on an empty user table is
     // born active with role owner so a fresh install can administer itself.
     // Every later registration is born pending and waits for owner approval.
+    // Precedence note (P2-3): an invitation row cannot exist on an empty
+    // user table (its creator is a foreign key, cascading on delete), so a
+    // live invitationToken implies user count >= 1 and the bootstrap path
+    // below stays reserved for the no-token first account. The first
+    // account is therefore still born active owner, invitation or not.
     const bootstrap = bootstrapAccountState(await prisma.user.count());
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await prisma.user.create({
-      data: { email, password: passwordHash, name, familyName, status: bootstrap.status, role: bootstrap.role },
-    });
 
     if (bootstrap.status === 'active') {
+      const user = await prisma.user.create({
+        data: { email, password: passwordHash, name, familyName, status: bootstrap.status, role: bootstrap.role },
+      });
       const token = signToken(user.id);
       return res.status(201).json({ user: toPublicUser(user), token });
     }
 
-    // Pending registration: no token is issued. Tell the truth about the
-    // account state so the UI can show a "waiting for activation" screen.
-    // Audit fact first (P2-2): the event is written before any projection.
+    // Pending registration, possibly consuming a live invitation (P2-3).
+    // The three writes are one unit: account, use increment, membership.
+    const now = new Date();
+    const user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: { email, password: passwordHash, name, familyName, status: bootstrap.status, role: bootstrap.role },
+      });
+      if (invitation !== null) {
+        await tx.invitation.update({
+          where: { id: invitation.id },
+          data: { usedCount: { increment: 1 }, lastUsedAt: now },
+        });
+        await tx.treeMember.create({
+          data: { treeId: invitation.treeId, userId: created.id, role: invitation.grantedRole },
+        });
+      }
+      return created;
+    });
+
+    if (invitation !== null) {
+      // Audit the successful use first (P2-2 funnel): the actor is the new
+      // account itself; a personal invitation is consumed here (single use).
+      const usedEvent = buildInvitationUsedEvent({
+        actorUserId: user.id,
+        familyTreeId: invitation.treeId,
+        invitationId: invitation.id,
+        invitationType: invitation.type as InvitationType,
+        result: 'success',
+        subjectUserId: user.id,
+      });
+      await appendEvent(usedEvent.type, usedEvent.actorUserId, usedEvent.familyTreeId, usedEvent.payload);
+    }
+
+    // No token is issued. Tell the truth about the account state so the UI
+    // can show a "waiting for activation" screen. Audit fact first (P2-2):
+    // the event is written before any projection.
     const event = buildAccountPendingCreatedEvent(user.id);
     await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
 
@@ -453,6 +549,224 @@ app.post('/api/v1/notifications/read-all', requireAuth, async (req: Authenticate
     res.json({ updated: result.count });
   } catch (e) {
     res.status(500).json({ code: 'NOTIFICATION_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Tree membership helpers (P2-3, ADR 0002 + 0004) ──────
+
+/**
+ * Resolves the caller's role on one tree. A TreeMember row is the source
+ * of truth; an installation owner (requireAuth already guarantees the
+ * account is active) may administer any tree per ADR 0002. Null means the
+ * caller holds no role on this tree.
+ */
+async function resolveTreeRole(userId: string, treeId: string): Promise<TreeRole | null> {
+  const membership = await prisma.treeMember.findUnique({
+    where: { treeId_userId: { treeId, userId } },
+  });
+  if (membership) return membership.role as TreeRole;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  return user !== null && user.role === 'owner' ? 'owner' : null;
+}
+
+type TreeGuard =
+  | { ok: true; role: TreeRole }
+  | { ok: false; statusCode: number; code: string; message: string };
+
+/**
+ * One guard for every tree-scoped route: 404 when the tree does not exist,
+ * 403 FORBIDDEN_TREE when the caller's role cannot perform the action
+ * (matrix in src/lib/invitations, ADR 0002).
+ */
+async function guardTreeAction(userId: string, treeId: string, action: TreeAction): Promise<TreeGuard> {
+  const tree = await prisma.familyTree.findUnique({ where: { id: treeId }, select: { id: true } });
+  if (!tree) return { ok: false, statusCode: 404, code: 'NOT_FOUND', message: 'Tree not found' };
+  const role = await resolveTreeRole(userId, treeId);
+  if (role === null || !canPerformTreeAction(role, action)) {
+    return {
+      ok: false,
+      statusCode: 403,
+      code: 'FORBIDDEN_TREE',
+      message: `Your role on this tree does not allow this action (${action})`,
+    };
+  }
+  return { ok: true, role };
+}
+
+// ─── Invitations (P2-3, ADR 0004) ────────────────────────
+//
+// The full token is returned exactly once, in the creation response; every
+// later surface (list, revoke) shows the masked form. The public info
+// endpoint is deliberately unauthenticated: a registrant holding only the
+// link must see what they are accepting, with no other PII.
+
+const INVITATION_CHANNELS = ['manual', 'wa', 'email'] as const;
+
+/** Base URL for invitation links; the UI route is /register?invite=... */
+function invitationBaseUrl(): string {
+  return (process.env['PUBLIC_APP_URL'] || 'http://localhost:5173').replace(/\/+$/, '');
+}
+
+function formatInvitationSummary(invitation: Invitation, now: Date) {
+  const state = invitationState(invitation, now);
+  return {
+    id: invitation.id,
+    treeId: invitation.treeId,
+    type: invitation.type,
+    grantedRole: invitation.grantedRole,
+    channel: invitation.channel,
+    state,
+    failureCode: invitationFailureCode(state),
+    usedCount: invitation.usedCount,
+    maxUses: invitation.maxUses,
+    remainingUses: remainingUses(invitation),
+    tokenMasked: maskInvitationToken(invitation.token),
+    expiresAt: invitation.expiresAt.toISOString(),
+    revokedAt: invitation.revokedAt ? invitation.revokedAt.toISOString() : null,
+    lastUsedAt: invitation.lastUsedAt ? invitation.lastUsedAt.toISOString() : null,
+    createdAt: invitation.createdAt.toISOString(),
+  };
+}
+
+app.post('/api/v1/trees/:treeId/invitations', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    // Tree owner or installation owner; manage_invitations is owner-only in
+    // the ADR 0002 matrix.
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_invitations');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+
+    const { type, grantedRole, channel, maxUses } = req.body ?? {};
+    if (!isInvitationType(type)) {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'type must be "personal" or "family"' });
+    }
+    if (!isValidGrantedRole(type, grantedRole)) {
+      return res.status(400).json({
+        code: 'VALIDATION_ERROR',
+        message: 'grantedRole must be "viewer", or "editor" for family invitations; owner cannot be granted',
+      });
+    }
+    if (maxUses !== undefined && type === 'personal') {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'maxUses applies to family invitations only; a personal invitation is single use' });
+    }
+    let channelValue: string = 'manual';
+    if (channel !== undefined) {
+      if (typeof channel !== 'string' || !(INVITATION_CHANNELS as readonly string[]).includes(channel)) {
+        return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'channel must be "manual", "wa", or "email"' });
+      }
+      channelValue = channel;
+    }
+
+    const now = new Date();
+    const invitation = await prisma.invitation.create({
+      data: {
+        token: generateInvitationToken(),
+        type,
+        treeId: req.params.treeId,
+        createdById: req.userId!,
+        grantedRole,
+        maxUses: initialMaxUses(type, maxUses),
+        channel: channelValue,
+        expiresAt: computeExpiresAt(type, now),
+      },
+    });
+    // Audit fact first (P2-2 funnel); familyTreeId rides the envelope.
+    const event = buildInvitationCreatedEvent({
+      actorUserId: req.userId!,
+      familyTreeId: invitation.treeId,
+      invitationId: invitation.id,
+      invitationType: type,
+      channel: channelValue,
+      grantedRole,
+      expiresAt: invitation.expiresAt,
+      maxUses: invitation.maxUses,
+    });
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+
+    // The one and only surface where the full token appears.
+    res.status(201).json({
+      invitation: {
+        ...formatInvitationSummary(invitation, now),
+        token: invitation.token,
+        url: `${invitationBaseUrl()}/register?invite=${invitation.token}`,
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ code: 'INVITATION_ERROR', message: (e as Error).message });
+  }
+});
+
+app.get('/api/v1/trees/:treeId/invitations', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_invitations');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const now = new Date();
+    const invitations = await prisma.invitation.findMany({
+      where: { treeId: req.params.treeId },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ invitations: invitations.map((invitation) => formatInvitationSummary(invitation, now)) });
+  } catch (e) {
+    res.status(500).json({ code: 'INVITATION_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/invitations/:id/revoke', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const invitation = await prisma.invitation.findUnique({ where: { id: req.params.id } });
+    if (!invitation) return res.status(404).json({ code: 'INVITATION_NOT_FOUND', message: 'Invitation not found' });
+    const guard = await guardTreeAction(req.userId!, invitation.treeId, 'manage_invitations');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    if (invitation.revokedAt !== null) {
+      return res.status(409).json({ code: 'INVITATION_ALREADY_REVOKED', message: 'This invitation has already been revoked' });
+    }
+
+    const now = new Date();
+    const updated = await prisma.invitation.update({ where: { id: invitation.id }, data: { revokedAt: now } });
+    const event = buildInvitationRevokedEvent({
+      actorUserId: req.userId!,
+      familyTreeId: updated.treeId,
+      invitationId: updated.id,
+      invitationType: updated.type as InvitationType,
+    });
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+    res.json({ invitation: formatInvitationSummary(updated, now) });
+  } catch (e) {
+    res.status(500).json({ code: 'INVITATION_ERROR', message: (e as Error).message });
+  }
+});
+
+/**
+ * Public, unauthenticated context for a registration link: what tree, who
+ * invites, how long the link lives, how many uses remain. No other PII.
+ * Honest dead-state codes: 404 unknown token, 410 expired/revoked/exhausted.
+ */
+app.get('/api/v1/invitations/:token/info', async (req: express.Request<{ token: string }>, res) => {
+  try {
+    const invitation = await prisma.invitation.findUnique({
+      where: { token: req.params.token },
+      include: { tree: { select: { name: true } }, createdBy: { select: { name: true } } },
+    });
+    if (!invitation) return res.status(404).json({ code: 'INVITATION_NOT_FOUND', message: 'Invitation not found' });
+    const now = new Date();
+    const failureCode = invitationFailureCode(invitationState(invitation, now));
+    if (failureCode !== null) {
+      const messages: Record<string, string> = {
+        INVITATION_EXPIRED: 'This invitation link has expired',
+        INVITATION_REVOKED: 'This invitation link has been revoked',
+        INVITATION_EXHAUSTED: 'This invitation link has no uses left',
+      };
+      return res.status(410).json({ code: failureCode, message: messages[failureCode] });
+    }
+    res.json(
+      buildInvitationContext({
+        invitation,
+        treeName: invitation.tree.name,
+        inviterName: invitation.createdBy.name,
+        now,
+      }),
+    );
+  } catch (e) {
+    res.status(500).json({ code: 'INVITATION_ERROR', message: (e as Error).message });
   }
 });
 
