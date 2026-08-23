@@ -9,11 +9,6 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   isInitialized: boolean;
-  /**
-   * P2-1: email of the most recent registration that the server accepted as
-   * pending (202, no token). Null after a normal login/register/logout.
-   */
-  pendingRegistrationEmail: string | null;
 
   // Actions
   initialize: () => Promise<void>;
@@ -32,7 +27,6 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       error: null,
       isInitialized: false,
-      pendingRegistrationEmail: null,
 
       /**
        * Initialize auth state on app start.
@@ -71,7 +65,6 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
             error: null,
-            pendingRegistrationEmail: null,
           });
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Login failed';
@@ -81,7 +74,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       register: async (email: string, password: string, name: string) => {
-        set({ isLoading: true, error: null, pendingRegistrationEmail: null });
+        set({ isLoading: true, error: null });
         try {
           const adapter = getAdapter();
           const session = await adapter.register({ email, password, name });
@@ -90,14 +83,13 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
             error: null,
-            pendingRegistrationEmail: null,
           });
         } catch (error) {
-          // P2-1: a 202 pending registration is a success as far as the
-          // account goes. Keep it out of the red error slot and remember the
-          // email so the UI can show the honest "waiting for activation" note.
           if (error instanceof AuthError && error.code === 'ACCOUNT_PENDING') {
-            set({ isLoading: false, error: null, pendingRegistrationEmail: email });
+            // A 202 pending registration is a success as far as the account
+            // goes: keep it out of the red error slot and let the login page
+            // hold the waiting-for-activation panel from its own form state.
+            set({ isLoading: false, error: null });
             throw error;
           }
           const message = error instanceof Error ? error.message : 'Registration failed';
@@ -117,7 +109,6 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           isAuthenticated: false,
           error: null,
-          pendingRegistrationEmail: null,
         });
       },
 
