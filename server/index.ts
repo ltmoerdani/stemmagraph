@@ -6,9 +6,8 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '../generated/prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification } from '../generated/prisma/client';
+import { prisma } from './db';
 import {
   bootstrapAccountState,
   buildAccountActivatedNotification,
@@ -30,10 +29,6 @@ if (process.env['NODE_ENV'] === 'production' && JWT_SECRET === 'dev-only-insecur
   console.error('❌ FATAL: JWT_SECRET must be set in production. Set the JWT_SECRET env variable.');
   process.exit(1);
 }
-
-const prisma = new PrismaClient({
-  adapter: new PrismaBetterSqlite3({ url: process.env['DATABASE_URL'] || 'file:./prisma/dev.db' }),
-});
 
 app.use(cors());
 app.use(express.json());
