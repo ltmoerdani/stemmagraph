@@ -89,22 +89,24 @@ export type OwnerGuardDecision =
  * Reviews a DISABLE action before it is applied.
  *
  * Rules, in order:
- *   1. An owner may never disable their own account. There is no scenario
- *      where this is needed, and doing it by mistake locks out the admin
- *      surface, so it is refused outright.
- *   2. Disabling the only active owner is refused: the installation would
- *      be left without anyone able to administer accounts.
+ *   1. Disabling the only active owner is refused: the installation would
+ *      be left without anyone able to administer accounts (R-73.5). This
+ *      check comes first so the guard is the loud, testable boundary even
+ *      when the actor is the last owner disabling themselves.
+ *   2. An owner may never disable their own account. Doing it by mistake
+ *      locks the actor out of the admin surface mid-session, so it is
+ *      refused outright.
  *
- * Disabling a pending or disabled account never trips rule 2 because the
+ * Disabling a pending or disabled account never trips rule 1 because the
  * guard protects the last ACTIVE owner specifically.
  */
 export function reviewDisableAction(input: OwnerGuardInput): OwnerGuardDecision {
-  if (input.actorId === input.targetId) {
-    return { allowed: false, code: SELF_DISABLE_CODE };
-  }
   const targetIsActiveOwner = input.targetRole === 'owner' && input.targetStatus === 'active';
   if (targetIsActiveOwner && input.otherActiveOwnerCount <= 0) {
     return { allowed: false, code: LAST_OWNER_GUARD_CODE };
+  }
+  if (input.actorId === input.targetId) {
+    return { allowed: false, code: SELF_DISABLE_CODE };
   }
   return { allowed: true };
 }

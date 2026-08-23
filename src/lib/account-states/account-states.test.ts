@@ -79,8 +79,13 @@ describe('reviewDisableAction: last-owner guard and self-disable', () => {
     otherActiveOwnerCount: 1,
   };
 
-  it('an owner may not disable their own account', () => {
-    const decision = reviewDisableAction({ ...base, targetId: 'owner-1' });
+  it('the last active owner disabling themselves is refused with LAST_OWNER_GUARD', () => {
+    const decision = reviewDisableAction({ ...base, targetId: 'owner-1', targetRole: 'owner', otherActiveOwnerCount: 0 });
+    expect(decision).toEqual({ allowed: false, code: 'LAST_OWNER_GUARD' });
+  });
+
+  it('an owner may not disable their own account while other owners remain', () => {
+    const decision = reviewDisableAction({ ...base, targetId: 'owner-1', otherActiveOwnerCount: 1 });
     expect(decision).toEqual({ allowed: false, code: 'SELF_DISABLE_FORBIDDEN' });
   });
 
