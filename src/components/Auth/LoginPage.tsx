@@ -48,22 +48,25 @@ export const LoginPage: React.FC = () => {
   // public info before submit so the registrant knows what they are joining.
   // The token is only sent on signup when the info loaded successfully; a
   // dead link (404/410) shows the honest server message and never travels.
-  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  // Read once: the query param cannot change without a full page reload,
+  // and a lazy initializer avoids a synchronous setState in the effect.
+  const [inviteToken] = useState<string | null>(() =>
+    new URLSearchParams(window.location.search).get('invite'),
+  );
   const [inviteInfo, setInviteInfo] = useState<InvitationContextInfo | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get('invite');
-    if (!token) return;
-    setInviteToken(token);
-    const api = getInvitationAdminApi();
-    if (!api) {
-      setInviteError(t('invite.infoUnavailable'));
-      return;
-    }
+    if (!inviteToken) return;
     let cancelled = false;
-    api
-      .getInvitationInfo(token)
+    const api = getInvitationAdminApi();
+    // Every state update happens in an async continuation, never directly
+    // in the effect body. A missing adapter surfaces as the same honest
+    // "info unavailable" message the dead-link path uses.
+    const infoPromise: Promise<InvitationContextInfo> = api
+      ? api.getInvitationInfo(inviteToken)
+      : Promise.reject(new Error(t('invite.infoUnavailable')));
+    infoPromise
       .then((info) => {
         if (!cancelled) setInviteInfo(info);
       })
@@ -78,7 +81,8 @@ export const LoginPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-    // Runs once on mount; t is stable enough for a one-shot fetch.
+    // Runs once per mount; the token is fixed for the page lifetime and t
+    // is stable enough for a one-shot fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
