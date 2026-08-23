@@ -22,14 +22,13 @@ export const NotificationMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
 
   const accountAdmin = getAccountAdminApi();
 
   const load = useCallback(async () => {
     if (!accountAdmin) return;
-    setIsLoading(true);
     try {
       const page = await accountAdmin.listNotifications();
       setNotifications(page.notifications);
@@ -43,10 +42,36 @@ export const NotificationMenu: React.FC = () => {
     }
   }, [accountAdmin]);
 
+  // The spinner starts true because the badge fetch begins on mount. It is
+  // re-armed in event handlers only, never synchronously inside an effect.
+  const loadWithSpinner = () => {
+    setIsLoading(true);
+    void load();
+  };
+
   useEffect(() => {
     // Fetch once on mount so the badge is honest before the first open.
-    void load();
-  }, [load]);
+    // Inline async with a cancelled flag: the shared load() helper stays
+    // for event handlers, and this copy cannot setState after unmount.
+    if (!accountAdmin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const page = await accountAdmin.listNotifications();
+        if (cancelled) return;
+        setNotifications(page.notifications);
+        setUnreadCount(page.unreadCount);
+        setLoadFailed(false);
+      } catch {
+        if (!cancelled) setLoadFailed(true);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountAdmin]);
 
   if (!accountAdmin || !isAuthenticated) return null;
 
@@ -55,7 +80,7 @@ export const NotificationMenu: React.FC = () => {
     setIsOpen(next);
     // Re-read on every open: read state can change in another tab or via
     // the admin panel acting on this user's registrations.
-    if (next) void load();
+    if (next) loadWithSpinner();
   };
 
   const markRead = async (notification: AppNotification) => {
@@ -124,7 +149,7 @@ export const NotificationMenu: React.FC = () => {
               </p>
               <div className="flex items-center space-x-1">
                 <button
-                  onClick={() => void load()}
+                  onClick={loadWithSpinner}
                   disabled={isLoading}
                   className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-50 transition-colors"
                   aria-label={t('notifications.refresh')}

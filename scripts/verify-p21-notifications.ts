@@ -10,7 +10,7 @@
 // use), not through raw fetch, so the adapter parsing and error mapping are
 // exercised too. Dev-only: intentionally NOT part of run-verify-all.mjs
 // because it spawns a server and takes ~20 seconds.
-import { spawn, spawnSync, execFileSync } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
   }
 
   try {
-    const adapter = (email: string) => new RestAdapter({ baseUrl: BASE });
+    const adapter = () => new RestAdapter({ baseUrl: BASE });
 
     // ── Bootstrap owner and three pending members ──────────
     const owner = adapter('owner');

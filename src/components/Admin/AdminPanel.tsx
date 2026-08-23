@@ -29,7 +29,6 @@ export const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const load = useCallback(async () => {
     if (!accountAdmin) return;
-    setIsLoading(true);
     try {
       setAccounts(await accountAdmin.listAccounts());
       setLoadFailed(false);
@@ -40,9 +39,35 @@ export const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
   }, [accountAdmin]);
 
-  useEffect(() => {
+  // The panel starts with isLoading true (mount fetch). Re-arm the spinner
+  // in event handlers only, never synchronously inside an effect.
+  const loadWithSpinner = () => {
+    setIsLoading(true);
     void load();
-  }, [load]);
+  };
+
+  useEffect(() => {
+    // Initial fetch. Inline async with a cancelled flag: the shared load()
+    // helper stays for event handlers, and this copy cannot setState after
+    // the modal unmounts mid-request.
+    if (!accountAdmin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const accounts = await accountAdmin.listAccounts();
+        if (cancelled) return;
+        setAccounts(accounts);
+        setLoadFailed(false);
+      } catch {
+        if (!cancelled) setLoadFailed(true);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountAdmin]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -109,7 +134,7 @@ export const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
           <div className="flex items-center space-x-1">
             <button
-              onClick={() => void load()}
+              onClick={loadWithSpinner}
               disabled={isLoading}
               className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 transition-colors"
               aria-label={t('admin.refresh')}
