@@ -10,6 +10,9 @@ import {
   buildAccountDisabledEvent,
   buildAccountEnabledEvent,
   buildAccountPendingCreatedEvent,
+  buildInvitationCreatedEvent,
+  buildInvitationRevokedEvent,
+  buildInvitationUsedEvent,
   isEventType,
   parseEventPayload,
   projectAccountActivatedNotification,
@@ -57,7 +60,7 @@ describe('builders produce contract-shaped envelopes', () => {
 
 describe('PII validator refuses third-party contact keys', () => {
   const refused = (payload: Record<string, string>) =>
-    expect(validateEventPayload(payload).ok).toBe(false);
+    expect(validateEventPayload('ACCOUNT_DISABLED', payload).ok).toBe(false);
 
   it('refuses "phone"', () => refused({ subjectUserId: 'u1', phone: '+6281234567890' }));
   it('refuses "phoneNumber" and normalized variants', () => {
@@ -71,46 +74,160 @@ describe('PII validator refuses third-party contact keys', () => {
   it('refuses "email"', () => refused({ subjectUserId: 'u1', email: 'third.party@example.com' }));
 
   it('accepts technical user ids', () => {
-    expect(validateEventPayload({ subjectUserId: 'user-1' }).ok).toBe(true);
+    expect(validateEventPayload('ACCOUNT_ACTIVATED', { subjectUserId: 'user-1' }).ok).toBe(true);
+  });
+
+  it('refuses recipient contact keys on invitation payloads too (P2-3)', () => {
+    const base = { invitationId: 'inv-1', invitationType: 'family' };
+    for (const key of ['recipientPhone', 'recipient_phone', 'recipientEmail', 'recipient', 'penerima', 'contact', 'contactDetail']) {
+      const verdict = validateEventPayload('INVITATION_REVOKED', { ...base, [key]: '081234567890' });
+      expect(verdict.ok, `key "${key}" must be refused`).toBe(false);
+    }
   });
 });
 
 describe('validator rejects empty or unknown fields', () => {
   it('refuses empty string values', () => {
-    const result = validateEventPayload({ subjectUserId: '' });
+    const result = validateEventPayload('ACCOUNT_PENDING_CREATED', { subjectUserId: '' });
     expect(result.ok).toBe(false);
   });
 
   it('refuses null and undefined values', () => {
-    expect(validateEventPayload({ subjectUserId: null }).ok).toBe(false);
-    expect(validateEventPayload({ subjectUserId: undefined }).ok).toBe(false);
+    expect(validateEventPayload('ACCOUNT_PENDING_CREATED', { subjectUserId: null }).ok).toBe(false);
+    expect(validateEventPayload('ACCOUNT_PENDING_CREATED', { subjectUserId: undefined }).ok).toBe(false);
   });
 
-  it('refuses keys outside the v1 contract', () => {
-    expect(validateEventPayload({ subjectUserId: 'u1', note: 'hello' }).ok).toBe(false);
+  it('refuses keys outside the account contract', () => {
+    expect(validateEventPayload('ACCOUNT_ACTIVATED', { subjectUserId: 'u1', note: 'hello' }).ok).toBe(false);
   });
 
   it('refuses non-object payloads', () => {
-    expect(validateEventPayload('nope').ok).toBe(false);
-    expect(validateEventPayload([1, 2]).ok).toBe(false);
-    expect(validateEventPayload(null).ok).toBe(false);
+    expect(validateEventPayload('ACCOUNT_DISABLED', 'nope').ok).toBe(false);
+    expect(validateEventPayload('ACCOUNT_DISABLED', [1, 2]).ok).toBe(false);
+    expect(validateEventPayload('ACCOUNT_DISABLED', null).ok).toBe(false);
   });
 });
 
-describe('exhaustiveness of the v1 event union', () => {
-  it('EVENT_TYPES holds exactly the four v1 types, no duplicates', () => {
+describe('invitation builders produce contract-shaped envelopes (P2-3)', () => {
+  it('INVITATION_CREATED records the policy stamps, tree in the envelope', () => {
+    const event = buildInvitationCreatedEvent({
+      actorUserId: 'owner-1',
+      familyTreeId: 'tree-1',
+      invitationId: 'inv-1',
+      invitationType: 'family',
+      channel: 'manual',
+      grantedRole: 'editor',
+      expiresAt: new Date('2026-08-31T12:00:00.000Z'),
+      maxUses: 20,
+    });
+    expect(event.type).toBe('INVITATION_CREATED');
+    expect(event.actorUserId).toBe('owner-1');
+    expect(event.familyTreeId).toBe('tree-1');
+    expect(event.payload).toEqual({
+      invitationId: 'inv-1',
+      invitationType: 'family',
+      channel: 'manual',
+      grantedRole: 'editor',
+      expiresAt: '2026-08-31T12:00:00.000Z',
+      maxUses: 20,
+    });
+    expect(validateEventPayload(event.type, event.payload).ok).toBe(true);
+  });
+
+  it('INVITATION_USED success names the consuming account, no reason key', () => {
+    const event = buildInvitationUsedEvent({
+      actorUserId: 'user-9',
+      familyTreeId: 'tree-1',
+      invitationId: 'inv-1',
+      invitationType: 'personal',
+      result: 'success',
+      subjectUserId: 'user-9',
+    });
+    expect(event.payload).toEqual({
+      invitationId: 'inv-1',
+      invitationType: 'personal',
+      result: 'success',
+      subjectUserId: 'user-9',
+    });
+    expect('reason' in event.payload).toBe(false);
+    expect(validateEventPayload(event.type, event.payload).ok).toBe(true);
+  });
+
+  it('INVITATION_USED failure carries the honest reason and null subject', () => {
+    const event = buildInvitationUsedEvent({
+      actorUserId: null,
+      familyTreeId: 'tree-1',
+      invitationId: 'inv-1',
+      invitationType: 'family',
+      result: 'failure',
+      reason: 'INVITATION_EXPIRED',
+      subjectUserId: null,
+    });
+    expect(event.actorUserId).toBeNull();
+    expect(event.payload).toEqual({
+      invitationId: 'inv-1',
+      invitationType: 'family',
+      result: 'failure',
+      reason: 'INVITATION_EXPIRED',
+      subjectUserId: null,
+    });
+    expect(validateEventPayload(event.type, event.payload).ok).toBe(true);
+  });
+
+  it('INVITATION_REVOKED carries only the two technical keys', () => {
+    const event = buildInvitationRevokedEvent({
+      actorUserId: 'owner-1',
+      familyTreeId: 'tree-1',
+      invitationId: 'inv-2',
+      invitationType: 'personal',
+    });
+    expect(event.payload).toEqual({ invitationId: 'inv-2', invitationType: 'personal' });
+    expect(validateEventPayload(event.type, event.payload).ok).toBe(true);
+  });
+
+  it('validator pins each invitation type to its own key set', () => {
+    const revokedShape = { invitationId: 'inv-1', invitationType: 'personal' };
+    expect(validateEventPayload('INVITATION_REVOKED', revokedShape).ok).toBe(true);
+    // CREATED-only and USED-only keys are refused on REVOKED.
+    expect(validateEventPayload('INVITATION_REVOKED', { ...revokedShape, channel: 'manual' }).ok).toBe(false);
+    expect(validateEventPayload('INVITATION_REVOKED', { ...revokedShape, result: 'success' }).ok).toBe(false);
+    expect(validateEventPayload('INVITATION_CREATED', { ...revokedShape, channel: 'wa', grantedRole: 'viewer', expiresAt: '2026-08-31T12:00:00.000Z', maxUses: 1 }).ok).toBe(true);
+    expect(validateEventPayload('INVITATION_CREATED', { ...revokedShape, channel: 'wa', grantedRole: 'viewer', expiresAt: '2026-08-31T12:00:00.000Z', maxUses: Number.NaN }).ok).toBe(false);
+  });
+
+  it('validator enforces the reason rule on INVITATION_USED', () => {
+    const base = { invitationId: 'inv-1', invitationType: 'family', subjectUserId: null };
+    expect(validateEventPayload('INVITATION_USED', { ...base, result: 'failure' }).ok).toBe(false);
+    expect(validateEventPayload('INVITATION_USED', { ...base, result: 'success' }).ok).toBe(true);
+    expect(
+      validateEventPayload('INVITATION_USED', { ...base, result: 'success', reason: 'INVITATION_EXPIRED' }).ok,
+    ).toBe(false);
+    expect(validateEventPayload('INVITATION_USED', { ...base, result: 'maybe', reason: 'X' }).ok).toBe(false);
+    // A non-null subjectUserId stays a plain non-empty string.
+    expect(
+      validateEventPayload('INVITATION_USED', { invitationId: 'inv-1', invitationType: 'family', result: 'success', subjectUserId: 'user-9' }).ok,
+    ).toBe(true);
+  });
+});
+
+describe('exhaustiveness of the event union', () => {
+  it('EVENT_TYPES holds exactly the seven shipped types, no duplicates', () => {
     expect([...EVENT_TYPES]).toEqual([
       'ACCOUNT_PENDING_CREATED',
       'ACCOUNT_ACTIVATED',
       'ACCOUNT_DISABLED',
       'ACCOUNT_ENABLED',
+      'INVITATION_CREATED',
+      'INVITATION_USED',
+      'INVITATION_REVOKED',
     ]);
-    expect(new Set(EVENT_TYPES).size).toBe(4);
+    expect(new Set(EVENT_TYPES).size).toBe(7);
   });
 
   it('isEventType accepts members and refuses anything else', () => {
     for (const type of EVENT_TYPES) expect(isEventType(type)).toBe(true);
     expect(isEventType('ACCOUNT_DELETED')).toBe(false);
+    expect(isEventType('INVITATION_DELETED')).toBe(false);
     expect(isEventType('')).toBe(false);
     expect(isEventType(42)).toBe(false);
   });
