@@ -60,6 +60,9 @@ import {
   parseGrowthMetricsQuery,
   roundGrowthMetric,
 } from '../src/lib/metrics/kfactor';
+import { buildDigestForUser, runWeeklyDigestPass, startDigestScheduler } from './digest';
+import { mailerDisabled } from '../src/lib/digest/mailer';
+import { weeklyWindow } from '../src/lib/digest/window';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -717,6 +720,101 @@ app.get('/api/v1/admin/metrics/growth', requireAuth, requireOwner, async (req: A
   }
 });
 
+// ─── Weekly digest (P2-7, ADR 0008) ──────────────────────
+//
+// GET /digest/weekly is the PREVIEW: it renders the digest the caller
+// would receive for the last complete ISO week, even when the caller has
+// not opted in (you can look before you switch on). PUT
+// /digest/preferences flips only the caller's own digestOptIn column,
+// one boolean, nothing else. Both are read-or-own-row surfaces behind
+// requireAuth.
+//
+// POST /admin/digest/send is the owner's manual trigger and fails
+// closed: without SMTP_URL there is no mailer and the endpoint answers
+// 503 instead of pretending a send happened.
+
+app.get('/api/v1/digest/weekly', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId! },
+      select: { id: true, name: true, digestOptIn: true },
+    });
+    if (user === null) {
+      return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Account not found' });
+    }
+    const window = weeklyWindow(new Date());
+    const [memberships, events, trees] = await Promise.all([
+      prisma.treeMember.findMany({ where: { userId: user.id }, select: { treeId: true } }),
+      prisma.event.findMany({
+        where: { createdAt: { gte: window.startAt, lt: window.endAt } },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, type: true, actorUserId: true, familyTreeId: true, createdAt: true },
+      }),
+      prisma.familyTree.findMany({ select: { id: true, name: true } }),
+    ]);
+    const actorIds = [
+      ...new Set(events.map((event) => event.actorUserId).filter((id): id is string => id !== null)),
+    ];
+    const actors =
+      actorIds.length === 0
+        ? []
+        : await prisma.user.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true } });
+    const digest = await buildDigestForUser(
+      { id: user.id, name: user.name },
+      window,
+      events,
+      trees,
+      actors,
+      memberships.map((membership) => membership.treeId),
+    );
+    res.json({
+      window: { startAt: window.startAt.toISOString(), endAt: window.endAt.toISOString() },
+      optIn: user.digestOptIn,
+      empty: digest.empty,
+      subject: digest.empty ? null : digest.subject,
+      body: digest.empty ? null : digest.body,
+    });
+  } catch (e) {
+    res.status(500).json({ code: 'DIGEST_PREVIEW_ERROR', message: (e as Error).message });
+  }
+});
+
+app.put('/api/v1/digest/preferences', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const body = req.body as { optIn?: unknown } | null | undefined;
+    if (typeof body !== 'object' || body === null || typeof body.optIn !== 'boolean') {
+      return res.status(400).json({
+        code: 'DIGEST_PREF_INVALID',
+        message: 'Body must be a JSON object with a boolean optIn field',
+      });
+    }
+    // Only the caller's own row, only the consent column: one boolean in,
+    // one boolean out, no other column can move through this endpoint.
+    const user = await prisma.user.update({
+      where: { id: req.userId! },
+      data: { digestOptIn: body.optIn },
+      select: { digestOptIn: true },
+    });
+    res.json({ optIn: user.digestOptIn });
+  } catch (e) {
+    res.status(500).json({ code: 'DIGEST_PREF_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/admin/digest/send', requireAuth, requireOwner, async (_req: AuthenticatedRequest, res) => {
+  try {
+    if (mailerDisabled()) {
+      return res
+        .status(503)
+        .json({ code: 'DIGEST_MAIL_DISABLED', message: 'SMTP_URL is not set; the digest mailer is disabled' });
+    }
+    const summary = await runWeeklyDigestPass();
+    res.json(summary);
+  } catch (e) {
+    res.status(500).json({ code: 'DIGEST_SEND_ERROR', message: (e as Error).message });
+  }
+});
+
 // ─── Tree membership helpers (P2-3, ADR 0002 + 0004) ──────
 
 /**
@@ -1297,6 +1395,9 @@ function formatRelationship(r: FamilyRelationship) {
 }
 
 // ─── Start ───────────────────────────────────────────────
+
+// P2-7: the hourly digest check exists only when a mailer is configured.
+startDigestScheduler();
 
 app.listen(PORT, () => {
   console.log(`🚀 API server running at http://localhost:${PORT}/api/v1`);

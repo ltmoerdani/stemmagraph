@@ -336,5 +336,20 @@
     "unavailable": "Growth metrics need the server backend. Start the app with the REST adapter to see them.",
     "loadFailed": "Loading growth metrics failed.",
     "retry": "Retry"
+  },
+  "digest": {
+    "title": "Weekly email digest",
+    "subtitle": "One email per week with what happened on your trees. Off until you switch it on.",
+    "optInLabel": "Send me the weekly digest",
+    "optInHint": "Switch it off any time; future emails stop immediately.",
+    "saving": "Saving...",
+    "saveFailed": "Saving the preference failed. Nothing changed on the server.",
+    "loading": "Loading digest preview...",
+    "loadFailed": "Loading the digest preview failed.",
+    "retry": "Retry",
+    "unavailable": "The weekly digest needs the server backend. Start the app with the REST adapter to use it.",
+    "previewTitle": "Last week in preview",
+    "windowLabel": "Window: {{start}} to {{end}}",
+    "previewEmpty": "Nothing happened on your trees last week, so there is no digest to show."
   }
 }

@@ -3,6 +3,7 @@ import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine } from 'lucide
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { FeedPanel } from './FeedPanel';
 import { InvitationsPanel } from './InvitationsPanel';
+import { DigestSettingsPanel } from '../DigestSettingsPanel';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { navigate } from '../../utils/routing';
@@ -315,6 +316,9 @@ export const Dashboard: React.FC = () => {
               )}
             </div>
           )}
+
+          {/* Weekly digest settings: opt-in switch plus last week preview (P2-7). */}
+          <DigestSettingsPanel />
         </div>
       </main>
 
