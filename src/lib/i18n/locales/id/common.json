@@ -351,5 +351,49 @@
     "previewTitle": "Pratinjau minggu lalu",
     "windowLabel": "Jendela: {{start}} sampai {{end}}",
     "previewEmpty": "Tidak ada kejadian di pohon Anda minggu lalu, jadi tidak ada ringkasan untuk ditampilkan."
+  },
+  "changeReview": {
+    "open": "Usulan perubahan",
+    "title": "Usulan perubahan: {{treeName}}",
+    "close": "Tutup",
+    "refresh": "Muat ulang",
+    "unavailable": "Fitur usulan perubahan memerlukan backend REST (VITE_API_BASE_URL).",
+    "loading": "Memuat usulan...",
+    "loadFailed": "Gagal memuat usulan.",
+    "ownerTitle": "Menunggu keputusan Anda",
+    "editorTitle": "Usulan Anda",
+    "emptyOwner": "Tidak ada usulan yang menunggu keputusan.",
+    "emptyEditor": "Anda belum mengajukan usulan apa pun di pohon ini.",
+    "targetType": {
+      "member": "Anggota",
+      "relationship": "Relasi"
+    },
+    "state": {
+      "pending": "Menunggu",
+      "rejected": "Ditolak",
+      "distinct": "Ditandai beda"
+    },
+    "reasonLabel": "Alasan pengusul",
+    "beforeLabel": "Nilai sekarang",
+    "afterLabel": "Nilai usulan",
+    "proposedAt": "Diajukan {{date}}",
+    "decidedAt": "Diputuskan {{date}}",
+    "decisionNoteLabel": "Catatan keputusan",
+    "actionAccept": "Terima dan terapkan",
+    "actionReject": "Tolak",
+    "actionDistinct": "Tandai beda secara permanen",
+    "rejectNotePlaceholder": "Tulis alasan penolakan untuk pengusul...",
+    "rejectNoteRequired": "Catatan penolakan wajib diisi.",
+    "distinctNotePlaceholder": "Catatan tambahan (opsional)",
+    "distinctHint": "Tandai beda menolak isi yang sama untuk rekaman ini selamanya.",
+    "actionFailed": "Aksi gagal.",
+    "acceptDone": "Usulan diterima dan diterapkan.",
+    "proposeBanner": "Perubahan Anda akan dikirim ke pemilik pohon untuk ditinjau, bukan langsung disimpan.",
+    "reasonNoteLabel": "Alasan perubahan",
+    "reasonNotePlaceholder": "Jelaskan mengapa perubahan ini perlu...",
+    "reasonNoteRequired": "Alasan perubahan wajib diisi (3-500 karakter).",
+    "submitPropose": "Kirim usulan",
+    "proposeSent": "Usulan terkirim dan menunggu keputusan pemilik.",
+    "proposeFailed": "Gagal mengirim usulan."
   }
 }

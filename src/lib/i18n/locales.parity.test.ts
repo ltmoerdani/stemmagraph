@@ -55,6 +55,47 @@ const DIGEST_KEYS = [
   'previewEmpty',
 ];
 
+const CHANGE_REVIEW_KEYS = [
+  'open',
+  'title',
+  'close',
+  'refresh',
+  'unavailable',
+  'loading',
+  'loadFailed',
+  'ownerTitle',
+  'editorTitle',
+  'emptyOwner',
+  'emptyEditor',
+  'targetType.member',
+  'targetType.relationship',
+  'state.pending',
+  'state.rejected',
+  'state.distinct',
+  'reasonLabel',
+  'beforeLabel',
+  'afterLabel',
+  'proposedAt',
+  'decidedAt',
+  'decisionNoteLabel',
+  'actionAccept',
+  'actionReject',
+  'actionDistinct',
+  'rejectNotePlaceholder',
+  'rejectNoteRequired',
+  'distinctNotePlaceholder',
+  'distinctHint',
+  'actionFailed',
+  'acceptDone',
+  'proposeBanner',
+  'reasonNoteLabel',
+  'reasonNotePlaceholder',
+  'reasonNoteRequired',
+  'submitPropose',
+  'proposeSent',
+  'proposeFailed',
+];
+
 describe('flatten helper', () => {
   it('joins nested keys with dots and stringifies leaves', () => {
     const flat = flatten({ a: 'x', b: { c: 'y', d: { e: 'z' } } });
@@ -103,5 +144,33 @@ describe('digest namespace (P2-7 U5)', () => {
   it('labels the preview window with the same start and end placeholders in both locales', () => {
     expect(placeholders(en.get("digest.windowLabel"))).toEqual(['end', 'start']);
     expect(placeholders(id.get("digest.windowLabel"))).toEqual(['end', 'start']);
+  });
+});
+
+describe('changeReview namespace (P2-5 U5)', () => {
+  it('ships the full key set in both locales', () => {
+    for (const locale of [en, id]) {
+      const keys = [...locale.keys()]
+        .filter((key) => key.startsWith('changeReview.'))
+        .map((key) => key.slice('changeReview.'.length))
+        .sort();
+      expect(keys).toEqual([...CHANGE_REVIEW_KEYS].sort());
+    }
+  });
+
+  it('carries non-empty values in both locales', () => {
+    for (const key of CHANGE_REVIEW_KEYS) {
+      expect(en.get(`changeReview.${key}`)).not.toBe('');
+      expect(id.get(`changeReview.${key}`)).not.toBe('');
+    }
+  });
+
+  it('formats titles and timestamps with the same placeholders in both locales', () => {
+    expect(placeholders(en.get('changeReview.title'))).toEqual(['treeName']);
+    expect(placeholders(id.get('changeReview.title'))).toEqual(['treeName']);
+    expect(placeholders(en.get('changeReview.proposedAt'))).toEqual(['date']);
+    expect(placeholders(id.get('changeReview.proposedAt'))).toEqual(['date']);
+    expect(placeholders(en.get('changeReview.decidedAt'))).toEqual(['date']);
+    expect(placeholders(id.get('changeReview.decidedAt'))).toEqual(['date']);
   });
 });
