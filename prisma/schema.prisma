@@ -25,6 +25,13 @@ model User {
   // role:   "owner" | "member"
   status     String   @default("pending")
   role       String   @default("member")
+  // P2-7 weekly digest (ADR 0008). digestOptIn is the explicit consent
+  // switch: default false, never assumed, flipped only by the owner of the
+  // row through PUT /digest/preferences. digestLastSentAt is the once per
+  // ISO week guard timestamp the scheduler advances only after a send
+  // succeeds. No email content is persisted anywhere.
+  digestOptIn      Boolean   @default(false)
+  digestLastSentAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
