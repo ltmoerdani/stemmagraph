@@ -10,12 +10,16 @@ import {
   buildAccountDisabledEvent,
   buildAccountEnabledEvent,
   buildAccountPendingCreatedEvent,
+  buildChangeAcceptedEvent,
+  buildChangeProposedEvent,
+  buildChangeRejectedEvent,
   buildInvitationCreatedEvent,
   buildInvitationRevokedEvent,
   buildInvitationUsedEvent,
   isEventType,
   parseEventPayload,
   projectAccountActivatedNotification,
+  projectChangeNotifications,
   projectPendingCreatedNotifications,
   serializeEventPayload,
   validateEventPayload,
@@ -211,7 +215,7 @@ describe('invitation builders produce contract-shaped envelopes (P2-3)', () => {
 });
 
 describe('exhaustiveness of the event union', () => {
-  it('EVENT_TYPES holds exactly the seven shipped types, no duplicates', () => {
+  it('EVENT_TYPES holds exactly the ten shipped types, no duplicates', () => {
     expect([...EVENT_TYPES]).toEqual([
       'ACCOUNT_PENDING_CREATED',
       'ACCOUNT_ACTIVATED',
@@ -220,8 +224,11 @@ describe('exhaustiveness of the event union', () => {
       'INVITATION_CREATED',
       'INVITATION_USED',
       'INVITATION_REVOKED',
+      'CHANGE_PROPOSED',
+      'CHANGE_ACCEPTED',
+      'CHANGE_REJECTED',
     ]);
-    expect(new Set(EVENT_TYPES).size).toBe(7);
+    expect(new Set(EVENT_TYPES).size).toBe(10);
   });
 
   it('isEventType accepts members and refuses anything else', () => {
@@ -297,3 +304,149 @@ describe('projections from an emitted event', () => {
     ).toThrow(/expects ACCOUNT_ACTIVATED or ACCOUNT_ENABLED/);
   });
 });
+
+// ─── Change-review events (P2-5, ADR 0009) ───────────────
+
+describe('change-review builders produce contract-shaped envelopes (P2-5)', () => {
+  it('CHANGE_PROPOSED: proposer is the actor, tree scoped, state pending', () => {
+    const envelope = buildChangeProposedEvent({
+      actorUserId: 'user-editor',
+      familyTreeId: 'tree-1',
+      proposalId: 'prop-1',
+      targetType: 'member',
+    });
+    expect(envelope).toEqual({
+      type: 'CHANGE_PROPOSED',
+      actorUserId: 'user-editor',
+      familyTreeId: 'tree-1',
+      payload: { proposalId: 'prop-1', state: 'pending', targetType: 'member' },
+    });
+    expect(validateEventPayload(envelope.type, envelope.payload)).toEqual({ ok: true });
+  });
+
+  it('CHANGE_ACCEPTED and CHANGE_REJECTED: deciding owner is the actor', () => {
+    const accepted = buildChangeAcceptedEvent({
+      actorUserId: 'user-owner',
+      familyTreeId: 'tree-1',
+      proposalId: 'prop-1',
+      targetType: 'relationship',
+    });
+    const rejected = buildChangeRejectedEvent({
+      actorUserId: 'user-owner',
+      familyTreeId: 'tree-1',
+      proposalId: 'prop-2',
+      targetType: 'member',
+    });
+    expect(accepted.payload).toEqual({ proposalId: 'prop-1', state: 'accepted', targetType: 'relationship' });
+    expect(rejected.payload).toEqual({ proposalId: 'prop-2', state: 'rejected', targetType: 'member' });
+    expect(validateEventPayload(accepted.type, accepted.payload)).toEqual({ ok: true });
+    expect(validateEventPayload(rejected.type, rejected.payload)).toEqual({ ok: true });
+  });
+
+  it('validator pins change payloads to their three technical keys', () => {
+    const base = { proposalId: 'prop-1', state: 'pending', targetType: 'member' };
+    expect(validateEventPayload('CHANGE_PROPOSED', { ...base, beforeJson: '{}' })).toEqual({
+      ok: false,
+      reason: 'payload key "beforeJson" is not part of the CHANGE_PROPOSED contract',
+    });
+    expect(validateEventPayload('CHANGE_ACCEPTED', { ...base, afterJson: '{}' })).toEqual({
+      ok: false,
+      reason: 'payload key "afterJson" is not part of the CHANGE_ACCEPTED contract',
+    });
+    expect(validateEventPayload('CHANGE_REJECTED', { ...base, reasonNote: 'typo fix' })).toEqual({
+      ok: false,
+      reason: 'payload key "reasonNote" is not part of the CHANGE_REJECTED contract',
+    });
+    expect(validateEventPayload('CHANGE_PROPOSED', { proposalId: 'prop-1', state: '', targetType: 'member' })).toEqual({
+      ok: false,
+      reason: 'payload key "state" must not be empty',
+    });
+  });
+
+  it('validator refuses contact keys on change payloads too', () => {
+    const refusal = validateEventPayload('CHANGE_PROPOSED', {
+      proposalId: 'prop-1',
+      state: 'pending',
+      targetType: 'member',
+      email: 'third.party@example.com',
+    });
+    expect(refusal).toEqual({
+      ok: false,
+      reason: 'payload key "email" is refused: contact data of third parties must not enter the event store',
+    });
+  });
+});
+
+describe('change-review notification projections (P2-5)', () => {
+  const proposed = buildChangeProposedEvent({
+    actorUserId: 'user-editor',
+    familyTreeId: 'tree-1',
+    proposalId: 'prop-1',
+    targetType: 'member',
+  });
+
+  it('CHANGE_PROPOSED fans out one draft per tree owner except the proposer', () => {
+    const drafts = projectChangeNotifications(proposed, {
+      treeOwners: [{ id: 'user-owner-a' }, { id: 'user-owner-b' }, { id: 'user-editor' }],
+      proposerUserId: 'user-editor',
+    });
+    expect(drafts).toHaveLength(2);
+    expect(drafts[0]).toEqual({
+      userId: 'user-owner-a',
+      type: 'CHANGE_PROPOSED',
+      payloadJson: JSON.stringify({ proposalId: 'prop-1', state: 'pending', targetType: 'member' }),
+    });
+    expect(drafts[1]?.userId).toBe('user-owner-b');
+  });
+
+  it('verdicts notify the proposer, unless the proposer decided themself', () => {
+    const accepted = buildChangeAcceptedEvent({
+      actorUserId: 'user-owner',
+      familyTreeId: 'tree-1',
+      proposalId: 'prop-1',
+      targetType: 'member',
+    });
+    const drafts = projectChangeNotifications(accepted, {
+      treeOwners: [{ id: 'user-owner' }],
+      proposerUserId: 'user-editor',
+    });
+    expect(drafts).toEqual([
+      {
+        userId: 'user-editor',
+        type: 'CHANGE_ACCEPTED',
+        payloadJson: JSON.stringify({ proposalId: 'prop-1', state: 'accepted', targetType: 'member' }),
+      },
+    ]);
+
+    const selfAccepted = buildChangeAcceptedEvent({
+      actorUserId: 'user-owner',
+      familyTreeId: 'tree-1',
+      proposalId: 'prop-9',
+      targetType: 'member',
+    });
+    expect(
+      projectChangeNotifications(selfAccepted, { treeOwners: [{ id: 'user-owner' }], proposerUserId: 'user-owner' }),
+    ).toEqual([]);
+  });
+
+  it('CHANGE_REJECTED reaches the proposer with the same three-key payload', () => {
+    const rejected = buildChangeRejectedEvent({
+      actorUserId: 'user-owner',
+      familyTreeId: 'tree-1',
+      proposalId: 'prop-2',
+      targetType: 'relationship',
+    });
+    const drafts = projectChangeNotifications(rejected, {
+      treeOwners: [],
+      proposerUserId: 'user-editor',
+    });
+    expect(drafts).toEqual([
+      {
+        userId: 'user-editor',
+        type: 'CHANGE_REJECTED',
+        payloadJson: JSON.stringify({ proposalId: 'prop-2', state: 'rejected', targetType: 'relationship' }),
+      },
+    ]);
+  });
+});
+

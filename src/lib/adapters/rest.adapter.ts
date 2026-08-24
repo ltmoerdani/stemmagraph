@@ -51,6 +51,10 @@ import {
   GrowthMetricsQueryOptions,
   DigestApi,
   DigestPreview,
+  ChangeReviewApi,
+  ChangeProposalPage,
+  ChangeProposalRecord,
+  CreateChangeProposalInput,
   AdapterError,
   AuthError,
 } from './types';
@@ -69,7 +73,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -414,5 +418,48 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
 
   async updateDigestPreferences(optIn: boolean): Promise<{ optIn: boolean }> {
     return this.request<{ optIn: boolean }>('PUT', '/digest/preferences', { optIn });
+  }
+
+  // ── Change review (P2-5, ADR 0009) ─────────────────────
+  // Pure routing again: roles, the distinct fence and the accept
+  // transaction all live in the server. The adapter carries the field
+  // slice in and the formatted proposal out.
+
+  async listChangeProposals(treeId: string): Promise<ChangeProposalPage> {
+    return this.request<ChangeProposalPage>('GET', `/trees/${treeId}/change-proposals`);
+  }
+
+  async createChangeProposal(
+    treeId: string,
+    input: CreateChangeProposalInput,
+  ): Promise<ChangeProposalRecord> {
+    const body = await this.request<{ proposal: ChangeProposalRecord }>(
+      'POST',
+      `/trees/${treeId}/change-proposals`,
+      input,
+    );
+    return body.proposal;
+  }
+
+  async acceptChangeProposal(proposalId: string): Promise<{ accepted: string }> {
+    return this.request<{ accepted: string }>('POST', `/change-proposals/${proposalId}/accept`);
+  }
+
+  async rejectChangeProposal(proposalId: string, decisionNote: string): Promise<ChangeProposalRecord> {
+    const body = await this.request<{ proposal: ChangeProposalRecord }>(
+      'POST',
+      `/change-proposals/${proposalId}/reject`,
+      { decisionNote },
+    );
+    return body.proposal;
+  }
+
+  async distinctChangeProposal(proposalId: string, decisionNote?: string): Promise<ChangeProposalRecord> {
+    const body = await this.request<{ proposal: ChangeProposalRecord }>(
+      'POST',
+      `/change-proposals/${proposalId}/distinct`,
+      decisionNote === undefined || decisionNote === '' ? {} : { decisionNote },
+    );
+    return body.proposal;
   }
 }

@@ -351,5 +351,50 @@
     "previewTitle": "Last week in preview",
     "windowLabel": "Window: {{start}} to {{end}}",
     "previewEmpty": "Nothing happened on your trees last week, so there is no digest to show."
+  },
+  "changeReview": {
+    "open": "Change proposals",
+    "title": "Change proposals: {{treeName}}",
+    "close": "Close",
+    "refresh": "Refresh",
+    "unavailable": "Change proposals need the REST backend (VITE_API_BASE_URL).",
+    "loading": "Loading proposals...",
+    "loadFailed": "Failed to load proposals.",
+    "ownerTitle": "Waiting for your decision",
+    "editorTitle": "Your proposals",
+    "emptyOwner": "No proposals are waiting for your decision.",
+    "emptyEditor": "You have not proposed anything on this tree yet.",
+    "targetType": {
+      "member": "Member",
+      "relationship": "Relationship"
+    },
+    "state": {
+      "pending": "Waiting",
+      "rejected": "Rejected",
+      "distinct": "Marked distinct"
+    },
+    "reasonLabel": "Proposer's reason",
+    "beforeLabel": "Current values",
+    "afterLabel": "Proposed values",
+    "proposedAt": "Proposed {{date}}",
+    "decidedAt": "Decided {{date}}",
+    "decisionNoteLabel": "Decision note",
+    "actionAccept": "Accept and apply",
+    "actionReject": "Reject",
+    "actionDistinct": "Mark distinct permanently",
+    "cancelReject": "Cancel",
+    "rejectNotePlaceholder": "Write the rejection reason for the proposer...",
+    "rejectNoteRequired": "A rejection note is required.",
+    "distinctNotePlaceholder": "Additional note (optional)",
+    "distinctHint": "Marking distinct refuses this exact content for this record forever.",
+    "actionFailed": "Action failed.",
+    "acceptDone": "Proposal accepted and applied.",
+    "proposeBanner": "Your edit will be sent to the tree owner for review instead of being saved directly.",
+    "reasonNoteLabel": "Reason for the change",
+    "reasonNotePlaceholder": "Explain why this change is needed...",
+    "reasonNoteRequired": "A reason is required (3-500 characters).",
+    "submitPropose": "Send proposal",
+    "proposeSent": "Proposal sent and waiting for the owner's decision.",
+    "proposeFailed": "Failed to send the proposal."
   }
 }

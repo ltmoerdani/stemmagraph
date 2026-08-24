@@ -21,7 +21,7 @@ import {
   type EventEnvelope,
   type EventType,
 } from '../events';
-import { feedKindOfEventType, type FeedItem } from './feed';
+import { feedKindOfEventType, isFeedRenderedEventType, type FeedItem } from './feed';
 
 // ─── Limits ──────────────────────────────────────────────
 
@@ -179,7 +179,9 @@ export interface FeedViewer {
  */
 export function isEventVisibleInFeed(event: EventEnvelope, viewer: FeedViewer): boolean {
   if (event.familyTreeId !== null && viewer.treeIds.includes(event.familyTreeId)) return true;
-  if (feedKindOfEventType(event.type) !== 'account') return false;
+  // The fence keeps this total: a CHANGE_* fact with no tree (impossible
+  // today) reads as not-account instead of throwing (ADR 0009).
+  if (!isFeedRenderedEventType(event.type) || feedKindOfEventType(event.type) !== 'account') return false;
   const payload = event.payload as AccountEventPayload;
   return payload.subjectUserId === viewer.id || event.actorUserId === viewer.id;
 }
@@ -218,7 +220,11 @@ export function parseStoredEventRow(row: StoredFeedEventRow): { id: string; crea
   };
 }
 
-/** The account event types, for the endpoint's subject-user clause. */
+/**
+ * The account event types, for the endpoint's subject-user clause. The
+ * rendered-event fence runs first: CHANGE_* types are in the vocabulary
+ * but feedKindOfEventType refuses them by design (ADR 0009).
+ */
 export const ACCOUNT_EVENT_TYPES: readonly EventType[] = EVENT_TYPES.filter(
-  (type) => feedKindOfEventType(type) === 'account',
+  (type) => isFeedRenderedEventType(type) && feedKindOfEventType(type) === 'account',
 );

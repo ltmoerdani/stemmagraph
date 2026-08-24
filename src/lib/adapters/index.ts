@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -109,6 +109,19 @@ export function getActivityFeedApi(): ActivityFeedApi | null {
   return adapter instanceof RestAdapter ? adapter : null;
 }
 
+// ─── Change review (P2-5) ─────────────────────────────────
+
+/**
+ * Returns the change-review surface of the active adapter, or null when
+ * the adapter has no server backend (mock, supabase): the queue lives in
+ * the ChangeProposal table. The UI hides every change-review surface for
+ * null; the server refuses viewers with 403 on its own.
+ */
+export function getChangeReviewApi(): ChangeReviewApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 // ─── Growth metrics (P2-8) ────────────────────────────────
 
 /**
@@ -180,6 +193,9 @@ export type {
   GrowthWeekMetrics,
   DigestApi,
   DigestPreview,
+  ChangeReviewApi,
+  ChangeProposalRecord,
+  CreateChangeProposalInput,
 } from './types';
 
 export {

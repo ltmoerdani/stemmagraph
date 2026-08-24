@@ -38,6 +38,7 @@ model User {
   notifications Notification[]
   treeMemberships TreeMember[]
   createdInvitations Invitation[] @relation("InvitationCreator")
+  proposedChanges ChangeProposal[] @relation("ChangeProposer")
 }
 
 // ─── Notification (in-app, P2-1) ─────────────────────────
@@ -95,6 +96,7 @@ model FamilyTree {
   relationships   FamilyRelationship[]
   treeMembers     TreeMember[]
   invitations     Invitation[]
+  changeProposals ChangeProposal[]
 }
 
 // ─── Family Member ────────────────────────────────────────
@@ -198,4 +200,40 @@ model Invitation {
 
   @@index([treeId])
   @@index([createdById])
+}
+
+// ─── Change Proposal (P2-5) ───────────────────────────────
+// One row is one proposed edit to one live record, held in the two-version
+// webtrees style (ADR 0009): the proposal stores a frozen beforeJson and a
+// desired afterJson, and the live row moves only when the tree owner
+// accepts. State is "pending" | "rejected" | "distinct" (the pure module in
+// src/lib/changes owns the vocabulary and the legal transitions).
+// reasonNote is mandatory proposer prose; decisionNote is optional reviewer
+// prose. autoAccepted is stamped true only when the narrow owner policy
+// fired; editor proposals are never auto-accepted. decidedByUserId is a
+// plain nullable technical id, deliberately not a foreign key: the audit
+// trail must survive account deletion the same way the event store does.
+
+model ChangeProposal {
+  id              String    @id @default(uuid())
+  familyTreeId    String
+  proposerUserId  String
+  targetType      String
+  targetId        String
+  beforeJson      String
+  afterJson       String
+  state           String    @default("pending")
+  reasonNote      String
+  autoAccepted    Boolean   @default(false)
+  decidedByUserId String?
+  decidedAt       DateTime?
+  decisionNote    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  familyTree   FamilyTree @relation(fields: [familyTreeId], references: [id], onDelete: Cascade)
+  proposerUser User       @relation("ChangeProposer", fields: [proposerUserId], references: [id], onDelete: Cascade)
+
+  @@index([familyTreeId, state])
+  @@index([proposerUserId])
 }

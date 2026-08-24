@@ -1,10 +1,12 @@
-// Unit tests for the pure activity-feed projector (P2-6 AC-1).
-// Covers: the complete mapping of all seven v1 event types into FeedItem,
-// param minimization for invitation facts (channel, invitationType, result,
-// time, invitation id only; never phone numbers, share text or tokens),
-// kind grouping, i18n keys, timestamp normalization, the type filter
-// builder, and newest-first sorting with id tie-break. Every case is pure:
-// fixtures are envelopes from the P2-2 builders, no I/O anywhere.
+// Unit tests for the pure activity-feed projector (P2-6 AC-1, P2-5 fence).
+// Covers: the complete mapping of the seven rendered event types into
+// FeedItem, the P2-5 fence that keeps CHANGE_* facts out of the feed until
+// the deferred feed-item decision, param minimization for invitation facts
+// (channel, invitationType, result, time, invitation id only; never phone
+// numbers, share text or tokens), kind grouping, i18n keys, timestamp
+// normalization, the type filter builder, and newest-first sorting with id
+// tie-break. Every case is pure: fixtures are envelopes from the P2-2
+// builders, no I/O anywhere.
 
 import { describe, expect, it } from 'vitest';
 import {
@@ -12,19 +14,21 @@ import {
   buildAccountDisabledEvent,
   buildAccountEnabledEvent,
   buildAccountPendingCreatedEvent,
+  buildChangeProposedEvent,
   buildInvitationCreatedEvent,
   buildInvitationRevokedEvent,
   buildInvitationUsedEvent,
   EVENT_TYPES,
   type EventEnvelope,
-  type EventType,
 } from '../events';
 import {
   applyFeedTypeFilter,
   FEED_KINDS,
+  FEED_RENDERED_EVENT_TYPES,
   FEED_TYPES_BY_KIND,
   FEED_TYPE_SELECTIONS,
   feedKindOfEventType,
+  isFeedRenderedEventType,
   isFeedTypeSelection,
   projectEventToFeedItem,
   projectFeedItems,
@@ -232,19 +236,31 @@ describe('kind grouping', () => {
     expect(FEED_TYPES_BY_KIND.invitation).toHaveLength(3);
   });
 
-  it('partitions all seven v1 types exactly once', () => {
+  it('partitions the seven rendered types exactly once', () => {
     const grouped = [...FEED_TYPES_BY_KIND.account, ...FEED_TYPES_BY_KIND.invitation];
-    expect(grouped).toHaveLength(EVENT_TYPES.length);
-    expect(new Set(grouped)).toEqual(new Set(EVENT_TYPES));
+    expect(grouped).toHaveLength(FEED_RENDERED_EVENT_TYPES.length);
+    expect(new Set(grouped)).toEqual(new Set(FEED_RENDERED_EVENT_TYPES));
     expect(FEED_KINDS).toEqual(['account', 'invitation']);
+  });
+
+  it('keeps the CHANGE_* fence: known to the store, not rendered here', () => {
+    expect(EVENT_TYPES).toHaveLength(10);
+    expect(FEED_RENDERED_EVENT_TYPES).toHaveLength(7);
+    for (const type of EVENT_TYPES) {
+      if ((String(type) as string).startsWith('CHANGE_')) {
+        expect(isFeedRenderedEventType(type)).toBe(false);
+      } else {
+        expect(isFeedRenderedEventType(type)).toBe(true);
+      }
+    }
   });
 });
 
 // ─── i18n keys ───────────────────────────────────────────
 
 describe('i18n keys', () => {
-  it('gives every type a distinct key under activityFeed.items', () => {
-    const envelopeByType: Record<EventType, EventEnvelope> = {
+  it('gives every rendered type a distinct key under activityFeed.items', () => {
+    const envelopeByType: Record<(typeof FEED_RENDERED_EVENT_TYPES)[number], EventEnvelope> = {
       ACCOUNT_PENDING_CREATED: buildAccountPendingCreatedEvent('user_reg'),
       ACCOUNT_ACTIVATED: buildAccountActivatedEvent('user_owner', 'user_reg'),
       ACCOUNT_DISABLED: buildAccountDisabledEvent('user_owner', 'user_x'),
@@ -258,11 +274,28 @@ describe('i18n keys', () => {
         invitationType: 'personal',
       }),
     };
-    const keys = EVENT_TYPES.map((type) =>
+    const keys = FEED_RENDERED_EVENT_TYPES.map((type) =>
       projectEventToFeedItem(source(`evt_${type}`, envelopeByType[type])).i18nKey,
     );
     expect(keys.every((key) => key.startsWith('activityFeed.items.'))).toBe(true);
-    expect(new Set(keys).size).toBe(EVENT_TYPES.length);
+    expect(new Set(keys).size).toBe(FEED_RENDERED_EVENT_TYPES.length);
+  });
+
+  it('drops a CHANGE_PROPOSED envelope in projectFeedItems instead of throwing', () => {
+    const changeEnvelope = buildChangeProposedEvent({
+      actorUserId: 'user_editor',
+      familyTreeId: 'tree_1',
+      proposalId: 'prop_1',
+      targetType: 'member',
+    });
+    const items = projectFeedItems([
+      source('evt_p1', invitationCreatedEnvelope(), new Date('2026-08-24T05:00:00.000Z')),
+      source('evt_p2', changeEnvelope, new Date('2026-08-24T06:00:00.000Z')),
+    ]);
+    expect(items.map((item) => item.id)).toEqual(['evt_p1']);
+    expect(() => projectEventToFeedItem(source('evt_p2', changeEnvelope))).toThrow(
+      /event type is not rendered in the feed/,
+    );
   });
 });
 
