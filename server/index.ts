@@ -46,6 +46,14 @@ import {
 } from '../src/lib/invitations';
 import { generateInvitationToken } from '../src/lib/invitations/token';
 import { appendEvent } from './events';
+import {
+  ACCOUNT_EVENT_TYPES,
+  encodeFeedCursor,
+  parseActivityFeedQuery,
+  parseStoredEventRow,
+  projectEventToFeedItem,
+  type FeedItem,
+} from '../src/lib/feed';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -551,6 +559,96 @@ app.post('/api/v1/notifications/read-all', requireAuth, async (req: Authenticate
     res.json({ updated: result.count });
   } catch (e) {
     res.status(500).json({ code: 'NOTIFICATION_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Activity feed (P2-6, ADR 0006) ──────────────────────
+//
+// READ-ONLY application layer over the P2-2 event store. This handler
+// appends nothing, writes no table, and never widens the event
+// vocabulary: it only filters, projects and pages stored events. The
+// pure decisions live in src/lib/feed (query parsing, cursor codec,
+// visibility rules, minimization projector); the SQL below mirrors
+// isEventVisibleInFeed: trees the caller is a TreeMember of (any role
+// may read, per the ADR 0002 matrix) plus account events that concern
+// the caller (payload subjectUserId or envelope actorUserId). Account
+// events about other people stay out of everyone's feed.
+
+app.get('/api/v1/activity-feed', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const parsed = parseActivityFeedQuery({
+      type: req.query['type'],
+      limit: req.query['limit'],
+      before: req.query['before'],
+    });
+    if (!parsed.ok) {
+      return res.status(400).json({ code: parsed.code, message: parsed.message });
+    }
+
+    const memberships = await prisma.treeMember.findMany({
+      where: { userId: req.userId! },
+      select: { treeId: true },
+    });
+    const treeIds = memberships.map((membership) => membership.treeId);
+
+    // Keyset pagination on (createdAt, id): the next page is strictly
+    // older than the cursor tuple, so re-reading a cursor is idempotent.
+    // Empty objects keep the AND list flat without importing Prisma types.
+    const cursorClause =
+      parsed.before !== null
+        ? {
+            OR: [
+              { createdAt: { lt: new Date(parsed.before.createdAt) } },
+              { AND: [{ createdAt: new Date(parsed.before.createdAt) }, { id: { lt: parsed.before.id } }] },
+            ],
+          }
+        : {};
+    const typeClause = parsed.typeFilter !== null ? { type: { in: parsed.typeFilter } } : {};
+
+    const events = await prisma.event.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { familyTreeId: { in: treeIds } },
+              {
+                AND: [
+                  { type: { in: [...ACCOUNT_EVENT_TYPES] } },
+                  {
+                    OR: [
+                      { actorUserId: req.userId! },
+                      // Account payloads carry exactly one key
+                      // (subjectUserId), so a quoted id match inside
+                      // payloadJson can only hit that subject.
+                      { payloadJson: { contains: `"${req.userId}"` } },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          cursorClause,
+          typeClause,
+        ],
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: parsed.limit + 1,
+    });
+
+    const page = events.slice(0, parsed.limit);
+    const items: FeedItem[] = [];
+    for (const row of page) {
+      const source = parseStoredEventRow(row);
+      if (source !== null) items.push(projectEventToFeedItem(source));
+    }
+    const lastRow = page[page.length - 1];
+    const nextCursor =
+      events.length > parsed.limit && lastRow !== undefined
+        ? encodeFeedCursor({ id: lastRow.id, createdAt: lastRow.createdAt.toISOString() })
+        : null;
+    res.json({ items, nextCursor });
+  } catch (e) {
+    res.status(500).json({ code: 'FEED_ERROR', message: (e as Error).message });
   }
 });
 
