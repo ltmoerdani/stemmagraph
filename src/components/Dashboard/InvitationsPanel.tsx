@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Copy, Link2, RefreshCw, UserPlus, Users, X, AlertCircle, CheckCircle } from 'lucide-react';
+import { Copy, Link2, RefreshCw, Send, UserPlus, Users, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getInvitationAdminApi } from '../../lib/adapters';
 import type {
@@ -10,6 +10,8 @@ import type {
   TreeRoleValue,
 } from '../../lib/adapters';
 import { formatDate } from '../../lib/i18n';
+import { useAuthStore } from '../../store/authStore';
+import { buildInvitationShareText, buildWhatsAppUrl, normalizeWhatsAppPhone } from '../../lib/share/whatsapp';
 
 /**
  * Owner panel for invitations and tree membership (P2-3 AC-6).
@@ -23,6 +25,14 @@ import { formatDate } from '../../lib/i18n';
  * Copy discipline (R-74.6): the invite text never promises full tree
  * access and never suggests the server sends anything. The channel field
  * records the owner's intent only; sharing happens outside the app.
+ *
+ * WhatsApp path (P2-4 AC-3, ADR 0005): when the channel is 'wa' the panel
+ * shows an optional phone input plus a share button. The button creates
+ * the invitation through the same P2-3 API (payload carries the channel
+ * intent only), composes the four-field text client-side, and opens
+ * wa.me in a new tab. The typed phone lives in local component state
+ * only: it is never sent to the server, never persisted, and it dies
+ * with the panel when the owner closes it (the parent unmounts us).
  */
 export const InvitationsPanel: React.FC<{ treeId: string; treeName: string; onClose: () => void }> = ({
   treeId,
@@ -31,6 +41,7 @@ export const InvitationsPanel: React.FC<{ treeId: string; treeName: string; onCl
 }) => {
   const { t, i18n } = useTranslation();
   const invitationsApi = getInvitationAdminApi();
+  const user = useAuthStore((state) => state.user);
 
   const [invitations, setInvitations] = useState<InvitationRecord[]>([]);
   const [members, setMembers] = useState<TreeMembershipRecord[]>([]);
@@ -46,6 +57,12 @@ export const InvitationsPanel: React.FC<{ treeId: string; treeName: string; onCl
   const [channel, setChannel] = useState<'manual' | 'wa' | 'email'>('manual');
   const [maxUses, setMaxUses] = useState('20');
   const [isCreating, setIsCreating] = useState(false);
+
+  // WhatsApp share state. Local only: the phone number must never reach the
+  // server, the URL bar outside wa.me, or any store. Unmounting the panel on
+  // close throws this state away, which is the documented reset (P2-4).
+  const [waPhone, setWaPhone] = useState('');
+  const [isSharing, setIsSharing] = useState(false);
 
   const load = useCallback(async () => {
     if (!invitationsApi) return;
@@ -156,6 +173,59 @@ export const InvitationsPanel: React.FC<{ treeId: string; treeName: string; onCl
       setCopied(true);
     } catch {
       setCopied(false);
+    }
+  };
+
+  // WhatsApp share (P2-4 AC-3): create the invitation, compose the share
+  // text, open wa.me. The phone is validated first so a typo cannot burn
+  // an invitation that could then never be shared. The phone itself never
+  // leaves this component; the API payload holds the channel only.
+  const handleWhatsAppShare = async () => {
+    if (!invitationsApi) return;
+    setActionError(null);
+    setCreated(null);
+    setCopied(false);
+
+    const trimmedPhone = waPhone.trim();
+    if (trimmedPhone !== '') {
+      try {
+        normalizeWhatsAppPhone(trimmedPhone);
+      } catch {
+        setActionError(t('invitePanel.waPhoneInvalid'));
+        return;
+      }
+    }
+
+    const inviterName = user?.name?.trim() ?? '';
+    if (inviterName === '') {
+      setActionError(t('invitePanel.createFailed'));
+      return;
+    }
+
+    setIsSharing(true);
+    try {
+      const input =
+        inviteType === 'family'
+          ? { type: inviteType, grantedRole, channel: 'wa' as const, maxUses: Number(maxUses) || undefined }
+          : { type: inviteType, grantedRole: 'viewer' as const, channel: 'wa' as const };
+      // P2-3 API as-is: the URL comes from the server response, never rebuilt here.
+      const record = await invitationsApi.createInvitation(treeId, input);
+      setCreated(record);
+      setInvitations(await invitationsApi.listInvitations(treeId));
+
+      const shareText = buildInvitationShareText({
+        inviterName,
+        treeName,
+        inviteUrl: record.url,
+        message: t('invitePanel.waTemplate', { inviterName, treeName }),
+      });
+      // Empty phone falls back to wa.me's contact-picker form inside the
+      // builder, so the owner picks the recipient in their own WhatsApp.
+      window.open(buildWhatsAppUrl(trimmedPhone, shareText), '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : t('invitePanel.createFailed'));
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -297,6 +367,36 @@ export const InvitationsPanel: React.FC<{ treeId: string; treeName: string; onCl
               <Link2 className="h-4 w-4" />
               <span>{isCreating ? t('invitePanel.creating') : t('invitePanel.createAction')}</span>
             </button>
+
+            {/* WhatsApp share block (P2-4 AC-3): optional phone, never stored. */}
+            {channel === 'wa' && (
+              <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-3" data-testid="wa-share-block">
+                <label className="text-xs font-medium text-gray-700">
+                  {t('invitePanel.waPhoneLabel')}
+                  <input
+                    type="text"
+                    inputMode="tel"
+                    value={waPhone}
+                    onChange={(e) => setWaPhone(e.target.value)}
+                    placeholder={t('invitePanel.waPhonePlaceholder')}
+                    autoComplete="off"
+                    data-testid="wa-phone-input"
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                  />
+                </label>
+                <p className="mt-1 text-xs text-gray-500">{t('invitePanel.waPhoneNote')}</p>
+                <button
+                  type="button"
+                  onClick={handleWhatsAppShare}
+                  disabled={isSharing || isCreating}
+                  data-testid="wa-share-button"
+                  className="mt-2 flex items-center space-x-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                >
+                  <Send className="h-4 w-4" />
+                  <span>{isSharing ? t('invitePanel.creating') : t('invitePanel.waShareAction')}</span>
+                </button>
+              </div>
+            )}
 
             {/* The full link appears exactly once, here. */}
             {created && (
