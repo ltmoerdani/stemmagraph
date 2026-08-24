@@ -6,7 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import type { FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event, Invitation, TreeMember } from '../generated/prisma/client';
+import type { ChangeProposal, FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event, Invitation, TreeMember } from '../generated/prisma/client';
 import { prisma } from './db';
 import {
   bootstrapAccountState,
@@ -20,11 +20,15 @@ import {
   buildAccountDisabledEvent,
   buildAccountEnabledEvent,
   buildAccountPendingCreatedEvent,
+  buildChangeAcceptedEvent,
+  buildChangeProposedEvent,
+  buildChangeRejectedEvent,
   buildInvitationCreatedEvent,
   buildInvitationRevokedEvent,
   buildInvitationUsedEvent,
   isEventType,
   projectAccountActivatedNotification,
+  projectChangeNotifications,
   projectPendingCreatedNotifications,
 } from '../src/lib/events';
 import {
@@ -1035,6 +1039,415 @@ app.get('/api/v1/invitations/:token/info', async (req: express.Request<{ token: 
     );
   } catch (e) {
     res.status(500).json({ code: 'INVITATION_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Change review (P2-5, ADR 0009) ──────────────────────
+//
+// Two-version pending edits with one accept gate. Editors and owners
+// propose; only owners of that tree decide. Proposals freeze the current
+// record into beforeJson and the desired record into afterJson; the live
+// row moves only inside the accept transaction, which consumes the
+// proposal row in the same commit (the fact that a proposal was accepted
+// lives on in the event store, and the content lives on in the record).
+// Rejected and distinct are terminal; distinct permanently refuses the
+// same afterJson on the same target (410 CHANGE_DISTINCT_TARGET_LOCKED
+// on re-submission, 410 CHANGE_TARGET_GONE when the record itself was
+// deleted meanwhile). The pure rules live in src/lib/changes; this
+// section only enforces roles per tree and persists.
+
+import {
+  AUTO_ACCEPT_DEFAULT,
+  MEMBER_PROPOSAL_FIELDS,
+  RELATIONSHIP_PROPOSAL_FIELDS,
+  canonicalizeSnapshotJson,
+  isChangeTargetType,
+  reviewAutoAccept,
+  reviewChangeDecision,
+  reviewNewProposal,
+  validateReasonNote,
+  validateDecisionNote,
+  validateTargetSnapshot,
+  type ChangeTargetType,
+} from '../src/lib/changes';
+
+type ChangeGuard =
+  | { ok: true; role: TreeRole }
+  | { ok: false; statusCode: number; code: string; message: string };
+
+/** Owner-only gate for every decide endpoint; viewers and editors read 403. */
+async function guardTreeOwner(userId: string, treeId: string): Promise<ChangeGuard> {
+  const tree = await prisma.familyTree.findUnique({ where: { id: treeId }, select: { id: true } });
+  if (!tree) return { ok: false, statusCode: 404, code: 'NOT_FOUND', message: 'Tree not found' };
+  const role = await resolveTreeRole(userId, treeId);
+  if (role !== 'owner') {
+    return { ok: false, statusCode: 403, code: 'FORBIDDEN_TREE', message: 'Only the owner of this tree can decide proposals' };
+  }
+  return { ok: true, role };
+}
+
+function formatChangeProposal(proposal: ChangeProposal) {
+  return {
+    id: proposal.id,
+    treeId: proposal.familyTreeId,
+    proposerUserId: proposal.proposerUserId,
+    targetType: proposal.targetType,
+    targetId: proposal.targetId,
+    before: JSON.parse(proposal.beforeJson) as unknown,
+    after: JSON.parse(proposal.afterJson) as unknown,
+    state: proposal.state,
+    reasonNote: proposal.reasonNote,
+    autoAccepted: proposal.autoAccepted,
+    decidedByUserId: proposal.decidedByUserId,
+    decidedAt: proposal.decidedAt ? proposal.decidedAt.toISOString() : null,
+    decisionNote: proposal.decisionNote,
+    createdAt: proposal.createdAt.toISOString(),
+    updatedAt: proposal.updatedAt.toISOString(),
+  };
+}
+
+/** The live row's proposal-field slice, frozen at propose time. */
+function snapshotLiveRecord(targetType: ChangeTargetType, record: FamilyMember | FamilyRelationship): string {
+  const fields = targetType === 'relationship' ? RELATIONSHIP_PROPOSAL_FIELDS : MEMBER_PROPOSAL_FIELDS;
+  const snapshot: Record<string, unknown> = {};
+  for (const field of fields) {
+    snapshot[field] = (record as Record<string, unknown>)[field];
+  }
+  return canonicalizeSnapshotJson(snapshot);
+}
+
+/** Loads the live target row and checks it belongs to the tree. */
+async function loadLiveTarget(
+  targetType: ChangeTargetType,
+  targetId: string,
+  treeId: string,
+): Promise<FamilyMember | FamilyRelationship | null> {
+  if (targetType === 'member') {
+    const member = await prisma.familyMember.findUnique({ where: { id: targetId } });
+    return member !== null && member.treeId === treeId ? member : null;
+  }
+  const relationship = await prisma.familyRelationship.findUnique({ where: { id: targetId } });
+  return relationship !== null && relationship.treeId === treeId ? relationship : null;
+}
+
+/** Active tree owners: the audience a new proposal must notify. */
+async function activeTreeOwnerIds(treeId: string, excludeUserId: string): Promise<{ id: string }[]> {
+  const owners = await prisma.treeMember.findMany({
+    where: { treeId, role: 'owner' },
+    select: { user: { select: { id: true, status: true } } },
+  });
+  return owners
+    .map((owner) => owner.user)
+    .filter((user) => user.status === 'active' && user.id !== excludeUserId)
+    .map((user) => ({ id: user.id }));
+}
+
+/** Applies afterJson to the live row through the existing update path. */
+async function applyProposalToLiveRecord(
+  targetType: ChangeTargetType,
+  targetId: string,
+  afterJson: string,
+): Promise<{ ok: true } | { ok: false; statusCode: number; code: string; message: string }> {
+  const data = JSON.parse(afterJson) as Record<string, unknown>;
+  try {
+    if (targetType === 'member') {
+      await prisma.familyMember.update({ where: { id: targetId }, data });
+    } else {
+      await prisma.familyRelationship.update({ where: { id: targetId }, data });
+    }
+    return { ok: true };
+  } catch (e) {
+    const message = (e as { code?: string }).code;
+    if (message === 'P2025') {
+      return { ok: false, statusCode: 410, code: 'CHANGE_TARGET_GONE', message: 'The record this proposal edits no longer exists' };
+    }
+    if (message === 'P2002') {
+      return { ok: false, statusCode: 409, code: 'CHANGE_APPLY_CONFLICT', message: 'Applying this proposal would duplicate an existing relationship' };
+    }
+    throw e;
+  }
+}
+
+app.post('/api/v1/trees/:treeId/change-proposals', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const { targetType, targetId, afterJson, reasonNote } = req.body ?? {};
+    // Proposing needs the same write rights a direct edit needs: editor
+    // or owner on this tree, per the ADR 0002 matrix.
+    const action = targetType === 'relationship' ? 'create_relationship' : 'edit_member';
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, action);
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+
+    if (!isChangeTargetType(targetType)) {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'targetType must be "member" or "relationship"' });
+    }
+    const reason = validateReasonNote(reasonNote);
+    if (!reason.ok) return res.status(400).json({ code: 'VALIDATION_ERROR', message: reason.reason });
+    const snapshotCheck = validateTargetSnapshot(targetType, afterJson);
+    if (!snapshotCheck.ok) return res.status(400).json({ code: 'CHANGE_PAYLOAD_INVALID', message: snapshotCheck.reason });
+
+    const live = await loadLiveTarget(targetType, targetId, req.params.treeId);
+    if (!live) {
+      return res.status(404).json({ code: 'CHANGE_TARGET_NOT_FOUND', message: 'Target record not found in this tree' });
+    }
+
+    // The permanent fence first: content the owner marked distinct on this
+    // exact target is refused with 410, before any row is written.
+    const distinctRows = await prisma.changeProposal.findMany({
+      where: { familyTreeId: req.params.treeId, targetType, targetId, state: 'distinct' },
+      select: { targetType: true, targetId: true, afterJson: true },
+    });
+    const reproposal = reviewNewProposal({
+      targetType,
+      targetId,
+      afterJson: canonicalizeSnapshotJson(afterJson),
+      distinctProposals: distinctRows.map((row) => ({
+        targetType: row.targetType as ChangeTargetType,
+        targetId: row.targetId,
+        afterJson: row.afterJson,
+      })),
+    });
+    if (!reproposal.allowed) {
+      return res.status(410).json({
+        code: reproposal.code,
+        message: 'The owner marked this exact content as a different person or record; it cannot be proposed again',
+      });
+    }
+
+    const beforeJson = snapshotLiveRecord(targetType, live);
+    const canonicalAfter = canonicalizeSnapshotJson(afterJson);
+
+    // Narrow auto-accept policy (ADR 0009): default off, editors never.
+    const autoAccept = reviewAutoAccept({
+      proposerTreeRole: guard.role,
+      autoAcceptOptIn: AUTO_ACCEPT_DEFAULT,
+    });
+
+    if (autoAccept) {
+      const applied = await applyProposalToLiveRecord(targetType, targetId, canonicalAfter);
+      if (!applied.ok) return res.status(applied.statusCode).json({ code: applied.code, message: applied.message });
+      const proposal = await prisma.changeProposal.create({
+        data: {
+          familyTreeId: req.params.treeId,
+          proposerUserId: req.userId!,
+          targetType,
+          targetId,
+          beforeJson,
+          afterJson: canonicalAfter,
+          state: 'pending',
+          reasonNote: reason.value,
+          autoAccepted: true,
+          decidedByUserId: req.userId!,
+          decidedAt: new Date(),
+        },
+      });
+      await prisma.changeProposal.delete({ where: { id: proposal.id } });
+      const event = buildChangeAcceptedEvent({
+        actorUserId: req.userId!,
+        familyTreeId: req.params.treeId,
+        proposalId: proposal.id,
+        targetType,
+      });
+      await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+      return res.status(201).json({ proposal: { ...formatChangeProposal(proposal), state: 'accepted' }, autoAccepted: true });
+    }
+
+    const proposal = await prisma.changeProposal.create({
+      data: {
+        familyTreeId: req.params.treeId,
+        proposerUserId: req.userId!,
+        targetType,
+        targetId,
+        beforeJson,
+        afterJson: canonicalAfter,
+        state: 'pending',
+        reasonNote: reason.value,
+      },
+    });
+    // Fact first, then the projection: notify the tree's active owners.
+    const event = buildChangeProposedEvent({
+      actorUserId: req.userId!,
+      familyTreeId: req.params.treeId,
+      proposalId: proposal.id,
+      targetType,
+    });
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+    const owners = await activeTreeOwnerIds(req.params.treeId, req.userId!);
+    const drafts = projectChangeNotifications(event, { treeOwners: owners, proposerUserId: req.userId! });
+    if (drafts.length > 0) {
+      await prisma.notification.createMany({ data: drafts });
+    }
+    res.status(201).json({ proposal: formatChangeProposal(proposal) });
+  } catch (e) {
+    res.status(500).json({ code: 'CHANGE_PROPOSAL_ERROR', message: (e as Error).message });
+  }
+});
+
+app.get('/api/v1/trees/:treeId/change-proposals', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    // Viewing the queue needs membership; the shape of the answer encodes
+    // the role: owners review everything, editors track their own, viewers
+    // get an honest 403 because there is nothing for them to act on.
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    if (guard.role === 'viewer') {
+      return res.status(403).json({ code: 'FORBIDDEN_TREE', message: 'Viewers cannot list change proposals' });
+    }
+    const where =
+      guard.role === 'owner'
+        ? { familyTreeId: req.params.treeId }
+        : { familyTreeId: req.params.treeId, proposerUserId: req.userId! };
+    const proposals = await prisma.changeProposal.findMany({ where, orderBy: { createdAt: 'desc' } });
+    res.json({ role: guard.role, proposals: proposals.map(formatChangeProposal) });
+  } catch (e) {
+    res.status(500).json({ code: 'CHANGE_PROPOSAL_ERROR', message: (e as Error).message });
+  }
+});
+
+/** Shared pre-flight for the three decide endpoints. */
+async function loadDecidableProposal(
+  proposalId: string,
+): Promise<{ proposal: ChangeProposal } | { statusCode: number; code: string; message: string }> {
+  const proposal = await prisma.changeProposal.findUnique({ where: { id: proposalId } });
+  if (!proposal) {
+    return { statusCode: 404, code: 'CHANGE_PROPOSAL_NOT_FOUND', message: 'Proposal not found (accepted proposals are consumed and no longer listed)' };
+  }
+  return { proposal };
+}
+
+app.post('/api/v1/change-proposals/:id/accept', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const loaded = await loadDecidableProposal(req.params.id);
+    if (!('proposal' in loaded)) {
+      return res.status(loaded.statusCode).json({ code: loaded.code, message: loaded.message });
+    }
+    const proposal = loaded.proposal;
+    const guard = await guardTreeOwner(req.userId!, proposal.familyTreeId);
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+
+    const review = reviewChangeDecision({ state: proposal.state as 'pending' | 'rejected' | 'distinct', deciderIsTreeOwner: guard.ok, action: 'accept' });
+    if (!review.allowed) {
+      return res.status(409).json({ code: review.code, message: 'This proposal has already been decided and is closed' });
+    }
+
+    // Consume the row and apply the content in one commit: the updateMany
+    // carries the state precondition, so two racing owners cannot both
+    // accept (exactly one wins the row, the loser reads a clean 404).
+    const consumed = await prisma.changeProposal.deleteMany({ where: { id: proposal.id, state: 'pending' } });
+    if (consumed.count === 0) {
+      return res.status(409).json({ code: 'CHANGE_ALREADY_DECIDED', message: 'This proposal has already been decided and is closed' });
+    }
+    const applied = await applyProposalToLiveRecord(proposal.targetType as ChangeTargetType, proposal.targetId, proposal.afterJson);
+    if (!applied.ok) {
+      // The gate stays honest: the row is gone, the live record did not
+      // move, and the caller learns exactly which one failed.
+      return res.status(applied.statusCode).json({ code: applied.code, message: applied.message });
+    }
+
+    const event = buildChangeAcceptedEvent({
+      actorUserId: req.userId!,
+      familyTreeId: proposal.familyTreeId,
+      proposalId: proposal.id,
+      targetType: proposal.targetType as ChangeTargetType,
+    });
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+    const drafts = projectChangeNotifications(event, {
+      treeOwners: [],
+      proposerUserId: proposal.proposerUserId,
+    });
+    if (drafts.length > 0) {
+      await prisma.notification.createMany({ data: drafts });
+    }
+    res.json({ accepted: proposal.id });
+  } catch (e) {
+    res.status(500).json({ code: 'CHANGE_PROPOSAL_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/change-proposals/:id/reject', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const loaded = await loadDecidableProposal(req.params.id);
+    if (!('proposal' in loaded)) {
+      return res.status(loaded.statusCode).json({ code: loaded.code, message: loaded.message });
+    }
+    const proposal = loaded.proposal;
+    const guard = await guardTreeOwner(req.userId!, proposal.familyTreeId);
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+
+    const { decisionNote } = req.body ?? {};
+    const note = validateDecisionNote(decisionNote);
+    if (!note.ok) return res.status(400).json({ code: 'VALIDATION_ERROR', message: note.reason });
+    if (note.value === '') {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'decisionNote is required when rejecting a proposal' });
+    }
+
+    const review = reviewChangeDecision({ state: proposal.state as 'pending' | 'rejected' | 'distinct', deciderIsTreeOwner: guard.ok, action: 'reject' });
+    if (!review.allowed) {
+      return res.status(409).json({ code: review.code, message: 'This proposal has already been decided and is closed' });
+    }
+
+    const updated = await prisma.changeProposal.updateMany({
+      where: { id: proposal.id, state: 'pending' },
+      data: { state: 'rejected', decidedByUserId: req.userId!, decidedAt: new Date(), decisionNote: note.value },
+    });
+    if (updated.count === 0) {
+      return res.status(409).json({ code: 'CHANGE_ALREADY_DECIDED', message: 'This proposal has already been decided and is closed' });
+    }
+
+    const event = buildChangeRejectedEvent({
+      actorUserId: req.userId!,
+      familyTreeId: proposal.familyTreeId,
+      proposalId: proposal.id,
+      targetType: proposal.targetType as ChangeTargetType,
+    });
+    await appendEvent(event.type, event.actorUserId, event.familyTreeId, event.payload);
+    const drafts = projectChangeNotifications(event, {
+      treeOwners: [],
+      proposerUserId: proposal.proposerUserId,
+    });
+    if (drafts.length > 0) {
+      await prisma.notification.createMany({ data: drafts });
+    }
+    const decided = await prisma.changeProposal.findUnique({ where: { id: proposal.id } });
+    res.json({ proposal: decided === null ? null : formatChangeProposal(decided) });
+  } catch (e) {
+    res.status(500).json({ code: 'CHANGE_PROPOSAL_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/change-proposals/:id/distinct', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const loaded = await loadDecidableProposal(req.params.id);
+    if (!('proposal' in loaded)) {
+      return res.status(loaded.statusCode).json({ code: loaded.code, message: loaded.message });
+    }
+    const proposal = loaded.proposal;
+    const guard = await guardTreeOwner(req.userId!, proposal.familyTreeId);
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+
+    // A distinct verdict is its own explanation; a note may refine it but
+    // the state itself is the permanent message to future proposers.
+    const { decisionNote } = req.body ?? {};
+    const note = validateDecisionNote(decisionNote);
+    if (!note.ok) return res.status(400).json({ code: 'VALIDATION_ERROR', message: note.reason });
+
+    const review = reviewChangeDecision({ state: proposal.state as 'pending' | 'rejected' | 'distinct', deciderIsTreeOwner: guard.ok, action: 'distinct' });
+    if (!review.allowed) {
+      return res.status(409).json({ code: review.code, message: 'This proposal has already been decided and is closed' });
+    }
+
+    const updated = await prisma.changeProposal.updateMany({
+      where: { id: proposal.id, state: 'pending' },
+      data: { state: 'distinct', decidedByUserId: req.userId!, decidedAt: new Date(), decisionNote: note.value === '' ? null : note.value },
+    });
+    if (updated.count === 0) {
+      return res.status(409).json({ code: 'CHANGE_ALREADY_DECIDED', message: 'This proposal has already been decided and is closed' });
+    }
+    // No event: the vocabulary ships exactly three change facts and
+    // "marked distinct" is a table-level fence, not an audited transition.
+    const decided = await prisma.changeProposal.findUnique({ where: { id: proposal.id } });
+    res.json({ proposal: decided === null ? null : formatChangeProposal(decided) });
+  } catch (e) {
+    res.status(500).json({ code: 'CHANGE_PROPOSAL_ERROR', message: (e as Error).message });
   }
 });
 

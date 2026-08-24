@@ -101,9 +101,10 @@ describe('validateTargetSnapshot', () => {
   });
 
   it('refuses privacyStatus: a proposal never touches consent', () => {
-    const refusal = validateTargetSnapshot('member', { privacyStatus: 'shared' });
-    expect(refusal.ok).toBe(false);
-    expect(refusal.reason).toContain('privacyStatus');
+    expect(validateTargetSnapshot('member', { privacyStatus: 'shared' })).toEqual({
+      ok: false,
+      reason: 'field "privacyStatus" is not part of the member proposal contract',
+    });
   });
 
   it('refuses technical keys (id, treeId) and non-object payloads', () => {
