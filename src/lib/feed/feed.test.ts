@@ -192,11 +192,11 @@ describe('projectEventToFeedItem (invitation facts)', () => {
 describe('projectEventToFeedItem (defensive)', () => {
   it('throws on an event type outside the v1 vocabulary', () => {
     const envelope = {
-      type: 'GEDCOM_IMPORTED' as EventType,
+      type: 'GEDCOM_IMPORTED',
       actorUserId: null,
       familyTreeId: null,
       payload: {},
-    };
+    } as unknown as EventEnvelope;
     expect(() => projectEventToFeedItem(source('evt_l', envelope))).toThrow(/unknown event type/);
   });
 });

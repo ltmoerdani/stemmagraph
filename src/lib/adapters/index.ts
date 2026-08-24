@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi, InvitationAdminApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -97,6 +97,18 @@ export function getInvitationAdminApi(): InvitationAdminApi | null {
   return adapter instanceof RestAdapter ? adapter : null;
 }
 
+// ─── Activity feed (P2-6) ─────────────────────────────────
+
+/**
+ * Returns the activity feed surface of the active adapter, or null when
+ * the adapter has no server backend (mock, supabase): the feed reads the
+ * server event store. The UI shows an honest unavailable state for null.
+ */
+export function getActivityFeedApi(): ActivityFeedApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 /**
  * Override adapter with a custom implementation (useful for testing).
  */
@@ -134,6 +146,9 @@ export type {
   AccountStatusAction,
   AppNotification,
   NotificationsPage,
+  ActivityFeedApi,
+  ActivityFeedPage,
+  ActivityFeedQueryOptions,
 } from './types';
 
 export {
