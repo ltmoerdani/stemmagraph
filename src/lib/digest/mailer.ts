@@ -15,7 +15,6 @@
 // The mailer never writes the database; advancing digestLastSentAt is
 // the caller's job and happens only after a successful send.
 
-/// <reference path="./nodemailer.d.ts" />
 import nodemailer from 'nodemailer';
 
 export interface DigestEmail {

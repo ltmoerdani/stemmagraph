@@ -323,6 +323,30 @@ export interface GrowthMetricsApi {
   fetchGrowthMetrics(options?: GrowthMetricsQueryOptions): Promise<GrowthMetricsSnapshot>;
 }
 
+// ─── Weekly digest (P2-7, ADR 0008) ───────────────────────
+// Server-backed user settings surface. Only the REST adapter implements
+// it: the digest reads the server event store, which mock and supabase
+// adapters do not have. getDigestApi returns null for them so the UI can
+// hide the digest panel instead of crashing or faking a toggle.
+
+/** Preview of the digest the caller would receive for the last complete ISO week. */
+export interface DigestPreview {
+  window: { startAt: string; endAt: string };
+  /** Current consent switch; the preview renders even when false. */
+  optIn: boolean;
+  /** True when nothing happened on the caller's trees last week. */
+  empty: boolean;
+  subject: string | null;
+  body: string | null;
+}
+
+export interface DigestApi {
+  /** GET /digest/weekly: look before you switch on. */
+  fetchWeeklyDigestPreview(): Promise<DigestPreview>;
+  /** PUT /digest/preferences: flips only the caller's own optIn column. */
+  updateDigestPreferences(optIn: boolean): Promise<{ optIn: boolean }>;
+}
+
 // ─── Error Types ──────────────────────────────────────────
 
 export class AdapterError extends Error {

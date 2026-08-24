@@ -49,6 +49,8 @@ import {
   GrowthMetricsApi,
   GrowthMetricsSnapshot,
   GrowthMetricsQueryOptions,
+  DigestApi,
+  DigestPreview,
   AdapterError,
   AuthError,
 } from './types';
@@ -67,7 +69,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -399,5 +401,18 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
       'GET',
       `/admin/metrics/growth${query === '' ? '' : `?${query}`}`,
     );
+  }
+
+  // ── Weekly digest (P2-7, ADR 0008) ─────────────────────
+  // Pure routing: the server renders the preview from stored events and
+  // guards the preferences column per caller. The adapter sends one
+  // boolean and gets one boolean back.
+
+  async fetchWeeklyDigestPreview(): Promise<DigestPreview> {
+    return this.request<DigestPreview>('GET', '/digest/weekly');
+  }
+
+  async updateDigestPreferences(optIn: boolean): Promise<{ optIn: boolean }> {
+    return this.request<{ optIn: boolean }>('PUT', '/digest/preferences', { optIn });
   }
 }
