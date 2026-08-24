@@ -336,5 +336,20 @@
     "unavailable": "Metrik pertumbuhan butuh backend server. Jalankan aplikasi dengan adapter REST untuk melihatnya.",
     "loadFailed": "Memuat metrik pertumbuhan gagal.",
     "retry": "Coba lagi"
+  },
+  "digest": {
+    "title": "Ringkasan email mingguan",
+    "subtitle": "Satu email per minggu berisi kejadian di pohon Anda. Nonaktif sampai Anda menyalakannya.",
+    "optInLabel": "Kirimkan saya ringkasan mingguan",
+    "optInHint": "Matikan kapan saja; email berikutnya langsung berhenti.",
+    "saving": "Menyimpan...",
+    "saveFailed": "Menyimpan preferensi gagal. Tidak ada yang berubah di server.",
+    "loading": "Memuat pratinjau ringkasan...",
+    "loadFailed": "Memuat pratinjau ringkasan gagal.",
+    "retry": "Coba lagi",
+    "unavailable": "Ringkasan mingguan butuh backend server. Jalankan aplikasi dengan adapter REST untuk memakainya.",
+    "previewTitle": "Pratinjau minggu lalu",
+    "windowLabel": "Jendela: {{start}} sampai {{end}}",
+    "previewEmpty": "Tidak ada kejadian di pohon Anda minggu lalu, jadi tidak ada ringkasan untuk ditampilkan."
   }
 }
