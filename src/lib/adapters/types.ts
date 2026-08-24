@@ -50,6 +50,8 @@ export interface FamilyTreeRecord {
   lastUpdated: string;
   createdAt: string;
   thumbnail?: string;
+  /** The caller's role on this tree (P2-5): null on adapters without one. */
+  role?: TreeRoleValue | null;
 }
 
 export interface CreateTreeInput {
@@ -345,6 +347,63 @@ export interface DigestApi {
   fetchWeeklyDigestPreview(): Promise<DigestPreview>;
   /** PUT /digest/preferences: flips only the caller's own optIn column. */
   updateDigestPreferences(optIn: boolean): Promise<{ optIn: boolean }>;
+}
+
+// ─── Change review (P2-5, ADR 0009) ──────────────────────
+
+export type ChangeTargetTypeValue = 'member' | 'relationship';
+export type ChangeProposalState = 'pending' | 'rejected' | 'distinct';
+
+/**
+ * One proposal as the server formats it: before/after are the frozen
+ * proposal-field slices (never ids-only and never the full record), and
+ * an accepted proposal is consumed, so it stops appearing here.
+ */
+export interface ChangeProposalRecord {
+  id: string;
+  treeId: string;
+  proposerUserId: string;
+  targetType: ChangeTargetTypeValue;
+  targetId: string;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  state: ChangeProposalState;
+  reasonNote: string;
+  autoAccepted: boolean;
+  decidedByUserId: string | null;
+  decidedAt: string | null;
+  decisionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateChangeProposalInput {
+  targetType: ChangeTargetTypeValue;
+  targetId: string;
+  /** Proposal-field slice only; the server re-validates the contract. */
+  afterJson: Record<string, unknown>;
+  /** 3..500 chars, required so the owner never reviews a mute edit. */
+  reasonNote: string;
+}
+
+/** The caller's role comes back with the list: owner sees all, editor own. */
+export interface ChangeProposalPage {
+  role: TreeRoleValue;
+  proposals: ChangeProposalRecord[];
+}
+
+/**
+ * Server-backed change-review surface. Only the REST adapter implements
+ * it: the queue lives in the ChangeProposal table behind the API. The UI
+ * hides every change-review surface for null (mock, supabase) instead of
+ * crashing, and viewers are refused by the server with 403 anyway.
+ */
+export interface ChangeReviewApi {
+  listChangeProposals(treeId: string): Promise<ChangeProposalPage>;
+  createChangeProposal(treeId: string, input: CreateChangeProposalInput): Promise<ChangeProposalRecord>;
+  acceptChangeProposal(proposalId: string): Promise<{ accepted: string }>;
+  rejectChangeProposal(proposalId: string, decisionNote: string): Promise<ChangeProposalRecord>;
+  distinctChangeProposal(proposalId: string, decisionNote?: string): Promise<ChangeProposalRecord>;
 }
 
 // ─── Error Types ──────────────────────────────────────────

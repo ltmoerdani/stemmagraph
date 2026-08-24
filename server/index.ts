@@ -1461,21 +1461,24 @@ app.post('/api/v1/change-proposals/:id/distinct', requireAuth, async (req: Authe
 app.get('/api/v1/trees', requireAuth, async (_req: AuthenticatedRequest, res) => {
   try {
     // An active installation owner sees every tree (ADR 0002); everyone
-    // else sees exactly the trees they hold a TreeMember row on.
+    // else sees exactly the trees they hold a TreeMember row on. Either
+    // way each row carries the caller's role on that tree (P2-5).
     const user = await prisma.user.findUnique({ where: { id: _req.userId! }, select: { role: true } });
-    if (user !== null && user.role === 'owner') {
-      const trees = await prisma.familyTree.findMany({ orderBy: { createdAt: 'desc' } });
-      return res.json(trees.map((t) => formatTree(t)));
-    }
     const memberships = await prisma.treeMember.findMany({
       where: { userId: _req.userId! },
-      select: { treeId: true },
+      select: { treeId: true, role: true },
     });
+    const roleByTree = new Map(memberships.map((m) => [m.treeId, m.role as TreeRole]));
+    const fallback: TreeRole | null = user !== null && user.role === 'owner' ? 'owner' : null;
+    if (user !== null && user.role === 'owner') {
+      const trees = await prisma.familyTree.findMany({ orderBy: { createdAt: 'desc' } });
+      return res.json(trees.map((t) => formatTree(t, roleByTree.get(t.id) ?? fallback)));
+    }
     const trees = await prisma.familyTree.findMany({
       where: { id: { in: memberships.map((m) => m.treeId) } },
       orderBy: { createdAt: 'desc' },
     });
-    res.json(trees.map((t) => formatTree(t)));
+    res.json(trees.map((t) => formatTree(t, roleByTree.get(t.id) ?? fallback)));
   } catch (e) {
     res.status(500).json({ code: 'TREE_ERROR', message: (e as Error).message });
   }
@@ -1487,7 +1490,7 @@ app.get('/api/v1/trees/:id', requireAuth, async (req: AuthenticatedRequest<{ id:
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
     const t = await prisma.familyTree.findUnique({ where: { id: req.params.id } });
     if (!t) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
-    res.json(formatTree(t));
+    res.json(formatTree(t, guard.role));
   } catch (e) {
     res.status(500).json({ code: 'TREE_ERROR', message: (e as Error).message });
   }
@@ -1506,7 +1509,7 @@ app.post('/api/v1/trees', requireAuth, async (req: AuthenticatedRequest, res) =>
       await tx.treeMember.create({ data: { treeId: tree.id, userId: req.userId!, role: 'owner' } });
       return tree;
     });
-    res.status(201).json(formatTree(t));
+    res.status(201).json(formatTree(t, 'owner'));
   } catch (e) {
     res.status(500).json({ code: 'TREE_ERROR', message: (e as Error).message });
   }
@@ -1521,7 +1524,9 @@ app.put('/api/v1/trees/:id', requireAuth, async (req: AuthenticatedRequest<{ id:
       where: { id: req.params.id },
       data: { name, description },
     });
-    res.json(formatTree(t));
+    // update_tree is owner-only in the matrix, so the caller's role here
+    // is always owner.
+    res.json(formatTree(t, 'owner'));
   } catch (e) {
     res.status(500).json({ code: 'TREE_ERROR', message: (e as Error).message });
   }
@@ -1764,7 +1769,7 @@ app.delete('/api/v1/relationships/:id', requireAuth, async (req: AuthenticatedRe
 
 // ─── Formatters ──────────────────────────────────────────
 
-function formatTree(t: FamilyTree) {
+function formatTree(t: FamilyTree, viewerRole?: TreeRole | null) {
   return {
     id: t.id,
     name: t.name,
@@ -1774,6 +1779,9 @@ function formatTree(t: FamilyTree) {
     thumbnail: t.thumbnail,
     lastUpdated: t.updatedAt?.toISOString?.() ?? t.updatedAt,
     createdAt: t.createdAt?.toISOString?.() ?? t.createdAt,
+    // The caller's role on this tree (P2-5): the UI uses it to offer the
+    // change-review surfaces to owners and editors and none to viewers.
+    role: viewerRole ?? null,
   };
 }
 
