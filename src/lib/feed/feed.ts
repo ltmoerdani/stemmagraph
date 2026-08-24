@@ -25,6 +25,7 @@ import {
   EVENT_TYPES,
   isEventType,
   type EventEnvelope,
+  type EventPayload,
   type EventType,
   type InvitationCreatedPayload,
   type InvitationRevokedPayload,
@@ -59,6 +60,27 @@ export const FEED_TYPES_BY_KIND: Readonly<Record<FeedKind, readonly EventType[]>
   account: ACCOUNT_FEED_TYPES,
   invitation: INVITATION_FEED_TYPES,
 };
+
+// ─── Rendered-event fence (P2-5, ADR 0009) ───────────────
+//
+// The event vocabulary grew three change-review types, but the feed keeps
+// rendering exactly the seven account and invitation facts: whether a
+// CHANGE_* fact deserves a feed item is a separate product decision, and
+// until it is made the projector must refuse them the same way it refuses
+// any unlisted type. Everything downstream (projection, filters, i18n
+// keys) consults this list instead of the raw vocabulary.
+
+/** Event types the feed renders; CHANGE_* stays out pending its own decision. */
+export const FEED_RENDERED_EVENT_TYPES: readonly FeedRenderedEventType[] = [
+  ...ACCOUNT_FEED_TYPES,
+  ...INVITATION_FEED_TYPES,
+];
+export type FeedRenderedEventType = (typeof ACCOUNT_FEED_TYPES)[number] | (typeof INVITATION_FEED_TYPES)[number];
+
+/** True when the feed projects the type; false for CHANGE_* and anything unknown. */
+export function isFeedRenderedEventType(type: EventType): type is FeedRenderedEventType {
+  return (FEED_RENDERED_EVENT_TYPES as readonly string[]).includes(type);
+}
 
 /** Coarse group of an event type. Throws on values outside the v1 vocabulary. */
 export function feedKindOfEventType(type: EventType): FeedKind {
@@ -99,7 +121,7 @@ export interface FeedSourceEvent {
   readonly envelope: EventEnvelope;
 }
 
-const I18N_KEY_BY_TYPE: Readonly<Record<EventType, string>> = {
+const I18N_KEY_BY_TYPE: Readonly<Record<FeedRenderedEventType, string>> = {
   ACCOUNT_PENDING_CREATED: 'activityFeed.items.accountPendingCreated',
   ACCOUNT_ACTIVATED: 'activityFeed.items.accountActivated',
   ACCOUNT_DISABLED: 'activityFeed.items.accountDisabled',
@@ -122,7 +144,7 @@ function toIsoTimestamp(value: Date | string): string {
 // outcome. subjectUserId, reason, expiresAt, maxUses, grantedRole and any
 // key not named here are dropped on the floor.
 
-function buildFeedParams(type: EventType, payload: EventEnvelope['payload']): Readonly<Record<string, string>> {
+function buildFeedParams(type: FeedRenderedEventType, payload: EventPayload): Readonly<Record<string, string>> {
   switch (type) {
     case 'ACCOUNT_PENDING_CREATED':
     case 'ACCOUNT_ACTIVATED':
@@ -162,6 +184,16 @@ function buildFeedParams(type: EventType, payload: EventEnvelope['payload']): Re
 /** Projects one stored event into its display-shaped feed item. */
 export function projectEventToFeedItem(source: FeedSourceEvent): FeedItem {
   const { type, actorUserId, familyTreeId, payload } = source.envelope;
+  // The rendered-event fence: CHANGE_* facts are known to the store but
+  // deliberately unrendered here (ADR 0009); anything else unlisted is
+  // refused the same way it always was.
+  if (!isFeedRenderedEventType(type)) {
+    throw new Error(
+      isEventType(type)
+        ? `event type is not rendered in the feed: ${String(type)}`
+        : `unknown event type: ${String(type)}`,
+    );
+  }
   return {
     id: source.id,
     kind: feedKindOfEventType(type),
@@ -176,7 +208,10 @@ export function projectEventToFeedItem(source: FeedSourceEvent): FeedItem {
 
 /** Projects many stored events and sorts them newest first (id desc on ties). */
 export function projectFeedItems(sources: readonly FeedSourceEvent[]): FeedItem[] {
-  return sortFeedItemsNewestFirst(sources.map(projectEventToFeedItem));
+  // The rendered-event fence runs before projection: CHANGE_* rows (and
+  // any type outside the fence) are dropped here, never thrown on.
+  const rendered = sources.filter((source) => isFeedRenderedEventType(source.envelope.type));
+  return sortFeedItemsNewestFirst(rendered.map(projectEventToFeedItem));
 }
 
 /** Newest first, stable, id descending on identical timestamps. */

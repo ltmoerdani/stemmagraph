@@ -49,6 +49,7 @@ import { appendEvent } from './events';
 import {
   ACCOUNT_EVENT_TYPES,
   encodeFeedCursor,
+  isFeedRenderedEventType,
   parseActivityFeedQuery,
   parseStoredEventRow,
   projectEventToFeedItem,
@@ -648,7 +649,11 @@ app.get('/api/v1/activity-feed', requireAuth, async (req: AuthenticatedRequest, 
     const items: FeedItem[] = [];
     for (const row of page) {
       const source = parseStoredEventRow(row);
-      if (source !== null) items.push(projectEventToFeedItem(source));
+      // P2-5 fence: CHANGE_* rows share the tree scope but stay out of
+      // the feed until the deferred feed-item decision (ADR 0009).
+      if (source !== null && isFeedRenderedEventType(source.envelope.type)) {
+        items.push(projectEventToFeedItem(source));
+      }
     }
     const lastRow = page[page.length - 1];
     const nextCursor =

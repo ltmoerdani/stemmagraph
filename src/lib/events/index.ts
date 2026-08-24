@@ -6,13 +6,14 @@
 // the projections that derive P2-1 notifications from an emitted event. The
 // binding design record is docs/decisions/0003-event-store.md.
 
-// ─── Event vocabulary (v1 + P2-3) ────────────────────────
+// ─── Event vocabulary (v1 + P2-3 + P2-5) ─────────────────
 //
-// Seven event types ship after P2-3: the four account administration
-// facts from v1 plus the three invitation lifecycle facts. Adding a type
-// is a contract change: bump the vocabulary here, extend the exhaustive
-// switch in the projectors, and record it in the ADR (0003 for v1, 0004
-// for invitations).
+// Ten event types ship after P2-5: the four account administration
+// facts from v1, the three invitation lifecycle facts from P2-3, and the
+// three change-review facts. Adding a type is a contract change: bump the
+// vocabulary here, extend the exhaustive switch in the projectors, and
+// record it in the ADR (0003 for v1, 0004 for invitations, 0009 for
+// change review).
 
 export const EVENT_TYPES = [
   'ACCOUNT_PENDING_CREATED',
@@ -22,6 +23,9 @@ export const EVENT_TYPES = [
   'INVITATION_CREATED',
   'INVITATION_USED',
   'INVITATION_REVOKED',
+  'CHANGE_PROPOSED',
+  'CHANGE_ACCEPTED',
+  'CHANGE_REJECTED',
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
@@ -29,14 +33,17 @@ export function isEventType(value: unknown): value is EventType {
   return typeof value === 'string' && (EVENT_TYPES as readonly string[]).includes(value);
 }
 
-// ─── Payload contract (v1 + P2-3) ────────────────────────
+// ─── Payload contract (v1 + P2-3 + P2-5) ─────────────────
 //
 // Every account payload carries exactly one technical key: subjectUserId,
 // the id of the account the fact is about. Invitation payloads carry the
 // invitation's technical ids and policy stamps; the recipient's contact
-// data is refused everywhere. The actor and the family tree are envelope
-// columns, not payload keys, so they can be indexed and filtered without
-// parsing JSON.
+// data is refused everywhere. Change-review payloads carry the proposal's
+// technical id, the outcome state, and the target type; the beforeJson and
+// afterJson record contents stay in the ChangeProposal table and never
+// enter the store. The actor and the family tree are envelope columns,
+// not payload keys, so they can be indexed and filtered without parsing
+// JSON.
 //
 // Known payload keys per type (exhaustive):
 //   ACCOUNT_PENDING_CREATED  subjectUserId (the registrant, self-registered)
@@ -48,9 +55,13 @@ export function isEventType(value: unknown): value is EventType {
 //   INVITATION_USED          invitationId, invitationType, result,
 //                            reason (failure code), subjectUserId (nullable)
 //   INVITATION_REVOKED       invitationId, invitationType
+//   CHANGE_PROPOSED          proposalId, state, targetType
+//   CHANGE_ACCEPTED          proposalId, state, targetType
+//   CHANGE_REJECTED          proposalId, state, targetType
 //
 // Anything beyond the keys above is rejected by validateEventPayload.
 
+import type { ChangeTargetType } from '../changes';
 import type { InvitationType, TreeRole } from '../invitations';
 
 export interface AccountEventPayload {
@@ -90,11 +101,33 @@ export interface InvitationRevokedPayload {
   invitationType: InvitationType;
 }
 
+/**
+ * The outcome vocabulary for change-review events (P2-5, ADR 0009). It
+ * records what happened: a proposal waiting at the gate, one applied to
+ * the live record, one refused. The stored proposal's own vocabulary in
+ * src/lib/changes is different on purpose: it records what remains
+ * (pending, rejected, distinct), and "distinct" never appears here
+ * because marking a subject a different person emits no event.
+ */
+export type ChangeEventState = 'pending' | 'accepted' | 'rejected';
+
+/**
+ * A change-review fact (P2-5, ADR 0009). proposalId and targetType are
+ * technical; the record snapshots (beforeJson, afterJson) stay in the
+ * ChangeProposal table, never in the store.
+ */
+export interface ChangeEventPayload {
+  proposalId: string;
+  state: ChangeEventState;
+  targetType: ChangeTargetType;
+}
+
 export type EventPayload =
   | AccountEventPayload
   | InvitationCreatedPayload
   | InvitationUsedPayload
-  | InvitationRevokedPayload;
+  | InvitationRevokedPayload
+  | ChangeEventPayload;
 
 export interface EventEnvelope {
   type: EventType;
@@ -110,6 +143,14 @@ export interface AccountEventEnvelope {
   actorUserId: string | null;
   familyTreeId: null;
   payload: AccountEventPayload;
+}
+
+/** Any change-review event; the tree is always scoped, so null never appears. */
+export interface ChangeEventEnvelope {
+  type: Extract<EventType, 'CHANGE_PROPOSED' | 'CHANGE_ACCEPTED' | 'CHANGE_REJECTED'>;
+  actorUserId: string | null;
+  familyTreeId: string;
+  payload: ChangeEventPayload;
 }
 
 // ─── Builders ────────────────────────────────────────────
@@ -224,6 +265,56 @@ export function buildInvitationRevokedEvent(input: InvitationRevokedEventInput):
   };
 }
 
+// ─── Change-review builders (P2-5, ADR 0009) ─────────────
+//
+// familyTreeId is the proposal's tree; the actor is the proposer for
+// CHANGE_PROPOSED and the deciding owner for the two verdicts. The
+// payload never grows: no snapshot content, no note text, no role data.
+
+export interface ChangeProposedEventInput {
+  actorUserId: string;
+  familyTreeId: string;
+  proposalId: string;
+  targetType: ChangeTargetType;
+}
+
+/** An editor or owner submitted a proposed edit for the owner gate. */
+export function buildChangeProposedEvent(input: ChangeProposedEventInput): ChangeEventEnvelope {
+  return {
+    type: 'CHANGE_PROPOSED',
+    actorUserId: input.actorUserId,
+    familyTreeId: input.familyTreeId,
+    payload: { proposalId: input.proposalId, state: 'pending', targetType: input.targetType },
+  };
+}
+
+export interface ChangeDecidedEventInput {
+  actorUserId: string;
+  familyTreeId: string;
+  proposalId: string;
+  targetType: ChangeTargetType;
+}
+
+/** The owner accepted a proposal; the live record now holds the content. */
+export function buildChangeAcceptedEvent(input: ChangeDecidedEventInput): ChangeEventEnvelope {
+  return {
+    type: 'CHANGE_ACCEPTED',
+    actorUserId: input.actorUserId,
+    familyTreeId: input.familyTreeId,
+    payload: { proposalId: input.proposalId, state: 'accepted', targetType: input.targetType },
+  };
+}
+
+/** The owner refused a pending proposal, with the verdict stored on the row. */
+export function buildChangeRejectedEvent(input: ChangeDecidedEventInput): ChangeEventEnvelope {
+  return {
+    type: 'CHANGE_REJECTED',
+    actorUserId: input.actorUserId,
+    familyTreeId: input.familyTreeId,
+    payload: { proposalId: input.proposalId, state: 'rejected', targetType: input.targetType },
+  };
+}
+
 // ─── PII validator ───────────────────────────────────────
 //
 // The event store is an audit log that outlives consent withdrawals, so it
@@ -261,6 +352,9 @@ const KNOWN_PAYLOAD_KEYS_BY_TYPE: Readonly<Record<EventType, readonly string[]>>
   INVITATION_CREATED: ['invitationid', 'invitationtype', 'channel', 'grantedrole', 'expiresat', 'maxuses'],
   INVITATION_USED: ['invitationid', 'invitationtype', 'result', 'reason', 'subjectuserid'],
   INVITATION_REVOKED: ['invitationid', 'invitationtype'],
+  CHANGE_PROPOSED: ['proposalid', 'state', 'targettype'],
+  CHANGE_ACCEPTED: ['proposalid', 'state', 'targettype'],
+  CHANGE_REJECTED: ['proposalid', 'state', 'targettype'],
 };
 
 export type PayloadValidation =
@@ -397,4 +491,58 @@ export function projectAccountActivatedNotification(
     throw new Error(`projectAccountActivatedNotification expects ACCOUNT_ACTIVATED or ACCOUNT_ENABLED, got ${event.type}`);
   }
   return buildAccountActivatedNotification(event.payload.subjectUserId);
+}
+
+// ─── Projections to P2-1 notifications: change review ────
+//
+// The P2-5 fan-out mirrors the account pattern: the fact names technical
+// ids only, display data lives on the user rows the caller resolves. A
+// new proposal notifies every tree owner except a self-proposing owner;
+// a verdict notifies the proposer except when the proposer decided it
+// themself (an owner who accepts their own proposal already knows). The
+// payload copies the event's own three keys, so the notification can
+// never carry more than the audit fact.
+
+/** Notification types derived from change-review events (P2-5). */
+export const CHANGE_NOTIFICATION_TYPES = ['CHANGE_PROPOSED', 'CHANGE_ACCEPTED', 'CHANGE_REJECTED'] as const;
+export type ChangeNotificationType = (typeof CHANGE_NOTIFICATION_TYPES)[number];
+
+/** Shape handed to the persistence layer; id/readAt/createdAt are set by the store. */
+export interface ChangeNotificationDraft {
+  userId: string;
+  type: ChangeNotificationType;
+  payloadJson: string;
+}
+
+export interface ChangeNotificationAudience {
+  /** Tree owners (the gate holders) a new proposal must reach. */
+  treeOwners: readonly { id: string }[];
+  /** The proposer, who must learn the verdict on their submission. */
+  proposerUserId: string;
+}
+
+/**
+ * Derives in-app notifications from one change-review event. The switch
+ * is exhaustive over the three change types with no default case: the
+ * compiler refuses a silent fallthrough, so an unhandled vocabulary
+ * change fails the build instead of leaking or dropping a draft.
+ */
+export function projectChangeNotifications(
+  event: ChangeEventEnvelope,
+  audience: ChangeNotificationAudience,
+): ChangeNotificationDraft[] {
+  switch (event.type) {
+    case 'CHANGE_PROPOSED': {
+      const payloadJson = JSON.stringify(event.payload);
+      return audience.treeOwners
+        .filter((owner) => owner.id !== event.actorUserId)
+        .map((owner) => ({ userId: owner.id, type: 'CHANGE_PROPOSED' as const, payloadJson }));
+    }
+    case 'CHANGE_ACCEPTED':
+    case 'CHANGE_REJECTED': {
+      if (audience.proposerUserId === event.actorUserId) return [];
+      const payloadJson = JSON.stringify(event.payload);
+      return [{ userId: audience.proposerUserId, type: event.type, payloadJson }];
+    }
+  }
 }

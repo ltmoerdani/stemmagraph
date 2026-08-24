@@ -85,7 +85,7 @@ describe('grouping and name resolution', () => {
     event({ id: 'ev-4', type: 'ACCOUNT_ACTIVATED', actorUserId: 'user-a', familyTreeId: 'tree-1', createdAt: '2026-08-21T08:00:00Z' }),
   ];
 
-  it('groups per tree and counts all seven types, zeros included', () => {
+  it('groups per tree and counts all ten types, zeros included', () => {
     const result = build(events);
     expect(result.empty).toBe(false);
     if (result.empty) return;
@@ -100,6 +100,9 @@ describe('grouping and name resolution', () => {
       INVITATION_CREATED: 1,
       INVITATION_USED: 1,
       INVITATION_REVOKED: 1,
+      CHANGE_PROPOSED: 0,
+      CHANGE_ACCEPTED: 0,
+      CHANGE_REJECTED: 0,
     });
     expect(result.treeSections[0]?.counts.ACCOUNT_ACTIVATED).toBe(1);
   });
