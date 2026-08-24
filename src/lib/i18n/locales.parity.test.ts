@@ -81,6 +81,7 @@ const CHANGE_REVIEW_KEYS = [
   'actionAccept',
   'actionReject',
   'actionDistinct',
+  'cancelReject',
   'rejectNotePlaceholder',
   'rejectNoteRequired',
   'distinctNotePlaceholder',

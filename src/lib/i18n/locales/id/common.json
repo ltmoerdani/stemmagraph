@@ -382,6 +382,7 @@
     "actionAccept": "Terima dan terapkan",
     "actionReject": "Tolak",
     "actionDistinct": "Tandai beda secara permanen",
+    "cancelReject": "Batal",
     "rejectNotePlaceholder": "Tulis alasan penolakan untuk pengusul...",
     "rejectNoteRequired": "Catatan penolakan wajib diisi.",
     "distinctNotePlaceholder": "Catatan tambahan (opsional)",

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine } from 'lucide-react';
+import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff } from 'lucide-react';
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { FeedPanel } from './FeedPanel';
 import { InvitationsPanel } from './InvitationsPanel';
+import { ChangeReviewPanel } from './ChangeReviewPanel';
 import { DigestSettingsPanel } from '../DigestSettingsPanel';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
@@ -17,6 +18,9 @@ export const Dashboard: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   // Tree whose invitations/membership panel is open (P2-3 AC-6).
   const [sharingTreeId, setSharingTreeId] = useState<string | null>(null);
+  // Tree whose change-review panel is open (P2-5 AC-5). Only owner and
+  // editor trees get the entry button; viewers see nothing here.
+  const [reviewTreeId, setReviewTreeId] = useState<string | null>(null);
   // Dashboard section: family trees or the activity feed (P2-6 AC-4).
   const [activeTab, setActiveTab] = useState<'trees' | 'activity'>('trees');
 
@@ -227,6 +231,16 @@ export const Dashboard: React.FC = () => {
                       >
                         {t('dashboard.open')}
                       </button>
+                      {(tree.role === 'owner' || tree.role === 'editor') && (
+                        <button
+                          onClick={() => setReviewTreeId(tree.id)}
+                          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          title={t('changeReview.open')}
+                          aria-label={t('changeReview.open')}
+                        >
+                          <FileDiff className="w-4 h-4 text-gray-600" />
+                        </button>
+                      )}
                       <button
                         onClick={() => setSharingTreeId(tree.id)}
                         className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -285,6 +299,16 @@ export const Dashboard: React.FC = () => {
                             >
                               {t('dashboard.open')}
                             </button>
+                            {(tree.role === 'owner' || tree.role === 'editor') && (
+                              <button
+                                onClick={() => setReviewTreeId(tree.id)}
+                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                title={t('changeReview.open')}
+                                aria-label={t('changeReview.open')}
+                              >
+                                <FileDiff className="w-4 h-4 text-gray-600" />
+                              </button>
+                            )}
                             <button
                               onClick={() => setSharingTreeId(tree.id)}
                               className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -334,6 +358,15 @@ export const Dashboard: React.FC = () => {
           treeId={sharingTreeId}
           treeName={familyTrees.find((tree) => tree.id === sharingTreeId)?.name ?? ''}
           onClose={() => setSharingTreeId(null)}
+        />
+      )}
+
+      {/* Change review panel (P2-5): mounted only from owner/editor cards */}
+      {reviewTreeId !== null && (
+        <ChangeReviewPanel
+          treeId={reviewTreeId}
+          treeName={familyTrees.find((tree) => tree.id === reviewTreeId)?.name ?? ''}
+          onClose={() => setReviewTreeId(null)}
         />
       )}
     </div>

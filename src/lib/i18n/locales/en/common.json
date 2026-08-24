@@ -382,6 +382,7 @@
     "actionAccept": "Accept and apply",
     "actionReject": "Reject",
     "actionDistinct": "Mark distinct permanently",
+    "cancelReject": "Cancel",
     "rejectNotePlaceholder": "Write the rejection reason for the proposer...",
     "rejectNoteRequired": "A rejection note is required.",
     "distinctNotePlaceholder": "Additional note (optional)",
