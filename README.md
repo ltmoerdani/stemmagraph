@@ -36,6 +36,7 @@ Open-source, interactive, and free — forever.
   - The activity feed is an application-layer view of the event store (ADR 0006); it is never included in any export format, including a future GEDCOM export.
   - Growth metrics and the k-factor dashboard (ADR 0007) are internal owner observations and are never exported either.
 - **📧 Weekly digest email**: opt-in per account with explicit consent (UU PDP), one plain-text summary of last week per tree, no personal data of living persons beyond tree names, event counts, actor account names, and the window (ADR 0008)
+- **✍️ Change review**: an editor's edit waits as a proposal beside the live record; the tree owner accepts it, rejects it with a note, or marks it distinct forever; proposals never enter any export (ADR 0009)
 - **🔌 Adapter pattern** — swap between REST API, Supabase, or in-memory mock without touching UI code
 - **🔐 Secure auth** — JWT sessions + bcrypt password hashing
 - **📱 Responsive** — works seamlessly on desktop and mobile
