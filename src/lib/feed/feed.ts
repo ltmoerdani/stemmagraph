@@ -10,6 +10,16 @@
 // fields per event type, never copied from the raw payload, so even a
 // legacy row that smuggled contact data into its payload cannot leak it
 // into a feed item.
+//
+// Living-person fence (consent clause R-74.6, filter T0e): the v1 payload
+// vocabulary above carries no living-person data, only account facts and
+// minimized invitation facts. Future tree events that touch a living
+// person's record MUST pass the privacy gate before they may be projected
+// into a feed item. The fence is the explicit type allowlist in this file:
+// a new event type only reaches the feed after it is added here on
+// purpose, with its own minimization review and consent filter. The tests
+// pin this by feeding a hypothetical person-record event to the projector
+// and asserting it is refused, not rendered.
 
 import {
   EVENT_TYPES,

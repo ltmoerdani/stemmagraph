@@ -199,6 +199,20 @@ describe('projectEventToFeedItem (defensive)', () => {
     } as unknown as EventEnvelope;
     expect(() => projectEventToFeedItem(source('evt_l', envelope))).toThrow(/unknown event type/);
   });
+
+  // Pins the living-person fence documented in the module header: future
+  // tree events that touch a living person's record may only reach the
+  // feed after a privacy gate, and until such a type is deliberately
+  // added to the allowlist the projector refuses it outright.
+  it('refuses future person-record events instead of projecting them', () => {
+    const envelope = {
+      type: 'PERSON_RECORD_UPDATED',
+      actorUserId: 'user_owner',
+      familyTreeId: 'tree_1',
+      payload: { personId: 'p_1', name: 'Living Relative', birthDate: '1990-01-01' },
+    } as unknown as EventEnvelope;
+    expect(() => projectEventToFeedItem(source('evt_m', envelope))).toThrow(/unknown event type/);
+  });
 });
 
 // ─── Kind grouping ───────────────────────────────────────
