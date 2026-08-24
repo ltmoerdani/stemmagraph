@@ -46,6 +46,9 @@ import {
   ActivityFeedApi,
   ActivityFeedPage,
   ActivityFeedQueryOptions,
+  GrowthMetricsApi,
+  GrowthMetricsSnapshot,
+  GrowthMetricsQueryOptions,
   AdapterError,
   AuthError,
 } from './types';
@@ -64,7 +67,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -381,5 +384,20 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
       `/activity-feed${query === '' ? '' : `?${query}`}`,
     );
     return { items: body.items ?? [], nextCursor: body.nextCursor ?? null };
+  }
+
+  // ── Growth metrics (P2-8, ADR 0007) ────────────────────
+  // Read-only owner dashboard. The server parses ?weeks= (integer, clamped
+  // into 1..26, default 12), projects stored events server-side, and rounds
+  // rates to 4 decimals, so the adapter only forwards the requested span.
+
+  async fetchGrowthMetrics(options: GrowthMetricsQueryOptions = {}): Promise<GrowthMetricsSnapshot> {
+    const params = new URLSearchParams();
+    if (options.weeks !== undefined) params.set('weeks', String(options.weeks));
+    const query = params.toString();
+    return this.request<GrowthMetricsSnapshot>(
+      'GET',
+      `/admin/metrics/growth${query === '' ? '' : `?${query}`}`,
+    );
   }
 }

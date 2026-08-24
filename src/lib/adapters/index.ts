@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -109,6 +109,18 @@ export function getActivityFeedApi(): ActivityFeedApi | null {
   return adapter instanceof RestAdapter ? adapter : null;
 }
 
+// ─── Growth metrics (P2-8) ────────────────────────────────
+
+/**
+ * Returns the growth metrics surface of the active adapter, or null when
+ * the adapter has no server backend (mock, supabase): the metrics read the
+ * server event store. The UI shows an honest unavailable state for null.
+ */
+export function getGrowthMetricsApi(): GrowthMetricsApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 /**
  * Override adapter with a custom implementation (useful for testing).
  */
@@ -149,6 +161,10 @@ export type {
   ActivityFeedApi,
   ActivityFeedPage,
   ActivityFeedQueryOptions,
+  GrowthMetricsApi,
+  GrowthMetricsSnapshot,
+  GrowthMetricsQueryOptions,
+  GrowthWeekMetrics,
 } from './types';
 
 export {
