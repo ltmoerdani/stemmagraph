@@ -2,6 +2,8 @@
 // Database-agnostic contract. Implement this interface for any backend.
 // Current adapters: mock (in-memory), rest (generic API), supabase
 
+import type { FeedItem } from '../feed';
+
 // ─── Auth Types ───────────────────────────────────────────
 
 export interface AuthUser {
@@ -256,6 +258,34 @@ export interface InvitationAdminApi {
   listTreeMembership(treeId: string): Promise<TreeMembershipRecord[]>;
   updateTreeMembershipRole(treeId: string, membershipId: string, role: TreeRoleValue): Promise<TreeMembershipRecord>;
   removeTreeMembership(treeId: string, membershipId: string): Promise<void>;
+}
+
+// ─── Activity feed (P2-6, ADR 0006) ──────────────────────
+
+/** One page of the activity feed plus the cursor for the next page. */
+export interface ActivityFeedPage {
+  items: FeedItem[];
+  nextCursor: string | null;
+}
+
+/** Query options; every field is optional and re-validated server side. */
+export interface ActivityFeedQueryOptions {
+  /** One of the seven v1 event types; absent means no filter. */
+  type?: string;
+  /** Server clamps into 1..100, default 50. */
+  limit?: number;
+  /** Opaque cursor from a previous response's nextCursor. */
+  before?: string;
+}
+
+/**
+ * Server-backed activity feed surface (read-only). Only the REST adapter
+ * implements it: the feed reads the server event store, which mock and
+ * supabase adapters do not have. getActivityFeedApi returns null for them
+ * so the UI can show an honest unavailable state instead of crashing.
+ */
+export interface ActivityFeedApi {
+  fetchActivityFeed(options?: ActivityFeedQueryOptions): Promise<ActivityFeedPage>;
 }
 
 // ─── Error Types ──────────────────────────────────────────

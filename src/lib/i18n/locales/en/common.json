@@ -264,5 +264,58 @@
       "active": "active",
       "disabled": "disabled"
     }
+  },
+  "activityFeed": {
+    "tab": "Activity",
+    "title": "Activity feed",
+    "subtitle": "What happened in your trees and your account.",
+    "filterLabel": "Activity type",
+    "filterAll": "All activity",
+    "types": {
+      "ACCOUNT_PENDING_CREATED": "Registration created",
+      "ACCOUNT_ACTIVATED": "Account activated",
+      "ACCOUNT_DISABLED": "Account disabled",
+      "ACCOUNT_ENABLED": "Account enabled",
+      "INVITATION_CREATED": "Invitation created",
+      "INVITATION_USED": "Invitation used",
+      "INVITATION_REVOKED": "Invitation revoked"
+    },
+    "items": {
+      "accountPendingCreated": "Your registration was created and is waiting for owner activation.",
+      "accountActivated": {
+        "asSubject": "Your account was activated.",
+        "asActor": "You activated an account."
+      },
+      "accountDisabled": {
+        "asSubject": "Your account was disabled.",
+        "asActor": "You disabled an account."
+      },
+      "accountEnabled": {
+        "asSubject": "Your account was enabled again.",
+        "asActor": "You enabled an account."
+      },
+      "invitationCreated": "Invitation link created via {{channel}} ({{invitationType}}).",
+      "invitationUsed": {
+        "success": "An invitation link was used: registration succeeded.",
+        "failure": "An invitation link was used: the attempt failed."
+      },
+      "invitationRevoked": "Invitation link revoked ({{invitationType}})."
+    },
+    "invitationType": {
+      "personal": "personal",
+      "family": "family"
+    },
+    "channel": {
+      "manual": "manual link",
+      "wa": "WhatsApp",
+      "email": "email"
+    },
+    "loadMore": "Load more",
+    "loading": "Loading activity...",
+    "empty": "No activity yet. Actions in your trees will appear here.",
+    "emptyFiltered": "No activity of this type.",
+    "unavailable": "The activity feed needs the server backend. Start the app with the REST adapter to see it.",
+    "loadFailed": "Loading the activity feed failed.",
+    "retry": "Retry"
   }
 }

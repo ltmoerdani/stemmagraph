@@ -264,5 +264,58 @@
       "active": "aktif",
       "disabled": "nonaktif"
     }
+  },
+  "activityFeed": {
+    "tab": "Aktivitas",
+    "title": "Feed aktivitas",
+    "subtitle": "Apa yang terjadi di pohon keluarga dan akun Anda.",
+    "filterLabel": "Jenis aktivitas",
+    "filterAll": "Semua aktivitas",
+    "types": {
+      "ACCOUNT_PENDING_CREATED": "Pendaftaran dibuat",
+      "ACCOUNT_ACTIVATED": "Akun diaktifkan",
+      "ACCOUNT_DISABLED": "Akun dinonaktifkan",
+      "ACCOUNT_ENABLED": "Akun diaktifkan kembali",
+      "INVITATION_CREATED": "Undangan dibuat",
+      "INVITATION_USED": "Undangan dipakai",
+      "INVITATION_REVOKED": "Undangan dicabut"
+    },
+    "items": {
+      "accountPendingCreated": "Pendaftaran Anda dibuat dan menunggu aktivasi oleh owner.",
+      "accountActivated": {
+        "asSubject": "Akun Anda diaktifkan.",
+        "asActor": "Anda mengaktifkan sebuah akun."
+      },
+      "accountDisabled": {
+        "asSubject": "Akun Anda dinonaktifkan.",
+        "asActor": "Anda menonaktifkan sebuah akun."
+      },
+      "accountEnabled": {
+        "asSubject": "Akun Anda diaktifkan kembali.",
+        "asActor": "Anda mengaktifkan kembali sebuah akun."
+      },
+      "invitationCreated": "Tautan undangan dibuat via {{channel}} ({{invitationType}}).",
+      "invitationUsed": {
+        "success": "Sebuah tautan undangan dipakai: pendaftaran berhasil.",
+        "failure": "Sebuah tautan undangan dipakai: percobaan gagal."
+      },
+      "invitationRevoked": "Tautan undangan dicabut ({{invitationType}})."
+    },
+    "invitationType": {
+      "personal": "personal",
+      "family": "keluarga"
+    },
+    "channel": {
+      "manual": "tautan manual",
+      "wa": "WhatsApp",
+      "email": "email"
+    },
+    "loadMore": "Muat lagi",
+    "loading": "Memuat aktivitas...",
+    "empty": "Belum ada aktivitas. Aksi di pohon keluarga Anda akan tampil di sini.",
+    "emptyFiltered": "Tidak ada aktivitas jenis ini.",
+    "unavailable": "Feed aktivitas butuh backend server. Jalankan aplikasi dengan adapter REST untuk melihatnya.",
+    "loadFailed": "Memuat feed aktivitas gagal.",
+    "retry": "Coba lagi"
   }
 }

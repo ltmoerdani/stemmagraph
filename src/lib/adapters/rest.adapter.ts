@@ -43,9 +43,13 @@ import {
   CreateInvitationInput,
   TreeMembershipRecord,
   TreeRoleValue,
+  ActivityFeedApi,
+  ActivityFeedPage,
+  ActivityFeedQueryOptions,
   AdapterError,
   AuthError,
 } from './types';
+import type { FeedItem } from '../feed';
 
 /**
  * P2-1 (ADR 0002): server error codes that describe an unusable account
@@ -60,7 +64,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -358,5 +362,24 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
 
   async removeTreeMembership(treeId: string, membershipId: string): Promise<void> {
     await this.request<void>('DELETE', `/trees/${treeId}/membership/${membershipId}`);
+  }
+
+  // ── Activity feed (P2-6, ADR 0006) ─────────────────────
+  // Read-only projection of the server event store. The server validates
+  // ?type= against the seven v1 event types, clamps ?limit= into 1..100
+  // and treats ?before= as an opaque keyset cursor, so this method only
+  // forwards what the caller picked in the UI.
+
+  async fetchActivityFeed(options: ActivityFeedQueryOptions = {}): Promise<ActivityFeedPage> {
+    const params = new URLSearchParams();
+    if (options.type !== undefined && options.type !== '') params.set('type', options.type);
+    if (options.limit !== undefined) params.set('limit', String(options.limit));
+    if (options.before !== undefined && options.before !== '') params.set('before', options.before);
+    const query = params.toString();
+    const body = await this.request<{ items: FeedItem[]; nextCursor: string | null }>(
+      'GET',
+      `/activity-feed${query === '' ? '' : `?${query}`}`,
+    );
+    return { items: body.items ?? [], nextCursor: body.nextCursor ?? null };
   }
 }
