@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { X, AlertCircle, User, Calendar, MapPin } from 'lucide-react';
+import { X, AlertCircle, CheckCircle, Clock, User, Calendar, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
+import { useDashboardStore } from '../../store/dashboardStore';
+import { getChangeReviewApi } from '../../lib/adapters';
 
 const buildInitialFormData = (editingMember?: FamilyMember): FormData => {
   if (!editingMember) return initialFormData;
@@ -64,9 +67,20 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   relationshipContext,
   onMemberAdded
 }) => {
-  const { addMember, updateMember, addMemberWithRelationship } = useFamilyStore();
+  const { t } = useTranslation();
+  const { addMember, updateMember, addMemberWithRelationship, currentFamilyTreeId } = useFamilyStore();
+  // P2-5 U5d: the caller's role on the active tree comes from the dashboard
+  // records; mock and supabase trees carry no role, so the direct write path
+  // stays the default there.
+  const treeRole = useDashboardStore(
+    (state) => state.familyTrees.find((tree) => tree.id === currentFamilyTreeId)?.role ?? null,
+  );
+  const changeApi = getChangeReviewApi();
+  const isProposeFlow = Boolean(editingMember) && currentFamilyTreeId !== null && treeRole === 'editor' && changeApi !== null;
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [error, setError] = useState('');
+  const [reasonNote, setReasonNote] = useState('');
+  const [proposeSent, setProposeSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reset form state when the modal opens or the editing target changes.
@@ -78,6 +92,8 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
     prevSignature.current = signature;
     setFormData(buildInitialFormData(editingMember));
     setError('');
+    setReasonNote('');
+    setProposeSent(false);
   }
 
   if (!isOpen) return null;
@@ -115,6 +131,16 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       }
     }
 
+    // The proposal contract demands prose: 3 to 500 trimmed characters, the
+    // same bound the server enforces on reasonNote.
+    if (isProposeFlow) {
+      const note = reasonNote.trim();
+      if (note.length < 3 || note.length > 500) {
+        setError(t('changeReview.reasonNoteRequired'));
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -140,7 +166,32 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       };
 
       if (editingMember) {
-        // Update existing member
+        if (isProposeFlow && changeApi && currentFamilyTreeId) {
+          // Editor path (P2-5): the edit becomes a proposal for the owner
+          // gate. afterJson carries the form's member fields only, every
+          // key inside the MEMBER_PROPOSAL_FIELDS contract, so the accept
+          // flow applies exactly this slice to the live record.
+          const afterJson: Record<string, unknown> = {
+            name: formData.name.trim(),
+            nickname: formData.nickname.trim() || null,
+            gender: formData.gender,
+            birthDate: formData.birthDate || null,
+            birthPlace: formData.birthPlace.trim() || null,
+            isAlive: formData.isAlive,
+            deathDate: !formData.isAlive ? formData.deathDate || null : null,
+          };
+          await changeApi.createChangeProposal(currentFamilyTreeId, {
+            targetType: 'member',
+            targetId: editingMember.id,
+            afterJson,
+            reasonNote: reasonNote.trim(),
+          });
+          // Keep the modal open: the sent banner is the confirmation the
+          // editor needs before closing.
+          setProposeSent(true);
+          return;
+        }
+        // Owner path: update the live record directly.
         await updateMember(editingMember.id, memberData);
       } else {
         // Add new member with proper generation logic for new family trees
@@ -181,7 +232,13 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       
     } catch (err) {
       console.error('Error saving member:', err);
-      setError(err instanceof Error && err.message ? err.message : 'Failed to save member data. Please try again.');
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : isProposeFlow
+            ? t('changeReview.proposeFailed')
+            : 'Failed to save member data. Please try again.',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -202,6 +259,8 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       onClose();
       setFormData(initialFormData);
       setError('');
+      setReasonNote('');
+      setProposeSent(false);
     }
   };
 
@@ -248,6 +307,21 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
               <p className="text-gray-700 mb-4">
                 Who will be the <strong>"root"</strong> of this family tree?
               </p>
+            </div>
+          )}
+
+          {/* P2-5 U5d: editors edit through the owner gate, not a direct write. */}
+          {isProposeFlow && !proposeSent && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-3">
+              <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-amber-800 text-sm">{t('changeReview.proposeBanner')}</p>
+            </div>
+          )}
+
+          {proposeSent && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-3">
+              <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+              <p className="text-green-800 text-sm">{t('changeReview.proposeSent')}</p>
             </div>
           )}
 
@@ -451,6 +525,28 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
               )}
             </div>
 
+            {/* Reason note: only on the editor propose path (P2-5 U5d). */}
+            {isProposeFlow && !proposeSent && (
+              <div>
+                <label htmlFor="reason-note" className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('changeReview.reasonNoteLabel')} <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="reason-note"
+                  value={reasonNote}
+                  onChange={(e) => {
+                    setReasonNote(e.target.value);
+                    setError('');
+                  }}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={t('changeReview.reasonNotePlaceholder')}
+                  disabled={isSubmitting}
+                />
+              </div>
+            )}
+
             {/* Error Message */}
             {error && (
               <div className="flex items-center space-x-2 text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
@@ -471,7 +567,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !formData.name.trim()}
+                disabled={isSubmitting || proposeSent || !formData.name.trim()}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center space-x-2 min-w-30 justify-center"
               >
                 {isSubmitting && (
@@ -480,6 +576,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                 <span>
                   {(() => {
                     if (isSubmitting) return 'SAVING...';
+                    if (isProposeFlow) return t('changeReview.submitPropose');
                     if (editingMember) return 'UPDATE';
                     return 'SAVE';
                   })()}
