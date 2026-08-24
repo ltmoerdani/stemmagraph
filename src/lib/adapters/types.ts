@@ -288,6 +288,41 @@ export interface ActivityFeedApi {
   fetchActivityFeed(options?: ActivityFeedQueryOptions): Promise<ActivityFeedPage>;
 }
 
+// ─── Growth metrics (P2-8) ────────────────────────────────
+// Server-backed owner dashboard surface (read-only). Only the REST adapter
+// implements it: the metrics read the server event store, which mock and
+// supabase adapters do not have. getGrowthMetricsApi returns null for them
+// so the UI can show an honest unavailable state instead of fake numbers.
+
+/** One projected ISO week; rates arrive rounded to 4 decimals by the server. */
+export interface GrowthWeekMetrics {
+  isoWeek: string;
+  startAt: string;
+  endAt: string;
+  e1: number;
+  e2: number;
+  e3: number;
+  k: number;
+  pakaiRate: number;
+  aktivasiRate: number;
+  denominator: number;
+}
+
+/** Whole response of GET /admin/metrics/growth. */
+export interface GrowthMetricsSnapshot {
+  weeks: GrowthWeekMetrics[];
+  treesWithActiveEditorPct: number;
+}
+
+export interface GrowthMetricsQueryOptions {
+  /** Server clamps into 1..26, default 12. */
+  weeks?: number;
+}
+
+export interface GrowthMetricsApi {
+  fetchGrowthMetrics(options?: GrowthMetricsQueryOptions): Promise<GrowthMetricsSnapshot>;
+}
+
 // ─── Error Types ──────────────────────────────────────────
 
 export class AdapterError extends Error {

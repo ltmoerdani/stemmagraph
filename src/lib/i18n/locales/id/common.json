@@ -317,5 +317,24 @@
     "unavailable": "Feed aktivitas butuh backend server. Jalankan aplikasi dengan adapter REST untuk melihatnya.",
     "loadFailed": "Memuat feed aktivitas gagal.",
     "retry": "Coba lagi"
+  },
+  "growthMetrics": {
+    "title": "Metrik pertumbuhan",
+    "subtitle": "Funnel undangan mingguan dan k-factor. Tampilan internal owner, tidak pernah diekspor.",
+    "treesWithActiveEditor": "Pohon dengan editor aktif: {{pct}}%",
+    "loading": "Memuat metrik pertumbuhan...",
+    "table": {
+      "week": "Minggu",
+      "e1": "E1 undangan",
+      "e2": "E2 pendaftaran",
+      "e3": "E3 aktivasi",
+      "k": "K",
+      "pakaiRate": "Rate pemakaian",
+      "aktivasiRate": "Rate aktivasi"
+    },
+    "empty": "Belum ada data pertumbuhan di jendela ini. Metrik muncul setelah ada undangan dan pendaftaran.",
+    "unavailable": "Metrik pertumbuhan butuh backend server. Jalankan aplikasi dengan adapter REST untuk melihatnya.",
+    "loadFailed": "Memuat metrik pertumbuhan gagal.",
+    "retry": "Coba lagi"
   }
 }

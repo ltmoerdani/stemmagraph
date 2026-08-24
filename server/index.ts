@@ -54,6 +54,12 @@ import {
   projectEventToFeedItem,
   type FeedItem,
 } from '../src/lib/feed';
+import {
+  computeGrowthMetrics,
+  GROWTH_METRIC_EVENT_TYPES,
+  parseGrowthMetricsQuery,
+  roundGrowthMetric,
+} from '../src/lib/metrics/kfactor';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -649,6 +655,65 @@ app.get('/api/v1/activity-feed', requireAuth, async (req: AuthenticatedRequest, 
     res.json({ items, nextCursor });
   } catch (e) {
     res.status(500).json({ code: 'FEED_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Growth metrics (P2-8, ADR 0007) ─────────────────────
+//
+// READ-ONLY owner dashboard over the P2-2 event store plus TreeMember and
+// User rows. This handler appends nothing and writes no table: it projects
+// stored events into weekly buckets (pure logic in src/lib/metrics/kfactor)
+// and counts trees with an active editor from live membership rows, not
+// from events. The funnel stays labeled an inference until the product has
+// its own data, and none of these numbers ever reach an export surface.
+
+app.get('/api/v1/admin/metrics/growth', requireAuth, requireOwner, async (req: AuthenticatedRequest, res) => {
+  try {
+    const parsedQuery = parseGrowthMetricsQuery({ weeks: req.query['weeks'] });
+    if (!parsedQuery.ok) {
+      return res.status(400).json({ code: parsedQuery.code, message: parsedQuery.message });
+    }
+
+    // Full history of the five metric types: the k-factor denominator needs
+    // every activation ever recorded, not just the requested window.
+    const rows = await prisma.event.findMany({
+      where: { type: { in: [...GROWTH_METRIC_EVENT_TYPES] } },
+      orderBy: { createdAt: 'asc' },
+      select: { type: true, payloadJson: true, createdAt: true },
+    });
+    const metrics = computeGrowthMetrics(rows, { weeks: parsedQuery.weeks, now: new Date() });
+    if (!metrics.ok) {
+      return res.status(400).json({ code: metrics.code, message: metrics.message });
+    }
+
+    // Serialization boundary: rates keep exact fractions in the module and
+    // round to 4 decimals only here, in the response.
+    const weeks = metrics.weeks.map((week) => ({
+      ...week,
+      k: roundGrowthMetric(week.k),
+      pakaiRate: roundGrowthMetric(week.pakaiRate),
+      aktivasiRate: roundGrowthMetric(week.aktivasiRate),
+    }));
+
+    const [memberships, activeUsers] = await Promise.all([
+      prisma.treeMember.findMany({ select: { treeId: true, userId: true, role: true } }),
+      prisma.user.findMany({ where: { status: 'active' }, select: { id: true } }),
+    ]);
+    const activeUserIds = new Set(activeUsers.map((user) => user.id));
+    const treesWithMembers = new Set(memberships.map((membership) => membership.treeId));
+    const treesWithActiveEditor = new Set(
+      memberships
+        .filter((membership) => membership.role === 'editor' && activeUserIds.has(membership.userId))
+        .map((membership) => membership.treeId),
+    );
+    const treesWithActiveEditorPct =
+      treesWithMembers.size === 0
+        ? 0
+        : Math.round((100 * treesWithActiveEditor.size) / treesWithMembers.size) / 100;
+
+    res.json({ weeks, treesWithActiveEditorPct });
+  } catch (e) {
+    res.status(500).json({ code: 'METRICS_ERROR', message: (e as Error).message });
   }
 });
 

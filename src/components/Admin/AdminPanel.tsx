@@ -5,6 +5,7 @@ import { getAccountAdminApi } from '../../lib/adapters';
 import type { AdminAccount, AccountStatusAction } from '../../lib/adapters';
 import { actionsForStatus } from '../../lib/account-states/adminView';
 import { formatDate } from '../../lib/i18n';
+import { GrowthMetricsPanel } from './GrowthMetricsPanel';
 
 /**
  * Account administration panel (P2-1, AC-5b).
@@ -155,6 +156,8 @@ export const AdminPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </div>
 
         <div className="p-5 overflow-y-auto">
+          <GrowthMetricsPanel />
+
           <p className="text-xs text-gray-400 mb-3">
             {t('admin.accounts', { count: accounts.length })}
           </p>

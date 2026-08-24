@@ -34,6 +34,7 @@ Open-source, interactive, and free — forever.
 - **🔗 Relationship types** — parent–child, marriage, and sibling edges with custom rendering
 - **📤 Export anywhere** — download your tree as **PDF** or **PNG image**
   - The activity feed is an application-layer view of the event store (ADR 0006); it is never included in any export format, including a future GEDCOM export.
+  - Growth metrics and the k-factor dashboard (ADR 0007) are internal owner observations and are never exported either.
 - **🔌 Adapter pattern** — swap between REST API, Supabase, or in-memory mock without touching UI code
 - **🔐 Secure auth** — JWT sessions + bcrypt password hashing
 - **📱 Responsive** — works seamlessly on desktop and mobile

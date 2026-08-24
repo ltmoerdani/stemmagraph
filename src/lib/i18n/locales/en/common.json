@@ -317,5 +317,24 @@
     "unavailable": "The activity feed needs the server backend. Start the app with the REST adapter to see it.",
     "loadFailed": "Loading the activity feed failed.",
     "retry": "Retry"
+  },
+  "growthMetrics": {
+    "title": "Growth metrics",
+    "subtitle": "Weekly invitation funnel and k-factor. Internal owner view, never exported.",
+    "treesWithActiveEditor": "Trees with an active editor: {{pct}}%",
+    "loading": "Loading growth metrics...",
+    "table": {
+      "week": "Week",
+      "e1": "E1 invitations",
+      "e2": "E2 registrations",
+      "e3": "E3 activations",
+      "k": "K",
+      "pakaiRate": "Use rate",
+      "aktivasiRate": "Activation rate"
+    },
+    "empty": "No growth data in this window. Metrics appear once invitations and registrations exist.",
+    "unavailable": "Growth metrics need the server backend. Start the app with the REST adapter to see them.",
+    "loadFailed": "Loading growth metrics failed.",
+    "retry": "Retry"
   }
 }
