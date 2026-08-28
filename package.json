@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "dev": "vite",
+    "postinstall": "prisma generate",
     "dev:server": "npx tsx server/index.ts",
     "dev:full": "concurrently -n api,app -c blue,green \"npm run dev:server\" \"npm run dev\"",
     "build": "vite build",
