@@ -44,3 +44,7 @@ tsconfig.node.tsbuildinfo
 .env
 .env.local
 .verify-s14-work/
+
+# Local SQLite databases
+*.db
+*.db-journal
