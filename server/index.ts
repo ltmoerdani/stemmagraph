@@ -1767,6 +1767,222 @@ app.delete('/api/v1/relationships/:id', requireAuth, async (req: AuthenticatedRe
   }
 });
 
+// ─── Public share links (GAP #4, ADR 0010) ───────────────
+//
+// Read-only public access to one tree through a TreeShareLink row.
+// Three surfaces share one resolver: the JSON payload, the dynamic OG
+// image, and a minimal preview page with Open Graph meta tags. Every
+// surface is rate limited (fixed window per IP+token, ADR 0010) before
+// any database work, so hammering dies at the brake. The payload comes
+// only from buildPublicTreePayload, which routes every member through
+// the phase 1 export privacy gate: living members, and members whose
+// life or consent status is NULL or ambiguous, are treated as living
+// and redacted; contact fields are dropped for everyone.
+//
+// Management endpoints (create/list/revoke by an authenticated owner)
+// are a separate follow-up; this section is the public read surface.
+
+import { FixedWindowRateLimiter } from '../src/lib/share/rate-limit';
+import { buildPublicTreePayload } from '../src/lib/share/public-tree';
+import { verifySharePassword } from '../src/lib/share/password';
+import { buildShareOgImageSvg, escapeXmlText } from '../src/lib/share/og-image';
+
+// Password guessing gets the tightest budget; plain reads and OG fetches
+// are courtesy brakes against hammering, not quotas.
+const shareReadLimiter = new FixedWindowRateLimiter({ limit: 30, windowMs: 60_000 });
+const shareOgLimiter = new FixedWindowRateLimiter({ limit: 60, windowMs: 60_000 });
+const sharePasswordLimiter = new FixedWindowRateLimiter({ limit: 10, windowMs: 60_000 });
+
+function shareRateKey(req: express.Request<{ token: string }>, purpose: string): string {
+  return `${req.ip ?? 'unknown'}|${req.params.token}|${purpose}`;
+}
+
+function sendShareRateLimited(res: express.Response, retryAfterSeconds: number): express.Response {
+  res.set('Retry-After', String(retryAfterSeconds));
+  return res.status(429).json({ code: 'SHARE_RATE_LIMITED', message: 'Too many requests; retry later' });
+}
+
+// The exact member columns the public builder may see. Selecting this
+// list (and nothing else) is the second fence after the builder itself:
+// notes, email, phone, and location can never reach the response even
+// by accident.
+const SHARE_MEMBER_SELECT = {
+  id: true,
+  name: true,
+  nickname: true,
+  birthDate: true,
+  deathDate: true,
+  birthPlace: true,
+  profession: true,
+  education: true,
+  gender: true,
+  isAlive: true,
+  privacyStatus: true,
+  generation: true,
+} as const;
+
+type ShareLinkRow = {
+  id: string;
+  treeId: string;
+  mode: string;
+  passwordHash: string | null;
+  revokedAt: Date | null;
+};
+
+type ShareFailure = { error: 'SHARE_NOT_FOUND' } | { error: 'SHARE_REVOKED' };
+
+/**
+ * Resolves one share token into the link row plus the raw tree data the
+ * public builder consumes. Unknown token and unknown tree answer the
+ * same 404 so probing tokens learns nothing about tree ids.
+ */
+async function loadShareContext(token: string): Promise<
+  | ShareFailure
+  | {
+      link: ShareLinkRow;
+      tree: { name: string; description: string | null; generationCount: number };
+      members: Array<{ id: string; name: string; nickname: string | null; birthDate: string | null; deathDate: string | null; birthPlace: string | null; profession: string | null; education: string | null; gender: string | null; isAlive: boolean; privacyStatus: string | null; generation: number }>;
+      relationships: Array<{ memberId: string; relatedId: string; type: string }>;
+    }
+> {
+  const link = await prisma.treeShareLink.findUnique({
+    where: { token },
+    select: { id: true, treeId: true, mode: true, passwordHash: true, revokedAt: true },
+  });
+  if (!link) return { error: 'SHARE_NOT_FOUND' };
+  if (link.revokedAt !== null) return { error: 'SHARE_REVOKED' };
+
+  const tree = await prisma.familyTree.findUnique({
+    where: { id: link.treeId },
+    select: { name: true, description: true, generationCount: true },
+  });
+  if (!tree) return { error: 'SHARE_NOT_FOUND' };
+
+  const members = await prisma.familyMember.findMany({
+    where: { treeId: link.treeId },
+    select: SHARE_MEMBER_SELECT,
+  });
+  const relationships = await prisma.familyRelationship.findMany({
+    where: { treeId: link.treeId },
+    select: { memberId: true, relatedId: true, type: true },
+  });
+  return { link, tree, members, relationships };
+}
+
+function shareFailureResponse(res: express.Response, failure: ShareFailure): express.Response {
+  if (failure.error === 'SHARE_REVOKED') {
+    return res.status(410).json({ code: 'SHARE_REVOKED', message: 'This share link has been revoked' });
+  }
+  return res.status(404).json({ code: 'SHARE_NOT_FOUND', message: 'Share link not found' });
+}
+
+app.get('/api/v1/share/:token', async (req: express.Request<{ token: string }>, res) => {
+  const read = shareReadLimiter.check(shareRateKey(req, 'read'));
+  if (!read.allowed) return sendShareRateLimited(res, read.retryAfterSeconds);
+
+  try {
+    const context = await loadShareContext(req.params.token);
+    if ('error' in context) return shareFailureResponse(res, context);
+    const { link, tree, members, relationships } = context;
+
+    if (link.mode === 'password') {
+      const attempt = sharePasswordLimiter.check(shareRateKey(req, 'password'));
+      if (!attempt.allowed) return sendShareRateLimited(res, attempt.retryAfterSeconds);
+      const header = req.header('x-share-password');
+      if (header === undefined || header === '') {
+        return res.status(401).json({ code: 'SHARE_PASSWORD_REQUIRED', message: 'This share link requires a password' });
+      }
+      const ok = link.passwordHash !== null && await verifySharePassword(header, link.passwordHash);
+      if (!ok) {
+        return res.status(401).json({ code: 'SHARE_PASSWORD_INVALID', message: 'Incorrect share password' });
+      }
+    }
+
+    await prisma.treeShareLink.update({ where: { id: link.id }, data: { lastUsedAt: new Date() } });
+    res.json({
+      link: { mode: link.mode },
+      payload: buildPublicTreePayload(
+        { name: tree.name, description: tree.description, generationCount: tree.generationCount },
+        members,
+        relationships,
+      ),
+    });
+  } catch (e) {
+    res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
+  }
+});
+
+app.get('/api/v1/share/:token/og-image', async (req: express.Request<{ token: string }>, res) => {
+  const og = shareOgLimiter.check(shareRateKey(req, 'og'));
+  if (!og.allowed) return sendShareRateLimited(res, og.retryAfterSeconds);
+
+  try {
+    const context = await loadShareContext(req.params.token);
+    if ('error' in context) return shareFailureResponse(res, context);
+
+    // A password link keeps its tree name out of crawler previews: the
+    // OG route cannot demand a request header, so it renders the generic
+    // title instead of leaking the name (ADR 0010).
+    const isPublic = context.link.mode !== 'password';
+    const svg = buildShareOgImageSvg({
+      title: isPublic ? context.tree.name : 'A shared family tree',
+      subtitle: 'Stemmagraph',
+    });
+    res.set('Content-Type', 'image/svg+xml; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=300');
+    res.send(svg);
+  } catch (e) {
+    res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
+  }
+});
+
+// Minimal preview document for crawlers and manual QA: Open Graph and
+// Twitter meta tags plus a plain-text fallback. Same generic-title rule
+// as the OG image for password links.
+app.get('/api/v1/share/:token/preview', async (req: express.Request<{ token: string }>, res) => {
+  const og = shareOgLimiter.check(shareRateKey(req, 'preview'));
+  if (!og.allowed) return sendShareRateLimited(res, og.retryAfterSeconds);
+
+  try {
+    const context = await loadShareContext(req.params.token);
+    if ('error' in context) return shareFailureResponse(res, context);
+    const isPublic = context.link.mode !== 'password';
+    const title = isPublic ? context.tree.name : 'A shared family tree';
+    const description = isPublic && context.tree.description
+      ? context.tree.description
+      : 'A family tree shared on Stemmagraph.';
+    const origin = `${req.protocol}://${req.get('host') ?? ''}`;
+    const imageUrl = `${origin}/api/v1/share/${encodeURIComponent(req.params.token)}/og-image`;
+
+    const html = [
+      '<!doctype html>',
+      '<html lang="en">',
+      '<head>',
+      '<meta charset="utf-8">',
+      `<title>${escapeXmlText(title)}</title>`,
+      `<meta property="og:type" content="website">`,
+      `<meta property="og:title" content="${escapeXmlText(title)}">`,
+      `<meta property="og:description" content="${escapeXmlText(description)}">`,
+      `<meta property="og:image" content="${escapeXmlText(imageUrl)}">`,
+      `<meta name="twitter:card" content="summary_large_image">`,
+      `<meta name="twitter:title" content="${escapeXmlText(title)}">`,
+      `<meta name="twitter:description" content="${escapeXmlText(description)}">`,
+      `<meta name="twitter:image" content="${escapeXmlText(imageUrl)}">`,
+      '</head>',
+      '<body>',
+      `<h1>${escapeXmlText(title)}</h1>`,
+      `<p>${escapeXmlText(description)}</p>`,
+      '</body>',
+      '</html>',
+    ].join('');
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=300');
+    res.send(html);
+  } catch (e) {
+    res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
+  }
+});
+
 // ─── Formatters ──────────────────────────────────────────
 
 function formatTree(t: FamilyTree, viewerRole?: TreeRole | null) {
