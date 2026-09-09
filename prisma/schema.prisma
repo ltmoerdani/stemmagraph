@@ -97,6 +97,9 @@ model FamilyTree {
   treeMembers     TreeMember[]
   invitations     Invitation[]
   changeProposals ChangeProposal[]
+  // Public read links (ADR 0010). Relation side only: no FamilyTree
+  // column changes, the FK lives on the TreeShareLink row.
+  shareLinks      TreeShareLink[]
 }
 
 // ─── Family Member ────────────────────────────────────────
@@ -236,4 +239,30 @@ model ChangeProposal {
 
   @@index([familyTreeId, state])
   @@index([proposerUserId])
+}
+
+// ─── Tree Share Link (public read, ADR 0010) ─────────────
+// One row is one public read-only link to one tree. Two modes:
+// "public" (anyone with the token reads the redacted payload) and
+// "password" (the payload unlocks only with the password, stored as a
+// bcrypt hash, never plaintext). The token is >= 128-bit entropy,
+// URL-safe, generated per row, shown once in the creation response and
+// masked everywhere else, mirroring ADR 0004. Revocation is a stamp
+// (revokedAt), never a delete, so an old link stays explainable in the
+// audit trail. Deliberately separate from Invitation (ADR 0004): a
+// share link grants no membership, has no user, no role, and no expiry
+// in v1, so the invitation state machine does not apply.
+model TreeShareLink {
+  id           String    @id @default(uuid())
+  treeId       String
+  token        String    @unique
+  mode         String    @default("public")
+  passwordHash String?
+  revokedAt    DateTime?
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  tree FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@index([treeId])
 }
