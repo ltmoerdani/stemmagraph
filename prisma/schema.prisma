@@ -266,3 +266,129 @@ model TreeShareLink {
 
   @@index([treeId])
 }
+
+// ─── Genealogy core models (S1 phase 2, ADR 0011) ────────
+// Additive only: no existing model, field, or index is touched.
+// These five models give the tree genealogy-grade structure:
+// typed partial dates, normalized places, sources, citations,
+// and life events referencing them. Existing free-text columns
+// (birthDate, birthPlace, gender) stay untouched until the
+// separate backfill and cutover phases of ADR 0011.
+// SQLite note: the Prisma SQLite provider has no enum support,
+// so the vocabularies below (dateKind, eventType, confidence)
+// are documented String columns enforced in application code,
+// matching the existing status/role/type pattern in this file.
+
+// Typed partial date (ADR 0011, decision 1). The stored precision
+// is never sharper than the source: originalDateString keeps the
+// exact wording found in the source and is never overwritten.
+// dateKind: "EXACT" | "ABOUT" | "BEFORE" | "AFTER" | "RANGE".
+// RANGE is the only kind that uses the *End columns; EXACT,
+// ABOUT, BEFORE and AFTER use the *Start columns alone.
+model PartialDate {
+  id                 String   @id @default(uuid())
+  dateKind           String
+  yearStart          Int?
+  monthStart         Int?
+  dayStart           Int?
+  yearEnd            Int?
+  monthEnd           Int?
+  dayEnd             Int?
+  originalDateString String
+  createdAt          DateTime @default(now())
+
+  lifeEvents LifeEvent[]
+}
+
+// Place as an entity (ADR 0011, decision 3): displayName is what
+// the source writes, normalizedName is the match/dedup key per
+// tree. Existing text columns (birthPlace, currentLocation) keep
+// living on FamilyMember until the backfill phase.
+model Place {
+  id             String   @id @default(uuid())
+  treeId         String
+  displayName    String
+  normalizedName String
+  latitude       Float?
+  longitude      Float?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lifeEvents LifeEvent[]
+
+  @@index([treeId])
+  @@unique([treeId, normalizedName])
+}
+
+// Source = the document itself (book, archive, certificate,
+// digitized archive URL). Citations point at sources, life events
+// point at citations (ADR 0011, decision 4).
+model Source {
+  id            String   @id @default(uuid())
+  treeId        String
+  title         String
+  author        String?
+  publisher     String?
+  repositoryRef String?
+  url           String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  citations Citation[]
+
+  @@index([treeId])
+}
+
+// Citation = one source seen through a qualifier (page, act
+// number) with an optional transcription. confidence is a free
+// String (default "secondary" per the ADR 0011 draft).
+model Citation {
+  id            String   @id @default(uuid())
+  sourceId      String
+  qualifier     String?
+  transcription String?
+  confidence    String   @default("secondary")
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  source     Source      @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  lifeEvents LifeEvent[]
+
+  @@index([sourceId])
+}
+
+// Life event (ADR 0011, decisions 1, 4, 5). eventType domain
+// values: "BIRTH" | "DEATH" | "MARRIAGE" | "DIVORCE" |
+// "PARTNERSHIP" | "ADOPTION" | "CENSUS" | "IMMIGRATION" |
+// "EMMIGRATION" | "BURIAL" | "BAPTISM" | "OCCUPATION" |
+// "RESIDENCE" | "OTHER". The subject is one member; marriage,
+// divorce and partnership events name the second member through
+// partnerMemberId (FamilyRelationship stays the graph backbone).
+// memberId, partnerMemberId and treeId deliberately carry no
+// foreign key in this additive phase: FamilyMember and FamilyTree
+// stay untouched until backfill/cutover, mirroring how the event
+// store outlives referenced rows. date, place and citation are
+// optional, so removing one leaves the event row explainable.
+model LifeEvent {
+  id              String   @id @default(uuid())
+  treeId          String
+  memberId        String
+  partnerMemberId String?
+  eventType       String
+  dateId          String?
+  placeId         String?
+  citationId      String?
+  detail          String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  date     PartialDate? @relation(fields: [dateId], references: [id])
+  place    Place?       @relation(fields: [placeId], references: [id])
+  citation Citation?    @relation(fields: [citationId], references: [id])
+
+  @@index([treeId, memberId])
+  @@index([eventType])
+}
