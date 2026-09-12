@@ -16,6 +16,14 @@
 //   AFTER : "AFT <DATE>" | "AFTER <DATE>"
 //   RANGE : "BET <DATE> AND <DATE>" (kedua sisi harus sah)
 //
+// Tanggal ISO 8601 calendar (S1F3-A) diterima pada posisi <DATE> polos dan
+// setelah kata kunci ABT/ABOUT/BEF/BEFORE/AFT/AFTER:
+//   "YYYY-MM-DD" | "YYYY-MM" | "YYYY" (tahun saja lewat aturan YEAR lama).
+// Bentuk dengan bagian waktu ("1945-03-15T10:00:00"), bulan 13, hari
+// mustahil, atau tahun 0 gagal urai dan jatuh ke ABOUT tanpa komponen;
+// originalDateString tetap utuh, tanpa mengarang presisi. RANGE (BET..AND)
+// masih menerima tanggal GEDCOM saja pada fase ini.
+//
 // Escape kalender GEDCOM seperti "@#DGREGORIAN@" dibuang saat normalisasi.
 // Validitas hari dicek terhadap panjang bulan Gregorian; tanggal mustahil
 // ("31 FEB 1900") diperlakukan sebagai gagal urai, bukan tanggal sah.
@@ -86,6 +94,11 @@ const MONTHS: Readonly<Record<string, number>> = {
 const DAY_RE = /^\d{1,2}$/
 const YEAR_RE = /^\d{1,4}$/
 
+/** ISO 8601 calendar lengkap: "YYYY-MM-DD" (bulan dan hari dua digit). */
+const ISO_YMD_RE = /^(\d{1,4})-(\d{2})-(\d{2})$/
+/** ISO 8601 tahun-bulan: "YYYY-MM" (tanpa hari, jangan mengarang presisi). */
+const ISO_YM_RE = /^(\d{1,4})-(\d{2})$/
+
 /** Tahun kabisat Gregorian (aturan proleptik; komentar lihat bawah). */
 function isLeapYear(year: number): boolean {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
@@ -141,6 +154,45 @@ function parseExactTokens(normalized: string): EventDateComponents | null {
 }
 
 /**
+ * Urai tanggal ISO 8601 calendar: "YYYY-MM-DD" atau "YYYY-MM".
+ * Tahun memakai rentang aturan GEDCOM yang sudah ada (1 sampai 4 digit,
+ * tahun >= 1, konstanta tidak diubah). Bulan wajib 01 sampai 12 dan hari
+ * wajib 01 sampai panjang bulan Gregorian, sehingga bentuk mustahil
+ * ("1945-13-01", "2023-02-29") gagal urai. Bentuk dengan bagian waktu
+ * ("1945-03-15T10:00:00") tidak cocok pola apa pun di sini dan gagal:
+ * jangan membuang bagian lalu mengarang presisi dari sisa yang tertinggal.
+ * Tahun saja ("1945") sudah tertangani aturan YEAR GEDCOM di atas.
+ */
+function parseIsoDate(normalized: string): EventDateComponents | null {
+  const ymd = normalized.match(ISO_YMD_RE)
+  if (ymd) {
+    const year = Number(ymd[1])
+    const month = Number(ymd[2])
+    const day = Number(ymd[3])
+    if (year < 1 || month < 1 || month > 12) return null
+    if (day < 1 || day > daysInMonth(year, month)) return null
+    return { year, month, day }
+  }
+  const ym = normalized.match(ISO_YM_RE)
+  if (ym) {
+    const year = Number(ym[1])
+    const month = Number(ym[2])
+    if (year < 1 || month < 1 || month > 12) return null
+    return { year, month }
+  }
+  return null
+}
+
+/**
+ * Urai satu tanggal tanpa kata kunci pada posisi tanggal polos: coba
+ * format GEDCOM dulu agar seluruh perilaku lama tetap identik, baru
+ * fallback ke ISO 8601. Input yang gagal keduanya kembali null.
+ */
+function parsePlainDate(normalized: string): EventDateComponents | null {
+  return parseExactTokens(normalized) ?? parseIsoDate(normalized)
+}
+
+/**
  * Parse string tanggal GEDCOM menjadi objek ParsedEventDate.
  * Gagal urai TIDAK melempar: kembalikan ABOUT tanpa komponen, dengan
  * originalDateString persis sama seperti input.
@@ -166,10 +218,11 @@ export function parseEventDate(input: string): ParsedEventDate {
     return { dateKind: 'ABOUT', ...base }
   }
 
-  // Kata kunci presisi longgar: ambil sisanya sebagai tanggal exact.
+  // Kata kunci presisi longgar: ambil sisanya sebagai tanggal polos
+  // (GEDCOM atau ISO 8601).
   const keywordMatch = normalized.match(/^(ABT|ABOUT|BEF|BEFORE|AFT|AFTER)\s+(.+)$/)
   if (keywordMatch) {
-    const inner = parseExactTokens(keywordMatch[2].trim())
+    const inner = parsePlainDate(keywordMatch[2].trim())
     if (!inner) return { dateKind: 'ABOUT', ...base }
     const kindMap = {
       ABT: 'ABOUT', ABOUT: 'ABOUT',
@@ -179,8 +232,9 @@ export function parseEventDate(input: string): ParsedEventDate {
     return { dateKind: kindMap[keywordMatch[1] as keyof typeof kindMap], ...inner, ...base }
   }
 
-  // Tanpa kata kunci: harus exact sah, kalau tidak jatuh ke ABOUT.
-  const exact = parseExactTokens(normalized)
+  // Tanpa kata kunci: harus tanggal polos sah (GEDCOM atau ISO 8601),
+  // kalau tidak jatuh ke ABOUT.
+  const exact = parsePlainDate(normalized)
   if (exact) {
     return { dateKind: 'EXACT', ...exact, ...base }
   }
