@@ -24,6 +24,7 @@ import { version as appVersion } from '../../../package.json'
 import { evaluateMemberPrivacy } from '../privacy/exportPrivacyGate'
 import { parseEventDate } from './parseEventDate'
 import { formatGedcomDateValue } from './formatGedcomDate'
+import { placePayload } from './placePayload'
 import type {
   FamilyMemberRecord,
   MemberRelationship,
@@ -433,7 +434,8 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     if (!redact && (m.birthDate || m.birthPlace)) {
       const birt = new GEDCStruct('BIRT', indi)
       addText(birt, 'DATE', eventDateValue(m.birthDate))
-      addText(birt, 'PLAC', m.birthPlace)
+      const birtPlace = m.birthPlace ? placePayload(m.birthPlace) : undefined
+      if (birtPlace) addText(birt, 'PLAC', birtPlace)
     }
 
     // The gate labels only living members 'redact', so a redacted INDI
