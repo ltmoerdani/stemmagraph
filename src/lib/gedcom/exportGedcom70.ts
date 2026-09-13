@@ -22,6 +22,8 @@
 import { GEDCStruct } from './vendor/gedcstruct.js'
 import { version as appVersion } from '../../../package.json'
 import { evaluateMemberPrivacy } from '../privacy/exportPrivacyGate'
+import { parseEventDate } from './parseEventDate'
+import { formatGedcomDateValue } from './formatGedcomDate'
 import type {
   FamilyMemberRecord,
   MemberRelationship,
@@ -116,6 +118,20 @@ function dateExact(d: Date): string {
   return `${day} ${month} ${year}`
 }
 
+/**
+ * Maps a stored event date string (BIRT/DEAT) to a GEDCOM 7 DateValue
+ * payload (S1F4-A). Strings the parser recognizes are normalized to the
+ * proper 7.0 grammar (ABT/BEF/AFT/BET..AND, month names, ISO 8601
+ * input) while keeping the source precision. Anything the parser cannot
+ * read falls back to the raw string, unchanged: a stored precision is
+ * never sharpened (ADR 0011, decision 1), and unrecognized text is
+ * never rewritten into something that looks authoritative.
+ */
+function eventDateValue(raw: string): string {
+  const formatted = formatGedcomDateValue(parseEventDate(raw))
+  return formatted ?? raw
+}
+
 /** True when the URL can be written as an OBJE>FILE payload. */
 function isHttpUrl(url: string): boolean {
   return /^https?:\/\//.test(url)
@@ -176,12 +192,18 @@ function addText(
  *   Splitting names properly is deferred to the model rework (T0c).
  * - NICK: substructure of NAME (its only legal parent per the registry).
  * - SEX: male=M, female=F, other=X.
- * - BIRT>DATE / BIRT>PLAC: model strings written as-is. The model stores
- *   free-form date strings and date grammar normalization is explicitly
- *   out of scope for this wave, so a non-GEDCOM-shaped birthDate stays
- *   byte-preserved here (validators will flag it; see worklog S-04).
- * - DEAT: DEAT>DATE when deathDate exists; plain "DEAT Y" when the member
- *   is recorded as not alive without a death date; omitted otherwise.
+ * - BIRT>DATE / BIRT>PLAC: model strings, with the date going through
+ *   parseEventDate + formatGedcomDateValue first (S1F4-A). Recognized
+ *   date grammar is written as a proper GEDCOM 7 DateValue: ABT/BEF/
+ *   AFT prefixes, BET..AND ranges, and GEDCOM month names, each keeping
+ *   exactly the precision recorded in the source (ADR 0011, decision 1:
+ *   a stored date is never sharpened). Unrecognized date strings stay
+ *   byte-preserved via the raw fallback (validators will flag them;
+ *   see worklog S-04). PLAC is written as-is.
+ * - DEAT: DEAT>DATE (through the same date normalization as BIRT.DATE,
+ *   same raw fallback) when deathDate exists; plain "DEAT Y" when the
+ *   member is recorded as not alive without a death date; omitted
+ *   otherwise.
  * - EDUC: standard 7.0 tag (verified present under INDI in the registry),
  *   so education needs no extension tag.
  * - OCCU: standard tag.
@@ -410,7 +432,7 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     // both reveal identifying data).
     if (!redact && (m.birthDate || m.birthPlace)) {
       const birt = new GEDCStruct('BIRT', indi)
-      addText(birt, 'DATE', m.birthDate)
+      addText(birt, 'DATE', eventDateValue(m.birthDate))
       addText(birt, 'PLAC', m.birthPlace)
     }
 
@@ -420,7 +442,7 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     if (!redact) {
       if (m.deathDate) {
         const deat = new GEDCStruct('DEAT', indi)
-        addText(deat, 'DATE', m.deathDate)
+        addText(deat, 'DATE', eventDateValue(m.deathDate))
       } else if (!m.isAlive) {
         // Died, but no death date recorded. Payload Y is the standard way
         // to assert the event without a date and keeps DEAT non-empty.
