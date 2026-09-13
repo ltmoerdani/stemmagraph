@@ -215,4 +215,53 @@ describe('exportGedcom70: invariant semantik', () => {
     expect(countMatches(gedcom, /1 MARR Y/g)).toBe(1)
     expect(countMatches(gedcom, /1 DIV Y/g)).toBe(1)
   })
+
+  it('S1F4-A: birthDate berprefiks ABT/BEF/AFT diekspor sebagai DateValue GEDCOM 7', () => {
+    const members = [
+      member({ id: 'a', name: 'Lahir Kira', birthDate: 'ABT 1945' }),
+      member({ id: 'b', name: 'Lahir Sebelum', gender: 'female', birthDate: 'BEF MAR 1900' }),
+      member({ id: 'c', name: 'Lahir Sesudah', gender: 'other', birthDate: 'AFT 12 JAN 1900' }),
+    ]
+    const { gedcom } = exportGedcom70({ members, relationships: [], exportedAt: EXPORTED_AT })
+    expect(gedcom).toContain('2 DATE ABT 1945')
+    expect(gedcom).toContain('2 DATE BEF MAR 1900')
+    expect(gedcom).toContain('2 DATE AFT 12 JAN 1900')
+  })
+
+  it('S1F4-A: birthDate rentang BET..AND diekspor utuh dengan kedua sisi terjaga', () => {
+    const members = [
+      member({ id: 'a', name: 'Lahir Rentang', birthDate: 'BET 1900 AND 1910' }),
+      member({ id: 'b', name: 'Lahir Rentang Campur', gender: 'female', birthDate: 'BET 12 MAR 1945 AND JUN 1950' }),
+    ]
+    const { gedcom } = exportGedcom70({ members, relationships: [], exportedAt: EXPORTED_AT })
+    expect(gedcom).toContain('2 DATE BET 1900 AND 1910')
+    expect(gedcom).toContain('2 DATE BET 12 MAR 1945 AND JUN 1950')
+  })
+
+  it('S1F4-A: deathDate berprefiks presisi longgar juga dinormalisasi, DEAT Y tidak ditulis', () => {
+    const members = [
+      member({ id: 'a', name: 'Wafat Kira', isAlive: false, deathDate: 'ABT 3 JUN 2001' }),
+    ]
+    const { gedcom } = exportGedcom70({ members, relationships: [], exportedAt: EXPORTED_AT })
+    expect(gedcom).toContain('1 DEAT')
+    expect(gedcom).toContain('2 DATE ABT 3 JUN 2001')
+    expect(gedcom).not.toContain('1 DEAT Y')
+  })
+
+  it('S1F4-A: birthDate ISO 8601 diekspor dengan nama bulan GEDCOM', () => {
+    const members = [
+      member({ id: 'a', name: 'Iso', birthDate: '1945-03-12' }),
+    ]
+    const { gedcom } = exportGedcom70({ members, relationships: [], exportedAt: EXPORTED_AT })
+    expect(gedcom).toContain('2 DATE 12 MAR 1945')
+  })
+
+  it('S1F4-A: string tanggal tak terurai tetap tertulis verbatim (fallback raw)', () => {
+    const members = [
+      member({ id: 'a', name: 'Kira Kira', birthDate: 'kira-kira 1945', isAlive: false, deathDate: 'sekitar tahun 2000' }),
+    ]
+    const { gedcom } = exportGedcom70({ members, relationships: [], exportedAt: EXPORTED_AT })
+    expect(gedcom).toContain('2 DATE kira-kira 1945')
+    expect(gedcom).toContain('2 DATE sekitar tahun 2000')
+  })
 })
