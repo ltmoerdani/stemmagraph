@@ -170,3 +170,134 @@ describe('parseEventDate - kontrak umum', () => {
     }
   })
 })
+
+describe('parseEventDate - ISO 8601 (S1F3-A)', () => {
+  it('urai ISO lengkap YYYY-MM-DD jadi EXACT penuh', () => {
+    const r = parseEventDate('1945-03-15')
+    expect(r).toMatchObject({ dateKind: 'EXACT', day: 15, month: 3, year: 1945 })
+    expect(r.originalDateString).toBe('1945-03-15')
+  })
+
+  it('urai ISO tahun-bulan tanpa mengarang hari', () => {
+    const r = parseEventDate('1945-03')
+    expect(r).toMatchObject({ dateKind: 'EXACT', month: 3, year: 1945 })
+    expect(r).not.toHaveProperty('day')
+  })
+
+  it('ISO tahun saja tetap EXACT year lewat aturan YEAR GEDCOM yang ada', () => {
+    const r = parseEventDate('1945')
+    expect(r).toMatchObject({ dateKind: 'EXACT', year: 1945 })
+    expect(r).not.toHaveProperty('month')
+    expect(r).not.toHaveProperty('day')
+  })
+
+  it('ABT dan ABOUT dengan tanggal ISO memetakan ke ABOUT berkomponen', () => {
+    expect(parseEventDate('ABT 1945-03-15')).toMatchObject({
+      dateKind: 'ABOUT', day: 15, month: 3, year: 1945,
+    })
+    expect(parseEventDate('ABOUT 1945-03')).toMatchObject({
+      dateKind: 'ABOUT', month: 3, year: 1945,
+    })
+  })
+
+  it('BEF dan BEFORE dengan tanggal ISO memetakan ke BEFORE', () => {
+    expect(parseEventDate('BEF 1945-03-15')).toMatchObject({
+      dateKind: 'BEFORE', day: 15, month: 3, year: 1945,
+    })
+    expect(parseEventDate('BEFORE 1945-03')).toMatchObject({
+      dateKind: 'BEFORE', month: 3, year: 1945,
+    })
+  })
+
+  it('AFT dan AFTER dengan tanggal ISO memetakan ke AFTER', () => {
+    expect(parseEventDate('AFT 1945-03-15')).toMatchObject({
+      dateKind: 'AFTER', day: 15, month: 3, year: 1945,
+    })
+    expect(parseEventDate('AFTER 1945-03')).toMatchObject({
+      dateKind: 'AFTER', month: 3, year: 1945,
+    })
+  })
+
+  it('29 FEB kabisat: 2024-02-29 sah EXACT, 2023-02-29 gagal ke ABOUT', () => {
+    expect(parseEventDate('2024-02-29')).toMatchObject({
+      dateKind: 'EXACT', day: 29, month: 2, year: 2024,
+    })
+    const r = parseEventDate('2023-02-29')
+    expect(r).toMatchObject({ dateKind: 'ABOUT', originalDateString: '2023-02-29' })
+    expect(r).not.toHaveProperty('day')
+    expect(r).not.toHaveProperty('month')
+    expect(r).not.toHaveProperty('year')
+  })
+
+  it('bulan 13 dan hari 32 ditolak, jatuh ke ABOUT tanpa komponen', () => {
+    for (const bad of ['1945-13-01', '1945-00-10', '1945-05-32', '1945-05-00']) {
+      const r = parseEventDate(bad)
+      expect(r).toMatchObject({ dateKind: 'ABOUT', originalDateString: bad })
+      expect(r).not.toHaveProperty('year')
+      expect(r).not.toHaveProperty('month')
+      expect(r).not.toHaveProperty('day')
+    }
+  })
+
+  it('ISO dengan bagian waktu gagal urai, original utuh tanpa presisi buatan', () => {
+    for (const raw of ['1945-03-15T10:00:00', 'ABT 1945-03-15T10:00:00']) {
+      const r = parseEventDate(raw)
+      expect(r).toMatchObject({ dateKind: 'ABOUT', originalDateString: raw })
+      expect(r).not.toHaveProperty('year')
+      expect(r).not.toHaveProperty('month')
+      expect(r).not.toHaveProperty('day')
+    }
+  })
+
+  it('whitespace di sekitar tanggal ISO dilipat', () => {
+    expect(parseEventDate('  1945-03-15  ')).toMatchObject({
+      dateKind: 'EXACT', day: 15, month: 3, year: 1945,
+    })
+    expect(parseEventDate('\t aft \t 1945-03 \n')).toMatchObject({
+      dateKind: 'AFTER', month: 3, year: 1945,
+    })
+  })
+
+  it('kata kunci prefiks ISO tak case-sensitif', () => {
+    expect(parseEventDate('abt 1945-03-15')).toMatchObject({
+      dateKind: 'ABOUT', day: 15, month: 3, year: 1945,
+    })
+    expect(parseEventDate('before 1945-03')).toMatchObject({
+      dateKind: 'BEFORE', month: 3, year: 1945,
+    })
+    expect(parseEventDate('After 1945-03-15')).toMatchObject({
+      dateKind: 'AFTER', day: 15, month: 3, year: 1945,
+    })
+  })
+
+  it('bentuk ISO di luar kontrak gagal urai: satu digit, ordinal, week, tahun 0', () => {
+    for (const bad of ['1945-3-15', '1945-3', '1945-074', '1945-W11-3', '0000-03-15', '19450315']) {
+      const r = parseEventDate(bad)
+      expect(r).toMatchObject({ dateKind: 'ABOUT', originalDateString: bad })
+      expect(r).not.toHaveProperty('year')
+    }
+  })
+
+  it('RANGE BET AND masih tanggal GEDCOM saja pada fase ini', () => {
+    const r = parseEventDate('BET 1945-03-15 AND 1950-06-30')
+    expect(r).toMatchObject({
+      dateKind: 'ABOUT',
+      originalDateString: 'BET 1945-03-15 AND 1950-06-30',
+    })
+    expect(r).not.toHaveProperty('from')
+    expect(r).not.toHaveProperty('to')
+  })
+
+  it('format GEDCOM lama tetap berjalan berdampingan dengan ISO', () => {
+    expect(parseEventDate('12 JAN 1900')).toMatchObject({
+      dateKind: 'EXACT', day: 12, month: 1, year: 1900,
+    })
+    expect(parseEventDate('ABT 12 JAN 1900')).toMatchObject({
+      dateKind: 'ABOUT', day: 12, month: 1, year: 1900,
+    })
+    expect(parseEventDate('BET 1900 AND 1910')).toMatchObject({
+      dateKind: 'RANGE', from: { year: 1900 }, to: { year: 1910 },
+    })
+    expect(parseEventDate('31 FEB 1900')).toMatchObject({ dateKind: 'ABOUT' })
+  })
+})
