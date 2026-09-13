@@ -433,7 +433,8 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     if (!redact && (m.birthDate || m.birthPlace)) {
       const birt = new GEDCStruct('BIRT', indi)
       addText(birt, 'DATE', eventDateValue(m.birthDate))
-      addText(birt, 'PLAC', m.birthPlace)
+      const birtPlace = placePayload(m.birthPlace)
+      if (birtPlace) addText(birt, 'PLAC', birtPlace)
     }
 
     // The gate labels only living members 'redact', so a redacted INDI
