@@ -462,7 +462,8 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     // notes); the whole block is omitted for redacted members.
     if (!redact && (m.currentLocation || m.email || m.phone)) {
       const resi = new GEDCStruct('RESI', indi)
-      addText(resi, 'PLAC', m.currentLocation)
+      const resiPlace = m.currentLocation ? placePayload(m.currentLocation) : undefined
+      if (resiPlace) addText(resi, 'PLAC', resiPlace)
       addText(resi, 'EMAIL', m.email)
       addText(resi, 'PHON', m.phone)
     }

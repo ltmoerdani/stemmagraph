@@ -48,3 +48,33 @@ describe('exportGedcom70 BIRT PLAC wiring', () => {
     )
   })
 })
+
+describe('exportGedcom70 RESI PLAC wiring', () => {
+  it('payloads currentLocation through placePayload', () => {
+    const gedcom = exportOne({
+      currentLocation: '  Yogyakarta\tDI Yogyakarta  ',
+      email: 'budi@example.com',
+      phone: '+628123456789',
+    })
+    expect(gedcom).toContain('2 PLAC Yogyakarta DI Yogyakarta')
+    expect(gedcom).toContain('2 EMAIL budi@example.com')
+    expect(gedcom).toContain('2 PHON +628123456789')
+  })
+
+  it('omits RESI PLAC line for blank currentLocation and keeps EMAIL and PHON', () => {
+    const gedcom = exportOne({
+      currentLocation: '   ',
+      email: 'budi@example.com',
+      phone: '+628123456789',
+    })
+    expect(gedcom).not.toContain('2 PLAC')
+    expect(gedcom).toContain('2 EMAIL budi@example.com')
+    expect(gedcom).toContain('2 PHON +628123456789')
+  })
+
+  it('strips control characters from currentLocation', () => {
+    expect(
+      exportOne({ currentLocation: '  Bandung\t\u0007Jawa Barat ' }),
+    ).toContain('2 PLAC Bandung Jawa Barat')
+  })
+})
