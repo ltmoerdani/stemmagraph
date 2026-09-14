@@ -35,6 +35,26 @@
       "confirmLabel": "Saya mengerti dan tetap mengunduh data lengkap"
     }
   },
+  "import": {
+    "button": "Impor",
+    "busy": "Mengimpor...",
+    "close": "Tutup menu impor",
+    "hint": "Muat file GEDCOM 7.0 (.ged) atau GEDZIP (.gedzip) ke pohon aktif. Jenis file dikenali otomatis.",
+    "chooseFile": "Pilih file .ged atau .gedzip",
+    "summary": {
+      "title": "Impor selesai",
+      "members": "{{count}} anggota dibuat",
+      "relations": "{{count}} relasi dibuat",
+      "skipped": "{{count}} relasi dilewati (rujukan tak dikenal)",
+      "failed": "{{count}} anggota gagal disimpan"
+    },
+    "errors": {
+      "noTree": "Tidak ada pohon keluarga aktif. Buka atau buat pohon dulu.",
+      "unreadable": "File tidak dapat dibaca sebagai GEDCOM atau GEDZIP.",
+      "empty": "Tidak ada data individu pada file ini.",
+      "generic": "Impor gagal. Periksa file lalu coba lagi."
+    }
+  },
   "toolbar": {
     "dashboard": "Dasbor",
     "unsavedConfirm": "Ada perubahan yang belum disimpan. Yakin ingin keluar dari mode edit?",
