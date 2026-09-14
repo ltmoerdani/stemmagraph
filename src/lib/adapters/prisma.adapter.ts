@@ -256,6 +256,7 @@ export class PrismaAdapter implements DataAdapter {
         deathDate: input.deathDate,
         generation: input.generation ?? 1,
         maritalStatus: input.maritalStatus ?? 'single',
+        privacyStatus: input.privacyStatus ?? 'shared',
       },
     });
 

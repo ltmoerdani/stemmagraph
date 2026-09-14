@@ -99,6 +99,7 @@ export interface CreateMemberInput {
   deathDate?: string;
   generation?: number;
   maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
+  privacyStatus?: 'shared' | 'private';
 }
 
 export interface MemberRelationship {
