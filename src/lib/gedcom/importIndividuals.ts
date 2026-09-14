@@ -17,8 +17,9 @@
 //     to the wiring layer, not the parser.
 //
 // Purity contract (same family as parseEventDate/placePayload):
-//   - Pure functions: no DB, no env, no network, no side effects, and no
-//     commercial/billing code (pure core rule).
+//   - Pure functions: no DB, no env, no network, no side effects. The
+//     pure-core rule (no commercial code) applies: this parser only reads
+//     genealogical payloads and never touches monetization concerns.
 //   - Never throws on malformed GEDCOM: the vendor parser logs broken
 //     lines via the optional logger and skips them; empty payloads stay
 //     undefined; dates go through parseEventDate which also never throws.
