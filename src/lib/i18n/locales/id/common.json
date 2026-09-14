@@ -416,5 +416,10 @@
     "submitPropose": "Kirim usulan",
     "proposeSent": "Usulan terkirim dan menunggu keputusan pemilik.",
     "proposeFailed": "Gagal mengirim usulan."
+  },
+  "memberEdit": {
+    "privacyStatus": "Status Privasi",
+    "privacyShared": "Dibagikan, sertakan dalam ekspor silsilah publik",
+    "privacyPrivate": "Privat, samarkan dalam ekspor silsilah publik"
   }
 }
