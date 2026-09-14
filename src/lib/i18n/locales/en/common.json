@@ -35,6 +35,26 @@
       "confirmLabel": "I understand and still want to download the full data"
     }
   },
+  "import": {
+    "button": "Import",
+    "busy": "Importing...",
+    "close": "Close import menu",
+    "hint": "Load a GEDCOM 7.0 (.ged) or GEDZIP (.gedzip) file into the current tree. The file type is detected automatically.",
+    "chooseFile": "Choose a .ged or .gedzip file",
+    "summary": {
+      "title": "Import complete",
+      "members": "{{count}} members created",
+      "relations": "{{count}} relationships created",
+      "skipped": "{{count}} relationships skipped (unknown references)",
+      "failed": "{{count}} members failed to save"
+    },
+    "errors": {
+      "noTree": "No active family tree. Open or create a tree first.",
+      "unreadable": "The file could not be read as GEDCOM or GEDZIP.",
+      "empty": "No individual records were found in this file.",
+      "generic": "Import failed. Check the file and try again."
+    }
+  },
   "toolbar": {
     "dashboard": "Dashboard",
     "unsavedConfirm": "You have unsaved changes. Are you sure you want to exit edit mode?",

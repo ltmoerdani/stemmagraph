@@ -25,6 +25,7 @@ import { MarriageEdge } from './edges/MarriageEdge';
 import { ParentChildEdge } from './edges/ParentChildEdge';
 import { SiblingEdge } from './edges/SiblingEdge';
 import { ExportControls } from './controls/ExportControls';
+import { ImportControls } from './controls/ImportControls';
 import { FamilyTreeControls } from './controls/FamilyTreeControls';
 import { MemberEditModal } from './modals/MemberEditModal';
 import { constrainNodeMovement } from './layout/tierLayout';
@@ -550,6 +551,9 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
 
         <Panel position="top-right">
           <ExportControls />
+          <div className="mt-2">
+            <ImportControls />
+          </div>
         </Panel>
 
         {/* Tier indicators for vertical layout */}
