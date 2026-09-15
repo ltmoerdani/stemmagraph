@@ -20,8 +20,65 @@ model User {
   name       String
   familyName String?
   avatar     String?
+  // P2-1 account states. Application domain values:
+  // status: "pending" | "active" | "disabled" (see src/lib/account-states)
+  // role:   "owner" | "member"
+  status     String   @default("pending")
+  role       String   @default("member")
+  // P2-7 weekly digest (ADR 0008). digestOptIn is the explicit consent
+  // switch: default false, never assumed, flipped only by the owner of the
+  // row through PUT /digest/preferences. digestLastSentAt is the once per
+  // ISO week guard timestamp the scheduler advances only after a send
+  // succeeds. No email content is persisted anywhere.
+  digestOptIn      Boolean   @default(false)
+  digestLastSentAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  notifications Notification[]
+  treeMemberships TreeMember[]
+  createdInvitations Invitation[] @relation("InvitationCreator")
+  proposedChanges ChangeProposal[] @relation("ChangeProposer")
+}
+
+// ─── Notification (in-app, P2-1) ─────────────────────────
+// Deliveries stay inside the server: no email, no external push.
+// Known types: "ACCOUNT_PENDING_CREATED" | "ACCOUNT_ACTIVATED".
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  type        String
+  payloadJson String
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// ─── Event (append-only store, P2-2) ─────────────────────
+// Immutable audit log of meaningful account actions (ADR 0003).
+// Append-only by convention: the server has exactly one writer
+// (appendEvent in src/lib/events) and no update/delete route exists.
+// actorUserId is NULL for system-initiated actions.
+// familyTreeId is NULL for events not scoped to one tree.
+// No foreign keys on purpose: the store must outlive referenced rows
+// (records survive account deletion) and migrations stay additive.
+
+model Event {
+  id           String   @id @default(cuid())
+  type         String
+  actorUserId  String?
+  familyTreeId String?
+  payloadJson  String
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([familyTreeId, createdAt])
 }
 
 // ─── Family Tree ──────────────────────────────────────────
@@ -37,6 +94,12 @@ model FamilyTree {
   updatedAt       DateTime             @updatedAt
   members         FamilyMember[]
   relationships   FamilyRelationship[]
+  treeMembers     TreeMember[]
+  invitations     Invitation[]
+  changeProposals ChangeProposal[]
+  // Public read links (ADR 0010). Relation side only: no FamilyTree
+  // column changes, the FK lives on the TreeShareLink row.
+  shareLinks      TreeShareLink[]
 }
 
 // ─── Family Member ────────────────────────────────────────
@@ -57,6 +120,10 @@ model FamilyMember {
   email           String?
   phone           String?
   isAlive         Boolean              @default(true)
+  // Per-individual sharing consent (S-06 Wave 1). Application domain
+  // values: "shared" | "private". NULL means not yet recorded; the
+  // export privacy gate treats NULL living members as redact.
+  privacyStatus   String?
   generation      Int                  @default(1)
   maritalStatus   String               @default("single")
   notes           String?
@@ -87,4 +154,241 @@ model FamilyRelationship {
 
   @@unique([memberId, relatedId, type])
   @@index([treeId])
+}
+
+// ─── Tree Member (per-tree membership, P2-3) ─────────────
+// A user's role on one tree (ADR 0002 matrix): "owner" | "editor" | "viewer".
+// Membership is granted through invitations only; the tree creator is born
+// owner. The pair (treeId, userId) is unique: one row is one membership.
+
+model TreeMember {
+  id        String   @id @default(uuid())
+  treeId    String
+  userId    String
+  role      String   @default("viewer")
+  createdAt DateTime @default(now())
+
+  tree FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([treeId, userId])
+  @@index([userId])
+}
+
+// ─── Invitation (P2-3) ────────────────────────────────────
+// Two types (ADR 0004): "personal" (single use, TTL 48h) and "family"
+// (multi-use, TTL 7 days, maxUses clamped 1..100 at creation, default 20).
+// The token is >= 128-bit entropy, URL-safe, generated per row; it is shown
+// once in the creation response and masked everywhere else. channel records
+// how the owner intends to hand the link over ("manual" | "wa" | "email"),
+// it is data only: no outbound transport exists in this server.
+
+model Invitation {
+  id          String    @id @default(uuid())
+  token       String    @unique
+  type        String
+  treeId      String
+  createdById String
+  grantedRole String    @default("viewer")
+  maxUses     Int
+  usedCount   Int       @default(0)
+  channel     String?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  tree      FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  createdBy User       @relation("InvitationCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([treeId])
+  @@index([createdById])
+}
+
+// ─── Change Proposal (P2-5) ───────────────────────────────
+// One row is one proposed edit to one live record, held in the two-version
+// webtrees style (ADR 0009): the proposal stores a frozen beforeJson and a
+// desired afterJson, and the live row moves only when the tree owner
+// accepts. State is "pending" | "rejected" | "distinct" (the pure module in
+// src/lib/changes owns the vocabulary and the legal transitions).
+// reasonNote is mandatory proposer prose; decisionNote is optional reviewer
+// prose. autoAccepted is stamped true only when the narrow owner policy
+// fired; editor proposals are never auto-accepted. decidedByUserId is a
+// plain nullable technical id, deliberately not a foreign key: the audit
+// trail must survive account deletion the same way the event store does.
+
+model ChangeProposal {
+  id              String    @id @default(uuid())
+  familyTreeId    String
+  proposerUserId  String
+  targetType      String
+  targetId        String
+  beforeJson      String
+  afterJson       String
+  state           String    @default("pending")
+  reasonNote      String
+  autoAccepted    Boolean   @default(false)
+  decidedByUserId String?
+  decidedAt       DateTime?
+  decisionNote    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  familyTree   FamilyTree @relation(fields: [familyTreeId], references: [id], onDelete: Cascade)
+  proposerUser User       @relation("ChangeProposer", fields: [proposerUserId], references: [id], onDelete: Cascade)
+
+  @@index([familyTreeId, state])
+  @@index([proposerUserId])
+}
+
+// ─── Tree Share Link (public read, ADR 0010) ─────────────
+// One row is one public read-only link to one tree. Two modes:
+// "public" (anyone with the token reads the redacted payload) and
+// "password" (the payload unlocks only with the password, stored as a
+// bcrypt hash, never plaintext). The token is >= 128-bit entropy,
+// URL-safe, generated per row, shown once in the creation response and
+// masked everywhere else, mirroring ADR 0004. Revocation is a stamp
+// (revokedAt), never a delete, so an old link stays explainable in the
+// audit trail. Deliberately separate from Invitation (ADR 0004): a
+// share link grants no membership, has no user, no role, and no expiry
+// in v1, so the invitation state machine does not apply.
+model TreeShareLink {
+  id           String    @id @default(uuid())
+  treeId       String
+  token        String    @unique
+  mode         String    @default("public")
+  passwordHash String?
+  revokedAt    DateTime?
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  tree FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@index([treeId])
+}
+
+// ─── Genealogy core models (S1 phase 2, ADR 0011) ────────
+// Additive only: no existing model, field, or index is touched.
+// These five models give the tree genealogy-grade structure:
+// typed partial dates, normalized places, sources, citations,
+// and life events referencing them. Existing free-text columns
+// (birthDate, birthPlace, gender) stay untouched until the
+// separate backfill and cutover phases of ADR 0011.
+// SQLite note: the Prisma SQLite provider has no enum support,
+// so the vocabularies below (dateKind, eventType, confidence)
+// are documented String columns enforced in application code,
+// matching the existing status/role/type pattern in this file.
+
+// Typed partial date (ADR 0011, decision 1). The stored precision
+// is never sharper than the source: originalDateString keeps the
+// exact wording found in the source and is never overwritten.
+// dateKind: "EXACT" | "ABOUT" | "BEFORE" | "AFTER" | "RANGE".
+// RANGE is the only kind that uses the *End columns; EXACT,
+// ABOUT, BEFORE and AFTER use the *Start columns alone.
+model PartialDate {
+  id                 String   @id @default(uuid())
+  dateKind           String
+  yearStart          Int?
+  monthStart         Int?
+  dayStart           Int?
+  yearEnd            Int?
+  monthEnd           Int?
+  dayEnd             Int?
+  originalDateString String
+  createdAt          DateTime @default(now())
+
+  lifeEvents LifeEvent[]
+}
+
+// Place as an entity (ADR 0011, decision 3): displayName is what
+// the source writes, normalizedName is the match/dedup key per
+// tree. Existing text columns (birthPlace, currentLocation) keep
+// living on FamilyMember until the backfill phase.
+model Place {
+  id             String   @id @default(uuid())
+  treeId         String
+  displayName    String
+  normalizedName String
+  latitude       Float?
+  longitude      Float?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lifeEvents LifeEvent[]
+
+  @@index([treeId])
+  @@unique([treeId, normalizedName])
+}
+
+// Source = the document itself (book, archive, certificate,
+// digitized archive URL). Citations point at sources, life events
+// point at citations (ADR 0011, decision 4).
+model Source {
+  id            String   @id @default(uuid())
+  treeId        String
+  title         String
+  author        String?
+  publisher     String?
+  repositoryRef String?
+  url           String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  citations Citation[]
+
+  @@index([treeId])
+}
+
+// Citation = one source seen through a qualifier (page, act
+// number) with an optional transcription. confidence is a free
+// String (default "secondary" per the ADR 0011 draft).
+model Citation {
+  id            String   @id @default(uuid())
+  sourceId      String
+  qualifier     String?
+  transcription String?
+  confidence    String   @default("secondary")
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  source     Source      @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  lifeEvents LifeEvent[]
+
+  @@index([sourceId])
+}
+
+// Life event (ADR 0011, decisions 1, 4, 5). eventType domain
+// values: "BIRTH" | "DEATH" | "MARRIAGE" | "DIVORCE" |
+// "PARTNERSHIP" | "ADOPTION" | "CENSUS" | "IMMIGRATION" |
+// "EMMIGRATION" | "BURIAL" | "BAPTISM" | "OCCUPATION" |
+// "RESIDENCE" | "OTHER". The subject is one member; marriage,
+// divorce and partnership events name the second member through
+// partnerMemberId (FamilyRelationship stays the graph backbone).
+// memberId, partnerMemberId and treeId deliberately carry no
+// foreign key in this additive phase: FamilyMember and FamilyTree
+// stay untouched until backfill/cutover, mirroring how the event
+// store outlives referenced rows. date, place and citation are
+// optional, so removing one leaves the event row explainable.
+model LifeEvent {
+  id              String   @id @default(uuid())
+  treeId          String
+  memberId        String
+  partnerMemberId String?
+  eventType       String
+  dateId          String?
+  placeId         String?
+  citationId      String?
+  detail          String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  date     PartialDate? @relation(fields: [dateId], references: [id])
+  place    Place?       @relation(fields: [placeId], references: [id])
+  citation Citation?    @relation(fields: [citationId], references: [id])
+
+  @@index([treeId, memberId])
+  @@index([eventType])
 }

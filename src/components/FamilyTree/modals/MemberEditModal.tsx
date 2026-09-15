@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, User, Calendar, MapPin, Briefcase, Phone } from 'lucide-react';
 import type { FamilyMember } from '../../../types/family';
 
@@ -15,6 +16,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<FamilyMember>(member);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -160,6 +162,22 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 onChange={(e) => handleInputChange('generation', parseInt(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            {/* Privacy Status */}
+            <div>
+              <label htmlFor="member-privacy-status" className="block text-sm font-medium text-gray-700 mb-1">
+                {t('memberEdit.privacyStatus', 'Privacy Status')}
+              </label>
+              <select
+                id="member-privacy-status"
+                value={formData.privacyStatus ?? 'shared'}
+                onChange={(e) => handleInputChange('privacyStatus', e.target.value as 'shared' | 'private')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="shared">{t('memberEdit.privacyShared', 'Shared, include in public tree exports')}</option>
+                <option value="private">{t('memberEdit.privacyPrivate', 'Private, redact in public tree exports')}</option>
+              </select>
             </div>
           </div>
 

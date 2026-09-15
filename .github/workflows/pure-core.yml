@@ -1,0 +1,30 @@
+# Pure-core guard — keeps commercial code out of src/ and server/.
+# Scans for billing/premium/paywall/subscription patterns on every push
+# (except main) and pull request. Needs no npm install: the guard script
+# uses Node built-ins only, so this job is fast and dependency-free.
+
+name: Pure-core guard
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pure-core-guard:
+    name: Anti-commercial pattern scan (src/ + server/)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run pure-core guard
+        run: node scripts/guard-pure-core.mjs

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 import { Dashboard } from './components/Dashboard/Dashboard';
-import { UpgradePage } from './components/Upgrade/UpgradePage';
 import { Header } from './components/Header/Header';
 import { Toolbar } from './components/Toolbar/Toolbar';
 import { StatsSidebar } from './components/Sidebar/StatsSidebar';
@@ -19,7 +18,7 @@ function App() {
   const { familyTrees, fetchTrees } = useDashboardStore();
   const { isInitialized, initialize } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'family-tree' | 'upgrade'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'family-tree'>('dashboard');
   const [currentFamilyTreeName, setCurrentFamilyTreeName] = useState<string>('');
 
   // Initialize auth + load trees on mount
@@ -49,8 +48,6 @@ function App() {
 
       // Load members from adapter
       fetchMembers(treeId);
-    } else if (route === '/upgrade') {
-      setCurrentView('upgrade');
     } else {
       setCurrentView('dashboard');
     }
@@ -76,8 +73,6 @@ function App() {
         setCurrentFamilyTreeName(familyTree.name);
         setCurrentView('family-tree');
         fetchMembers(treeId);
-      } else if (route === '/upgrade') {
-        setCurrentView('upgrade');
       } else {
         setCurrentView('dashboard');
       }
@@ -90,7 +85,6 @@ function App() {
   return (
     <ProtectedRoute>
       {currentView === 'dashboard' && <Dashboard />}
-      {currentView === 'upgrade' && <UpgradePage />}
       {currentView === 'family-tree' && (
         <div className="h-screen flex flex-col bg-gray-50">
           <Header onMenuToggle={handleMenuToggle} familyName={currentFamilyTreeName} />

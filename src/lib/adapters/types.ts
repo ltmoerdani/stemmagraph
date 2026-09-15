@@ -2,6 +2,8 @@
 // Database-agnostic contract. Implement this interface for any backend.
 // Current adapters: mock (in-memory), rest (generic API), supabase
 
+import type { FeedItem } from '../feed';
+
 // ─── Auth Types ───────────────────────────────────────────
 
 export interface AuthUser {
@@ -10,6 +12,10 @@ export interface AuthUser {
   name: string;
   familyName?: string;
   avatar?: string;
+  /** Account state from the server (ADR 0002). Absent on adapters without accounts. */
+  status?: 'pending' | 'active' | 'disabled';
+  /** Installation-level role from the server. Absent on adapters without accounts. */
+  role?: 'owner' | 'member';
   createdAt: string;
 }
 
@@ -29,6 +35,8 @@ export interface RegisterInput {
   password: string;
   name: string;
   familyName?: string;
+  /** Invitation token from a /register?invite= link (P2-3, optional). */
+  invitationToken?: string;
 }
 
 // ─── Family Tree Types ────────────────────────────────────
@@ -42,6 +50,8 @@ export interface FamilyTreeRecord {
   lastUpdated: string;
   createdAt: string;
   thumbnail?: string;
+  /** The caller's role on this tree (P2-5): null on adapters without one. */
+  role?: TreeRoleValue | null;
 }
 
 export interface CreateTreeInput {
@@ -67,6 +77,11 @@ export interface FamilyMemberRecord {
   email?: string;
   phone?: string;
   isAlive: boolean;
+  // Per-individual sharing consent (S-06 Wave 1). "shared" exports the
+  // member in full even while living; "private" redacts them. Undefined
+  // (or NULL at the database level) means not yet recorded and the
+  // export privacy gate redacts living members by default.
+  privacyStatus?: 'shared' | 'private';
   generation: number;
   maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
   notes?: string;
@@ -84,6 +99,7 @@ export interface CreateMemberInput {
   deathDate?: string;
   generation?: number;
   maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
+  privacyStatus?: 'shared' | 'private';
 }
 
 export interface MemberRelationship {
@@ -129,6 +145,266 @@ export interface DataAdapter {
   listRelationships(treeId: string): Promise<MemberRelationship[]>;
   createRelationship(treeId: string, memberId: string, relatedId: string, type: MemberRelationship['type']): Promise<MemberRelationship>;
   deleteRelationship(id: string): Promise<void>;
+}
+
+// ─── Account Administration (P2-1) ────────────────────────
+// Server-backed adapters (rest) implement this surface; mock and supabase
+// adapters do not, and `getAccountAdminApi` returns null for them so the UI
+// can hide the admin panel and notification menu instead of crashing.
+
+export type AdminAccountStatus = 'pending' | 'active' | 'disabled';
+export type AdminAccountRole = 'owner' | 'member';
+export type AccountStatusAction = 'activate' | 'disable' | 'enable';
+
+export interface AdminAccount {
+  id: string;
+  email: string;
+  name: string;
+  familyName: string | null;
+  avatar: string | null;
+  role: AdminAccountRole;
+  status: AdminAccountStatus;
+  createdAt: string;
+}
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  payload: Record<string, unknown> | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationsPage {
+  notifications: AppNotification[];
+  unreadCount: number;
+}
+
+export interface AccountAdminApi {
+  listNotifications(): Promise<NotificationsPage>;
+  markNotificationRead(id: string): Promise<AppNotification>;
+  markAllNotificationsRead(): Promise<number>;
+  listAccounts(): Promise<AdminAccount[]>;
+  setAccountStatus(id: string, action: AccountStatusAction): Promise<AdminAccount>;
+}
+
+// ─── Invitations and tree membership (P2-3) ───────────────
+// Server-backed adapters (rest) implement this surface; mock and supabase
+// adapters do not, and `getInvitationAdminApi` returns null for them so the
+// UI can hide the invitations panel instead of crashing.
+
+/** Public, PII-minimal context a registration link carries (GET /invitations/:token/info). */
+export interface InvitationContextInfo {
+  type: 'personal' | 'family';
+  treeName: string;
+  inviterName: string;
+  expiresAt: string;
+  remainingUses: number;
+}
+
+export type InvitationState = 'active' | 'expired' | 'exhausted' | 'revoked' | 'consumed';
+export type InvitationTypeValue = 'personal' | 'family';
+export type InvitationChannel = 'manual' | 'wa' | 'email';
+export type TreeRoleValue = 'owner' | 'editor' | 'viewer';
+
+/** Invitation as shown on every surface after creation: token masked. */
+export interface InvitationRecord {
+  id: string;
+  treeId: string;
+  type: InvitationTypeValue;
+  grantedRole: TreeRoleValue;
+  channel: string | null;
+  state: InvitationState;
+  failureCode: string | null;
+  usedCount: number;
+  maxUses: number;
+  remainingUses: number;
+  tokenMasked: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  lastUsedAt: string | null;
+  createdAt: string;
+}
+
+/** Creation response: the only surface where the full token and URL appear. */
+export interface CreatedInvitation extends InvitationRecord {
+  token: string;
+  url: string;
+}
+
+export interface CreateInvitationInput {
+  type: InvitationTypeValue;
+  grantedRole: TreeRoleValue;
+  channel?: InvitationChannel;
+  /** Family invitations only; the server clamps it to 1..100 (default 20). */
+  maxUses?: number;
+}
+
+/** A user's membership row on one tree, with display columns for owners. */
+export interface TreeMembershipRecord {
+  id: string;
+  treeId: string;
+  userId: string;
+  role: TreeRoleValue;
+  email: string;
+  name: string;
+  userStatus: string;
+  createdAt: string;
+}
+
+export interface InvitationAdminApi {
+  /** Public fetch, no session needed; throws AdapterError on 404/410 dead links. */
+  getInvitationInfo(token: string): Promise<InvitationContextInfo>;
+  listInvitations(treeId: string): Promise<InvitationRecord[]>;
+  createInvitation(treeId: string, input: CreateInvitationInput): Promise<CreatedInvitation>;
+  revokeInvitation(invitationId: string): Promise<InvitationRecord>;
+  listTreeMembership(treeId: string): Promise<TreeMembershipRecord[]>;
+  updateTreeMembershipRole(treeId: string, membershipId: string, role: TreeRoleValue): Promise<TreeMembershipRecord>;
+  removeTreeMembership(treeId: string, membershipId: string): Promise<void>;
+}
+
+// ─── Activity feed (P2-6, ADR 0006) ──────────────────────
+
+/** One page of the activity feed plus the cursor for the next page. */
+export interface ActivityFeedPage {
+  items: FeedItem[];
+  nextCursor: string | null;
+}
+
+/** Query options; every field is optional and re-validated server side. */
+export interface ActivityFeedQueryOptions {
+  /** One of the seven v1 event types; absent means no filter. */
+  type?: string;
+  /** Server clamps into 1..100, default 50. */
+  limit?: number;
+  /** Opaque cursor from a previous response's nextCursor. */
+  before?: string;
+}
+
+/**
+ * Server-backed activity feed surface (read-only). Only the REST adapter
+ * implements it: the feed reads the server event store, which mock and
+ * supabase adapters do not have. getActivityFeedApi returns null for them
+ * so the UI can show an honest unavailable state instead of crashing.
+ */
+export interface ActivityFeedApi {
+  fetchActivityFeed(options?: ActivityFeedQueryOptions): Promise<ActivityFeedPage>;
+}
+
+// ─── Growth metrics (P2-8) ────────────────────────────────
+// Server-backed owner dashboard surface (read-only). Only the REST adapter
+// implements it: the metrics read the server event store, which mock and
+// supabase adapters do not have. getGrowthMetricsApi returns null for them
+// so the UI can show an honest unavailable state instead of fake numbers.
+
+/** One projected ISO week; rates arrive rounded to 4 decimals by the server. */
+export interface GrowthWeekMetrics {
+  isoWeek: string;
+  startAt: string;
+  endAt: string;
+  e1: number;
+  e2: number;
+  e3: number;
+  k: number;
+  pakaiRate: number;
+  aktivasiRate: number;
+  denominator: number;
+}
+
+/** Whole response of GET /admin/metrics/growth. */
+export interface GrowthMetricsSnapshot {
+  weeks: GrowthWeekMetrics[];
+  treesWithActiveEditorPct: number;
+}
+
+export interface GrowthMetricsQueryOptions {
+  /** Server clamps into 1..26, default 12. */
+  weeks?: number;
+}
+
+export interface GrowthMetricsApi {
+  fetchGrowthMetrics(options?: GrowthMetricsQueryOptions): Promise<GrowthMetricsSnapshot>;
+}
+
+// ─── Weekly digest (P2-7, ADR 0008) ───────────────────────
+// Server-backed user settings surface. Only the REST adapter implements
+// it: the digest reads the server event store, which mock and supabase
+// adapters do not have. getDigestApi returns null for them so the UI can
+// hide the digest panel instead of crashing or faking a toggle.
+
+/** Preview of the digest the caller would receive for the last complete ISO week. */
+export interface DigestPreview {
+  window: { startAt: string; endAt: string };
+  /** Current consent switch; the preview renders even when false. */
+  optIn: boolean;
+  /** True when nothing happened on the caller's trees last week. */
+  empty: boolean;
+  subject: string | null;
+  body: string | null;
+}
+
+export interface DigestApi {
+  /** GET /digest/weekly: look before you switch on. */
+  fetchWeeklyDigestPreview(): Promise<DigestPreview>;
+  /** PUT /digest/preferences: flips only the caller's own optIn column. */
+  updateDigestPreferences(optIn: boolean): Promise<{ optIn: boolean }>;
+}
+
+// ─── Change review (P2-5, ADR 0009) ──────────────────────
+
+export type ChangeTargetTypeValue = 'member' | 'relationship';
+export type ChangeProposalState = 'pending' | 'rejected' | 'distinct';
+
+/**
+ * One proposal as the server formats it: before/after are the frozen
+ * proposal-field slices (never ids-only and never the full record), and
+ * an accepted proposal is consumed, so it stops appearing here.
+ */
+export interface ChangeProposalRecord {
+  id: string;
+  treeId: string;
+  proposerUserId: string;
+  targetType: ChangeTargetTypeValue;
+  targetId: string;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  state: ChangeProposalState;
+  reasonNote: string;
+  autoAccepted: boolean;
+  decidedByUserId: string | null;
+  decidedAt: string | null;
+  decisionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateChangeProposalInput {
+  targetType: ChangeTargetTypeValue;
+  targetId: string;
+  /** Proposal-field slice only; the server re-validates the contract. */
+  afterJson: Record<string, unknown>;
+  /** 3..500 chars, required so the owner never reviews a mute edit. */
+  reasonNote: string;
+}
+
+/** The caller's role comes back with the list: owner sees all, editor own. */
+export interface ChangeProposalPage {
+  role: TreeRoleValue;
+  proposals: ChangeProposalRecord[];
+}
+
+/**
+ * Server-backed change-review surface. Only the REST adapter implements
+ * it: the queue lives in the ChangeProposal table behind the API. The UI
+ * hides every change-review surface for null (mock, supabase) instead of
+ * crashing, and viewers are refused by the server with 403 anyway.
+ */
+export interface ChangeReviewApi {
+  listChangeProposals(treeId: string): Promise<ChangeProposalPage>;
+  createChangeProposal(treeId: string, input: CreateChangeProposalInput): Promise<ChangeProposalRecord>;
+  acceptChangeProposal(proposalId: string): Promise<{ accepted: string }>;
+  rejectChangeProposal(proposalId: string, decisionNote: string): Promise<ChangeProposalRecord>;
+  distinctChangeProposal(proposalId: string, decisionNote?: string): Promise<ChangeProposalRecord>;
 }
 
 // ─── Error Types ──────────────────────────────────────────

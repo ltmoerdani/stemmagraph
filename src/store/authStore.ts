@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getAdapter } from '@/lib/adapters';
+import { getAdapter, AuthError } from '@/lib/adapters';
 import type { AuthUser } from '@/lib/adapters';
 
 interface AuthState {
@@ -14,7 +14,7 @@ interface AuthState {
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, invitationToken?: string) => Promise<void>;
   clearError: () => void;
   updateUser: (updates: Partial<AuthUser>) => void;
 }
@@ -73,11 +73,11 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (email: string, password: string, name: string) => {
+      register: async (email: string, password: string, name: string, invitationToken?: string) => {
         set({ isLoading: true, error: null });
         try {
           const adapter = getAdapter();
-          const session = await adapter.register({ email, password, name });
+          const session = await adapter.register({ email, password, name, invitationToken });
           set({
             user: session.user,
             isAuthenticated: true,
@@ -85,6 +85,13 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error) {
+          if (error instanceof AuthError && error.code === 'ACCOUNT_PENDING') {
+            // A 202 pending registration is a success as far as the account
+            // goes: keep it out of the red error slot and let the login page
+            // hold the waiting-for-activation panel from its own form state.
+            set({ isLoading: false, error: null });
+            throw error;
+          }
           const message = error instanceof Error ? error.message : 'Registration failed';
           set({ isLoading: false, error: message });
           throw error;

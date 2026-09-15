@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Users, Calendar, Settings, List, Grid3X3, Crown, TreePine } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff } from 'lucide-react';
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
+import { FeedPanel } from './FeedPanel';
+import { InvitationsPanel } from './InvitationsPanel';
+import { ChangeReviewPanel } from './ChangeReviewPanel';
+import { DigestSettingsPanel } from '../DigestSettingsPanel';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { navigate, replaceRoute } from '../../utils/routing';
+import { navigate } from '../../utils/routing';
+import { useTranslation } from 'react-i18next';
+import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
-  const { familyTrees, viewMode, setViewMode, isPremium } = useDashboardStore();
+  const { familyTrees, viewMode, setViewMode } = useDashboardStore();
+  const { t, i18n } = useTranslation();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false);
+  // Tree whose invitations/membership panel is open (P2-3 AC-6).
+  const [sharingTreeId, setSharingTreeId] = useState<string | null>(null);
+  // Tree whose change-review panel is open (P2-5 AC-5). Only owner and
+  // editor trees get the entry button; viewers see nothing here.
+  const [reviewTreeId, setReviewTreeId] = useState<string | null>(null);
+  // Dashboard section: family trees or the activity feed (P2-6 AC-4).
+  const [activeTab, setActiveTab] = useState<'trees' | 'activity'>('trees');
 
-  const maxMembersPerTree = isPremium ? Infinity : 15;
   const currentMemberCount = familyTrees.reduce((total, tree) => total + tree.memberCount, 0);
-
-  // Check for upgrade success
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('upgraded') === 'true') {
-      setShowUpgradeSuccess(true);
-      // Remove the parameter from URL
-      replaceRoute('/dashboard');
-      // Hide success message after 5 seconds
-      setTimeout(() => setShowUpgradeSuccess(false), 5000);
-    }
-  }, []);
 
   const handleCreateTree = () => {
     setShowCreateModal(true);
@@ -35,16 +35,8 @@ export const Dashboard: React.FC = () => {
     navigate(`/family-tree/${treeId}`);
   };
 
-  const handleUpgrade = () => {
-    navigate('/upgrade');
-  };
-
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
+    return formatDateWithLocale(dateString, i18n.language);
   };
 
   // Helper: Render the create new card button
@@ -53,41 +45,20 @@ export const Dashboard: React.FC = () => {
       type="button"
       onClick={handleCreateTree}
       className="group relative bg-white rounded-xl border-2 border-dashed transition-all duration-200 h-48 flex flex-col items-center justify-center cursor-pointer border-gray-300 hover:border-green-500 hover:bg-green-50"
-      aria-label="Create New Family Tree"
+      aria-label={t('dashboard.createNew')}
     >
       <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-green-200 transition-colors">
         <Plus className="w-6 h-6 text-green-600" />
       </div>
-      <h3 className="font-semibold text-gray-900 mb-1">Create New Family Tree</h3>
+      <h3 className="font-semibold text-gray-900 mb-1">{t('dashboard.createNew')}</h3>
       <p className="text-sm text-gray-500 text-center px-4">
-        Start building a new family tree
+        {t('dashboard.createNewDesc')}
       </p>
     </button>
   );
 
   return (
     <div className="min-h-screen bg-gray-50" data-testid="dashboard">
-      {/* Upgrade Success Notification */}
-      {showUpgradeSuccess && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 animate-in slide-in-from-right-4 duration-300">
-          <div className="flex items-center space-x-3">
-            <Crown className="w-6 h-6" />
-            <div>
-              <p className="font-semibold">Congratulations! Your Account Is Now Premium</p>
-              <p className="text-sm opacity-90">Enjoy all unlimited features</p>
-            </div>
-            <button
-              onClick={() => setShowUpgradeSuccess(false)}
-              className="text-white hover:text-gray-200"
-              aria-label="Close upgrade notification"
-            >
-              {/* Use lucide-react X icon safely */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -113,7 +84,7 @@ export const Dashboard: React.FC = () => {
                     ? 'bg-white text-gray-900 shadow-xs' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
-                title="Card View"
+                title={t('dashboard.cardView')}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
@@ -124,7 +95,7 @@ export const Dashboard: React.FC = () => {
                     ? 'bg-white text-gray-900 shadow-xs' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
-                title="List View"
+                title={t('dashboard.listView')}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -151,42 +122,13 @@ export const Dashboard: React.FC = () => {
       </header>
 
       {/* Status Bar */}
-      <div className={`px-6 py-3 border-b ${isPremium ? 'bg-linear-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {isPremium ? (
-              <div className="flex items-center space-x-2">
-                <Crown className="w-5 h-5 text-yellow-600" />
-                <span className="font-medium text-yellow-800">Premium Plan</span>
-                <span className="text-yellow-700">• Unlimited Family Trees & Members</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <span className="font-medium text-blue-800">
-                  Free Account: {familyTrees.length} Family Tree (Development Mode)
-                </span>
-                <span className="text-blue-700">•</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-blue-700">{currentMemberCount}/{maxMembersPerTree} Members</span>
-                  <div className="w-24 h-2 bg-blue-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-600 transition-all duration-300"
-                      style={{ width: `${Math.min(100, (currentMemberCount / maxMembersPerTree) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {!isPremium && (
-            <button 
-              onClick={handleUpgrade}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Upgrade Premium $9.99/year
-            </button>
-          )}
+      <div className="px-6 py-3 border-b bg-blue-50 border-blue-200">
+        <div className="flex items-center space-x-4">
+          <span className="font-medium text-blue-800">
+            {t('dashboard.treeCount', { count: familyTrees.length })}
+          </span>
+          <span className="text-blue-700">•</span>
+          <span className="text-blue-700">{t('dashboard.memberCount', { count: currentMemberCount })}</span>
         </div>
       </div>
 
@@ -196,25 +138,55 @@ export const Dashboard: React.FC = () => {
           {/* Header Section */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Family Trees</h2>
+              <h2 className="text-3xl font-bold text-gray-900">{t('dashboard.familyTreesTitle')}</h2>
               <p className="text-gray-600 mt-1">
-                Manage and explore your family trees
+                {t('dashboard.familyTreesSubtitle')}
               </p>
             </div>
             
-            {viewMode === 'list' && (
+            {viewMode === 'list' && activeTab === 'trees' && (
               <button
                 onClick={handleCreateTree}
                 className="flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700"
               >
                 <Plus className="w-5 h-5" />
-                <span>Create New Family Tree</span>
+                <span>{t('dashboard.createNew')}</span>
               </button>
             )}
           </div>
 
+          {/* Section tabs: family trees vs activity feed (P2-6) */}
+          <div className="flex items-center space-x-1 mb-6 border-b border-gray-200" role="tablist" aria-label={t('activityFeed.tab')}>
+            <button
+              role="tab"
+              aria-selected={activeTab === 'trees'}
+              onClick={() => setActiveTab('trees')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                activeTab === 'trees'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              {t('dashboard.familyTreesTitle')}
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === 'activity'}
+              onClick={() => setActiveTab('activity')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                activeTab === 'activity'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              {t('activityFeed.tab')}
+            </button>
+          </div>
+
           {/* Content */}
-          {viewMode === 'card' ? (
+          {activeTab === 'activity' ? (
+            <FeedPanel />
+          ) : viewMode === 'card' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {/* Create New Card */}
               {renderCreateNewCard()}
@@ -241,11 +213,13 @@ export const Dashboard: React.FC = () => {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <Users className="w-4 h-4" />
-                        <span>{tree.memberCount} members • {tree.generationCount} generations</span>
+                        <span>
+                          {t('dashboard.members', { count: tree.memberCount })} • {t('dashboard.generations', { count: tree.generationCount })}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <Calendar className="w-4 h-4" />
-                        <span>Updated: {formatDate(tree.lastUpdated)}</span>
+                        <span>{t('dashboard.updated', { date: formatDate(tree.lastUpdated) })}</span>
                       </div>
                     </div>
 
@@ -255,9 +229,24 @@ export const Dashboard: React.FC = () => {
                         onClick={() => handleOpenTree(tree.id)}
                         className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                       >
-                        OPEN
+                        {t('dashboard.open')}
                       </button>
-                      <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                      {(tree.role === 'owner' || tree.role === 'editor') && (
+                        <button
+                          onClick={() => setReviewTreeId(tree.id)}
+                          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          title={t('changeReview.open')}
+                          aria-label={t('changeReview.open')}
+                        >
+                          <FileDiff className="w-4 h-4 text-gray-600" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setSharingTreeId(tree.id)}
+                        className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        title={t('invitePanel.open')}
+                        aria-label={t('invitePanel.open')}
+                      >
                         <Settings className="w-4 h-4 text-gray-600" />
                       </button>
                     </div>
@@ -272,11 +261,11 @@ export const Dashboard: React.FC = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Family Tree Name</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Members</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Generations</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-900">Last Updated</th>
-                      <th className="text-center py-4 px-6 font-semibold text-gray-900">Actions</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.name')}</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.members')}</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.generations')}</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.lastUpdated')}</th>
+                      <th className="text-center py-4 px-6 font-semibold text-gray-900">{t('dashboard.table.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -289,7 +278,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900">{tree.name}</h3>
-                              <p className="text-sm text-gray-500">Created {formatDate(tree.createdAt)}</p>
+                              <p className="text-sm text-gray-500">{t('dashboard.created', { date: formatDate(tree.createdAt) })}</p>
                             </div>
                           </div>
                         </td>
@@ -308,9 +297,24 @@ export const Dashboard: React.FC = () => {
                               onClick={() => handleOpenTree(tree.id)}
                               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                             >
-                              OPEN
+                              {t('dashboard.open')}
                             </button>
-                            <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            {(tree.role === 'owner' || tree.role === 'editor') && (
+                              <button
+                                onClick={() => setReviewTreeId(tree.id)}
+                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                title={t('changeReview.open')}
+                                aria-label={t('changeReview.open')}
+                              >
+                                <FileDiff className="w-4 h-4 text-gray-600" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setSharingTreeId(tree.id)}
+                              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                              title={t('invitePanel.open')}
+                              aria-label={t('invitePanel.open')}
+                            >
                               <Settings className="w-4 h-4 text-gray-600" />
                             </button>
                           </div>
@@ -324,45 +328,21 @@ export const Dashboard: React.FC = () => {
               {familyTrees.length === 0 && (
                 <div className="text-center py-12">
                   <TreePine className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Family Tree Yet</h3>
-                  <p className="text-gray-500 mb-6">Start by creating your first family tree</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.emptyTitle')}</h3>
+                  <p className="text-gray-500 mb-6">{t('dashboard.emptyDesc')}</p>
                   <button
                     onClick={handleCreateTree}
                     className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
                   >
-                    Create First Family Tree
+                    {t('dashboard.createFirst')}
                   </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* Usage Warning for Free Users */}
-          {!isPremium && currentMemberCount >= maxMembersPerTree * 0.8 && (
-            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <Crown className="w-4 h-4 text-yellow-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-yellow-800">
-                    {currentMemberCount >= maxMembersPerTree ? 'Member limit reached!' : 'Almost full!'}
-                  </h4>
-                  <p className="text-yellow-700 text-sm">
-                    {currentMemberCount >= maxMembersPerTree 
-                      ? 'Upgrade to Premium to add unlimited members.'
-                      : 'Upgrade to Premium for unlimited members and family trees.'}
-                  </p>
-                </div>
-                <button 
-                  onClick={handleUpgrade}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium"
-                >
-                  Upgrade Sekarang
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Weekly digest settings: opt-in switch plus last week preview (P2-7). */}
+          <DigestSettingsPanel />
         </div>
       </main>
 
@@ -371,6 +351,24 @@ export const Dashboard: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       />
+
+      {/* Invitations and membership panel (P2-3) */}
+      {sharingTreeId !== null && (
+        <InvitationsPanel
+          treeId={sharingTreeId}
+          treeName={familyTrees.find((tree) => tree.id === sharingTreeId)?.name ?? ''}
+          onClose={() => setSharingTreeId(null)}
+        />
+      )}
+
+      {/* Change review panel (P2-5): mounted only from owner/editor cards */}
+      {reviewTreeId !== null && (
+        <ChangeReviewPanel
+          treeId={reviewTreeId}
+          treeName={familyTrees.find((tree) => tree.id === reviewTreeId)?.name ?? ''}
+          onClose={() => setReviewTreeId(null)}
+        />
+      )}
     </div>
   );
 };

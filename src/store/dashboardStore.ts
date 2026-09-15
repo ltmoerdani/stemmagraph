@@ -6,7 +6,6 @@ import type { FamilyTreeRecord } from '@/lib/adapters';
 interface DashboardState {
   familyTrees: FamilyTreeRecord[];
   viewMode: 'card' | 'list';
-  isPremium: boolean;
   isLoading: boolean;
 
   // Actions
@@ -15,7 +14,6 @@ interface DashboardState {
   createFamilyTree: (name: string) => Promise<FamilyTreeRecord>;
   updateFamilyTree: (id: string, updates: Partial<FamilyTreeRecord>) => Promise<void>;
   deleteFamilyTree: (id: string) => Promise<void>;
-  setPremium: (premium: boolean) => void;
 }
 
 export const useDashboardStore = create<DashboardState>()(
@@ -23,7 +21,6 @@ export const useDashboardStore = create<DashboardState>()(
     (set) => ({
       familyTrees: [],
       viewMode: 'card',
-      isPremium: false,
       isLoading: false,
 
       fetchTrees: async () => {
@@ -66,15 +63,12 @@ export const useDashboardStore = create<DashboardState>()(
           familyTrees: state.familyTrees.filter((tree) => tree.id !== id),
         }));
       },
-
-      setPremium: (premium) => set({ isPremium: premium }),
     }),
     {
       name: 'dashboard-storage',
       partialize: (state) => ({
         familyTrees: state.familyTrees,
         viewMode: state.viewMode,
-        isPremium: state.isPremium,
       }),
     },
   ),

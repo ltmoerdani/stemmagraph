@@ -19,6 +19,11 @@ import {
   AuthError,
 } from './types';
 
+// Server-side adapter: DATABASE_URL is read from the Node runtime. The app
+// tsconfig uses DOM libs without Node globals, so declare the narrow shape we
+// actually consume instead of pulling @types/node into the browser config.
+declare const process: { env: Record<string, string | undefined> };
+
 export class PrismaAdapter implements DataAdapter {
   readonly name = 'prisma';
   readonly version = '1.0.0';
@@ -201,6 +206,7 @@ export class PrismaAdapter implements DataAdapter {
       email: m.email ?? undefined,
       phone: m.phone ?? undefined,
       isAlive: m.isAlive,
+      privacyStatus: (m.privacyStatus ?? undefined) as 'shared' | 'private' | undefined,
       generation: m.generation,
       maritalStatus: m.maritalStatus as 'single' | 'married' | 'divorced' | 'widowed',
       notes: m.notes ?? undefined,
@@ -228,6 +234,7 @@ export class PrismaAdapter implements DataAdapter {
       email: m.email ?? undefined,
       phone: m.phone ?? undefined,
       isAlive: m.isAlive,
+      privacyStatus: (m.privacyStatus ?? undefined) as 'shared' | 'private' | undefined,
       generation: m.generation,
       maritalStatus: m.maritalStatus as 'single' | 'married' | 'divorced' | 'widowed',
       notes: m.notes ?? undefined,
@@ -249,6 +256,7 @@ export class PrismaAdapter implements DataAdapter {
         deathDate: input.deathDate,
         generation: input.generation ?? 1,
         maritalStatus: input.maritalStatus ?? 'single',
+        privacyStatus: input.privacyStatus ?? 'shared',
       },
     });
 
@@ -280,6 +288,7 @@ export class PrismaAdapter implements DataAdapter {
       email: m.email ?? undefined,
       phone: m.phone ?? undefined,
       isAlive: m.isAlive,
+      privacyStatus: (m.privacyStatus ?? undefined) as 'shared' | 'private' | undefined,
       generation: m.generation,
       maritalStatus: m.maritalStatus as 'single' | 'married' | 'divorced' | 'widowed',
       notes: m.notes ?? undefined,
@@ -305,6 +314,7 @@ export class PrismaAdapter implements DataAdapter {
         email: data.email,
         phone: data.phone,
         isAlive: data.isAlive,
+        privacyStatus: data.privacyStatus,
         generation: data.generation,
         maritalStatus: data.maritalStatus,
         notes: data.notes,
@@ -326,6 +336,7 @@ export class PrismaAdapter implements DataAdapter {
       email: m.email ?? undefined,
       phone: m.phone ?? undefined,
       isAlive: m.isAlive,
+      privacyStatus: (m.privacyStatus ?? undefined) as 'shared' | 'private' | undefined,
       generation: m.generation,
       maritalStatus: m.maritalStatus as 'single' | 'married' | 'divorced' | 'widowed',
       notes: m.notes ?? undefined,

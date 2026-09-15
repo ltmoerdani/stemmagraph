@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -73,6 +73,80 @@ export function resetAdapter(): void {
   _adapter = null;
 }
 
+// ─── Account Administration (P2-1) ────────────────────────
+
+/**
+ * Returns the account admin surface of the active adapter, or null when the
+ * adapter has no server-backed accounts (mock, supabase). The UI hides the
+ * notification menu and admin panel for null instead of crashing.
+ */
+export function getAccountAdminApi(): AccountAdminApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+// ─── Invitations and tree membership (P2-3) ───────────────
+
+/**
+ * Returns the invitation and membership surface of the active adapter, or
+ * null when the adapter has no server backend (mock, supabase). The UI
+ * hides the invitations panel for null instead of crashing.
+ */
+export function getInvitationAdminApi(): InvitationAdminApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+// ─── Activity feed (P2-6) ─────────────────────────────────
+
+/**
+ * Returns the activity feed surface of the active adapter, or null when
+ * the adapter has no server backend (mock, supabase): the feed reads the
+ * server event store. The UI shows an honest unavailable state for null.
+ */
+export function getActivityFeedApi(): ActivityFeedApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+// ─── Change review (P2-5) ─────────────────────────────────
+
+/**
+ * Returns the change-review surface of the active adapter, or null when
+ * the adapter has no server backend (mock, supabase): the queue lives in
+ * the ChangeProposal table. The UI hides every change-review surface for
+ * null; the server refuses viewers with 403 on its own.
+ */
+export function getChangeReviewApi(): ChangeReviewApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+// ─── Growth metrics (P2-8) ────────────────────────────────
+
+/**
+ * Returns the growth metrics surface of the active adapter, or null when
+ * the adapter has no server backend (mock, supabase): the metrics read the
+ * server event store. The UI shows an honest unavailable state for null.
+ */
+export function getGrowthMetricsApi(): GrowthMetricsApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+// ─── Weekly digest (P2-7) ─────────────────────────────────
+
+/**
+ * Returns the digest settings surface of the active adapter, or null
+ * when the adapter has no server backend (mock, supabase): the digest
+ * reads the server event store. The UI shows an honest unavailable
+ * state for null instead of a dead toggle.
+ */
+export function getDigestApi(): DigestApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 /**
  * Override adapter with a custom implementation (useful for testing).
  */
@@ -93,6 +167,35 @@ export type {
   FamilyMemberRecord,
   CreateMemberInput,
   MemberRelationship,
+  AccountAdminApi,
+  InvitationAdminApi,
+  InvitationContextInfo,
+  InvitationRecord,
+  InvitationState,
+  InvitationTypeValue,
+  InvitationChannel,
+  CreatedInvitation,
+  CreateInvitationInput,
+  TreeMembershipRecord,
+  TreeRoleValue,
+  AdminAccount,
+  AdminAccountStatus,
+  AdminAccountRole,
+  AccountStatusAction,
+  AppNotification,
+  NotificationsPage,
+  ActivityFeedApi,
+  ActivityFeedPage,
+  ActivityFeedQueryOptions,
+  GrowthMetricsApi,
+  GrowthMetricsSnapshot,
+  GrowthMetricsQueryOptions,
+  GrowthWeekMetrics,
+  DigestApi,
+  DigestPreview,
+  ChangeReviewApi,
+  ChangeProposalRecord,
+  CreateChangeProposalInput,
 } from './types';
 
 export {

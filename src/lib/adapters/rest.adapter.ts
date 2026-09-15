@@ -31,8 +31,40 @@ import {
   FamilyMemberRecord,
   CreateMemberInput,
   MemberRelationship,
+  AccountAdminApi,
+  AdminAccount,
+  AccountStatusAction,
+  AppNotification,
+  NotificationsPage,
+  InvitationAdminApi,
+  InvitationContextInfo,
+  InvitationRecord,
+  CreatedInvitation,
+  CreateInvitationInput,
+  TreeMembershipRecord,
+  TreeRoleValue,
+  ActivityFeedApi,
+  ActivityFeedPage,
+  ActivityFeedQueryOptions,
+  GrowthMetricsApi,
+  GrowthMetricsSnapshot,
+  GrowthMetricsQueryOptions,
+  DigestApi,
+  DigestPreview,
+  ChangeReviewApi,
+  ChangeProposalPage,
+  ChangeProposalRecord,
+  CreateChangeProposalInput,
   AdapterError,
+  AuthError,
 } from './types';
+import type { FeedItem } from '../feed';
+
+/**
+ * P2-1 (ADR 0002): server error codes that describe an unusable account
+ * state rather than bad credentials. Login surfaces them as AuthError.
+ */
+const ACCOUNT_STATE_ERROR_CODES = new Set(['ACCOUNT_PENDING', 'ACCOUNT_DISABLED']);
 
 interface RestAdapterOptions {
   baseUrl: string;
@@ -41,7 +73,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -108,15 +140,36 @@ export class RestAdapter implements DataAdapter {
   // ── Auth ────────────────────────────────────────────────
 
   async login(credentials: AuthCredentials): Promise<AuthSession> {
-    const session = await this.request<AuthSession>('POST', '/auth/login', credentials);
-    this.token = session.token ?? null;
-    return session;
+    try {
+      const session = await this.request<AuthSession>('POST', '/auth/login', credentials);
+      this.token = session.token ?? null;
+      return session;
+    } catch (e) {
+      // P2-1: a pending or disabled account is a typed auth state, not a
+      // generic API failure. request() only knows AdapterError, so rethrow
+      // the state codes as AuthError for the login screen to branch on.
+      if (e instanceof AdapterError && ACCOUNT_STATE_ERROR_CODES.has(e.code)) {
+        throw new AuthError(e.message, e.code, e.statusCode);
+      }
+      throw e;
+    }
   }
 
   async register(input: RegisterInput): Promise<AuthSession> {
-    const session = await this.request<AuthSession>('POST', '/auth/register', input);
-    this.token = session.token ?? null;
-    return session;
+    const body = await this.request<AuthSession & { message?: string }>('POST', '/auth/register', input);
+    // P2-1: a later registration is born pending and gets no token. The
+    // server answers 202 with the user and an honest message; surface that
+    // as a typed error so the auth store can show the waiting screen
+    // instead of pretending the user signed in.
+    if (!body.token && body.user?.status === 'pending') {
+      throw new AuthError(
+        body.message ?? 'Account created, waiting for activation',
+        'ACCOUNT_PENDING',
+        202,
+      );
+    }
+    this.token = body.token ?? null;
+    return body;
   }
 
   async logout(): Promise<void> {
@@ -218,5 +271,195 @@ export class RestAdapter implements DataAdapter {
 
   async deleteRelationship(id: string): Promise<void> {
     await this.request<void>('DELETE', `/relationships/${id}`);
+  }
+
+  // ── Account Administration (P2-1) ───────────────────────
+  // Mirrors server/index.ts: notifications belong to the caller; account
+  // management is owner-gated server side. The adapter only routes calls.
+
+  async listNotifications(): Promise<NotificationsPage> {
+    const body = await this.request<{ notifications: AppNotification[]; unreadCount: number }>(
+      'GET',
+      '/notifications',
+    );
+    return {
+      notifications: body.notifications ?? [],
+      unreadCount: body.unreadCount ?? 0,
+    };
+  }
+
+  async markNotificationRead(id: string): Promise<AppNotification> {
+    const body = await this.request<{ notification: AppNotification }>(
+      'POST',
+      `/notifications/${id}/read`,
+    );
+    return body.notification;
+  }
+
+  async markAllNotificationsRead(): Promise<number> {
+    const body = await this.request<{ updated: number }>('POST', '/notifications/read-all');
+    return body.updated ?? 0;
+  }
+
+  async listAccounts(): Promise<AdminAccount[]> {
+    const body = await this.request<{ accounts: AdminAccount[] }>('GET', '/admin/accounts');
+    return body.accounts ?? [];
+  }
+
+  async setAccountStatus(id: string, action: AccountStatusAction): Promise<AdminAccount> {
+    const body = await this.request<{ account: AdminAccount }>(
+      'POST',
+      `/admin/accounts/${id}/${action}`,
+    );
+    return body.account;
+  }
+
+  // ── Invitations and tree membership (P2-3) ──────────────
+  // Pure routing: every authorization decision lives in the server
+  // (FORBIDDEN_TREE, TREE_LAST_OWNER_GUARD, INVITATION_* codes).
+
+  async getInvitationInfo(token: string): Promise<InvitationContextInfo> {
+    // Public endpoint; works with or without a session token.
+    return this.request<InvitationContextInfo>('GET', `/invitations/${token}/info`);
+  }
+
+  async listInvitations(treeId: string): Promise<InvitationRecord[]> {
+    const body = await this.request<{ invitations: InvitationRecord[] }>(
+      'GET',
+      `/trees/${treeId}/invitations`,
+    );
+    return body.invitations ?? [];
+  }
+
+  async createInvitation(treeId: string, input: CreateInvitationInput): Promise<CreatedInvitation> {
+    const body = await this.request<{ invitation: CreatedInvitation }>(
+      'POST',
+      `/trees/${treeId}/invitations`,
+      input,
+    );
+    return body.invitation;
+  }
+
+  async revokeInvitation(invitationId: string): Promise<InvitationRecord> {
+    const body = await this.request<{ invitation: InvitationRecord }>(
+      'POST',
+      `/invitations/${invitationId}/revoke`,
+    );
+    return body.invitation;
+  }
+
+  async listTreeMembership(treeId: string): Promise<TreeMembershipRecord[]> {
+    const body = await this.request<{ members: TreeMembershipRecord[] }>(
+      'GET',
+      `/trees/${treeId}/membership`,
+    );
+    return body.members ?? [];
+  }
+
+  async updateTreeMembershipRole(
+    treeId: string,
+    membershipId: string,
+    role: TreeRoleValue,
+  ): Promise<TreeMembershipRecord> {
+    const body = await this.request<{ membership: TreeMembershipRecord }>(
+      'PUT',
+      `/trees/${treeId}/membership/${membershipId}`,
+      { role },
+    );
+    return body.membership;
+  }
+
+  async removeTreeMembership(treeId: string, membershipId: string): Promise<void> {
+    await this.request<void>('DELETE', `/trees/${treeId}/membership/${membershipId}`);
+  }
+
+  // ── Activity feed (P2-6, ADR 0006) ─────────────────────
+  // Read-only projection of the server event store. The server validates
+  // ?type= against the seven v1 event types, clamps ?limit= into 1..100
+  // and treats ?before= as an opaque keyset cursor, so this method only
+  // forwards what the caller picked in the UI.
+
+  async fetchActivityFeed(options: ActivityFeedQueryOptions = {}): Promise<ActivityFeedPage> {
+    const params = new URLSearchParams();
+    if (options.type !== undefined && options.type !== '') params.set('type', options.type);
+    if (options.limit !== undefined) params.set('limit', String(options.limit));
+    if (options.before !== undefined && options.before !== '') params.set('before', options.before);
+    const query = params.toString();
+    const body = await this.request<{ items: FeedItem[]; nextCursor: string | null }>(
+      'GET',
+      `/activity-feed${query === '' ? '' : `?${query}`}`,
+    );
+    return { items: body.items ?? [], nextCursor: body.nextCursor ?? null };
+  }
+
+  // ── Growth metrics (P2-8, ADR 0007) ────────────────────
+  // Read-only owner dashboard. The server parses ?weeks= (integer, clamped
+  // into 1..26, default 12), projects stored events server-side, and rounds
+  // rates to 4 decimals, so the adapter only forwards the requested span.
+
+  async fetchGrowthMetrics(options: GrowthMetricsQueryOptions = {}): Promise<GrowthMetricsSnapshot> {
+    const params = new URLSearchParams();
+    if (options.weeks !== undefined) params.set('weeks', String(options.weeks));
+    const query = params.toString();
+    return this.request<GrowthMetricsSnapshot>(
+      'GET',
+      `/admin/metrics/growth${query === '' ? '' : `?${query}`}`,
+    );
+  }
+
+  // ── Weekly digest (P2-7, ADR 0008) ─────────────────────
+  // Pure routing: the server renders the preview from stored events and
+  // guards the preferences column per caller. The adapter sends one
+  // boolean and gets one boolean back.
+
+  async fetchWeeklyDigestPreview(): Promise<DigestPreview> {
+    return this.request<DigestPreview>('GET', '/digest/weekly');
+  }
+
+  async updateDigestPreferences(optIn: boolean): Promise<{ optIn: boolean }> {
+    return this.request<{ optIn: boolean }>('PUT', '/digest/preferences', { optIn });
+  }
+
+  // ── Change review (P2-5, ADR 0009) ─────────────────────
+  // Pure routing again: roles, the distinct fence and the accept
+  // transaction all live in the server. The adapter carries the field
+  // slice in and the formatted proposal out.
+
+  async listChangeProposals(treeId: string): Promise<ChangeProposalPage> {
+    return this.request<ChangeProposalPage>('GET', `/trees/${treeId}/change-proposals`);
+  }
+
+  async createChangeProposal(
+    treeId: string,
+    input: CreateChangeProposalInput,
+  ): Promise<ChangeProposalRecord> {
+    const body = await this.request<{ proposal: ChangeProposalRecord }>(
+      'POST',
+      `/trees/${treeId}/change-proposals`,
+      input,
+    );
+    return body.proposal;
+  }
+
+  async acceptChangeProposal(proposalId: string): Promise<{ accepted: string }> {
+    return this.request<{ accepted: string }>('POST', `/change-proposals/${proposalId}/accept`);
+  }
+
+  async rejectChangeProposal(proposalId: string, decisionNote: string): Promise<ChangeProposalRecord> {
+    const body = await this.request<{ proposal: ChangeProposalRecord }>(
+      'POST',
+      `/change-proposals/${proposalId}/reject`,
+      { decisionNote },
+    );
+    return body.proposal;
+  }
+
+  async distinctChangeProposal(proposalId: string, decisionNote?: string): Promise<ChangeProposalRecord> {
+    const body = await this.request<{ proposal: ChangeProposalRecord }>(
+      'POST',
+      `/change-proposals/${proposalId}/distinct`,
+      decisionNote === undefined || decisionNote === '' ? {} : { decisionNote },
+    );
+    return body.proposal;
   }
 }

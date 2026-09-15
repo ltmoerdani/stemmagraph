@@ -1,0 +1,143 @@
+// DRAFT S1: model data genealogi-grade (ADR 0011).
+// Berkas ini TIDAK dimuat Prisma generator: hanya `prisma/schema.prisma`
+// yang aktif. Berkas ini spesifikasi draft add-only untuk fase 2.
+// Larangan fase 1: tanpa hapus kolom, tanpa migrasi, tanpa pola komersial.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNKNOWN
+  OTHER
+}
+
+enum DateKind {
+  EXACT
+  ABOUT
+  BEFORE
+  AFTER
+  RANGE
+}
+
+enum LifeEventType {
+  BIRTH
+  DEATH
+  MARRIAGE
+  DIVORCE
+  PARTNERSHIP
+  ADOPTION
+  CENSUS
+  IMMIGRATION
+  EMMIGRATION
+  BURIAL
+  BAPTISM
+  OCCUPATION
+  RESIDENCE
+  OTHER
+}
+
+// Tanggal bertipe: presisi tidak pernah lebih tegas daripada sumber.
+// RANGE memakai *End; EXACT/ABOUT/BEFORE/AFTER memakai *Start saja.
+draft model PartialDate {
+  id                String   @id @default(uuid())
+  dateKind          DateKind
+  yearStart         Int?
+  monthStart        Int?
+  dayStart          Int?
+  yearEnd           Int?
+  monthEnd          Int?
+  dayEnd            Int?
+  originalDateString String
+  createdAt         DateTime @default(now())
+}
+
+model Place {
+  id            String  @id @default(uuid())
+  treeId        String
+  displayName   String
+  normalizedName String
+  latitude      Float?
+  longitude     Float?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  lifeEvents LifeEvent[]
+
+  @@index([treeId])
+  @@unique([treeId, normalizedName])
+}
+
+model Source {
+  id            String  @id @default(uuid())
+  treeId        String
+  title         String
+  author        String?
+  publisher     String?
+  repositoryRef String?
+  url           String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  citations Citation[]
+
+  @@index([treeId])
+}
+
+model Citation {
+  id            String  @id @default(uuid())
+  sourceId      String
+  qualifier     String?
+  transcription String?
+  confidence    String  @default("secondary")
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  source     Source      @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  lifeEvents LifeEvent[]
+
+  @@index([sourceId])
+}
+
+// Kejadian hidup genealogis. Subjek: satu anggota, atau pasangan
+// (MARRIAGE/DIVORCE/PARTNERSHIP) lewat partnerMemberId.
+model LifeEvent {
+  id              String        @id @default(uuid())
+  treeId          String
+  memberId        String
+  partnerMemberId String?
+  eventType       LifeEventType
+  dateId          String?
+  placeId         String?
+  citationId      String?
+  detail          String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  date     PartialDate? @relation(fields: [dateId], references: [id])
+  place    Place?       @relation(fields: [placeId], references: [id])
+  citation Citation?    @relation(fields: [citationId], references: [id])
+
+  @@index([treeId, memberId])
+  @@index([eventType])
+}
+ntoh pemetaan anggota ke arah enum Gender (fase 2; kolom existing
+// `gender String @default("male")` dipertahankan sampai cutover).
+// Nilai "male" -> MALE, "female" -> FEMALE, selain itu -> UNKNOWN.
+draft model PersonDraft {
+  id     String @id @default(uuid())
+  treeId String
+  gender Gender @default(UNKNOWN)
+
+  lifeEvents LifeEvent[] @relation("PersonDraftLifeEvents")
+}

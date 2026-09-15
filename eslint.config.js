@@ -5,7 +5,8 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  // .worktrees/** excluded so parallel git worktrees never produce false lint errors
+  { ignores: ['dist', 'src/lib/gedcom/vendor/**', '.worktrees/**', '.qa-worktree/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

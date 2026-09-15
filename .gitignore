@@ -12,6 +12,20 @@ dist
 dist-ssr
 *.local
 
+# GEDCOM 7 verification runtime cache (downloaded on demand by
+# scripts/verify-gedcom70.mjs from the official GEDCOM-registries repo)
+scripts/fixtures-gedcom70/g7validation.json
+# Verify script scratch space (bundled mapper under test)
+scripts/.verify-work/
+# Verify script debug scratch (S-06 typecheck experiment output)
+scripts/.verify-debug/
+# Canvas scale harness scratch (S-09 AC6 bundled layout under test)
+scripts/.verify-canvas-work/
+
+# TypeScript incremental build cache (safety net; current build emits none)
+tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -29,3 +43,8 @@ dist-ssr
 # Local environment overrides (committed variants: .env.example, .env.github-pages)
 .env
 .env.local
+.verify-s14-work/
+
+# Local SQLite databases
+*.db
+*.db-journal

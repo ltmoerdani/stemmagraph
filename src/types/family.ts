@@ -11,6 +11,8 @@ export interface FamilyMember {
   gender: 'male' | 'female';
   photoUrl?: string;
   spouseId?: string;
+  /** QA put-1 Temuan-3: semua pasangan dari rel spouse adapter; spouseId legacy = elemen pertama. */
+  spouseIds?: string[];
   parentIds?: string[];
   childrenIds?: string[];
   siblingIds?: string[];
@@ -19,6 +21,7 @@ export interface FamilyMember {
   isAlive: boolean;
   generation: number;
   maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
+  privacyStatus?: 'shared' | 'private';
   created_at?: string;
   updated_at?: string;
 }

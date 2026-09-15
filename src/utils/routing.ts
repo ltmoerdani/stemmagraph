@@ -56,7 +56,7 @@ export function replaceRoute(logicalRoute: string): void {
 /**
  * Build an absolute URL (including base prefix) for a logical route.
  * Use this with `window.location.href` when you want a full page reload
- * (e.g. after creating a tree, after upgrade).
+ * (e.g. after creating a tree).
  *
  *   navigate('/family-tree/abc')  → window.location.href = '/stemmagraph/family-tree/abc'
  */
