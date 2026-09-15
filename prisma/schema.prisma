@@ -133,6 +133,7 @@ model FamilyMember {
   tree              FamilyTree           @relation(fields: [treeId], references: [id], onDelete: Cascade)
   relationshipsFrom FamilyRelationship[] @relation("MemberFrom")
   relationshipsTo   FamilyRelationship[] @relation("MemberTo")
+  consentRecords    ConsentRecord[]
 
   @@index([treeId])
   @@index([generation])
@@ -391,4 +392,24 @@ model LifeEvent {
 
   @@index([treeId, memberId])
   @@index([eventType])
+}
+
+// ─── Consent Record ──────────────────────────────────────
+
+// Consent ledger per member (S-06b, additive only). One row is one
+// action on one scope: action mirrors ConsentAction in
+// src/lib/consent/record.ts ("grant" | "revoke" | "regrant").
+// Append-only in the application domain; deletion follows the member.
+model ConsentRecord {
+  id        String   @id
+  memberId  String
+  action    String
+  scope     String
+  note      String?
+  at        DateTime
+  createdAt DateTime @default(now())
+
+  member FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
 }
