@@ -248,6 +248,7 @@ export const TREE_ACTIONS = [
   'delete_tree',
   'manage_invitations',
   'manage_membership',
+  'manage_share_links',
 ] as const;
 export type TreeAction = (typeof TREE_ACTIONS)[number];
 
@@ -262,6 +263,10 @@ export const TREE_ACTION_MATRIX: Readonly<Record<TreeAction, readonly TreeRole[]
   delete_tree: ['owner'],
   manage_invitations: ['owner'],
   manage_membership: ['owner'],
+  // Share links expose the whole tree to the public web, so only the
+  // tree owner lists or revokes them (S-05, ADR 0010); editors and
+  // viewers stay out, matching manage_invitations.
+  manage_share_links: ['owner'],
 };
 
 export function canPerformTreeAction(role: TreeRole, action: TreeAction): boolean {
