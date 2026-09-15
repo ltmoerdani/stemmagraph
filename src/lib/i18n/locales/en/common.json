@@ -416,5 +416,10 @@
     "submitPropose": "Send proposal",
     "proposeSent": "Proposal sent and waiting for the owner's decision.",
     "proposeFailed": "Failed to send the proposal."
+  },
+  "memberEdit": {
+    "privacyStatus": "Privacy Status",
+    "privacyShared": "Shared, include in public tree exports",
+    "privacyPrivate": "Private, redact in public tree exports"
   }
 }

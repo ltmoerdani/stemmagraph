@@ -302,6 +302,7 @@ export class MockAdapter implements DataAdapter {
       deathDate: input.deathDate,
       generation: input.generation ?? 1,
       maritalStatus: input.maritalStatus ?? 'single',
+      privacyStatus: input.privacyStatus ?? 'shared',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
