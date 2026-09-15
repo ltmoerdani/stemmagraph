@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -93,6 +93,18 @@ export function getAccountAdminApi(): AccountAdminApi | null {
  * hides the invitations panel for null instead of crashing.
  */
 export function getInvitationAdminApi(): InvitationAdminApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+// ─── Share link management (S-05, ADR 0010) ───────────────
+
+/**
+ * Returns the share link surface of the active adapter, or null when the
+ * adapter has no server backend (mock, supabase). The UI hides the share
+ * links panel for null instead of crashing.
+ */
+export function getShareLinkAdminApi(): ShareLinkAdminApi | null {
   const adapter = getAdapter();
   return adapter instanceof RestAdapter ? adapter : null;
 }

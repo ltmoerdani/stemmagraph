@@ -421,5 +421,31 @@
     "privacyStatus": "Privacy Status",
     "privacyShared": "Shared, include in public tree exports",
     "privacyPrivate": "Private, redact in public tree exports"
+  },
+  "sharePanel": {
+    "open": "Manage share links",
+    "title": "Share links: {{treeName}}",
+    "listTitle": "Public share links",
+    "listHint": "Only you, the tree owner, can see this list. Tokens are shown masked; the full token appeared once when each link was created.",
+    "loading": "Loading share links...",
+    "loadFailed": "Failed to load share links.",
+    "empty": "No share link has been created for this tree yet.",
+    "refresh": "Refresh",
+    "close": "Close",
+    "state.active": "Active",
+    "state.revoked": "Revoked",
+    "mode.public": "Public",
+    "mode.password": "Password",
+    "created": "Created {{date}}",
+    "lastUsed": "last used {{date}}",
+    "revokedAt": "revoked {{date}}",
+    "revoke": "Revoke",
+    "revoking": "Revoking...",
+    "revokeFailed": "Failed to revoke the share link.",
+    "confirmTitle": "Revoke this share link?",
+    "confirmBody": "Link {{token}} will stop working immediately on every public surface. This cannot be undone.",
+    "confirmAction": "Yes, revoke link",
+    "cancel": "Cancel",
+    "unavailable": "Share link management needs the server connection and is unavailable on this adapter."
   }
 }

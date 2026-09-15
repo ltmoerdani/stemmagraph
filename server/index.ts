@@ -1779,13 +1779,22 @@ app.delete('/api/v1/relationships/:id', requireAuth, async (req: AuthenticatedRe
 // life or consent status is NULL or ambiguous, are treated as living
 // and redacted; contact fields are dropped for everyone.
 //
-// Management endpoints (create/list/revoke by an authenticated owner)
-// are a separate follow-up; this section is the public read surface.
+// Management endpoints (S-05): LIST and REVOKE for the tree owner,
+// backed by the pure helpers in src/lib/share/manage.ts. The public
+// resolver consults the same resolveShareAccess gate, so a revoked
+// link stops being served on all three surfaces at once.
 
 import { FixedWindowRateLimiter } from '../src/lib/share/rate-limit';
 import { buildPublicTreePayload } from '../src/lib/share/public-tree';
 import { verifySharePassword } from '../src/lib/share/password';
 import { buildShareOgImageSvg, escapeXmlText } from '../src/lib/share/og-image';
+import {
+  SHARE_ACCESS_HTTP,
+  buildShareLinkList,
+  formatShareLinkSummary,
+  resolveShareAccess,
+  type ShareAccessError,
+} from '../src/lib/share/manage';
 
 // Password guessing gets the tightest budget; plain reads and OG fetches
 // are courtesy brakes against hammering, not quotas.
@@ -1829,15 +1838,16 @@ type ShareLinkRow = {
   revokedAt: Date | null;
 };
 
-type ShareFailure = { error: 'SHARE_NOT_FOUND' } | { error: 'SHARE_REVOKED' };
+type ShareFailure = { error: ShareAccessError };
 
 /**
  * Resolves one share token into the link row plus the raw tree data the
  * public builder consumes. Unknown token and unknown tree answer the
- * same 404 so probing tokens learns nothing about tree ids.
+ * same 404 so probing tokens learns nothing about tree ids; a revoked
+ * link answers 410 on every public surface (S-05).
  */
 async function loadShareContext(token: string): Promise<
-  | ShareFailure
+  ShareFailure
   | {
       link: ShareLinkRow;
       tree: { name: string; description: string | null; generationCount: number };
@@ -1849,31 +1859,30 @@ async function loadShareContext(token: string): Promise<
     where: { token },
     select: { id: true, treeId: true, mode: true, passwordHash: true, revokedAt: true },
   });
-  if (!link) return { error: 'SHARE_NOT_FOUND' };
-  if (link.revokedAt !== null) return { error: 'SHARE_REVOKED' };
-
-  const tree = await prisma.familyTree.findUnique({
-    where: { id: link.treeId },
-    select: { name: true, description: true, generationCount: true },
-  });
-  if (!tree) return { error: 'SHARE_NOT_FOUND' };
+  const tree = link
+    ? await prisma.familyTree.findUnique({
+        where: { id: link.treeId },
+        select: { name: true, description: true, generationCount: true },
+      })
+    : null;
+  const access = resolveShareAccess(link, tree);
+  if ('error' in access) return access;
 
   const members = await prisma.familyMember.findMany({
-    where: { treeId: link.treeId },
+    where: { treeId: access.link.treeId },
     select: SHARE_MEMBER_SELECT,
   });
   const relationships = await prisma.familyRelationship.findMany({
-    where: { treeId: link.treeId },
+    where: { treeId: access.link.treeId },
     select: { memberId: true, relatedId: true, type: true },
   });
-  return { link, tree, members, relationships };
+  return { link: access.link as ShareLinkRow, tree: access.tree, members, relationships };
 }
 
 function shareFailureResponse(res: express.Response, failure: ShareFailure): express.Response {
-  if (failure.error === 'SHARE_REVOKED') {
-    return res.status(410).json({ code: 'SHARE_REVOKED', message: 'This share link has been revoked' });
-  }
-  return res.status(404).json({ code: 'SHARE_NOT_FOUND', message: 'Share link not found' });
+  return res
+    .status(SHARE_ACCESS_HTTP[failure.error])
+    .json({ code: failure.error, message: failure.error === 'SHARE_REVOKED' ? 'This share link has been revoked' : 'Share link not found' });
 }
 
 app.get('/api/v1/share/:token', async (req: express.Request<{ token: string }>, res) => {
@@ -1978,6 +1987,51 @@ app.get('/api/v1/share/:token/preview', async (req: express.Request<{ token: str
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.set('Cache-Control', 'public, max-age=300');
     res.send(html);
+  } catch (e) {
+    res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Share link management (S-05, ADR 0010) ──────────────
+//
+// Owner-only surface over the same rows the public resolver reads.
+// Every token leaves these endpoints masked (prefix + suffix, the
+// ADR 0004 comment discipline at the invitation section): the full
+// token was shown once at creation and is never reconstructed here.
+// Revocation is a soft stamp, so an old link stays explainable; the
+// public gate above answers 410 for any stamped row.
+
+app.get('/api/v1/trees/:treeId/share-links', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_share_links');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const links = await prisma.treeShareLink.findMany({
+      where: { treeId: req.params.treeId },
+      orderBy: { createdAt: 'desc' },
+    });
+    // buildShareLinkList re-filters by treeId and masks every token; the
+    // select above already scopes to the tree, this is the second fence.
+    res.json({ shareLinks: buildShareLinkList(links, req.params.treeId) });
+  } catch (e) {
+    res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/share-links/:id/revoke', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const link = await prisma.treeShareLink.findUnique({ where: { id: req.params.id } });
+    if (!link) return res.status(404).json({ code: 'SHARE_LINK_NOT_FOUND', message: 'Share link not found' });
+    const guard = await guardTreeAction(req.userId!, link.treeId, 'manage_share_links');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    if (link.revokedAt !== null) {
+      return res.status(409).json({ code: 'SHARE_LINK_ALREADY_REVOKED', message: 'This share link has already been revoked' });
+    }
+    // Soft revoke: the stamp flips state everywhere at once; no delete.
+    const updated = await prisma.treeShareLink.update({
+      where: { id: link.id },
+      data: { revokedAt: new Date() },
+    });
+    res.json({ shareLink: formatShareLinkSummary(updated) });
   } catch (e) {
     res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
   }

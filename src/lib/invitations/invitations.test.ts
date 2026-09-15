@@ -257,6 +257,7 @@ describe('canPerformTreeAction', () => {
     delete_tree: ['owner'],
     manage_invitations: ['owner'],
     manage_membership: ['owner'],
+    manage_share_links: ['owner'],
   };
 
   it('matches the ADR 0002 matrix for every action and role', () => {
@@ -327,7 +328,7 @@ describe('exported unions are exhaustive and closed', () => {
   it('lists every invitation state and tree role with no extras', () => {
     expect(INVITATION_STATES).toEqual(['active', 'expired', 'exhausted', 'revoked', 'consumed']);
     expect(TREE_ROLES).toEqual(['owner', 'editor', 'viewer']);
-    expect(TREE_ACTIONS).toHaveLength(10);
+    expect(TREE_ACTIONS).toHaveLength(11);
   });
 
   it('covers every tree action in the matrix (compile-time exhaustive)', () => {

@@ -37,6 +37,7 @@ import {
   AppNotification,
   NotificationsPage,
   InvitationAdminApi,
+  ShareLinkRecord,
   InvitationContextInfo,
   InvitationRecord,
   CreatedInvitation,
@@ -346,6 +347,26 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
       `/invitations/${invitationId}/revoke`,
     );
     return body.invitation;
+  }
+
+  // ── Share link management (S-05) ─────────────────────────
+  // Pure routing: the server decides owner-only access and answers
+  // FORBIDDEN_TREE / SHARE_LINK_* codes; the panel renders them verbatim.
+
+  async listShareLinks(treeId: string): Promise<ShareLinkRecord[]> {
+    const body = await this.request<{ shareLinks: ShareLinkRecord[] }>(
+      'GET',
+      `/trees/${treeId}/share-links`,
+    );
+    return body.shareLinks ?? [];
+  }
+
+  async revokeShareLink(linkId: string): Promise<ShareLinkRecord> {
+    const body = await this.request<{ shareLink: ShareLinkRecord }>(
+      'POST',
+      `/share-links/${linkId}/revoke`,
+    );
+    return body.shareLink;
   }
 
   async listTreeMembership(treeId: string): Promise<TreeMembershipRecord[]> {

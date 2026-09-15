@@ -263,6 +263,33 @@ export interface InvitationAdminApi {
   removeTreeMembership(treeId: string, membershipId: string): Promise<void>;
 }
 
+// ─── Share link management (S-05, ADR 0010) ──────────────
+
+/**
+ * One row of the owner's share link list. The token only ever appears
+ * masked (tokenMasked); the server never sends the full value.
+ */
+export interface ShareLinkRecord {
+  id: string;
+  treeId: string;
+  mode: string;
+  state: 'active' | 'revoked';
+  tokenMasked: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
+
+/**
+ * Server-backed share link surface (owner only). Only the REST adapter
+ * implements it; getShareLinkAdminApi returns null for the others so
+ * the panel shows an honest unavailable state.
+ */
+export interface ShareLinkAdminApi {
+  listShareLinks(treeId: string): Promise<ShareLinkRecord[]>;
+  revokeShareLink(linkId: string): Promise<ShareLinkRecord>;
+}
+
 // ─── Activity feed (P2-6, ADR 0006) ──────────────────────
 
 /** One page of the activity feed plus the cursor for the next page. */
