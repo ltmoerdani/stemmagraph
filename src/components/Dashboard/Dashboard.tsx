@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff } from 'lucide-react';
+import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff, Link2 } from 'lucide-react';
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { FeedPanel } from './FeedPanel';
 import { InvitationsPanel } from './InvitationsPanel';
+import { ShareLinksPanel } from './ShareLinksPanel';
 import { ChangeReviewPanel } from './ChangeReviewPanel';
 import { DigestSettingsPanel } from '../DigestSettingsPanel';
 import { useAuthStore } from '../../store/authStore';
@@ -18,6 +19,7 @@ export const Dashboard: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   // Tree whose invitations/membership panel is open (P2-3 AC-6).
   const [sharingTreeId, setSharingTreeId] = useState<string | null>(null);
+  const [shareLinksTreeId, setShareLinksTreeId] = useState<string | null>(null);
   // Tree whose change-review panel is open (P2-5 AC-5). Only owner and
   // editor trees get the entry button; viewers see nothing here.
   const [reviewTreeId, setReviewTreeId] = useState<string | null>(null);
@@ -241,6 +243,16 @@ export const Dashboard: React.FC = () => {
                           <FileDiff className="w-4 h-4 text-gray-600" />
                         </button>
                       )}
+                      {tree.role === 'owner' && (
+                        <button
+                          onClick={() => setShareLinksTreeId(tree.id)}
+                          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          title={t('sharePanel.open')}
+                          aria-label={t('sharePanel.open')}
+                        >
+                          <Link2 className="w-4 h-4 text-gray-600" />
+                        </button>
+                      )}
                       <button
                         onClick={() => setSharingTreeId(tree.id)}
                         className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -309,6 +321,16 @@ export const Dashboard: React.FC = () => {
                                 <FileDiff className="w-4 h-4 text-gray-600" />
                               </button>
                             )}
+                            {tree.role === 'owner' && (
+                              <button
+                                onClick={() => setShareLinksTreeId(tree.id)}
+                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                title={t('sharePanel.open')}
+                                aria-label={t('sharePanel.open')}
+                              >
+                                <Link2 className="w-4 h-4 text-gray-600" />
+                              </button>
+                            )}
                             <button
                               onClick={() => setSharingTreeId(tree.id)}
                               className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -358,6 +380,15 @@ export const Dashboard: React.FC = () => {
           treeId={sharingTreeId}
           treeName={familyTrees.find((tree) => tree.id === sharingTreeId)?.name ?? ''}
           onClose={() => setSharingTreeId(null)}
+        />
+      )}
+
+      {/* Share links management panel (S-05): mounted only from owner cards */}
+      {shareLinksTreeId !== null && (
+        <ShareLinksPanel
+          treeId={shareLinksTreeId}
+          treeName={familyTrees.find((tree) => tree.id === shareLinksTreeId)?.name ?? ''}
+          onClose={() => setShareLinksTreeId(null)}
         />
       )}
 

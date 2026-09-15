@@ -421,5 +421,31 @@
     "privacyStatus": "Status Privasi",
     "privacyShared": "Dibagikan, sertakan dalam ekspor silsilah publik",
     "privacyPrivate": "Privat, samarkan dalam ekspor silsilah publik"
+  },
+  "sharePanel": {
+    "open": "Kelola tautan bagikan",
+    "title": "Tautan bagikan: {{treeName}}",
+    "listTitle": "Tautan bagikan publik",
+    "listHint": "Hanya Anda sebagai pemilik pohon yang bisa melihat daftar ini. Token tampil ter-mask; token penuh hanya muncul sekali saat tautan dibuat.",
+    "loading": "Memuat tautan bagikan...",
+    "loadFailed": "Gagal memuat tautan bagikan.",
+    "empty": "Belum ada tautan bagikan yang dibuat untuk pohon ini.",
+    "refresh": "Muat ulang",
+    "close": "Tutup",
+    "state.active": "Aktif",
+    "state.revoked": "Dicabut",
+    "mode.public": "Publik",
+    "mode.password": "Kata sandi",
+    "created": "Dibuat {{date}}",
+    "lastUsed": "terakhir dipakai {{date}}",
+    "revokedAt": "dicabut {{date}}",
+    "revoke": "Cabut",
+    "revoking": "Mencabut...",
+    "revokeFailed": "Gagal mencabut tautan bagikan.",
+    "confirmTitle": "Cabut tautan bagikan ini?",
+    "confirmBody": "Tautan {{token}} langsung berhenti bekerja di semua permukaan publik. Tindakan ini tidak bisa dibatalkan.",
+    "confirmAction": "Ya, cabut tautan",
+    "cancel": "Batal",
+    "unavailable": "Kelola tautan bagikan butuh koneksi server dan tidak tersedia di adapter ini."
   }
 }
