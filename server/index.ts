@@ -54,7 +54,7 @@ import {
   replayConsentState,
   targetPrivacyStatus,
 } from '../src/lib/consent/dispatch';
-import { applyRecord, createRecord } from '../src/lib/consent/record';
+import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
 import { appendEvent } from './events';
 import {
   ACCOUNT_EVENT_TYPES,
@@ -1749,7 +1749,12 @@ app.get('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentica
     const state = replayConsentState(rows);
     res.json({ records: state.records, granted: state.granted });
   } catch (e) {
-    res.status(409).json({ code: 'CONSENT_LEDGER_INVALID', message: (e as Error).message });
+    // S-06e: only an illegal ledger is a 409; broken infrastructure must
+    // not masquerade as a domain conflict (matches sibling endpoints).
+    if (e instanceof ConsentLedgerError) {
+      return res.status(409).json({ code: 'CONSENT_INVALID_TRANSITION', message: e.message });
+    }
+    res.status(500).json({ code: 'CONSENT_ERROR', message: (e as Error).message });
   }
 });
 
@@ -1763,14 +1768,29 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
     const now = new Date();
     const at = now.toISOString();
-    const record = createRecord(req.params.memberId, parsed.action, parsed.scope, at, parsed.note);
-    const rows = await prisma.consentRecord.findMany({
-      where: { memberId: req.params.memberId },
-      orderBy: { at: 'asc' },
-    });
-    const state = replayConsentState(rows);
-    const next = applyRecord(state, record);
+    // createRecord is pure input validation (note length, known action);
+    // running it before the transaction keeps its failures a 400 without
+    // duplicating any reducer logic.
+    let record: ConsentRecord;
+    try {
+      record = createRecord(req.params.memberId, parsed.action, parsed.scope, at, parsed.note);
+    } catch (e) {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: (e as Error).message });
+    }
+    // S-06e: ledger read, replay, and reducer validation happen INSIDE the
+    // transaction, so validating state and writing the record commit or
+    // roll back as one unit. This closes the race window where two
+    // concurrent POSTs could both pass an out-of-transaction check and
+    // then both write (double revoke, grant after revoke, ...).
+    // The pure reducer (src/lib/consent) stays the single source of truth;
+    // nothing is re-implemented here.
     const updated = await prisma.$transaction(async (tx) => {
+      const rows = await tx.consentRecord.findMany({
+        where: { memberId: req.params.memberId },
+        orderBy: { at: 'asc' },
+      });
+      const state = replayConsentState(rows);
+      const next = applyRecord(state, record);
       await tx.consentRecord.create({
         data: {
           id: record.id,
@@ -1781,18 +1801,24 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
           at: now,
         },
       });
-      return tx.familyMember.update({
+      const member = await tx.familyMember.update({
         where: { id: req.params.memberId },
         data: { privacyStatus: targetPrivacyStatus(parsed.action) },
       });
+      return { member, granted: next.granted, last: next.records[next.records.length - 1] };
     });
     res.status(201).json({
-      record: next.records[next.records.length - 1],
-      granted: next.granted,
-      privacyStatus: updated.privacyStatus,
+      record: updated.last,
+      granted: updated.granted,
+      privacyStatus: updated.member.privacyStatus,
     });
   } catch (e) {
-    res.status(409).json({ code: 'CONSENT_TRANSITION_INVALID', message: (e as Error).message });
+    // S-06e: a reducer rejection is a domain conflict (409); anything else
+    // is an infrastructure failure and answers 500 like sibling endpoints.
+    if (e instanceof ConsentLedgerError) {
+      return res.status(409).json({ code: 'CONSENT_INVALID_TRANSITION', message: e.message });
+    }
+    res.status(500).json({ code: 'CONSENT_ERROR', message: (e as Error).message });
   }
 });
 
