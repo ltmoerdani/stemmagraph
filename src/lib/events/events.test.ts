@@ -215,7 +215,7 @@ describe('invitation builders produce contract-shaped envelopes (P2-3)', () => {
 });
 
 describe('exhaustiveness of the event union', () => {
-  it('EVENT_TYPES holds exactly the ten shipped types, no duplicates', () => {
+  it('EVENT_TYPES holds exactly the twelve shipped types, no duplicates', () => {
     expect([...EVENT_TYPES]).toEqual([
       'ACCOUNT_PENDING_CREATED',
       'ACCOUNT_ACTIVATED',
@@ -227,8 +227,10 @@ describe('exhaustiveness of the event union', () => {
       'CHANGE_PROPOSED',
       'CHANGE_ACCEPTED',
       'CHANGE_REJECTED',
+      'CONSENT_GRANTED',
+      'CONSENT_REVOKED',
     ]);
-    expect(new Set(EVENT_TYPES).size).toBe(10);
+    expect(new Set(EVENT_TYPES).size).toBe(12);
   });
 
   it('isEventType accepts members and refuses anything else', () => {

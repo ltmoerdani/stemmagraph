@@ -1,5 +1,5 @@
 // Unit tests for the pure activity-feed query layer (P2-6 AC-2, AC-3).
-// Covers: honest parsing of ?type= (seven v1 types accepted, anything else
+// Covers: honest parsing of ?type= (vocabulary types accepted, anything else
 // refused), ?limit= (default 50, clamp 1..100, non-integers refused) and
 // ?before= (cursor decode refused on garbage), cursor round-trips, the v1
 // visibility scope (member of the tree, or account event about self), and
@@ -46,7 +46,7 @@ function invitationCreatedEnvelope(treeId = TREE, actor = OWNER): EventEnvelope 
 // ─── parseActivityFeedQuery: type ────────────────────────
 
 describe('parseActivityFeedQuery (type)', () => {
-  it('accepts each of the seven event types', () => {
+  it('accepts each event type in the vocabulary', () => {
     for (const type of ['ACCOUNT_PENDING_CREATED', 'ACCOUNT_ACTIVATED', 'ACCOUNT_DISABLED', 'ACCOUNT_ENABLED', 'INVITATION_CREATED', 'INVITATION_USED', 'INVITATION_REVOKED'] as const) {
       const parsed = parseActivityFeedQuery({ type });
       expect(parsed).toMatchObject({ ok: true, typeFilter: [type] });

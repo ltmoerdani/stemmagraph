@@ -1,6 +1,6 @@
 // Unit tests for the pure digest builder (P2-7 AC-2).
 // Covers: the three filter rules (window, foreign actor, member tree),
-// null-tree exclusion, per-tree grouping with all seven counts, actor
+// null-tree exclusion, per-tree grouping with all twelve counts, actor
 // name resolution and fallbacks, the no-PII payload assertion, the
 // mandatory opt-out footer, the subject range and determinism.
 
@@ -85,7 +85,7 @@ describe('grouping and name resolution', () => {
     event({ id: 'ev-4', type: 'ACCOUNT_ACTIVATED', actorUserId: 'user-a', familyTreeId: 'tree-1', createdAt: '2026-08-21T08:00:00Z' }),
   ];
 
-  it('groups per tree and counts all ten types, zeros included', () => {
+  it('groups per tree and counts all twelve types, zeros included', () => {
     const result = build(events);
     expect(result.empty).toBe(false);
     if (result.empty) return;
@@ -103,6 +103,8 @@ describe('grouping and name resolution', () => {
       CHANGE_PROPOSED: 0,
       CHANGE_ACCEPTED: 0,
       CHANGE_REJECTED: 0,
+      CONSENT_GRANTED: 0,
+      CONSENT_REVOKED: 0,
     });
     expect(result.treeSections[0]?.counts.ACCOUNT_ACTIVATED).toBe(1);
   });
