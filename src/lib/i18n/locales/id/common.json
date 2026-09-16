@@ -422,6 +422,20 @@
     "privacyShared": "Dibagikan, sertakan dalam ekspor silsilah publik",
     "privacyPrivate": "Privat, samarkan dalam ekspor silsilah publik"
   },
+  "consent": {
+    "title": "Persetujuan",
+    "loading": "Memuat riwayat persetujuan...",
+    "empty": "Belum ada persetujuan yang tercatat untuk member ini.",
+    "grantedNow": "Persetujuan saat ini diberikan.",
+    "revokedNow": "Persetujuan saat ini tidak diberikan.",
+    "scopeLabel": "Cakupan",
+    "scopePlaceholder": "cth. ekspor foto",
+    "noteLabel": "Catatan",
+    "notePlaceholder": "Catatan opsional untuk entri ini",
+    "grantAction": "Berikan",
+    "revokeAction": "Cabut",
+    "loadFailed": "Gagal memuat riwayat persetujuan."
+  },
   "sharePanel": {
     "open": "Kelola tautan bagikan",
     "title": "Tautan bagikan: {{treeName}}",
