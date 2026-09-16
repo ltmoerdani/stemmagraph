@@ -56,6 +56,9 @@ import {
   ChangeProposalPage,
   ChangeProposalRecord,
   CreateChangeProposalInput,
+  ConsentApi,
+  ConsentStateView,
+  ConsentMutationResult,
   AdapterError,
   AuthError,
 } from './types';
@@ -74,7 +77,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -482,5 +485,29 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
       decisionNote === undefined || decisionNote === '' ? {} : { decisionNote },
     );
     return body.proposal;
+  }
+
+  // ── Member consent ledger (S-06c) ───────────────────────
+  // Pure routing: the server replays the append-only ledger through the
+  // pure reducer and guards tree access; invalid transitions come back as
+  // 409 CONSENT_* codes that the modal renders inline.
+
+  async getConsent(memberId: string): Promise<ConsentStateView> {
+    const body = await this.request<ConsentStateView>('GET', `/members/${memberId}/consent`);
+    return { records: body.records ?? [], granted: body.granted ?? false };
+  }
+
+  async postConsent(
+    memberId: string,
+    action: ConsentMutationResult['record']['action'],
+    scope: string,
+    note?: string,
+  ): Promise<ConsentMutationResult> {
+    const body = await this.request<ConsentMutationResult>('POST', `/members/${memberId}/consent`, {
+      action,
+      scope,
+      ...(note === undefined ? {} : { note }),
+    });
+    return body;
   }
 }
