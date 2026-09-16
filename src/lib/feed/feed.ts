@@ -70,14 +70,14 @@ export const FEED_TYPES_BY_KIND: Readonly<Record<FeedKind, readonly EventType[]>
 // any unlisted type. Everything downstream (projection, filters, i18n
 // keys) consults this list instead of the raw vocabulary.
 
-/** Event types the feed renders; CHANGE_* stays out pending its own decision. */
+/** Event types the feed renders; CHANGE_* and CONSENT_* stay out pending their own decision. */
 export const FEED_RENDERED_EVENT_TYPES: readonly FeedRenderedEventType[] = [
   ...ACCOUNT_FEED_TYPES,
   ...INVITATION_FEED_TYPES,
 ];
 export type FeedRenderedEventType = (typeof ACCOUNT_FEED_TYPES)[number] | (typeof INVITATION_FEED_TYPES)[number];
 
-/** True when the feed projects the type; false for CHANGE_* and anything unknown. */
+/** True when the feed projects the type; false for CHANGE_*, CONSENT_* and anything unknown. */
 export function isFeedRenderedEventType(type: EventType): type is FeedRenderedEventType {
   return (FEED_RENDERED_EVENT_TYPES as readonly string[]).includes(type);
 }
@@ -232,7 +232,7 @@ export function sortFeedItemsNewestFirst(items: readonly FeedItem[]): FeedItem[]
 
 export type FeedTypeSelection = 'all' | EventType;
 
-/** True for "all" plus the seven v1 event types, false for anything else. */
+/** True for "all" plus every event type in the vocabulary, false for anything else. */
 export function isFeedTypeSelection(value: unknown): value is FeedTypeSelection {
   return value === 'all' || isEventType(value);
 }
@@ -256,5 +256,5 @@ export function applyFeedTypeFilter(
   return items.filter((item) => keep.has(item.type));
 }
 
-/** The full selection list for UI dropdowns: "all" plus the seven types. */
+/** The full selection list for UI dropdowns: "all" plus every type in the vocabulary. */
 export const FEED_TYPE_SELECTIONS: readonly FeedTypeSelection[] = ['all', ...EVENT_TYPES];

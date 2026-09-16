@@ -1,7 +1,8 @@
 // Unit tests for the pure activity-feed projector (P2-6 AC-1, P2-5 fence).
 // Covers: the complete mapping of the seven rendered event types into
-// FeedItem, the P2-5 fence that keeps CHANGE_* facts out of the feed until
-// the deferred feed-item decision, param minimization for invitation facts
+// FeedItem, the P2-5 and S-09a-i fences that keep CHANGE_* and CONSENT_*
+// facts out of the feed until a deferred rendering decision, param
+// minimization for invitation facts
 // (channel, invitationType, result, time, invitation id only; never phone
 // numbers, share text or tokens), kind grouping, i18n keys, timestamp
 // normalization, the type filter builder, and newest-first sorting with id
@@ -243,11 +244,12 @@ describe('kind grouping', () => {
     expect(FEED_KINDS).toEqual(['account', 'invitation']);
   });
 
-  it('keeps the CHANGE_* fence: known to the store, not rendered here', () => {
-    expect(EVENT_TYPES).toHaveLength(10);
+  it('keeps the CHANGE_* and CONSENT_* fence: known to the store, not rendered here', () => {
+    expect(EVENT_TYPES).toHaveLength(12);
     expect(FEED_RENDERED_EVENT_TYPES).toHaveLength(7);
     for (const type of EVENT_TYPES) {
-      if ((String(type) as string).startsWith('CHANGE_')) {
+      const name = String(type) as string;
+      if (name.startsWith('CHANGE_') || name.startsWith('CONSENT_')) {
         expect(isFeedRenderedEventType(type)).toBe(false);
       } else {
         expect(isFeedRenderedEventType(type)).toBe(true);

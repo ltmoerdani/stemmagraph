@@ -122,7 +122,7 @@ export type ActivityFeedQuery =
 
 /**
  * Parses the query string honestly:
- *   - type: one of the seven v1 EVENT_TYPES, or absent for no filter.
+ *   - type: one of the EVENT_TYPES in the vocabulary, or absent for no filter.
  *     Anything else (including "all") is a 400, never a silent ignore.
  *   - limit: integer, clamped into 1..100, default 50.
  *   - before: a cursor from a previous response, or absent.

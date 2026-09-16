@@ -8,12 +8,13 @@
 
 // ─── Event vocabulary (v1 + P2-3 + P2-5) ─────────────────
 //
-// Ten event types ship after P2-5: the four account administration
-// facts from v1, the three invitation lifecycle facts from P2-3, and the
-// three change-review facts. Adding a type is a contract change: bump the
+// Twelve event types ship after S-09a-i: the four account administration
+// facts from v1, the three invitation lifecycle facts from P2-3, the three
+// change-review facts, and the two consent facts (S-09a-i, ADR 0012).
+// Adding a type is a contract change: bump the
 // vocabulary here, extend the exhaustive switch in the projectors, and
 // record it in the ADR (0003 for v1, 0004 for invitations, 0009 for
-// change review).
+// change review, 0012 for consent).
 
 export const EVENT_TYPES = [
   'ACCOUNT_PENDING_CREATED',
@@ -26,6 +27,8 @@ export const EVENT_TYPES = [
   'CHANGE_PROPOSED',
   'CHANGE_ACCEPTED',
   'CHANGE_REJECTED',
+  'CONSENT_GRANTED',
+  'CONSENT_REVOKED',
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
@@ -58,6 +61,8 @@ export function isEventType(value: unknown): value is EventType {
 //   CHANGE_PROPOSED          proposalId, state, targetType
 //   CHANGE_ACCEPTED          proposalId, state, targetType
 //   CHANGE_REJECTED          proposalId, state, targetType
+//   CONSENT_GRANTED          consentId, memberId, action, occurredAt
+//   CONSENT_REVOKED          consentId, memberId, action, occurredAt
 //
 // Anything beyond the keys above is rejected by validateEventPayload.
 
@@ -122,12 +127,33 @@ export interface ChangeEventPayload {
   targetType: ChangeTargetType;
 }
 
+/**
+ * A consent fact (S-09a-i, ADR 0012). All four keys are technical or
+ * from a closed vocabulary: consentId points at the ledger row, memberId
+ * is the subject of the decision, action is grant/revoke/regrant, and
+ * occurredAt mirrors the ledger timestamp. The free-text note and the
+ * scope string stay in the ConsentRecord table and never enter the
+ * store, same rule as the change-review snapshots.
+ */
+export type ConsentEventAction = 'grant' | 'revoke' | 'regrant';
+
+export interface ConsentEventPayload {
+  /** Id of the consent ledger row this fact was derived from. */
+  consentId: string;
+  /** Technical id of the member the consent decision is about. */
+  memberId: string;
+  action: ConsentEventAction;
+  /** ISO timestamp copied from the ledger row (record.at). */
+  occurredAt: string;
+}
+
 export type EventPayload =
   | AccountEventPayload
   | InvitationCreatedPayload
   | InvitationUsedPayload
   | InvitationRevokedPayload
-  | ChangeEventPayload;
+  | ChangeEventPayload
+  | ConsentEventPayload;
 
 export interface EventEnvelope {
   type: EventType;
@@ -355,6 +381,8 @@ const KNOWN_PAYLOAD_KEYS_BY_TYPE: Readonly<Record<EventType, readonly string[]>>
   CHANGE_PROPOSED: ['proposalid', 'state', 'targettype'],
   CHANGE_ACCEPTED: ['proposalid', 'state', 'targettype'],
   CHANGE_REJECTED: ['proposalid', 'state', 'targettype'],
+  CONSENT_GRANTED: ['consentid', 'memberid', 'action', 'occurredat'],
+  CONSENT_REVOKED: ['consentid', 'memberid', 'action', 'occurredat'],
 };
 
 export type PayloadValidation =

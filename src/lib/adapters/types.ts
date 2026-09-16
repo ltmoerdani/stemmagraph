@@ -300,7 +300,7 @@ export interface ActivityFeedPage {
 
 /** Query options; every field is optional and re-validated server side. */
 export interface ActivityFeedQueryOptions {
-  /** One of the seven v1 event types; absent means no filter. */
+  /** One of the event types in the vocabulary; absent means no filter. */
   type?: string;
   /** Server clamps into 1..100, default 50. */
   limit?: number;
