@@ -422,6 +422,20 @@
     "privacyShared": "Shared, include in public tree exports",
     "privacyPrivate": "Private, redact in public tree exports"
   },
+  "consent": {
+    "title": "Consent",
+    "loading": "Loading consent history...",
+    "empty": "No consent has been recorded for this member yet.",
+    "grantedNow": "Consent is currently granted.",
+    "revokedNow": "Consent is currently not granted.",
+    "scopeLabel": "Scope",
+    "scopePlaceholder": "e.g. export photos",
+    "noteLabel": "Note",
+    "notePlaceholder": "Optional note for this entry",
+    "grantAction": "Grant",
+    "revokeAction": "Revoke",
+    "loadFailed": "Failed to load the consent history."
+  },
   "sharePanel": {
     "open": "Manage share links",
     "title": "Share links: {{treeName}}",

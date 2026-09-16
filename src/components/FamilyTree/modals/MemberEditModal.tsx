@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, User, Calendar, MapPin, Briefcase, Phone } from 'lucide-react';
+import { X, User, Calendar, MapPin, Briefcase, Phone, ShieldCheck } from 'lucide-react';
 import type { FamilyMember } from '../../../types/family';
+import { getConsentApi, type ConsentStateView } from '../../../lib/adapters';
 
 interface MemberEditModalProps {
   member: FamilyMember;
@@ -19,6 +20,73 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
   const { t } = useTranslation();
   const [formData, setFormData] = useState<FamilyMember>(member);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const consentApi = getConsentApi();
+  const [consentState, setConsentState] = useState<ConsentStateView | null>(null);
+  const [consentError, setConsentError] = useState<string | null>(null);
+  const [consentBusy, setConsentBusy] = useState(false);
+  const [consentScope, setConsentScope] = useState('');
+  const [consentNote, setConsentNote] = useState('');
+  const [consentActionError, setConsentActionError] = useState<string | null>(null);
+
+  const refreshConsent = React.useCallback(async () => {
+    if (!consentApi) return;
+    try {
+      const state = await consentApi.getConsent(member.id);
+      setConsentState(state);
+    } catch (e) {
+      setConsentError((e as Error).message);
+    }
+  }, [consentApi, member.id]);
+
+  // Reset per-open consent state during render (the React-recommended
+  // alternative to setState-in-effect); the effect below refetches.
+  const [consentWasOpen, setConsentWasOpen] = useState(false);
+  if (isOpen && !consentWasOpen) {
+    setConsentWasOpen(true);
+    setConsentState(null);
+    setConsentError(null);
+    setConsentScope('');
+    setConsentNote('');
+    setConsentActionError(null);
+  } else if (!isOpen && consentWasOpen) {
+    setConsentWasOpen(false);
+  }
+
+  useEffect(() => {
+    if (!isOpen || !consentApi) return;
+    let active = true;
+    consentApi.getConsent(member.id)
+      .then((state) => {
+        if (active) setConsentState(state);
+      })
+      .catch((e) => {
+        if (active) setConsentError((e as Error).message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isOpen, consentApi, member.id]);
+
+  const handleConsentAction = async (action: 'grant' | 'revoke') => {
+    if (!consentApi || !consentScope.trim()) return;
+    setConsentBusy(true);
+    setConsentActionError(null);
+    try {
+      await consentApi.postConsent(
+        member.id,
+        action,
+        consentScope.trim(),
+        consentNote.trim() === '' ? undefined : consentNote.trim(),
+      );
+      setConsentScope('');
+      setConsentNote('');
+      await refreshConsent();
+    } catch (e) {
+      setConsentActionError((e as Error).message);
+    } finally {
+      setConsentBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -354,6 +422,102 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Consent Ledger (S-06c) */}
+          {consentApi && (
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <ShieldCheck className="w-5 h-5 mr-2 text-blue-600" />
+                {t('consent.title')}
+              </h3>
+
+              {consentError && (
+                <p className="mb-3 text-sm text-red-600" role="alert">{consentError}</p>
+              )}
+
+              {consentState === null ? (
+                <p className="text-sm text-gray-500">{t('consent.loading')}</p>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 mb-3">
+                    {consentState.granted ? t('consent.grantedNow') : t('consent.revokedNow')}
+                  </p>
+                  {consentState.records.length === 0 ? (
+                    <p className="text-sm text-gray-500 mb-4">{t('consent.empty')}</p>
+                  ) : (
+                    <ul className="mb-4 space-y-2 max-h-48 overflow-y-auto">
+                      {consentState.records.map((rec) => (
+                        <li key={rec.id} className="text-sm border border-gray-200 rounded-md px-3 py-2">
+                          <span className="font-medium">{rec.action}</span>
+                          <span className="mx-2 text-gray-300">|</span>
+                          <span className="text-gray-700">{rec.scope}</span>
+                          <span className="mx-2 text-gray-300">|</span>
+                          <span className="text-gray-500">{rec.at.slice(0, 10)}</span>
+                          {rec.note && (
+                            <p className="text-gray-500 mt-1">{rec.note}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="member-consent-scope" className="block text-sm font-medium text-gray-700 mb-1">
+                        {t('consent.scopeLabel')} *
+                      </label>
+                      <input
+                        id="member-consent-scope"
+                        type="text"
+                        value={consentScope}
+                        onChange={(e) => setConsentScope(e.target.value)}
+                        disabled={consentBusy}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                        placeholder={t('consent.scopePlaceholder')}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="member-consent-note" className="block text-sm font-medium text-gray-700 mb-1">
+                        {t('consent.noteLabel')}
+                      </label>
+                      <input
+                        id="member-consent-note"
+                        type="text"
+                        value={consentNote}
+                        onChange={(e) => setConsentNote(e.target.value)}
+                        disabled={consentBusy}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                        placeholder={t('consent.notePlaceholder')}
+                      />
+                    </div>
+                  </div>
+
+                  {consentActionError && (
+                    <p className="mt-2 text-sm text-red-600" role="alert">{consentActionError}</p>
+                  )}
+
+                  <div className="mt-3 flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => handleConsentAction('grant')}
+                      disabled={consentBusy || !consentScope.trim()}
+                      className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50"
+                    >
+                      {t('consent.grantAction')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleConsentAction('revoke')}
+                      disabled={consentBusy || !consentScope.trim()}
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50"
+                    >
+                      {t('consent.revokeAction')}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="border-t pt-6 flex justify-end space-x-3">

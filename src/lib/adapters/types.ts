@@ -434,6 +434,42 @@ export interface ChangeReviewApi {
   distinctChangeProposal(proposalId: string, decisionNote?: string): Promise<ChangeProposalRecord>;
 }
 
+// ─── Member consent ledger (S-06c) ──────────────────────
+// Read-write per-member surface. Only the REST adapter implements it: the
+// append-only ledger lives in the ConsentRecord table behind the API. The
+// UI renders the history read-only and offers Grant/Revoke actions; mock
+// and supabase adapters get null from getConsentApi and hide the section.
+
+/** One ledger row as the server returns it (chronological ascending). */
+export interface ConsentRecordView {
+  id: string;
+  memberId: string;
+  action: 'grant' | 'revoke' | 'regrant';
+  scope: string;
+  note: string | null;
+  at: string;
+}
+
+/** Whole GET response: replayed rows plus the current granted flag. */
+export interface ConsentStateView {
+  records: ConsentRecordView[];
+  granted: boolean;
+}
+
+/** Whole 201 response of a successful POST. */
+export interface ConsentMutationResult {
+  record: ConsentRecordView;
+  granted: boolean;
+  privacyStatus: 'shared' | 'private';
+}
+
+export interface ConsentApi {
+  /** GET /members/:memberId/consent: replayed ledger, oldest first. */
+  getConsent(memberId: string): Promise<ConsentStateView>;
+  /** POST /members/:memberId/consent: append one grant/revoke/regrant row. */
+  postConsent(memberId: string, action: ConsentRecordView['action'], scope: string, note?: string): Promise<ConsentMutationResult>;
+}
+
 // ─── Error Types ──────────────────────────────────────────
 
 export class AdapterError extends Error {
