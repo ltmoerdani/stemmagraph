@@ -16,6 +16,7 @@ import {
   Panel,
   BackgroundVariant,
   NodeChange,
+  type AriaLabelConfig,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTranslation } from 'react-i18next';
@@ -249,6 +250,27 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   );
   const { t } = useTranslation('canvas');
 
+  // S-08: konfigurasi label a11y canvas. Kunci mengikuti tipe
+  // AriaLabelConfig @xyflow/system (11 kunci); ariaLiveMessage berupa
+  // fungsi yang dipanggil React Flow saat node digerakkan pakai keyboard.
+  const ariaLabelConfig = useMemo<AriaLabelConfig>(
+    () => ({
+      'node.a11yDescription.default': t('a11y.node.default'),
+      'node.a11yDescription.keyboardDisabled': t('a11y.node.keyboardDisabled'),
+      'node.a11yDescription.ariaLiveMessage': ({ direction, x, y }) =>
+        t('a11y.node.ariaLiveMessage', { direction, x, y }),
+      'edge.a11yDescription.default': t('a11y.edge.default'),
+      'controls.ariaLabel': t('a11y.controls.ariaLabel'),
+      'controls.zoomIn.ariaLabel': t('a11y.controls.zoomIn'),
+      'controls.zoomOut.ariaLabel': t('a11y.controls.zoomOut'),
+      'controls.fitView.ariaLabel': t('a11y.controls.fitView'),
+      'controls.interactive.ariaLabel': t('a11y.controls.interactive'),
+      'minimap.ariaLabel': t('a11y.minimap'),
+      'handle.ariaLabel': t('a11y.handle'),
+    }),
+    [t]
+  );
+
   // S-09 AC2: batas generasi (pure function, default-on)
   const generationLimit = useMemo(
     () => applyGenerationLimit(members, generationLimitState),
@@ -480,6 +502,9 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
         snapToGrid={getSnapGrid(layoutDirection).snapToGrid}
         snapGrid={getSnapGrid(layoutDirection).snapGrid}
         onlyRenderVisibleElements={shouldOnlyRenderVisibleElements(nodes.length)}
+        nodesFocusable
+        edgesFocusable
+        ariaLabelConfig={ariaLabelConfig}
         proOptions={{
           hideAttribution: true // Hide React Flow attribution if using Pro
         }}

@@ -138,5 +138,24 @@
     "expandAllWarning": "The whole tree will be rendered ({{count}} individuals) and may be heavy on slow devices. Continue?",
     "collapse": "Restore generation limit",
     "tierIndicator": "{{count}} generations • Drag horizontally only"
+  },
+  "a11y": {
+    "node": {
+      "default": "Family member node. Press Enter to select.",
+      "keyboardDisabled": "This node cannot be moved with arrow keys because it is disabled.",
+      "ariaLiveMessage": "Moved node {{direction}} to position x {{x}}, y {{y}}."
+    },
+    "edge": {
+      "default": "Family relationship connection."
+    },
+    "controls": {
+      "ariaLabel": "Family tree canvas controls",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fitView": "Fit view",
+      "interactive": "Toggle node interactivity"
+    },
+    "minimap": "Mini map",
+    "handle": "Connection handle"
   }
 }
