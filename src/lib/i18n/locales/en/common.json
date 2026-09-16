@@ -434,6 +434,7 @@
     "notePlaceholder": "Optional note for this entry",
     "grantAction": "Grant",
     "revokeAction": "Revoke",
+    "regrantAction": "Regrant",
     "loadFailed": "Failed to load the consent history."
   },
   "sharePanel": {
