@@ -60,10 +60,8 @@ describe('MemberEditModal consent Regrant', () => {
       <MemberEditModal member={member} isOpen onClose={() => {}} onSave={() => {}} />,
     );
 
-    // Tombol tampil karena state terakhir revoked.
     const regrantButton = await waitFor(() => getByRole('button', { name: 'consent.regrantAction' }));
 
-    // Scope wajib diisi sebelum action (aturan yang sama dengan Grant/Revoke).
     const scopeInput = container.querySelector('#member-consent-scope') as HTMLInputElement;
     fireEvent.change(scopeInput, { target: { value: 'export photos' } });
     fireEvent.click(regrantButton);
@@ -72,5 +70,22 @@ describe('MemberEditModal consent Regrant', () => {
       expect(mockPostConsent).toHaveBeenCalledTimes(1);
     });
     expect(mockPostConsent).toHaveBeenCalledWith('m1', 'regrant', 'export photos', undefined);
+  });
+
+  it('renders error in role=alert element when ConsentApi throws an error', async () => {
+    mockPostConsent.mockRejectedValue(new Error('illegal ledger transition'));
+
+    const { container, getByRole } = render(
+      <MemberEditModal member={member} isOpen onClose={() => {}} onSave={() => {}} />,
+    );
+
+    const regrantButton = await waitFor(() => getByRole('button', { name: 'consent.regrantAction' }));
+
+    const scopeInput = container.querySelector('#member-consent-scope') as HTMLInputElement;
+    fireEvent.change(scopeInput, { target: { value: 'export photos' } });
+    fireEvent.click(regrantButton);
+
+    const alertEl = await waitFor(() => getByRole('alert'));
+    expect(alertEl.textContent).toContain('illegal ledger transition');
   });
 });

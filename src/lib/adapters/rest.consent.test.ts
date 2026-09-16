@@ -123,4 +123,40 @@ describe('RestAdapter consent surface', () => {
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toEqual({ action: 'regrant', scope: 'export tree' });
   });
+
+  it('POST grant with 409 CONSENT_INVALID_TRANSITION surfaces the error code', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        json(409, {
+          code: 'CONSENT_INVALID_TRANSITION',
+          message: 'illegal ledger transition',
+        }),
+      ),
+    );
+
+    await expect(makeAdapter().postConsent('m1', 'grant', 'export photos')).rejects.toMatchObject({
+      name: 'AdapterError',
+      code: 'CONSENT_INVALID_TRANSITION',
+      statusCode: 409,
+    });
+  });
+
+  it('POST grant with 500 CONSENT_ERROR surfaces an infrastructure error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        json(500, {
+          code: 'CONSENT_ERROR',
+          message: 'ledger unavailable',
+        }),
+      ),
+    );
+
+    await expect(makeAdapter().postConsent('m1', 'grant', 'export photos')).rejects.toMatchObject({
+      name: 'AdapterError',
+      code: 'CONSENT_ERROR',
+      statusCode: 500,
+    });
+  });
 });

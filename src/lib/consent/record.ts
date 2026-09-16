@@ -19,6 +19,20 @@ export interface ConsentState {
   granted: boolean;
 }
 
+/**
+ * Error domain untuk transisi ledger ilegal (S-06e). Dilempar applyRecord
+ * saat record menyalahi aturan transisi atau urutan timestamp. Endpoint
+ * memetakannya ke 409 CONSENT_INVALID_TRANSITION; pemisahan dari Error
+ * biasa membuat validasi input dan kegagalan infrastruktur bisa dipetakan
+ * ke kode respons berbeda tanpa menebak isi pesan.
+ */
+export class ConsentLedgerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ConsentLedgerError';
+  }
+}
+
 const NOTE_MAX_LENGTH = 280;
 const VALID_ACTIONS: readonly ConsentAction[] = ['grant', 'revoke', 'regrant'];
 
@@ -79,7 +93,7 @@ export function createRecord(
  */
 export function applyRecord(state: ConsentState, record: ConsentRecord): ConsentState {
   if (record.action === 'revoke' && !state.granted) {
-    throw new Error(
+    throw new ConsentLedgerError(
       `revoke ditolak: belum ada grant tercatat untuk member ${record.memberId}`,
     );
   }
@@ -87,7 +101,7 @@ export function applyRecord(state: ConsentState, record: ConsentRecord): Consent
   if (record.action === 'regrant') {
     const hasHistory = state.records.some((r) => r.memberId === record.memberId);
     if (state.granted || !hasHistory) {
-      throw new Error(
+      throw new ConsentLedgerError(
         `regrant ditolak: member ${record.memberId} tidak sedang dalam status revoked`,
       );
     }
@@ -101,7 +115,7 @@ export function applyRecord(state: ConsentState, record: ConsentRecord): Consent
     const lastMs = Date.parse(lastForSameMember.at);
     const nextMs = Date.parse(record.at);
     if (Number.isNaN(lastMs) || Number.isNaN(nextMs) || nextMs <= lastMs) {
-      throw new Error(
+      throw new ConsentLedgerError(
         `timestamp tidak monotonic: record baru (${record.at}) harus lebih baru dari record terakhir member ${record.memberId} (${lastForSameMember.at})`,
       );
     }
