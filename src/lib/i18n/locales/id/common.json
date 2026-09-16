@@ -434,6 +434,7 @@
     "notePlaceholder": "Catatan opsional untuk entri ini",
     "grantAction": "Berikan",
     "revokeAction": "Cabut",
+    "regrantAction": "Berikan Lagi",
     "loadFailed": "Gagal memuat riwayat persetujuan."
   },
   "sharePanel": {

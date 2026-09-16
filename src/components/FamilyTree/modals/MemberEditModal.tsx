@@ -67,7 +67,7 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
     };
   }, [isOpen, consentApi, member.id]);
 
-  const handleConsentAction = async (action: 'grant' | 'revoke') => {
+  const handleConsentAction = async (action: 'grant' | 'revoke' | 'regrant') => {
     if (!consentApi || !consentScope.trim()) return;
     setConsentBusy(true);
     setConsentActionError(null);
@@ -513,6 +513,19 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
                     >
                       {t('consent.revokeAction')}
                     </button>
+                    {/* Regrant only when the last state is revoked: the reducer
+                        (applyRecord) rejects regrant while granted or when the
+                        member has no prior grant history. */}
+                    {!consentState.granted && consentState.records.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleConsentAction('regrant')}
+                        disabled={consentBusy || !consentScope.trim()}
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
+                      >
+                        {t('consent.regrantAction')}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
