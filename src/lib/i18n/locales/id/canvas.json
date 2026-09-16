@@ -138,5 +138,24 @@
     "expandAllWarning": "Seluruh pohon akan dirender penuh ({{count}} individu) dan bisa berat pada perangkat lambat. Lanjutkan?",
     "collapse": "Kembalikan batas generasi",
     "tierIndicator": "{{count}} generasi • Geser horizontal saja"
+  },
+  "a11y": {
+    "node": {
+      "default": "Node anggota keluarga. Tekan Enter untuk memilih.",
+      "keyboardDisabled": "Node ini tidak bisa digerakkan dengan tombol panah karena dinonaktifkan.",
+      "ariaLiveMessage": "Node digeser ke {{direction}} pada posisi x {{x}}, y {{y}}."
+    },
+    "edge": {
+      "default": "Koneksi hubungan keluarga."
+    },
+    "controls": {
+      "ariaLabel": "Kontrol kanvas pohon keluarga",
+      "zoomIn": "Perbesar",
+      "zoomOut": "Perkecil",
+      "fitView": "Sesuaikan tampilan",
+      "interactive": "Alih interaktivitas node"
+    },
+    "minimap": "Peta mini",
+    "handle": "Pegangan koneksi"
   }
 }
