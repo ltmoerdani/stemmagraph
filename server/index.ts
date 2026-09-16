@@ -49,6 +49,12 @@ import {
   type TreeRole,
 } from '../src/lib/invitations';
 import { generateInvitationToken } from '../src/lib/invitations/token';
+import {
+  parseConsentBody,
+  replayConsentState,
+  targetPrivacyStatus,
+} from '../src/lib/consent/dispatch';
+import { applyRecord, createRecord } from '../src/lib/consent/record';
 import { appendEvent } from './events';
 import {
   ACCOUNT_EVENT_TYPES,
@@ -1725,6 +1731,68 @@ app.delete('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<
     res.status(204).send();
   } catch (e) {
     res.status(500).json({ code: 'MEMBER_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Consent ledger (per-member, S-06b-B, reducer pure di src/lib/consent) ───────────
+
+app.get('/api/v1/members/:memberId/consent', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
+  try {
+    const m = await prisma.familyMember.findUnique({ where: { id: req.params.memberId } });
+    if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const guard = await guardTreeAction(req.userId!, m.treeId, 'manage_invitations');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rows = await prisma.consentRecord.findMany({
+      where: { memberId: req.params.memberId },
+      orderBy: { at: 'asc' },
+    });
+    const state = replayConsentState(rows);
+    res.json({ records: state.records, granted: state.granted });
+  } catch (e) {
+    res.status(409).json({ code: 'CONSENT_LEDGER_INVALID', message: (e as Error).message });
+  }
+});
+
+app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
+  try {
+    const parsed = parseConsentBody(req.body ?? {});
+    if (!parsed.ok) return res.status(400).json({ code: parsed.code, message: parsed.message });
+    const m = await prisma.familyMember.findUnique({ where: { id: req.params.memberId } });
+    if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const guard = await guardTreeAction(req.userId!, m.treeId, 'manage_invitations');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const now = new Date();
+    const at = now.toISOString();
+    const record = createRecord(req.params.memberId, parsed.action, parsed.scope, at, parsed.note);
+    const rows = await prisma.consentRecord.findMany({
+      where: { memberId: req.params.memberId },
+      orderBy: { at: 'asc' },
+    });
+    const state = replayConsentState(rows);
+    const next = applyRecord(state, record);
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.consentRecord.create({
+        data: {
+          id: record.id,
+          memberId: record.memberId,
+          action: record.action,
+          scope: record.scope,
+          note: record.note,
+          at: now,
+        },
+      });
+      return tx.familyMember.update({
+        where: { id: req.params.memberId },
+        data: { privacyStatus: targetPrivacyStatus(parsed.action) },
+      });
+    });
+    res.status(201).json({
+      record: next.records[next.records.length - 1],
+      granted: next.granted,
+      privacyStatus: updated.privacyStatus,
+    });
+  } catch (e) {
+    res.status(409).json({ code: 'CONSENT_TRANSITION_INVALID', message: (e as Error).message });
   }
 });
 
