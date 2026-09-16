@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ConsentLedgerError,
   applyRecord,
   createRecord,
   initState,
@@ -55,5 +56,40 @@ describe('consent record', () => {
   it('dua record timestamp sama ditolak (monotonic)', () => {
     const revoke = createRecord('m1', 'revoke', 'newsletter', T0);
     expect(() => applyRecord(grantedState(), revoke)).toThrow(/monotonic/);
+  });
+
+  describe('ConsentLedgerError (S-06e AC3)', () => {
+    it('revoke tanpa grant tercatat melempar ConsentLedgerError', () => {
+      const record = createRecord('m1', 'revoke', 'newsletter', T0);
+      try {
+        applyRecord(initState(), record);
+        expect.unreachable('applyRecord harus melempar ConsentLedgerError');
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConsentLedgerError);
+        expect((e as Error).name).toBe('ConsentLedgerError');
+      }
+    });
+
+    it('regrant saat granted melempar ConsentLedgerError', () => {
+      const record = createRecord('m1', 'regrant', 'newsletter', T1);
+      try {
+        applyRecord(grantedState(), record);
+        expect.unreachable('applyRecord harus melempar ConsentLedgerError');
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConsentLedgerError);
+        expect((e as Error).name).toBe('ConsentLedgerError');
+      }
+    });
+
+    it('timestamp non-monotonic melempar ConsentLedgerError', () => {
+      const revoke = createRecord('m1', 'revoke', 'newsletter', T0);
+      try {
+        applyRecord(grantedState(), revoke);
+        expect.unreachable('applyRecord harus melempar ConsentLedgerError');
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConsentLedgerError);
+        expect((e as Error).name).toBe('ConsentLedgerError');
+      }
+    });
   });
 });
