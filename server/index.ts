@@ -31,6 +31,7 @@ import {
   projectChangeNotifications,
   projectPendingCreatedNotifications,
 } from '../src/lib/events';
+import { safeEmitConsentEvent, type ConsentEventSink } from '../src/lib/events/consent-wiring';
 import {
   buildInvitationContext,
   canPerformTreeAction,
@@ -1148,6 +1149,22 @@ async function activeTreeOwnerIds(treeId: string, excludeUserId: string): Promis
     .map((user) => ({ id: user.id }));
 }
 
+/**
+ * S-09a-ii: binds the pure consent wiring to the real infrastructure.
+ * appendEvent stays the only writer of the Event table and the
+ * Notification createMany stays the only projection write, so this sink
+ * adds no new store, it just routes the drafts through the same gates
+ * every other event type uses.
+ */
+const consentEventSink: ConsentEventSink = {
+  appendEvent: (envelope) =>
+    appendEvent(envelope.type, envelope.actorUserId, envelope.familyTreeId, envelope.payload),
+  createNotifications: async (drafts) =>
+    prisma.notification.createMany({
+      data: drafts.map((d) => ({ userId: d.userId, type: d.type, payloadJson: d.payloadJson })),
+    }),
+};
+
 /** Applies afterJson to the live row through the existing update path. */
 async function applyProposalToLiveRecord(
   targetType: ChangeTargetType,
@@ -1807,6 +1824,27 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
       });
       return { member, granted: next.granted, last: next.records[next.records.length - 1] };
     });
+    // S-09a-ii: the ledger row is committed, so the audit fact and the
+    // owner notifications are emitted here. Emission failures are
+    // contained by the catch below and must never fail the POST: the
+    // consent decision is already recorded in the ledger, and the
+    // member-facing contract answers 201 on the strength of that row.
+    // The owner lookup is inside the same guarded block: a failing
+    // audience query is an emission failure, not a consent failure.
+    try {
+      const owners = await activeTreeOwnerIds(m.treeId, req.userId!);
+      const emitResult = await safeEmitConsentEvent(
+        { record, treeId: m.treeId, actorId: req.userId!, owners },
+        consentEventSink,
+      );
+      if (!emitResult.ok) {
+        // Logged for operations, swallowed for the caller: the ledger row
+        // is the source of truth and the audit store is downstream.
+        console.error('consent event emission failed (ledger row kept):', emitResult.error);
+      }
+    } catch (emitError) {
+      console.error('consent event emission failed (ledger row kept):', emitError);
+    }
     res.status(201).json({
       record: updated.last,
       granted: updated.granted,

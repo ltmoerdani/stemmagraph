@@ -4,6 +4,8 @@
 
 Accepted (2026-09-17). Part of S-09a-i on branch `improve/stg-s09a-i-events`.
 
+Wiring status (S-09a-ii, branch `improve/stg-s09a-ii-consent-wiring`): the endpoint layer now emits these facts. `POST /api/v1/members/:memberId/consent` turns each committed ledger row into an `CONSENT_GRANTED` or `CONSENT_REVOKED` event through `emitConsentEvent` (src/lib/events/consent-wiring.ts), with the owner notification drafts derived from the emitted event by `projectConsentNotifications`. Emission is wrapped by `safeEmitConsentEvent`: a failing event store or notification write is logged and never fails the POST, because the ledger row is already the source of truth once the transaction commits. The adapter layer is deliberately untouched: adapters speak the client-side data contract and never see envelopes, so no adapter change fits this wiring.
+
 ## Context
 
 The consent ledger (S-06a, src/lib/consent) records every grant, revoke, and regrant per member, and the privacy gate already reads it on export and share. The append-only event store (ADR 0003) has no consent vocabulary, so the strongest privacy decisions a family can make leave no mark in the audit trail: if a ledger row is corrected, purged, or lost, nothing in the event history shows that a consent was once given or withdrawn.
