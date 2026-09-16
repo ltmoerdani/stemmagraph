@@ -399,7 +399,7 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
 
   // ── Activity feed (P2-6, ADR 0006) ─────────────────────
   // Read-only projection of the server event store. The server validates
-  // ?type= against the seven v1 event types, clamps ?limit= into 1..100
+  // ?type= against the event vocabulary, clamps ?limit= into 1..100
   // and treats ?before= as an opaque keyset cursor, so this method only
   // forwards what the caller picked in the UI.
 

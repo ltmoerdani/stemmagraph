@@ -61,11 +61,11 @@ export interface DigestBuildInput {
   readonly window: WeeklyWindow;
 }
 
-/** One tree's slice of the digest: counts for all seven types plus names. */
+/** One tree's slice of the digest: counts for all twelve types plus names. */
 export interface DigestTreeSection {
   readonly treeId: string;
   readonly treeName: string;
-  /** All seven v1 event types, always present, zero when nothing happened. */
+  /** All twelve v1 event types, always present, zero when nothing happened. */
   readonly counts: Readonly<Record<EventType, number>>;
   /** Distinct display names of acting accounts, alphabetical. */
   readonly actorNames: readonly string[];
