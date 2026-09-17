@@ -12,7 +12,6 @@ import {
 const T0 = '2026-09-17T00:00:00.000Z';
 const DUE = '2026-10-17T00:00:00.000Z'; // T0 + 30 hari
 const T1 = '2026-09-20T00:00:00.000Z';
-const T2 = '2026-10-01T00:00:00.000Z';
 
 function toRouteRow(event: ErasureEventRow, createdAt: string): ErasureRouteRow {
   return { type: event.type, payloadJson: event.payloadJson, createdAt: new Date(createdAt) };
