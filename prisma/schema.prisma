@@ -162,7 +162,7 @@ model FamilyRelationship {
   member  FamilyMember @relation("MemberFrom", fields: [memberId], references: [id], onDelete: Cascade)
   related FamilyMember @relation("MemberTo", fields: [relatedId], references: [id], onDelete: Cascade)
 
-  @@unique([memberId, relatedId, type])
+  @@index([memberId, relatedId, type])
   @@index([treeId])
 }
 
