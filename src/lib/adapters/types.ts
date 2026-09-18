@@ -68,6 +68,9 @@ export interface FamilyMemberRecord {
   nickname?: string;
   birthDate: string;
   deathDate?: string;
+  /** GEDCOM-aligned optional columns (v116-ii): JSON of GenealogicalDate. */
+  birthDateGed?: string;
+  deathDateGed?: string;
   birthPlace?: string;
   currentLocation?: string;
   profession?: string;

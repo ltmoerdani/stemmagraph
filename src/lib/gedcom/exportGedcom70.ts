@@ -25,6 +25,7 @@ import { evaluateMemberPrivacy } from '../privacy/exportPrivacyGate'
 import { parseEventDate } from './parseEventDate'
 import { formatGedcomDateValue } from './formatGedcomDate'
 import { placePayload } from './placePayload'
+import { sexFromGender } from '../genealogy/gedcom-bridge'
 import type {
   FamilyMemberRecord,
   MemberRelationship,
@@ -96,19 +97,14 @@ function singleKey(memberId: string): string {
   return `S\u0000${memberId}`
 }
 
-/** Maps model gender to the GEDCOM 7 SEX enumeration. */
+/**
+ * Maps model gender to the GEDCOM 7 SEX enumeration via the pure
+ * genealogy bridge (v116 iv-b). normalizeGender accepts both the new
+ * M/F/X/U values and the legacy male/female/other strings; anything
+ * unrecognized lands on U (the 7.0 enum's unknown value).
+ */
 function sexPayload(gender: FamilyMemberRecord['gender']): string {
-  switch (gender) {
-    case 'male':
-      return 'M'
-    case 'female':
-      return 'F'
-    // 'other' has no dedicated model handling yet (planned for the model
-    // rework, T0c). 'X' is the standard GEDCOM 7 value for non-binary
-    // sex, so exporting it directly keeps the data lossless.
-    default:
-      return 'X'
-  }
+  return sexFromGender(gender)
 }
 
 /** Formats a Date as a GEDCOM 7 DateExact payload, e.g. "18 AUG 2026". */
