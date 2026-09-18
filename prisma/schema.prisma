@@ -138,6 +138,11 @@ model FamilyMember {
   relationshipsFrom FamilyRelationship[] @relation("MemberFrom")
   relationshipsTo   FamilyRelationship[] @relation("MemberTo")
   consentRecords    ConsentRecord[]
+  // v116-iii-b, additive only: event genealogis dan tautan anak-parent
+  // yang menempel pada member ini.
+  events      GenealogyEvent[]
+  childLinks  FamilyLink[]     @relation("FamilyLinkChild")
+  parentLinks FamilyLink[]     @relation("FamilyLinkParent")
 
   @@index([treeId])
   @@index([generation])
@@ -416,4 +421,44 @@ model ConsentRecord {
   member FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@index([memberId])
+}
+
+// ─── Genealogy Event (v116-iii-b) ────────────────────────
+
+// One genealogical event (BIRT/DEAT/MARR) on one member, additive only.
+// type is validated at application level via makeEvent
+// (src/lib/genealogy/event-model.ts), not by a Prisma enum. dateGed
+// stores JSON of GenealogicalDate
+// (src/lib/genealogy/genealogical-date.ts), null when unknown.
+model GenealogyEvent {
+  id        String   @id @default(cuid())
+  memberId  String
+  type      String
+  dateGed   String?
+  place     String?
+  createdAt DateTime @default(now())
+
+  member FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+}
+
+// ─── Family Link (v116-iii-b) ────────────────────────────
+
+// Child-to-parent link, additive only. type mirrors RelationshipType
+// in src/lib/genealogy/relationship.ts (BIRTH/ADOPTED/FOSTER/OTHER),
+// mapped from the raw PEDI value via mapPediToRelationship; the
+// constraint stays application-level. The raw value itself belongs to
+// the importing layer, not to this table.
+model FamilyLink {
+  id       String @id @default(cuid())
+  childId  String
+  parentId String
+  type     String
+
+  child  FamilyMember @relation("FamilyLinkChild", fields: [childId], references: [id], onDelete: Cascade)
+  parent FamilyMember @relation("FamilyLinkParent", fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([parentId])
 }
