@@ -55,7 +55,13 @@ function isYearWord(word: string): boolean {
   return /^\d{1,4}$/.test(word)
 }
 
-function normalizeQuality(raw: string | undefined): DateQuality | null {
+/**
+ * Normalisasi quality dari metadata sumber (mis. kolom CSV/GEDCOM _QUAL)
+ * ke DateQuality, null bila tidak dinyatakan.
+ * Sumbu kedua yang berdiri sendiri: modifier diparse dari teks tanggal
+ * lewat parseGenealogicalDate, quality dinormalkan lewat fungsi ini.
+ */
+export function normalizeQuality(raw: string | undefined): DateQuality | null {
   if (raw === undefined || raw === null) return null
   const value = raw.trim().toLowerCase()
   if (value === 'primary') return 'primary'
