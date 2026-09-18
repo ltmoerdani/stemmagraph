@@ -48,7 +48,7 @@ const MODIFIER_WORD: Record<DateModifier, string> = {
   estimated: 'EST',
 }
 
-/** ABT/CAL/EST: tiga kata approx GEDCOM 7, tidak boleh digabung jadi dua. */
+/** ABT/CAL/EST: kata approx GEDCOM 7, pola dua token (kata approx + tahun). */
 const APPROX_WORDS = ['ABT', 'CAL', 'EST'] as const
 
 function isYearWord(word: string): boolean {
@@ -85,8 +85,8 @@ export function parseGenealogicalDate(input: string | null | undefined): Genealo
   const upper = text.toUpperCase()
   const words = upper.split(/\s+/)
 
-  // ABT 1900 / CAL 1875 / EST 1850: tepat tiga kata (kata approx + tahun).
-  if (words.length === 3 && APPROX_WORDS.includes(words[0] as (typeof APPROX_WORDS)[number])) {
+  // ABT 1900 / CAL 1875 / EST 1850: dua token (kata approx + tahun).
+  if (words.length === 2 && APPROX_WORDS.includes(words[0] as (typeof APPROX_WORDS)[number])) {
     if (isYearWord(words[1])) {
       return { modifier: words[0] === 'ABT' ? 'about' : words[0] === 'CAL' ? 'calculated' : 'estimated', year: Number(words[1]), quality: null }
     }
@@ -94,12 +94,12 @@ export function parseGenealogicalDate(input: string | null | undefined): Genealo
   }
 
   // FROM 1900 TO 1910: semantik periode (dua ujung).
-  if (words.length === 5 && words[0] === 'FROM' && words[2] === 'TO' && isYearWord(words[1]) && isYearWord(words[3])) {
+  if (words.length === 4 && words[0] === 'FROM' && words[2] === 'TO' && isYearWord(words[1]) && isYearWord(words[3])) {
     return { modifier: 'from', year: Number(words[1]), year2: Number(words[3]), quality: null }
   }
 
   // BET 1900 AND 1910: semantik rentang pencarian.
-  if (words.length === 5 && words[0] === 'BET' && words[2] === 'AND' && isYearWord(words[1]) && isYearWord(words[3])) {
+  if (words.length === 4 && words[0] === 'BET' && words[2] === 'AND' && isYearWord(words[1]) && isYearWord(words[3])) {
     return { modifier: 'range', year: Number(words[1]), year2: Number(words[3]), quality: null }
   }
 
