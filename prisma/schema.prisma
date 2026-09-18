@@ -111,11 +111,15 @@ model FamilyMember {
   nickname        String?
   birthDate       String
   deathDate       String?
+  // GEDCOM-aligned optional columns (v116-ii). JSON of GenealogicalDate
+  // (src/lib/genealogy/genealogical-date.ts), see migration-map.ts.
+  birthDateGed    String?
+  deathDateGed    String?
   birthPlace      String?
   currentLocation String?
   profession      String?
   education       String?
-  gender          String               @default("male")
+  gender          String               @default("U")
   photoUrl        String?
   email           String?
   phone           String?
