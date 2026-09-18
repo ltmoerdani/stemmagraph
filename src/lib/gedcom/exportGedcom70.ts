@@ -25,7 +25,8 @@ import { evaluateMemberPrivacy } from '../privacy/exportPrivacyGate'
 import { parseEventDate } from './parseEventDate'
 import { formatGedcomDateValue } from './formatGedcomDate'
 import { placePayload } from './placePayload'
-import { sexFromGender } from '../genealogy/gedcom-bridge'
+import { datePayloadFromGed, sexFromGender } from '../genealogy/gedcom-bridge'
+import { toGedcomDateValue } from '../genealogy/genealogical-date'
 import type {
   FamilyMemberRecord,
   MemberRelationship,
@@ -127,6 +128,42 @@ function dateExact(d: Date): string {
 function eventDateValue(raw: string): string {
   const formatted = formatGedcomDateValue(parseEventDate(raw))
   return formatted ?? raw
+}
+
+/**
+ * Event date payload input for the v116 iv-c helper: the legacy raw
+ * string (byte-preserved fallback) plus the optional GEDCOM-aligned
+ * Ged column (JSON of a GenealogicalDate, v116-ii).
+ */
+export interface EventDateInput {
+  /** Legacy stored string, unchanged from the pre-Ged columns. */
+  raw?: string | null
+  /** JSON string of a GenealogicalDate; preferred when present. */
+  ged?: string | null
+}
+
+/**
+ * Maps a stored event date (BIRT/DEAT) to a GEDCOM 7 DateValue payload
+ * with Ged-column preference (v116 iv-c). When the Ged column is set
+ * and parses via the pure bridge (datePayloadFromGed), the value is
+ * serialized with toGedcomDateValue exactly as the GenealogicalDate
+ * structure says: periods stay FROM-TO, closed ranges stay BET-AND,
+ * ABT/CAL/EST keep their approx modifier, and phrases are wrapped
+ * intact. No sharpening in either path (ADR 0011, decision 1). When
+ * the Ged column is absent, malformed JSON, or fails to parse (or
+ * serializes to an empty string), the legacy path runs unchanged:
+ * parseEventDate + formatGedcomDateValue with the raw byte-preserved
+ * fallback for unrecognized strings.
+ */
+export function eventDateValueGed(input: EventDateInput): string {
+  if (input.ged !== null && input.ged !== undefined && input.ged !== '') {
+    const parsed = datePayloadFromGed(input.ged)
+    if (parsed !== null) {
+      const value = toGedcomDateValue(parsed)
+      if (value !== '') return value
+    }
+  }
+  return input.raw === null || input.raw === undefined ? '' : eventDateValue(input.raw)
 }
 
 /** True when the URL can be written as an OBJE>FILE payload. */
@@ -427,9 +464,9 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
 
     // BIRT is omitted entirely for redacted members (DATE and PLAC
     // both reveal identifying data).
-    if (!redact && (m.birthDate || m.birthPlace)) {
+    if (!redact && (m.birthDate || m.birthDateGed || m.birthPlace)) {
       const birt = new GEDCStruct('BIRT', indi)
-      addText(birt, 'DATE', eventDateValue(m.birthDate))
+      addText(birt, 'DATE', eventDateValueGed({ raw: m.birthDate, ged: m.birthDateGed }))
       const birtPlace = m.birthPlace ? placePayload(m.birthPlace) : undefined
       if (birtPlace) addText(birt, 'PLAC', birtPlace)
     }
@@ -438,9 +475,9 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     // carries no DEAT either: a recorded death date on a member treated
     // as living would leak an exact date.
     if (!redact) {
-      if (m.deathDate) {
+      if (m.deathDate || m.deathDateGed) {
         const deat = new GEDCStruct('DEAT', indi)
-        addText(deat, 'DATE', eventDateValue(m.deathDate))
+        addText(deat, 'DATE', eventDateValueGed({ raw: m.deathDate, ged: m.deathDateGed }))
       } else if (!m.isAlive) {
         // Died, but no death date recorded. Payload Y is the standard way
         // to assert the event without a date and keeps DEAT non-empty.
