@@ -56,6 +56,7 @@ import {
   targetPrivacyStatus,
 } from '../src/lib/consent/dispatch';
 import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
+import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { appendEvent } from './events';
 import {
   ACCOUNT_EVENT_TYPES,
@@ -1859,6 +1860,10 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
     res.status(500).json({ code: 'CONSENT_ERROR', message: (e as Error).message });
   }
 });
+
+// ─── Erasure (S-09b-vi-ii-b, wiring adapter Express ke server hidup) ───────────
+
+createErasureExpressAdapter({ app, prisma });
 
 // ─── Relationships (per-tree scoped, P2-3 AC-6) ───────────
 
