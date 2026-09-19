@@ -22,6 +22,20 @@ import {
 } from './erasure-purge-plan';
 import { ErasureError } from './erasure';
 
+/**
+ * Tipe event audit purge. Sengaja TERPISAH dari tipe replay ledger:
+ * baris erasure.purged tidak boleh masuk erasureStateFromEvents karena
+ * state sudah COMPLETED, replay complete ulang akan ditolak dan merusak
+ * idempotensi purge run kedua.
+ */
+export type ErasurePurgeAuditType = 'erasure.requested' | 'erasure.completed' | 'erasure.cancelled' | 'erasure.purged';
+
+/** Baris event audit purge untuk ditulis ke ledger. */
+export interface ErasurePurgeAuditRow {
+  type: ErasurePurgeAuditType;
+  payloadJson: string;
+}
+
 export interface MemberPurgeableData {
   id: string;
   email?: string | null;
@@ -36,7 +50,7 @@ export interface ErasurePurgeExecuteDeps {
   listEvents(memberId: string): Promise<ErasureEventRow[]>;
   getMember(memberId: string): Promise<MemberPurgeableData | null>;
   updateMember(memberId: string, updated: MemberPurgeableData): Promise<void>;
-  appendEvent(row: ErasureEventRow): Promise<void>;
+  appendEvent(row: ErasurePurgeAuditRow): Promise<void>;
   nowIso(): string;
 }
 
@@ -129,7 +143,7 @@ export async function executeErasurePurge(
     });
 
     await deps.appendEvent({
-      type: 'erasure.completed',
+      type: 'erasure.purged',
       payloadJson: auditPayload,
     });
 
