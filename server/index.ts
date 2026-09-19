@@ -58,6 +58,7 @@ import {
 import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
+import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
 import { appendEvent } from './events';
 import {
   ACCOUNT_EVENT_TYPES,
@@ -1867,6 +1868,8 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
 createErasureExpressAdapter({ app, prisma });
 
 createWithdrawalExpressAdapter({ app, prisma });
+
+createErasurePurgeScheduler({ prisma });
 
 // ─── Relationships (per-tree scoped, P2-3 AC-6) ───────────
 
