@@ -151,12 +151,18 @@ function jalankanPipeline(text: string): PipelineHasil {
 
 /** Entri checklist yang dapat dievaluasi dari hasil pipeline. */
 function entriChecklist(hasil: PipelineHasil): ChecklistResultInput[] {
-  const semuaTanggalEksakAda = hasil.indis.every(
-    (indi) =>
-      indi.birthDate === undefined ||
-      indi.birthDate.dateKind === 'EXACT' ||
-      indi.birthDate.originalDateString.length > 0,
-  )
+  const semuaTanggalEksakAda =
+    hasil.indis.every(
+      (indi) =>
+        indi.birthDate === undefined ||
+        indi.birthDate.dateKind === 'EXACT' ||
+        indi.birthDate.originalDateString.length > 0,
+    ) &&
+    hasil.fams.every(
+      (fam) =>
+        fam.marriageDate === undefined ||
+        fam.marriageDate.originalDateString.length > 0,
+    )
   const exportText = exportGedcom70({
     members: hasil.members,
     relationships: hasil.relationships,
@@ -268,6 +274,70 @@ describe('testfile resmi GEDCOM 7: same-sex-marriage', () => {
     await denganTestfile(SUMBER_TESTFILE[1], (text) => {
       const hasil = jalankanPipeline(text)
       const ringkasan = runChecklist(entriChecklist(hasil))
+      expect(ringkasan.allPassed).toBe(true)
+    })
+  })
+})
+
+describe('testfile resmi GEDCOM 7: remarriage2', () => {
+  it('hasil parse memuat minimal 2 FAM sesuai isi berkas', async () => {
+    await denganTestfile(SUMBER_TESTFILE[2], (text) => {
+      const hasil = jalankanPipeline(text)
+      expect(hasil.indis.length).toBeGreaterThan(0)
+      expect(hasil.fams.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  it('pasangan yang sama muncul di dua FAM berbeda (regresi v121-i)', async () => {
+    await denganTestfile(SUMBER_TESTFILE[2], (text) => {
+      const hasil = jalankanPipeline(text)
+      const berpasangan = hasil.fams.map((fam) =>
+        [fam.husband, fam.wife].filter((v): v is string => typeof v === 'string').sort().join('+'),
+      )
+      // I1 dan I2 menikah di @F1@, cerai, lalu menikah lagi di @F3@.
+      const hitung = new Map<string, number>()
+      for (const key of berpasangan) {
+        hitung.set(key, (hitung.get(key) ?? 0) + 1)
+      }
+      const ganda = [...hitung.entries()].filter(([, n]) => n >= 2)
+      expect(ganda.length).toBeGreaterThan(0)
+      expect(ganda[0]?.[0]).toBe('I1+I2')
+    })
+  })
+
+  it('round-trip: jumlah FAM dan anggota pasangan tetap terjaga', async () => {
+    await denganTestfile(SUMBER_TESTFILE[2], (text) => {
+      const { awal, akhir } = roundTrip(text)
+      expect(akhir.indis).toHaveLength(awal.indis.length)
+      // Exporter mendedup pasangan lewat coupleKey: dua pernikahan pasangan
+      // sama (F1 dan F3) diekspor satu FAM. Invariant yang dipegang: jumlah
+      // FAM hasil export sama dengan jumlah pasangan unik sebelum export,
+      // dan setiap pasangan unik tetap terwakili.
+      const pasanganUnik = new Set(
+        awal.fams.map((fam) =>
+          [fam.husband, fam.wife].filter((v): v is string => typeof v === 'string').sort().join('+'),
+        ),
+      )
+      expect(akhir.fams).toHaveLength(pasanganUnik.size)
+      const xrefAwal = [...new Set(awal.indis.map((i) => i.xref))].sort()
+      const xrefAkhir = [...new Set(akhir.indis.map((i) => i.xref))].sort()
+      expect(xrefAkhir).toEqual(xrefAwal)
+      const pasanganAkhir = akhir.fams.map((fam) =>
+        [fam.husband, fam.wife].filter((v): v is string => typeof v === 'string').sort().join('+'),
+      )
+      expect(pasanganAkhir).toContain('I1+I2')
+      expect(pasanganAkhir).toContain('I1+I3')
+    })
+  })
+
+  it('checklist round-trip lulus untuk item yang dievaluasi', async () => {
+    await denganTestfile(SUMBER_TESTFILE[2], (text) => {
+      const hasil = jalankanPipeline(text)
+      const ringkasan = runChecklist(entriChecklist(hasil))
+      // minimal ada satu item dievaluasi nyata (RT-07 tanpa CONC, RT-10
+      // struktur inti); item di luar itu bernilai true dengan note N/A.
+      const dievaluasi = ringkasan.areas.flatMap((a) => a.passed)
+      expect(dievaluasi.length).toBeGreaterThan(0)
       expect(ringkasan.allPassed).toBe(true)
     })
   })
