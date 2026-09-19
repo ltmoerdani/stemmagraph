@@ -56,7 +56,10 @@ export function runSchemaGate(entries: SchemaGateEntry[]): SchemaGateReport {
   let checkedCount = 0;
 
   // Penghitung kemunculan per pasangan (induk, tag) untuk aturan kardinalitas.
-  const seen = new Map<string, { first: SchemaGateEntry; def: StructureEntry; count: number }>();
+  const seen = new Map<
+    string,
+    { first: SchemaGateEntry; def: StructureEntry; count: number; violationLine?: number }
+  >();
 
   for (const entry of entries) {
     const def = lookupStructure(entry.superstructureUri, entry.tag);
@@ -79,6 +82,10 @@ export function runSchemaGate(entries: SchemaGateEntry[]): SchemaGateReport {
     const key = entry.superstructureUri + '::' + entry.tag;
     const slot = seen.get(key) ?? { first: entry, def, count: 0 };
     slot.count += 1;
+    const maxNow = maxCardinality(slot.def.cardinality);
+    if (maxNow !== null && slot.count === maxNow + 1) {
+      slot.violationLine = entry.line;
+    }
     seen.set(key, slot);
   }
 
@@ -86,10 +93,10 @@ export function runSchemaGate(entries: SchemaGateEntry[]): SchemaGateReport {
   for (const slot of seen.values()) {
     const max = maxCardinality(slot.def.cardinality);
     if (max !== null && slot.count > max) {
-      // Satu issue per pasangan (induk, tag), dilaporkan di baris entri
-      // pertama yang melewati batas.
+      // Satu issue per pasangan (induk, tag), menunjuk kemunculan
+      // yang melewati batas.
       issues.push({
-        line: slot.first.line,
+        line: slot.violationLine ?? slot.first.line,
         structureUri: slot.def.uri,
         tag: slot.first.tag,
         reason: 'cardinality_violated',
