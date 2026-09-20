@@ -21,7 +21,8 @@
 
 import { GEDCStruct } from './vendor/gedcstruct.js'
 import { version as appVersion } from '../../../package.json'
-import { evaluateMemberPrivacy } from '../privacy/exportPrivacyGate'
+import { evaluateMemberPrivacy, isLiving } from '../privacy/exportPrivacyGate'
+import { privacyStatusToResn } from '../privacy/resn'
 import { parseEventDate } from './parseEventDate'
 import { formatGedcomDateValue } from './formatGedcomDate'
 import { placePayload } from './placePayload'
@@ -475,6 +476,19 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     }
 
     new GEDCStruct('SEX', indi, undefined, sexPayload(m.gender))
+
+    // RESN PRIVACY menandai living member dengan consent eksplisit
+    // 'private' pada arsip full mode (v128-ii-c, notes/297): penerima
+    // arsip privat melihat penanda pembatasan RESN. Clean mode meredaksi
+    // member ini sebagai gantinya, consent nihil tetap nihil RESN supaya
+    // fixture round-trip tetap byte-exact (tanpa penajaman).
+    if (
+      input.privacyMode === 'full' &&
+      isLiving(m) &&
+      m.privacyStatus === 'private'
+    ) {
+      new GEDCStruct('RESN', indi, undefined, privacyStatusToResn(m.privacyStatus))
+    }
 
     // BIRT is omitted entirely for redacted members (DATE and PLAC
     // both reveal identifying data).
