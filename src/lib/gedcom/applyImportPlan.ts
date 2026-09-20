@@ -79,6 +79,7 @@ function memberInput(member: PlannedMember): CreateMemberInput {
     birthDate: dateString(member.birthDate),
     deathDate: dateString(member.deathDate),
     birthPlace: member.birthPlace,
+    privacyStatus: member.privacyStatus,
   }
 }
 

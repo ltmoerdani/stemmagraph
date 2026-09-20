@@ -36,6 +36,7 @@
 import type { ImportedIndividual } from './importIndividuals'
 import type { ImportedFamily } from './importFamilies'
 import type { ParsedEventDate } from './parseEventDate'
+import { applyResnToPrivacyStatus } from './resn-import'
 
 /** Gender as planned for the wiring layer; unknown SEX never becomes male/female. */
 export type PlannedGender = 'male' | 'female' | 'other'
@@ -52,6 +53,12 @@ export interface PlannedMember {
   birthPlace: string | undefined
   deathDate: ParsedEventDate | undefined
   deathPlace: string | undefined
+  /**
+   * Privacy status hasil pemetaan RESN multi-nilai (v130-ii) lewat
+   * applyResnToPrivacyStatus. Undefined saat RESN absen maupun tak dikenal:
+   * keputusan tetap milik wiring layer, tidak ada fabrikasi nilai.
+   */
+  privacyStatus?: 'shared' | 'private'
 }
 
 /** One planned relation. parent: memberXref is the parent, relatedXref the child. */
@@ -92,6 +99,9 @@ function plannedMember(individual: ImportedIndividual): PlannedMember {
     birthPlace: individual.birthPlace,
     deathDate: individual.deathDate,
     deathPlace: individual.deathPlace,
+    // RESN multi-nilai: null (absen/tak dikenal) jadi undefined agar
+    // backward compatible dengan member tanpa RESN.
+    privacyStatus: applyResnToPrivacyStatus(individual.resn) ?? undefined,
   }
 }
 
