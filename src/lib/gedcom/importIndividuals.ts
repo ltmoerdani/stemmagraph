@@ -45,6 +45,8 @@ export interface ImportedIndividual {
   deathDate: ParsedEventDate | undefined
   /** DEAT.PLAC through placePayload, or undefined when absent/empty. */
   deathPlace: string | undefined
+  /** RESN payload verbatim (mapping is the consumer's job, not this parser), or undefined when absent. */
+  resn: string | undefined
 }
 
 /** First direct substructure with the given tag, or undefined. */
@@ -97,6 +99,7 @@ export function importIndividuals(
       birthPlace: placeOf(birt),
       deathDate: dateOf(deat),
       deathPlace: placeOf(deat),
+      resn: payloadOf(subWithTag(record, 'RESN')),
     })
   }
   return out

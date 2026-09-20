@@ -1,4 +1,4 @@
-// Test importIndividuals (S1F5-A): 10 kasus inti urai INDI, termasuk
+// Test importIndividuals (S1F5-A): kasus inti urai INDI, termasuk
 // round-trip nyata exportGedcom70 lalu importIndividuals. Kasus sanitasi
 // tanggal/place detail sudah diuji di parseEventDate.test.ts dan
 // placePayload.test.ts; di sini cukup wiring level lib.
@@ -190,5 +190,29 @@ describe('importIndividuals', () => {
     expect(out[1].name).toBe('Siti Aminah')
     expect(out[1].sex).toBe('F')
     expect(out[1].birthPlace).toBe('Yogyakarta')
+  })
+
+  it('parses RESN PRIVACY verbatim', () => {
+    const gedcom = ['0 @I1@ INDI', '1 RESN PRIVACY'].join('\n')
+    const out = importIndividuals(gedcom)
+    expect(out[0].resn).toBe('PRIVACY')
+  })
+
+  it('leaves resn undefined for an INDI without RESN', () => {
+    const gedcom = ['0 @I1@ INDI', '1 NAME Ani'].join('\n')
+    const out = importIndividuals(gedcom)
+    expect(out[0].resn).toBeUndefined()
+  })
+
+  it('parses RESN CONFIDENTIAL verbatim', () => {
+    const gedcom = ['0 @I1@ INDI', '1 RESN CONFIDENTIAL'].join('\n')
+    const out = importIndividuals(gedcom)
+    expect(out[0].resn).toBe('CONFIDENTIAL')
+  })
+
+  it('parses RESN LOCKED verbatim', () => {
+    const gedcom = ['0 @I1@ INDI', '1 RESN LOCKED'].join('\n')
+    const out = importIndividuals(gedcom)
+    expect(out[0].resn).toBe('LOCKED')
   })
 })
