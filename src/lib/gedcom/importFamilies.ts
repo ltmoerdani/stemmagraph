@@ -11,7 +11,8 @@
 // Scope (S1F5-B, deliberately narrow):
 //   - FAM records only: xref, HUSB, WIFE, CHIL (array, in file order),
 //     MARR DATE via parseEventDate, MARR PLAC via placePayload, DIV DATE
-//     via parseEventDate.
+//     via parseEventDate, RESN payload verbatim (no enum normalization,
+//     no mapping; same discipline as importIndividuals.ts).
 //   - FAMS/FSEM/FAMC pointers are ignored here on purpose: they are
 //     derivable from the INDI/FAM record pairs themselves, so keeping
 //     them would duplicate state.
@@ -49,6 +50,8 @@ export interface ImportedFamily {
   marriagePlace: string | undefined
   /** DIV.DATE through parseEventDate, or undefined when absent/empty. */
   divorceDate: ParsedEventDate | undefined
+  /** RESN verbatim utuh apa adanya (bisa multi-nilai seperti 'CONFIDENTIAL, LOCKED'), undefined bila FAM nihil RESN. */
+  resn?: string
 }
 
 /** First direct substructure with the given tag, or undefined. */
@@ -121,6 +124,7 @@ export function importFamilies(
       marriageDate: dateOf(marr),
       marriagePlace: placeOf(marr),
       divorceDate: dateOf(div),
+      resn: payloadOf(subWithTag(record, 'RESN')),
     })
   }
   return out
