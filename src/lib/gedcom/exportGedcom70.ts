@@ -31,6 +31,7 @@ import type {
   FamilyMemberRecord,
   MemberRelationship,
 } from '../adapters/types'
+import { famcStatPayload, dateCalPayload } from './stat-cal-import'
 
 /** Registry-verified GEDCOM 7.0.18 month abbreviations for DateExact. */
 const MONTHS = [
@@ -71,6 +72,13 @@ export interface ExportGedcom70Input {
   exportedAt?: Date
   /** Privacy mode; see ExportPrivacyMode. Defaults to 'full'. */
   privacyMode?: ExportPrivacyMode
+  /**
+   * Optional FAMC-STAT payloads keyed by member id (childId). When present,
+   * the raw STAT payload is written under every FAMC pointer of that child.
+   * Limitation: a child with multiple FAMC pointers gets the same STAT under
+   * each one; the input shape does not carry per-FAM precision.
+   */
+  famcStat?: Record<string, string>
 }
 
 export interface ExportGedcom70Stats {
@@ -161,6 +169,12 @@ export function eventDateValueGed(input: EventDateInput): string {
     if (parsed !== null) {
       const value = toGedcomDateValue(parsed)
       if (value !== '') return value
+    }
+  }
+  if (input.raw !== null && input.raw !== undefined && input.raw !== '') {
+    const cal = dateCalPayload(input.raw)
+    if (cal.calendarTag !== undefined || cal.phrase !== undefined) {
+      return input.raw.trim()
     }
   }
   return input.raw === null || input.raw === undefined ? '' : eventDateValue(input.raw)
@@ -521,7 +535,15 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
 
     // FAMS / FAMC pointers, in FAM xref order.
     for (const fx of famsOf.get(m.id) ?? []) new GEDCStruct('FAMS', indi, fx)
-    for (const fx of famcOf.get(m.id) ?? []) new GEDCStruct('FAMC', indi, fx)
+    for (const fx of famcOf.get(m.id) ?? []) {
+      const famc = new GEDCStruct('FAMC', indi, fx)
+      const statRaw = input.famcStat?.[m.id]
+      if (statRaw !== undefined && statRaw !== '') {
+        // Enum payloads pass through verbatim; raw extTag payloads pass
+        // through without normalization (GOAL v125, FAMC-STAT fidelity).
+        addText(famc, 'STAT', famcStatPayload(statRaw).value)
+      }
+    }
 
     indiRecords.push(indi)
   }
@@ -600,4 +622,3 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     },
   }
 }
-
