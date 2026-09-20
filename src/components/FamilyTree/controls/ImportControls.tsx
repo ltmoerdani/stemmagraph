@@ -88,6 +88,7 @@ export const ImportControls: React.FC = () => {
               birthDate: input.birthDate ?? '',
               deathDate: input.deathDate,
               birthPlace: input.birthPlace,
+              privacyStatus: input.privacyStatus,
             })
             .then((record) => record.id),
         createRelation: (id, memberId, relatedId, type) =>
