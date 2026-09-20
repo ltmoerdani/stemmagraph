@@ -83,7 +83,8 @@ describe('importFamilies RESN verbatim (v131-i)', () => {
       ged(['0 @F1@ FAM', '1 MARR', '2 DATE 10 JAN 1900']),
     )
     const strip = (r: (typeof withResn)[number]) => {
-      const { resn: _resn, ...rest } = r
+      const rest = { ...r }
+      delete rest.resn
       return rest
     }
     expect(strip(withResn[0])).toEqual(strip(withoutResn[0]))
