@@ -28,7 +28,8 @@ describe('resnTagForStatus', () => {
   });
 
   it('lowercase shared ke null', () => {
-    expect(resnTagForStatus('SHARED')).toBeNull();
+    // Fungsi pure mencocokkan 'shared' secara eksak; varian non-lowercase jatuh ke PRIVACY.
+    expect(resnTagForStatus('shared')).toBeNull();
   });
 
   it('hasil hanya PRIVACY atau null', () => {
