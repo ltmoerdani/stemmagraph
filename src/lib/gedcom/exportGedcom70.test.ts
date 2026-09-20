@@ -265,3 +265,69 @@ describe('exportGedcom70: invariant semantik', () => {
     expect(gedcom).toContain('2 DATE sekitar tahun 2000')
   })
 })
+
+  it('RESN PRIVACY hanya di full mode untuk living ber-consent private (v128-ii-c)', () => {
+    const base = {
+      treeId: 'tree-1',
+      birthDate: '1 JAN 1990',
+      gender: 'male' as const,
+      isAlive: true,
+      generation: 1,
+      maritalStatus: 'single' as const,
+    }
+    const mk = (id: string, privacyStatus: 'shared' | 'private' | undefined) =>
+      member({ id, name: `Orang ${id}`, privacyStatus, ...base })
+    const rels = [
+      rel('r1', 'p', 'q', 'spouse'),
+    ]
+
+    // Full mode + living + private: tepat satu RESN PRIVACY di INDI itu.
+    const fullPrivate = exportGedcom70({
+      members: [mk('p', 'private'), mk('q', 'shared')],
+      relationships: rels,
+      exportedAt: EXPORTED_AT,
+      privacyMode: 'full',
+    })
+    expect(countMatches(fullPrivate.gedcom, /1 RESN PRIVACY/g)).toBe(1)
+
+    // Full mode + shared: nihil RESN (consent eksplisit, nihil pembatasan).
+    const fullShared = exportGedcom70({
+      members: [mk('p', 'shared'), mk('q', 'shared')],
+      relationships: rels,
+      exportedAt: EXPORTED_AT,
+      privacyMode: 'full',
+    })
+    expect(fullShared.gedcom).not.toContain('1 RESN')
+
+    // Full mode + consent nihil: nihil RESN (fixture byte-exact aman).
+    const fullNoStatus = exportGedcom70({
+      members: [mk('p', undefined), mk('q', undefined)],
+      relationships: rels,
+      exportedAt: EXPORTED_AT,
+      privacyMode: 'full',
+    })
+    expect(fullNoStatus.gedcom).not.toContain('1 RESN')
+
+    // Clean mode + private: nihil RESN (member teredaksi sebagai gantinya).
+    const cleanPrivate = exportGedcom70({
+      members: [mk('p', 'private'), mk('q', 'shared')],
+      relationships: rels,
+      exportedAt: EXPORTED_AT,
+      privacyMode: 'clean',
+    })
+    expect(cleanPrivate.gedcom).not.toContain('1 RESN')
+
+    // Meninggal (deathDate ada, isAlive false) + private di full mode: nihil RESN.
+    const deceased = member({
+      ...base,
+      id: 'd', name: 'Almarhum', privacyStatus: 'private',
+      isAlive: false, deathDate: '2 FEB 2001', birthDate: '1 JAN 1930',
+    })
+    const fullDeceased = exportGedcom70({
+      members: [deceased],
+      relationships: [],
+      exportedAt: EXPORTED_AT,
+      privacyMode: 'full',
+    })
+    expect(fullDeceased.gedcom).not.toContain('1 RESN')
+  })
