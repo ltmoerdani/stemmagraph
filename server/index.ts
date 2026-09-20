@@ -59,6 +59,7 @@ import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } fro
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
+import { createConsentNotificationScheduler } from '../src/server/consent/consent-notification-scheduler-wiring';
 import { appendEvent } from './events';
 import {
   ACCOUNT_EVENT_TYPES,
@@ -1870,6 +1871,7 @@ createErasureExpressAdapter({ app, prisma });
 createWithdrawalExpressAdapter({ app, prisma });
 
 createErasurePurgeScheduler({ prisma });
+createConsentNotificationScheduler({ prisma });
 
 // ─── Relationships (per-tree scoped, P2-3 AC-6) ───────────
 
