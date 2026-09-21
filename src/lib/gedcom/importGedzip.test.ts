@@ -2,10 +2,11 @@
 //
 // Fokus: perilaku importGedzip pada arsip buatan: round-trip nyata
 // terhadap zipSync fflate (pola exportGedzip), pencarian entry
-// gedcom.ged secara case-insensitive dan di path bersarang,
-// determinisme saat kandidat lebih dari satu, serta kegagalan eksplisit
-// (arsip tanpa .ged, input bukan zip). Kasus non-UTF8 mengunci
-// perilaku TextDecoder default: byte tak valid diganti U+FFFD.
+// gedcom.ged secara case-sensitive (nama GEDCOM.GED ditolak) dan di
+// path bersarang sebagai toleransi aplikasi, determinisme saat
+// kandidat exact lebih dari satu, serta kegagalan eksplisit (arsip
+// tanpa .ged, input bukan zip). Kasus non-UTF8 mengunci perilaku
+// TextDecoder default: byte tak valid diganti U+FFFD.
 
 import { describe, expect, it } from 'vitest'
 import { zipSync } from 'fflate'
@@ -41,9 +42,9 @@ describe('importGedzip', () => {
     expect(importGedzip(packaged.zip)).toBe(SAMPLE_GEDCOM)
   })
 
-  it('nama entry case berbeda (GEDCOM.GED) tetap ditemukan', () => {
+  it('nama entry case berbeda (GEDCOM.GED) ditolak: matching case-sensitive', () => {
     const zip = zipSync({ 'GEDCOM.GED': encodeGedcom(SAMPLE_GEDCOM) })
-    expect(importGedzip(zip)).toBe(SAMPLE_GEDCOM)
+    expect(() => importGedzip(zip)).toThrowError(/gedcom\.ged/)
   })
 
   it('entry di path bersarang tetap ditemukan', () => {
@@ -53,12 +54,12 @@ describe('importGedzip', () => {
     expect(importGedzip(zip)).toBe(SAMPLE_GEDCOM)
   })
 
-  it('kandidat ganda dipilih deterministik sesuai urutan nama', () => {
+  it('dua kandidat exact dipilih deterministik sesuai urutan nama', () => {
     const zip = zipSync({
       'gedcom.ged': encodeGedcom('0 HEAD\n0 TRLR\n'),
-      'backup/GEDCOM.GED': encodeGedcom(SAMPLE_GEDCOM),
+      'backup/gedcom.ged': encodeGedcom(SAMPLE_GEDCOM),
     })
-    // 'backup/gedcom.ged' urut lebih awal daripada 'gedcom.ged'.
+    // Urutan raw code points: 'backup/gedcom.ged' sebelum 'gedcom.ged'.
     expect(importGedzip(zip)).toBe(SAMPLE_GEDCOM)
   })
 
