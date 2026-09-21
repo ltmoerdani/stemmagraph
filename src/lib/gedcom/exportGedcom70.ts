@@ -90,6 +90,15 @@ export interface ExportGedcom70Input {
    * export filter drops (CONFIDENTIAL) remove the RESN entirely.
    */
   memberResn?: Record<string, string | readonly string[]>
+  /**
+   * Privacy parity flag (v135-ii). When true, the PRIVACY level is also
+   * withheld from the written RESN, so privacy-restricted records ship
+   * without a marker (spec "Removing data" parity). CONFIDENTIAL stays
+   * dropped by resn-export-filter regardless of this flag and LOCKED
+   * always passes. Defaults to false: absent or false keeps the output
+   * byte-identical to the merged v135 wiring behavior.
+   */
+  exportPrivacyParity?: boolean
 }
 
 export interface ExportGedcom70Stats {
@@ -506,7 +515,7 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
         ? privacyStatusToResn(m.privacyStatus)
         : null
     const memberResnRaw = input.memberResn?.[m.id]
-    const resnLevels = resolveExportResn({
+    const resolvedResn = resolveExportResn({
       resn:
         memberResnRaw === undefined || memberResnRaw === null
           ? null
@@ -515,6 +524,14 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
             : memberResnRaw.join(', '),
       resnMulti: recordResn === null ? null : [recordResn],
     })
+    // Privacy parity (v135-ii): a caller-side pass over the already
+    // normalized resolution. Enum knowledge (normalize, precedence,
+    // CONFIDENTIAL drop, LOCKED pass) stays delegated to
+    // resn-export-filter; this only withholds the PRIVACY marker when
+    // the flag asks for it, so the flag default keeps bytes identical.
+    const resnLevels = input.exportPrivacyParity
+      ? resolvedResn.filter((level) => level !== 'PRIVACY')
+      : resolvedResn
     if (resnLevels.length > 0) {
       new GEDCStruct('RESN', indi, undefined, resnLevels.join(', '))
     }
