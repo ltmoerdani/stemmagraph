@@ -33,6 +33,7 @@ import type {
   MemberRelationship,
 } from '../adapters/types'
 import { famcStatPayload, dateCalPayload } from './stat-cal-import'
+import { resolveExportResn } from './resn-export-filter'
 
 /** Registry-verified GEDCOM 7.0.18 month abbreviations for DateExact. */
 const MONTHS = [
@@ -80,6 +81,15 @@ export interface ExportGedcom70Input {
    * each one; the input shape does not carry per-FAM precision.
    */
   famcStat?: Record<string, string>
+  /**
+   * Optional member-level RESN payloads keyed by member id (v135,
+   * wired through resolveExportResn). A string may carry multiple
+   * comma-separated enumset values; arrays pass per value. This
+   * event-level RESN overrides the record-level RESN derived from
+   * privacyStatus, mirroring effectiveResn precedence. Values the
+   * export filter drops (CONFIDENTIAL) remove the RESN entirely.
+   */
+  memberResn?: Record<string, string | readonly string[]>
 }
 
 export interface ExportGedcom70Stats {
@@ -482,12 +492,31 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     // arsip privat melihat penanda pembatasan RESN. Clean mode meredaksi
     // member ini sebagai gantinya, consent nihil tetap nihil RESN supaya
     // fixture round-trip tetap byte-exact (tanpa penajaman).
-    if (
+    // RESN wiring (v135): record-level RESN still comes from the
+    // existing PRIVACY living-private path with its gate conditions
+    // untouched (byte-identity when memberResn is absent), then the
+    // member-level input.memberResn overrides it via resolveExportResn
+    // (event beats record, CONFIDENTIAL is dropped so no RESN line is
+    // written at all, PRIVACY/LOCKED are written normalized). Empty
+    // resolution writes nothing: no empty RESN tag (notes/303).
+    const recordResn =
       input.privacyMode === 'full' &&
       isLiving(m) &&
       m.privacyStatus === 'private'
-    ) {
-      new GEDCStruct('RESN', indi, undefined, privacyStatusToResn(m.privacyStatus))
+        ? privacyStatusToResn(m.privacyStatus)
+        : null
+    const memberResnRaw = input.memberResn?.[m.id]
+    const resnLevels = resolveExportResn({
+      resn:
+        memberResnRaw === undefined || memberResnRaw === null
+          ? null
+          : typeof memberResnRaw === 'string'
+            ? memberResnRaw
+            : memberResnRaw.join(', '),
+      resnMulti: recordResn === null ? null : [recordResn],
+    })
+    if (resnLevels.length > 0) {
+      new GEDCStruct('RESN', indi, undefined, resnLevels.join(', '))
     }
 
     // BIRT is omitted entirely for redacted members (DATE and PLAC
