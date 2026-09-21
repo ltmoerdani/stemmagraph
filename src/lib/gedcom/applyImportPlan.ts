@@ -29,6 +29,7 @@
 
 import type { ImportPlan, PlannedMember, PlannedRelationship } from './importPlan'
 import { formatGedcomDateValue } from './formatGedcomDate'
+import { resolveInitialPrivacyStatus } from './living-privacy'
 import type { ParsedEventDate } from './parseEventDate'
 
 /** Masukan createMember sesuai kontrak io (S1F6-B). */
@@ -79,7 +80,11 @@ function memberInput(member: PlannedMember): CreateMemberInput {
     birthDate: dateString(member.birthDate),
     deathDate: dateString(member.deathDate),
     birthPlace: member.birthPlace,
-    privacyStatus: member.privacyStatus,
+    // Safe default anggap-hidup v139: living tanpa RESN jadi private, nilai eksplisit tetap menang.
+    privacyStatus: resolveInitialPrivacyStatus({
+      privacyStatus: member.privacyStatus,
+      livingSuggested: member.livingSuggested,
+    }),
   }
 }
 
