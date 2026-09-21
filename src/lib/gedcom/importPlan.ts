@@ -37,6 +37,7 @@ import type { ImportedIndividual } from './importIndividuals'
 import type { ImportedFamily } from './importFamilies'
 import type { ParsedEventDate } from './parseEventDate'
 import { applyResnToPrivacyStatus } from './resn-import'
+import { assessImportPrivacy } from './importPrivacyGate'
 
 /** Gender as planned for the wiring layer; unknown SEX never becomes male/female. */
 export type PlannedGender = 'male' | 'female' | 'other'
@@ -53,6 +54,8 @@ export interface PlannedMember {
   birthPlace: string | undefined
   deathDate: ParsedEventDate | undefined
   deathPlace: string | undefined
+  /** Hasil assessImportPrivacy (v138-c): ada deathDate berarti bukan living; tanpa deathDate living safe default. */
+  livingSuggested?: boolean
   /**
    * Privacy status hasil pemetaan RESN multi-nilai (v130-ii) lewat
    * applyResnToPrivacyStatus. Undefined saat RESN absen maupun tak dikenal:
@@ -102,6 +105,13 @@ function plannedMember(individual: ImportedIndividual): PlannedMember {
     // RESN multi-nilai: null (absen/tak dikenal) jadi undefined agar
     // backward compatible dengan member tanpa RESN.
     privacyStatus: applyResnToPrivacyStatus(individual.resn) ?? undefined,
+    // Privacy gate import (v138-c): penilaian living safe default dari
+    // assessImportPrivacy, tanpa efek samping, RESN tidak disentuh di sini.
+    livingSuggested: assessImportPrivacy({
+      id: individual.xref ?? '',
+      birthDate: individual.birthDate,
+      deathDate: individual.deathDate,
+    }).livingSuggested,
   }
 }
 
