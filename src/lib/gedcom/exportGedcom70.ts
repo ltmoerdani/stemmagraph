@@ -34,6 +34,8 @@ import type {
 } from '../adapters/types'
 import { famcStatPayload, dateCalPayload } from './stat-cal-import'
 import { resolveExportResn } from './resn-export-filter'
+import { isNoAssertionEvent } from './no-assertion'
+import type { ParsedNoAssertion } from './no-assertion'
 
 /** Registry-verified GEDCOM 7.0.18 month abbreviations for DateExact. */
 const MONTHS = [
@@ -99,6 +101,25 @@ export interface ExportGedcom70Input {
    * byte-identical to the merged v135 wiring behavior.
    */
   exportPrivacyParity?: boolean
+  /**
+   * Optional member-level NO (non-event) assertions keyed by member id
+   * (v137-ii-b). Each assertion is written as `1 NO <event>` with a
+   * `2 DATE <value>` sub-line when the parsed assertion carries a date;
+   * payloads pass through verbatim (no normalization), the same
+   * discipline the import side uses. Events that are neither an
+   * EVEN-enum tag nor an underscore extension tag are skipped so the
+   * output stays registry-valid. Absent input keeps the output
+   * byte-identical to the pre-v137 behavior.
+   */
+  memberNoAssertions?: Record<string, ParsedNoAssertion[]>
+  /**
+   * Optional family-level NO assertions keyed by family key
+   * (v137-ii-b). The key is the sorted participant ids joined with a
+   * comma: `id1,id2` for a couple family, a bare `id` for a
+   * single-parent family. Serialization and validation follow
+   * memberNoAssertions. Absent input keeps the output byte-identical.
+   */
+  familyNoAssertions?: Record<string, ParsedNoAssertion[]>
 }
 
 export interface ExportGedcom70Stats {
@@ -246,6 +267,21 @@ function addText(
 ): GEDCStruct | undefined {
   if (value === undefined || value === '') return undefined
   return new GEDCStruct(tag, sup, undefined, value)
+}
+
+/**
+ * Writes one NO assertion block under `sup` (v137-ii-b): `NO <event>`
+ * with a DATE sub-line when the assertion carries one. Payloads are
+ * passed through verbatim; invalid event payloads are skipped so the
+ * written structure always satisfies the 7.0.18 NO payload rule
+ * (EVEN-enum or underscore extTag, same check the parser applies).
+ */
+function addNoAssertions(sup: GEDCStruct, list: ParsedNoAssertion[]): void {
+  for (const assertion of list) {
+    if (!isNoAssertionEvent(assertion.event)) continue
+    const no = new GEDCStruct('NO', sup, undefined, assertion.event)
+    addText(no, 'DATE', assertion.date)
+  }
 }
 
 /**
@@ -536,6 +572,14 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
       new GEDCStruct('RESN', indi, undefined, resnLevels.join(', '))
     }
 
+    // NO assertions (v137-ii-b): written right after the RESN lines,
+    // before the event structures. Absent input writes nothing, so the
+    // pre-v137 output stays byte-identical.
+    const memberNoList = input.memberNoAssertions?.[m.id]
+    if (memberNoList !== undefined && memberNoList.length > 0) {
+      addNoAssertions(indi, memberNoList)
+    }
+
     // BIRT is omitted entirely for redacted members (DATE and PLAC
     // both reveal identifying data).
     if (!redact && (m.birthDate || m.birthDateGed || m.birthPlace)) {
@@ -641,6 +685,18 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     if (everDivorced) new GEDCStruct('DIV', fam, undefined, 'Y')
 
     for (const c of plan.childIds) new GEDCStruct('CHIL', fam, xrefOf.get(c))
+
+    // NO assertions (v137-ii-b): keyed by the sorted participant ids
+    // comma-joined ('p1,p2' couple, bare id single-parent). Written at
+    // the end of the record; absent input writes nothing.
+    const famNoKey =
+      plan.participants.length > 1
+        ? [...plan.participants].sort().join(',')
+        : plan.participants[0]
+    const famNoList = input.familyNoAssertions?.[famNoKey]
+    if (famNoList !== undefined && famNoList.length > 0) {
+      addNoAssertions(fam, famNoList)
+    }
 
     famRecords.push(fam)
   }
