@@ -8,10 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { unzipSync } from 'fflate'
 import { exportGedcom70 } from './exportGedcom70'
 import { exportGedzip, GEDZIP_ENTRY_NAME } from './exportGedzip'
-import type {
-  FamilyMemberRecord,
-  MemberRelationship,
-} from '../adapters/types'
+import type { FamilyMemberRecord } from '../adapters/types'
 
 const EXPORTED_AT = new Date('2026-09-21T00:00:00Z')
 
