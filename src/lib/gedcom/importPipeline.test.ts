@@ -60,8 +60,8 @@ describe('extractGedcom', () => {
     expect(result.text).toBe(GEDCOM_MINIMAL)
   })
 
-  it('gedzip: entry bersarang dan nama huruf besar tetap ditemukan', () => {
-    const zip = zipSync({ 'x/y/GEDCOM.GED': encodeGedcom(GEDCOM_MINIMAL) })
+  it('gedzip: entry bersarang di subpath tetap ditemukan (toleransi aplikasi)', () => {
+    const zip = zipSync({ 'x/y/gedcom.ged': encodeGedcom(GEDCOM_MINIMAL) })
     const result = extractGedcom(zip)
     expect(result.kind).toBe('gedzip')
     expect(result.text).toBe(GEDCOM_MINIMAL)

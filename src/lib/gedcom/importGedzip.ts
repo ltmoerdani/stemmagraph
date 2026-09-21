@@ -4,9 +4,11 @@
 // a ZIP archive whose family-data entry is the file gedcom.ged. This
 // module is the read counterpart of exportGedzip: it accepts raw
 // archive bytes, locates the gedcom.ged entry (name matched
-// case-insensitively, at the archive root or nested), and returns its
-// text decoded as UTF-8. It never parses genealogy data; callers feed
-// the returned string into the regular GEDCOM parsing path.
+// case-sensitively as the spec's GEDZIP chapter prescribes, with
+// nesting at any depth kept as a documented application tolerance),
+// and returns its text decoded as UTF-8. It never parses genealogy
+// data; callers feed the returned string into the regular GEDCOM
+// parsing path.
 //
 // Failure discipline: a missing gedcom.ged entry or an unreadable
 // archive throws an Error with a plain message. Nothing is swallowed
@@ -15,30 +17,28 @@
 
 import { unzipSync } from 'fflate'
 
-/** Lowercased file name this module looks for inside a GEDZIP archive. */
+/** Exact file name (case-sensitive) this module looks for inside a GEDZIP archive. */
 const GEDZIP_ENTRY_BASENAME = 'gedcom.ged'
 
 /**
- * Returns the final path segment of a ZIP entry name, lowercased for
- * case-insensitive matching. Directory entries (trailing slash) come
- * out as an empty string and never match.
+ * Returns the final path segment of a ZIP entry name, compared
+ * as-is so matching stays case-sensitive per the GEDZIP chapter of
+ * the GEDCOM 7.0 spec. Directory entries (trailing slash) come out
+ * as an empty string and never match.
  */
 function entryBasename(name: string): string {
   const parts = name.split('/')
   const base = parts[parts.length - 1] ?? ''
-  return base.toLowerCase()
+  return base
 }
 
 /**
- * Deterministic name ordering for candidate entries: case-insensitive
- * first, raw code points as the tie-break so archives carrying more
- * than one gedcom.ged candidate (e.g. GEDCOM.GED plus a nested copy)
- * always resolve to the same entry.
+ * Deterministic name ordering for candidate entries: raw code points
+ * so archives carrying more than one exact gedcom.ged candidate
+ * (e.g. a root copy plus a nested duplicate) always resolve to the
+ * same entry.
  */
 function compareEntryNames(a: string, b: string): number {
-  const la = a.toLowerCase()
-  const lb = b.toLowerCase()
-  if (la !== lb) return la < lb ? -1 : 1
   if (a !== b) return a < b ? -1 : 1
   return 0
 }
@@ -47,10 +47,11 @@ function compareEntryNames(a: string, b: string): number {
  * Extracts the GEDCOM 7.0 text from a GEDZIP archive.
  *
  * The archive is inflated with fflate's synchronous unzip, then the
- * gedcom.ged entry is located by case-insensitive file name match at
- * any path depth; the name comparison follows the GEDZIP reading
- * convention while the spec's canonical archives carry the entry at
- * the root. When several candidates exist, the alphabetically first
+ * gedcom.ged entry is located by exact case-sensitive file name match
+ * at any path depth, following the GEDZIP chapter of the GEDCOM 7.0
+ * spec; accepting nested paths is a documented application tolerance
+ * and only loosens where the entry may sit, never which name it
+ * carries. When several candidates exist, the raw-code-point-first
  * name wins so the result stays deterministic. The entry bytes are
  * decoded as UTF-8 with the platform TextDecoder defaults, meaning
  * malformed byte sequences are replaced (U+FFFD) rather than thrown
