@@ -28,6 +28,8 @@ import { GEDCStruct, g7ConfGEDC } from './vendor/gedcstruct.js'
 import { parseEventDate } from './parseEventDate'
 import type { ParsedEventDate } from './parseEventDate'
 import { placePayload } from './placePayload'
+import { parseNoLines } from './no-assertion'
+import type { ParsedNoAssertion } from './no-assertion'
 
 /** One parsed INDI record: raw payloads plus structured event dates. */
 export interface ImportedIndividual {
@@ -47,6 +49,8 @@ export interface ImportedIndividual {
   deathPlace: string | undefined
   /** RESN payload verbatim (mapping is the consumer's job, not this parser), or undefined when absent. */
   resn: string | undefined
+  /** NO assertions hasil parseNoLines (payload mentah diteruskan, tanpa normalisasi), kosong bila record nihil NO. */
+  noAssertions?: ParsedNoAssertion[]
 }
 
 /** First direct substructure with the given tag, or undefined. */
@@ -76,6 +80,24 @@ function placeOf(event: GEDCStruct | undefined): string | undefined {
 }
 
 /**
+ * Serializes one NO subtree back to depth-tagged lines so parseNoLines
+ * can do its job on the exact payloads as written. Payloads are passed
+ * through verbatim: no normalization, same discipline as RESN.
+ */
+function noLinesOf(no: GEDCStruct, depth: number): string[] {
+  const line = `${depth} ${no.tag}${typeof no.payload === 'string' && no.payload !== '' ? ` ${no.payload}` : ''}`
+  return [line, ...no.sub.flatMap((s) => noLinesOf(s, depth + 1))]
+}
+
+/** NO assertions of an INDI record via parseNoLines (pure, never throws). */
+function noAssertionsOf(record: GEDCStruct): ParsedNoAssertion[] {
+  const lines = record.sub
+    .filter((s) => s.tag === 'NO')
+    .flatMap((s) => noLinesOf(s, 1))
+  return lines.length === 0 ? [] : parseNoLines(lines).assertions
+}
+
+/**
  * Parses GEDCOM 7.0 text and returns one ImportedIndividual per INDI
  * record, in file order. Non-INDI records are ignored. The optional
  * logger receives vendor parse diagnostics (line, message) without any
@@ -100,6 +122,7 @@ export function importIndividuals(
       deathDate: dateOf(deat),
       deathPlace: placeOf(deat),
       resn: payloadOf(subWithTag(record, 'RESN')),
+      noAssertions: noAssertionsOf(record),
     })
   }
   return out
