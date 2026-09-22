@@ -6,11 +6,17 @@
  * komponen diuji sebagai pure bridge store ke panel. Pola render
  * mengikuti KinshipPanel.test.tsx: graph lewat buildKinshipGraph,
  * react-i18next di-mock minimal untuk memilih locale id/en.
+ *
+ * GOAL v143-ii: mount mendelegasikan pembangunan graph ke hook
+ * useKinshipGraph. Kasus baru memverifikasi delegasi via override
+ * hook (importOriginal) tanpa mengubah asersi perilaku render.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import type { FamilyMember } from '../../types/family';
 import type { MemberRelationship } from '../../lib/adapters';
+import { buildKinshipGraph } from '../../lib/genealogy/kinship';
+import { makePartnerRelation } from '../../lib/genealogy/relationship';
 import { KinshipPanelMount } from './KinshipPanelMount';
 
 interface FixtureState {
@@ -19,7 +25,7 @@ interface FixtureState {
   selectedMember: FamilyMember | null;
 }
 
-const { mockState } = vi.hoisted(() => ({
+const { mockState, hookOverride } = vi.hoisted(() => ({
   mockState: {
     language: 'id',
     state: {
@@ -28,12 +34,28 @@ const { mockState } = vi.hoisted(() => ({
       selectedMember: null,
     } as unknown as Record<string, unknown>,
   },
+  hookOverride: {
+    value: null as null | {
+      graph: ReturnType<typeof buildKinshipGraph>;
+      selectedMember: FamilyMember | null;
+    },
+  },
 }));
 
 vi.mock('../../store/familyStore', () => ({
   useFamilyStore: (sel: (s: FixtureState) => unknown) =>
     sel(mockState.state as unknown as FixtureState),
 }));
+
+vi.mock('../../hooks/useKinshipGraph', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('../../hooks/useKinshipGraph')
+  >();
+  return {
+    useKinshipGraph: () =>
+      hookOverride.value ?? actual.useKinshipGraph(),
+  };
+});
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: mockState.language } }),
@@ -62,6 +84,7 @@ function setState(
 
 beforeEach(() => {
   mockState.language = 'id';
+  hookOverride.value = null;
 });
 
 afterEach(cleanup);
@@ -149,5 +172,36 @@ describe('KinshipPanelMount', () => {
     render(<KinshipPanelMount />);
     expect(screen.getByText(/^saudara/)).toBeTruthy();
     expect(screen.getByText('Coco')).toBeTruthy();
+  });
+
+  it('delegasi hook: graph dari useKinshipGraph dipakai panel (v143-ii)', () => {
+    const A = member('A', 'Andi');
+    const B = member('B', 'Budi');
+    const graph = buildKinshipGraph(
+      ['A', 'B'],
+      [makePartnerRelation('A', 'B')],
+      [],
+    );
+    setState([A, B], [], A);
+    hookOverride.value = { graph, selectedMember: A };
+    render(<KinshipPanelMount />);
+    expect(screen.getByLabelText('kinship')).toBeTruthy();
+    expect(screen.getByText('Budi')).toBeTruthy();
+    expect(screen.getByText(/^pasangan/)).toBeTruthy();
+  });
+
+  it('delegasi hook: selectedMember dari hook jadi fromId panel (v143-ii)', () => {
+    const A = member('A', 'Andi');
+    const B = member('B', 'Budi');
+    const graph = buildKinshipGraph(
+      ['A', 'B'],
+      [makePartnerRelation('A', 'B')],
+      [],
+    );
+    setState([A, B], [], B);
+    hookOverride.value = { graph, selectedMember: B };
+    render(<KinshipPanelMount />);
+    expect(screen.getByText('Andi')).toBeTruthy();
+    expect(screen.getByText(/^pasangan/)).toBeTruthy();
   });
 });
