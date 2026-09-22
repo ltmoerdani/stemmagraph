@@ -2,6 +2,7 @@ import React from 'react';
 import { CardView } from './CardView';
 import { ListView } from './ListView';
 import { ReactFlowTreeView } from './ReactFlowTreeView';
+import { KinshipPanelMount } from './KinshipPanelMount';
 import { useFamilyStore } from '../../store/familyStore';
 
 export const FamilyTreeView: React.FC = () => {
@@ -12,6 +13,7 @@ export const FamilyTreeView: React.FC = () => {
       {viewMode.type === 'tree' && <ReactFlowTreeView />}
       {viewMode.type === 'card' && <CardView />}
       {viewMode.type === 'list' && <ListView />}
+      <KinshipPanelMount />
     </div>
   );
 };
