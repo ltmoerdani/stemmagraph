@@ -4,6 +4,13 @@ import type { FamilyMember } from '../../types/family';
 import { useTranslation } from 'react-i18next';
 import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 import { compareNames } from '../../utils/collator';
+import {
+  applySearchFilter,
+  filterAndSort,
+  type FilterSortOptions,
+  type SearchMember,
+  type SearchSortBy,
+} from '../../lib/genealogy/search-filter';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -289,36 +296,31 @@ export const FamilyTable: React.FC = () => {
 
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Helper functions to reduce cognitive complexity
-  // Filter and search members
+  // Filter, pencarian, dan sortir via engine fase i (search-filter.ts).
+  // Filter kolom (columnFilters) tetap lokal karena engine tidak memuat fitur itu.
   const filteredMembers = useMemo(() => {
-    const applyViewModeFilters = (member: FamilyMember): boolean => {
-      if (!viewMode.showAlive && member.isAlive) return false;
-      if (!viewMode.showDeceased && !member.isAlive) return false;
-      if (viewMode.selectedGeneration && member.generation !== viewMode.selectedGeneration) return false;
-      return true;
-    };
+    // Adapter: FamilyMember kompatibel dengan SearchMember untuk kebutuhan tabel.
+    const searchMembers = members as unknown as SearchMember[];
 
-    const applyGlobalSearchFilter = (member: FamilyMember): boolean => {
-      if (!searchQuery) return true;
-      
-      const query = searchQuery.toLowerCase();
-      return (
-        member.name.toLowerCase().includes(query) ||
-        (member.profession?.toLowerCase().includes(query) ?? false) ||
-        (member.currentLocation?.toLowerCase().includes(query) ?? false) ||
-        (member.nickname?.toLowerCase().includes(query) ?? false)
-      );
-    };
+    // Pencarian teks via engine: name, profession, currentLocation, nickname.
+    const searched = applySearchFilter(searchMembers, searchQuery ?? '');
+
+    // Pemetaan sortBy tabel ke sortBy engine.
+    const engineSortBy: SearchSortBy =
+      sortConfig.field === 'age'
+        ? 'birthDate'
+        : sortConfig.field === 'location'
+          ? 'currentLocation'
+          : sortConfig.field;
 
     const applyColumnFilters = (member: FamilyMember): boolean => {
       for (const [column, filter] of Object.entries(columnFilters)) {
         if (!filter) continue;
         const filterLower = filter.toLowerCase();
-        
+
         switch (column) {
           case 'name':
-            if (!member.name.toLowerCase().includes(filterLower) && 
+            if (!member.name.toLowerCase().includes(filterLower) &&
                 !(member.nickname?.toLowerCase().includes(filterLower) ?? false)) return false;
             break;
           case 'location':
@@ -332,44 +334,66 @@ export const FamilyTable: React.FC = () => {
       return true;
     };
 
-    const filtered = members.filter((member: FamilyMember) => {
-      return applyViewModeFilters(member) && 
-             applyGlobalSearchFilter(member) && 
-             applyColumnFilters(member);
-    });
+    // Tampilkan semua: kedua status aktif dan tanpa generasi terpilih.
+    // Filter viewMode tidak dipanggil, sortir manual dengan comparator tabel.
+    if (viewMode.showAlive && viewMode.showDeceased && !viewMode.selectedGeneration) {
+      const filtered = searched.filter(
+        (member) => applyColumnFilters(member as unknown as FamilyMember),
+      );
 
-    // Sort members
-    filtered.sort((a: FamilyMember, b: FamilyMember) => {
-      let comparison = 0;
-      
-      switch (sortConfig.field) {
-        case 'name':
-          comparison = compareNames(a.name, b.name);
-          break;
-        case 'age': {
-          const ageA = calculateAge(a.birthDate, a.deathDate);
-          const ageB = calculateAge(b.birthDate, b.deathDate);
-          comparison = ageA - ageB;
-          break;
+      const ageOf = (member: SearchMember): number => {
+        const birth = new Date(member.birthDate ?? '');
+        const end = member.deathDate ? new Date(member.deathDate) : new Date();
+        return end.getFullYear() - birth.getFullYear();
+      };
+
+      filtered.sort((a, b) => {
+        let comparison = 0;
+
+        switch (sortConfig.field) {
+          case 'name':
+            comparison = compareNames(a.name, b.name);
+            break;
+          case 'age':
+            comparison = ageOf(a) - ageOf(b);
+            break;
+          case 'generation':
+            comparison = a.generation - b.generation;
+            break;
+          case 'location':
+            comparison = compareNames(a.currentLocation ?? '', b.currentLocation ?? '');
+            break;
+          case 'birthDate':
+            comparison = new Date(a.birthDate ?? '').getTime() - new Date(b.birthDate ?? '').getTime();
+            break;
+          case 'profession':
+            comparison = compareNames(a.profession ?? '', b.profession ?? '');
+            break;
         }
-        case 'generation':
-          comparison = a.generation - b.generation;
-          break;
-        case 'location':
-          comparison = compareNames(a.currentLocation ?? '', b.currentLocation ?? '');
-          break;
-        case 'birthDate':
-          comparison = new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime();
-          break;
-        case 'profession':
-          comparison = compareNames(a.profession ?? '', b.profession ?? '');
-          break;
-      }
-      
-      return sortConfig.direction === 'asc' ? comparison : -comparison;
-    });
 
-    return filtered;
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      });
+
+      return filtered;
+    }
+
+    const engineOptions: FilterSortOptions = viewMode.selectedGeneration
+      ? {
+          viewMode: 'selectedGeneration',
+          sortBy: engineSortBy,
+          sortDirection: sortConfig.direction,
+          generation: viewMode.selectedGeneration,
+        }
+      : {
+          viewMode: viewMode.showAlive ? 'showAlive' : 'showDeceased',
+          sortBy: engineSortBy,
+          sortDirection: sortConfig.direction,
+        };
+
+    const engineResult = filterAndSort(searched, engineOptions);
+    return engineResult.filter(
+      (member) => applyColumnFilters(member as unknown as FamilyMember),
+    );
   }, [members, viewMode, searchQuery, columnFilters, sortConfig]);
 
   // Pagination
