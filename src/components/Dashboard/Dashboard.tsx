@@ -5,6 +5,7 @@ import { FeedPanel } from './FeedPanel';
 import { InvitationsPanel } from './InvitationsPanel';
 import { ShareLinksPanel } from './ShareLinksPanel';
 import { ChangeReviewPanel } from './ChangeReviewPanel';
+import { DedupReviewMount } from '../FamilyTree/DedupReviewMount';
 import { DigestSettingsPanel } from '../DigestSettingsPanel';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
@@ -23,6 +24,9 @@ export const Dashboard: React.FC = () => {
   // Tree whose change-review panel is open (P2-5 AC-5). Only owner and
   // editor trees get the entry button; viewers see nothing here.
   const [reviewTreeId, setReviewTreeId] = useState<string | null>(null);
+  // Dedup review panel (v148-ii): open from the header button, decisions
+  // are logged only in this phase (ADR 0009: no merge execution here).
+  const [dedupOpen, setDedupOpen] = useState(false);
   // Dashboard section: family trees or the activity feed (P2-6 AC-4).
   const [activeTab, setActiveTab] = useState<'trees' | 'activity'>('trees');
 
@@ -39,6 +43,12 @@ export const Dashboard: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     return formatDateWithLocale(dateString, i18n.language);
+  };
+
+  // Dedup decision log (v148-ii placeholder, ADR 0009): structured one-line
+  // log only; merge proposal comes in v149, no store mutation here.
+  const handleDedupDecision = (pairId: string, decision: 'ACCEPT' | 'REJECT' | 'SKIP') => {
+    console.info(JSON.stringify({ event: 'dedup-decision', pairId, decision, timestamp: new Date().toISOString() }));
   };
 
   // Helper: Render the create new card button
@@ -145,6 +155,15 @@ export const Dashboard: React.FC = () => {
                 {t('dashboard.familyTreesSubtitle')}
               </p>
             </div>
+
+            {/* Dedup review entry (v148-ii): opens the DedupReviewMount panel */}
+            <button
+              type="button"
+              onClick={() => setDedupOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <span>{t('dedupReview.open')}</span>
+            </button>
             
             {viewMode === 'list' && activeTab === 'trees' && (
               <button
@@ -400,6 +419,9 @@ export const Dashboard: React.FC = () => {
           onClose={() => setReviewTreeId(null)}
         />
       )}
+
+      {/* Dedup review panel (v148-ii): decisions logged, no merge (ADR 0009) */}
+      {dedupOpen && <DedupReviewMount onDecision={handleDedupDecision} />}
     </div>
   );
 };

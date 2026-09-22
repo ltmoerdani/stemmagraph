@@ -417,6 +417,9 @@
     "proposeSent": "Proposal sent and waiting for the owner's decision.",
     "proposeFailed": "Failed to send the proposal."
   },
+  "dedupReview": {
+    "open": "Check duplicates"
+  },
   "memberEdit": {
     "privacyStatus": "Privacy Status",
     "privacyShared": "Shared, include in public tree exports",
