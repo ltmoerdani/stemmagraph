@@ -1,38 +1,21 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useFamilyStore } from '../../store/familyStore';
-import { buildKinshipGraph, type ChildLink } from '../../lib/genealogy/kinship';
-import { makePartnerRelation } from '../../lib/genealogy/relationship';
+import { useKinshipGraph } from '../../hooks/useKinshipGraph';
 import { KinshipPanel } from './KinshipPanel';
 
 /**
- * Jembatan store ke panel kekerabatan: membangun KinshipGraph murni
- * dari members + relationships lalu merender KinshipPanel untuk
- * selectedMember.
+ * Jembatan store ke panel kekerabatan: data graph dibangun oleh hook
+ * useKinshipGraph (members + relationships dari store), komponen
+ * merender KinshipPanel untuk selectedMember.
  *
- * Konvensi store: rel 'spouse' simetris (memberId, relatedId pasangan),
- * rel 'parent' berarah (memberId orang tua, relatedId anak), sehingga
- * dipetakan ke ChildLink { childId: relatedId, parentId: memberId }.
+ * Konvensi pemetaan rel kini menjadi milik hook (rel 'spouse' simetris
+ * ke partner link, rel 'parent' berarah ke ChildLink, lihat
+ * src/hooks/useKinshipGraph.ts). Komponen hanya menambah lookup nama.
  * Pure UI: tanpa import server/prisma/API, tanpa efek samping.
  */
 export const KinshipPanelMount: React.FC = () => {
+  const { graph, selectedMember } = useKinshipGraph();
   const members = useFamilyStore((s) => s.members);
-  const relationships = useFamilyStore((s) => s.relationships);
-  const selectedMember = useFamilyStore((s) => s.selectedMember);
-
-  const graph = useMemo(() => {
-    const persons = members.map((m) => m.id);
-    const partnerLinks = relationships
-      .filter((r) => r.type === 'spouse')
-      .map((r) => makePartnerRelation(r.memberId, r.relatedId));
-    const childLinks: ChildLink[] = relationships
-      .filter((r) => r.type === 'parent')
-      .map((r): ChildLink => ({
-        childId: r.relatedId,
-        parentId: r.memberId,
-        type: 'BIRTH',
-      }));
-    return buildKinshipGraph(persons, partnerLinks, childLinks);
-  }, [members, relationships]);
 
   if (!selectedMember) {
     return null;
