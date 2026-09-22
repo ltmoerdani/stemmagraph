@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Phone, Mail, MapPin, Calendar, Briefcase, GraduationCap, Heart, MessageCircle, Edit } from 'lucide-react';
 import { useFamilyStore } from '../../store/familyStore';
 import { UnifiedMemberModal } from '../Forms/UnifiedMemberModal';
+import { MemberDetailSidebarKinship } from './MemberDetailSidebarKinship';
 
 export const MemberDetailSidebar: React.FC = () => {
   const { selectedMember, setSelectedMember } = useFamilyStore();
@@ -146,6 +147,8 @@ export const MemberDetailSidebar: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <MemberDetailSidebarKinship />
 
         {/* Contact Information */}
         {(selectedMember.phone || selectedMember.email) && (
