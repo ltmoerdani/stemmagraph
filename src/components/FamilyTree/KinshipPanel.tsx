@@ -46,7 +46,7 @@ export const KinshipPanel: React.FC<KinshipPanelProps> = ({
           <li key={rel.personId}>
             <span>{name ?? rel.personId}</span>
             <span>{kinshipLabelWithDepth(rel.kind, rel.depth, locale)}</span>
-            <span data-testid="kinship-phrase">{kinshipPhrase(rel, locale)}</span>
+            <span data-testid="kinship-phrase">({kinshipPhrase(rel, locale)})</span>
           </li>
         );
       })}

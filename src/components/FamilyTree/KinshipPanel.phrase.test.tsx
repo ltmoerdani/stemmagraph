@@ -61,25 +61,25 @@ afterEach(cleanup);
 describe('KinshipPanel frasa kinshipPhrase', () => {
   it('frasa id parent depth 1: ayah atau ibu', () => {
     render(<KinshipPanel graph={parentGraph()} fromId="Anak" />);
-    expect(screen.getByText('ayah atau ibu')).toBeTruthy();
+    expect(screen.getByText('(ayah atau ibu)')).toBeTruthy();
   });
 
   it('frasa en ancestor depth 3: great-grandparent', () => {
     mockState.language = 'en';
     render(<KinshipPanel graph={fourGenGraph()} fromId="P4" />);
-    expect(screen.getByText('great-grandparent')).toBeTruthy();
+    expect(screen.getByText('(great-grandparent)')).toBeTruthy();
   });
 
   it('frasa id parent-sibling: paman atau bibi', () => {
     render(<KinshipPanel graph={uncleGraph()} fromId="Anak" />);
     expect(
-      screen.getByText('paman atau bibi (saudara ayah atau ibu)'),
+      screen.getByText('(paman atau bibi (saudara ayah atau ibu))'),
     ).toBeTruthy();
   });
 
   it('frasa id sibling-child: keponakan (anak saudara)', () => {
     render(<KinshipPanel graph={uncleGraph()} fromId="Om" />);
-    expect(screen.getByText('keponakan (anak saudara)')).toBeTruthy();
+    expect(screen.getByText('(keponakan (anak saudara))')).toBeTruthy();
   });
 
   it('fallback kind tak dikenal tidak throw dan panel tetap render', () => {
@@ -87,7 +87,7 @@ describe('KinshipPanel frasa kinshipPhrase', () => {
     expect(() => kinshipPhrase(asing, 'id')).not.toThrow();
     expect(kinshipPhrase(asing, 'id')).toBe('hubungan tidak dikenal');
     render(<KinshipPanel graph={parentGraph()} fromId="Anak" />);
-    expect(screen.getByText('ayah atau ibu')).toBeTruthy();
+    expect(screen.getByText('(ayah atau ibu)')).toBeTruthy();
   });
 
   it('determinisme: render ulang menghasilkan frasa identik', () => {
@@ -98,7 +98,7 @@ describe('KinshipPanel frasa kinshipPhrase', () => {
     rerender(<KinshipPanel graph={uncleGraph()} fromId="Anak" />);
     const second = screen.getAllByTestId('kinship-phrase').map((el) => el.textContent);
     expect(second).toEqual(first);
-    expect(first).toContain('paman atau bibi (saudara ayah atau ibu)');
+    expect(first).toContain('(paman atau bibi (saudara ayah atau ibu))');
   });
 
   it('span frasa muncul di DOM untuk tiap baris relasi', () => {
@@ -115,7 +115,7 @@ describe('KinshipPanel frasa kinshipPhrase', () => {
     const spans = screen.getAllByTestId('kinship-phrase');
     expect(spans).toHaveLength(2);
     for (const span of spans) {
-      expect(span.textContent).toBe('suami atau istri');
+      expect(span.textContent).toBe('(suami atau istri)');
     }
   });
 });
