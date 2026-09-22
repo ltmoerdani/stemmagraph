@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { KinshipGraph } from '../../lib/genealogy/kinship';
 import { listRelationships } from '../../lib/genealogy/kinship-calc';
 import { kinshipLabelWithDepth } from '../../lib/genealogy/kinship-labels';
+import { kinshipPhrase } from '../../lib/genealogy/kinship-phrase';
 
 interface KinshipPanelProps {
   graph: KinshipGraph;
@@ -45,6 +46,7 @@ export const KinshipPanel: React.FC<KinshipPanelProps> = ({
           <li key={rel.personId}>
             <span>{name ?? rel.personId}</span>
             <span>{kinshipLabelWithDepth(rel.kind, rel.depth, locale)}</span>
+            <span data-testid="kinship-phrase">{kinshipPhrase(rel, locale)}</span>
           </li>
         );
       })}
