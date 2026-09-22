@@ -417,6 +417,9 @@
     "proposeSent": "Usulan terkirim dan menunggu keputusan pemilik.",
     "proposeFailed": "Gagal mengirim usulan."
   },
+  "dedupReview": {
+    "open": "Cek Duplikat"
+  },
   "memberEdit": {
     "privacyStatus": "Status Privasi",
     "privacyShared": "Dibagikan, sertakan dalam ekspor silsilah publik",
