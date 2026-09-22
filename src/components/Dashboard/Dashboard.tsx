@@ -10,6 +10,7 @@ import { DigestSettingsPanel } from '../DigestSettingsPanel';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { navigate } from '../../utils/routing';
+import { buildMergeProposal } from '../../lib/genealogy/build-merge-proposal';
 import { useTranslation } from 'react-i18next';
 import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 
@@ -45,10 +46,25 @@ export const Dashboard: React.FC = () => {
     return formatDateWithLocale(dateString, i18n.language);
   };
 
-  // Dedup decision log (v148-ii placeholder, ADR 0009): structured one-line
-  // log only; merge proposal comes in v149, no store mutation here.
+  // Dedup decision log (v149-ii wiring, ADR 0009): ACCEPT membangun payload
+  // change proposal merge_person lewat buildMergeProposal (pure) lalu dicatat
+  // sebagai log terstruktur satu baris; tanpa eksekusi merge, tanpa mutasi
+  // store. REJECT dan SKIP tetap memakai jalur log lama. Pair tanpa
+  // separator '::' jatuh ke log lama tanpa throw.
   const handleDedupDecision = (pairId: string, decision: 'ACCEPT' | 'REJECT' | 'SKIP') => {
-    console.info(JSON.stringify({ event: 'dedup-decision', pairId, decision, timestamp: new Date().toISOString() }));
+    if (decision !== 'ACCEPT' || !pairId.includes('::')) {
+      console.info(JSON.stringify({ event: 'dedup-decision', pairId, decision, timestamp: new Date().toISOString() }));
+      return;
+    }
+    const [idA, idB] = pairId.split('::');
+    const decisions = [{ pairId, decision, decidedAt: new Date().toISOString() }];
+    const payload = buildMergeProposal({
+      survivorId: idA,
+      duplicateId: idB,
+      reason: `Merge duplikat hasil review: pasangan ${pairId} diterima reviewer (ACCEPT)`,
+      decisions,
+    });
+    console.info(JSON.stringify({ event: 'dedup-decision', pairId, decision, payload, timestamp: new Date().toISOString() }));
   };
 
   // Helper: Render the create new card button
