@@ -27,7 +27,7 @@ interface DedupReviewPanelProps {
 }
 
 /** Identitas pasangan deterministik: idA < idB leksikal (output detektor). */
-export function dedupPairId(candidate: DedupCandidate): string {
+function dedupPairId(candidate: DedupCandidate): string {
   return candidate.idA + '::' + candidate.idB;
 }
 
@@ -126,7 +126,7 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, locale, onDecisi
       </div>
     </li>
   );
-);
+};
 
 /**
  * Panel review dedup: dua section (kuat, tinjau), tiap kandidat

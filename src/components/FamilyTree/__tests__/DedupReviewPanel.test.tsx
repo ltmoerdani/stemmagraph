@@ -8,8 +8,8 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import type { DedupCandidate } from '../../lib/genealogy/dedup-detect';
-import { DedupReviewPanel, dedupPairId } from './DedupReviewPanel';
+import type { DedupCandidate } from '../../../lib/genealogy/dedup-detect';
+import { DedupReviewPanel } from '../DedupReviewPanel';
 
 afterEach(cleanup);
 
@@ -185,7 +185,7 @@ describe('DedupReviewPanel i18n dan empty state', () => {
     );
     expect(screen.getByText('Kemiripan kuat')).toBeTruthy();
     expect(screen.getByText('Perlu ditinjau')).toBeTruthy();
-    expectDecisionButtons(dedupPairId(candidate('L1', 'L2', 65)), 'id');
+    expectDecisionButtons('L1::L2', 'id');
     unmount();
 
     render(
@@ -197,6 +197,6 @@ describe('DedupReviewPanel i18n dan empty state', () => {
     );
     expect(screen.getByText('Strong similarity')).toBeTruthy();
     expect(screen.getByText('Needs review')).toBeTruthy();
-    expectDecisionButtons(dedupPairId(candidate('L1', 'L2', 65)), 'en');
+    expectDecisionButtons('L1::L2', 'en');
   });
 });
