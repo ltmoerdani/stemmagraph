@@ -3,6 +3,41 @@ import { useTranslation } from 'react-i18next';
 import { X, User, Calendar, MapPin, Briefcase, Phone, ShieldCheck } from 'lucide-react';
 import type { FamilyMember } from '../../../types/family';
 import { getConsentApi, type ConsentStateView } from '../../../lib/adapters';
+import {
+  findDuplicatePairs,
+  DEDUP_REASON,
+  type DedupPersonInput,
+} from '../../../lib/genealogy/dedup-detect';
+
+const DEDUP_REASON_LABEL: Record<string, string> = {
+  [DEDUP_REASON.SAME_FIRST_NAME]: 'Nama depan sama',
+  [DEDUP_REASON.SAME_LAST_NAME]: 'Nama belakang sama',
+  [DEDUP_REASON.SAME_BIRTH_YEAR]: 'Tahun lahir sama',
+};
+
+/** Ubah FamilyMember (nama satu string) menjadi input dedup (depan + belakang). */
+function toDedupPerson(member: FamilyMember): DedupPersonInput {
+  const parts = member.name.trim().split(/\s+/);
+  const firstName = parts[0] ?? '';
+  const lastName = parts.slice(1).join(' ');
+  return {
+    id: member.id,
+    firstName: firstName === '' ? undefined : firstName,
+    lastName: lastName === '' ? undefined : lastName,
+    birthDate: member.birthDate ? member.birthDate : undefined,
+    birthPlace: member.birthPlace ? member.birthPlace : undefined,
+    gender: member.gender,
+  };
+}
+
+interface DedupWarningRow {
+  memberId: string;
+  name: string;
+  score: number;
+  reasons: string[];
+}
+
+const MAX_DEDUP_WARNINGS = 3;
 
 interface MemberEditModalProps {
   member: FamilyMember;
@@ -27,6 +62,64 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
   const [consentScope, setConsentScope] = useState('');
   const [consentNote, setConsentNote] = useState('');
   const [consentActionError, setConsentActionError] = useState<string | null>(null);
+  const [dedupMembers, setDedupMembers] = useState<FamilyMember[]>([]);
+  const [dedupWarning, setDedupWarning] = useState<DedupWarningRow[]>([]);
+  const [dedupAck, setDedupAck] = useState(false);
+  const [dedupVisible, setDedupVisible] = useState(true);
+
+  // Store dimuat dinamis (bukan import statis) supaya lingkungan test yang
+  // tidak menyediakan modul store tetap bisa merender modal tanpa error;
+  // kegagalan muat dianggap tidak ada data, peringatan dedup saja yang hilang.
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    import('../../../store/familyStore')
+      .then((mod) => {
+        if (active) setDedupMembers(mod.useFamilyStore.getState().members);
+      })
+      .catch(() => {
+        if (active) setDedupMembers([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
+
+  // Bandingkan data form saat ini dengan seluruh anggota di store
+  // (kecuali anggota yang sedang diedit) supaya peringatan mengikuti
+  // perubahan nama/tanggal lahir langsung saat pengguna mengetik.
+  useEffect(() => {
+    if (!isOpen || dedupMembers.length === 0) {
+      if (!isOpen) setDedupWarning([]);
+      return;
+    }
+    const selfId = formData.id;
+    const others = dedupMembers
+      .filter((m) => m.id !== selfId)
+      .map(toDedupPerson);
+    if (others.length === 0) {
+      setDedupWarning([]);
+      return;
+    }
+    const persons = [toDedupPerson(formData), ...others];
+    const rows: DedupWarningRow[] = findDuplicatePairs(persons)
+      .filter((pair) => pair.idA === selfId || pair.idB === selfId)
+      .map((pair) => {
+        const counterpartId = pair.idA === selfId ? pair.idB : pair.idA;
+        const counterpart = dedupMembers.find((m) => m.id === counterpartId);
+        return {
+          memberId: counterpartId,
+          name: counterpart?.name ?? counterpartId,
+          score: pair.score,
+          reasons: pair.reasons,
+        };
+      })
+      .sort((a, b) => b.score - a.score || (a.memberId < b.memberId ? -1 : 1))
+      .slice(0, MAX_DEDUP_WARNINGS);
+    setDedupWarning(rows);
+    setDedupAck(false);
+    setDedupVisible(true);
+  }, [isOpen, dedupMembers, formData]);
 
   const refreshConsent = React.useCallback(async () => {
     if (!consentApi) return;
@@ -154,6 +247,58 @@ export const MemberEditModal: React.FC<MemberEditModalProps> = ({
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {/* Dedup warning: non-blocking, informasional saja. Simpan tetap jalan
+            tanpa perlu acknowledgment; centang hanya penanda pemeriksaan manual. */}
+        {dedupVisible && dedupWarning.length > 0 && (
+          <div
+            data-testid="dedup-warning"
+            role="status"
+            className="mx-6 mt-4 border border-amber-300 bg-amber-50 rounded-md p-4"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-amber-800">
+                Kemungkinan data duplikat terdeteksi
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDedupVisible(false)}
+                aria-label="Tutup peringatan duplikat"
+                className="text-amber-500 hover:text-amber-700 transition-colors p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <ul className="space-y-1">
+              {dedupWarning.map((row) => (
+                <li
+                  key={row.memberId}
+                  data-testid="dedup-warning-row"
+                  className="text-sm text-amber-900"
+                >
+                  {row.name}: skor {row.score} ({row.reasons.map((r, i) => (
+                    <React.Fragment key={r}>
+                      {i > 0 && ', '}
+                      <span data-testid="dedup-reason">{DEDUP_REASON_LABEL[r] ?? r}</span>
+                    </React.Fragment>
+                  ))})
+                </li>
+              ))}
+            </ul>
+            <label className="mt-2 flex items-center gap-2 text-xs text-amber-700">
+              <input
+                type="checkbox"
+                checked={dedupAck}
+                onChange={(e) => setDedupAck(e.target.checked)}
+                data-testid="dedup-ack"
+              />
+              Saya sudah memeriksa, data ini memang berbeda
+            </label>
+            <p className="mt-1 text-xs text-amber-700">
+              Simpan tetap dapat dilanjutkan, dengan atau tanpa centang di atas.
+            </p>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
