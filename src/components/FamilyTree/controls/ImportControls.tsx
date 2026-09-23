@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Upload, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFamilyStore } from '../../../store/familyStore';
-import { getAdapter } from '../../../lib/adapters';
+import { getAdapter, getCitationApi } from '../../../lib/adapters';
 import { importIndividuals } from '../../../lib/gedcom/importIndividuals';
 import { importFamilies } from '../../../lib/gedcom/importFamilies';
 import { buildImportPlan } from '../../../lib/gedcom/importPlan';
@@ -11,6 +11,12 @@ import {
   type ImportApplyReport,
 } from '../../../lib/gedcom/applyImportPlan';
 import { extractGedcom } from '../../../lib/gedcom/importPipeline';
+import { GEDCStruct, g7ConfGEDC } from '../../../lib/gedcom/vendor/gedcstruct.js';
+import { buildCitationPlanFromRecords } from '../../../lib/gedcom/citationPlan';
+import {
+  applyCitationPlan,
+  type CitationApplyReport,
+} from '../../../lib/gedcom/citationApply';
 
 /**
  * Import controls (S1F6-C): wires the pure import libs
@@ -27,6 +33,7 @@ export const ImportControls: React.FC = () => {
   const [showPanel, setShowPanel] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [report, setReport] = useState<ImportApplyReport | null>(null);
+  const [citationSummary, setCitationSummary] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation('common');
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
@@ -50,6 +57,7 @@ export const ImportControls: React.FC = () => {
     setIsImporting(true);
     setErrorKey(null);
     setReport(null);
+    setCitationSummary(null);
     try {
       if (!currentFamilyTreeId) {
         setErrorKey('import.errors.noTree');
@@ -58,12 +66,30 @@ export const ImportControls: React.FC = () => {
 
       const bytes = new Uint8Array(await file.arrayBuffer());
       let gedcom: string;
+      let citationEntries: ReturnType<
+        typeof buildCitationPlanFromRecords
+      > = [];
       try {
         gedcom = extractGedcom(bytes).text;
       } catch (error) {
         console.error('GEDCOM extract failed:', error);
         setErrorKey('import.errors.unreadable');
         return;
+      }
+
+      // Citation plan entries come from a dedicated parse of the raw
+      // GEDCOM text (vendor GEDCStruct, dialect g7ConfGEDC), split into
+      // INDI/FAM records. Failure here must not block the import itself.
+      try {
+        const records = GEDCStruct.fromString(gedcom, g7ConfGEDC, (msg: string) =>
+          console.info('GEDCOM parse:', msg),
+        );
+        const indiRecords = records.filter((r) => r?.tag === 'INDI');
+        const famRecords = records.filter((r) => r?.tag === 'FAM');
+        citationEntries = buildCitationPlanFromRecords(indiRecords, famRecords);
+      } catch (error) {
+        console.error('Citation plan build failed:', error);
+        citationEntries = [];
       }
 
       const plan = buildImportPlan(
@@ -97,6 +123,54 @@ export const ImportControls: React.FC = () => {
             .then(() => undefined),
       });
       setReport(applyReport);
+
+      // Citation phase: only meaningful on server-backed adapters
+      // (getCitationApi returns null on mock/supabase). Runs after
+      // applyImportPlan because citations need the new member DB ids.
+      const citationApi = getCitationApi();
+      let citationReport: CitationApplyReport | undefined;
+      if (citationApi !== null) {
+        const memberMap = new Map(
+          applyReport.createdMembers
+            .filter((m) => m.xref !== undefined)
+            .map((m) => [m.xref, m.id]),
+        );
+        const resolveMember = (xref: string) =>
+          memberMap.get(xref.replace(/^@|@$/g, ''));
+        const resolveRelation = (xref: string) => {
+          const bare = xref.replace(/^@|@$/g, '');
+          for (const rel of plan.relationships) {
+            if (rel.type === 'spouse' && rel.memberXref === bare) {
+              const a = memberMap.get(rel.memberXref);
+              const b = memberMap.get(rel.relatedXref);
+              if (a !== undefined && b !== undefined) {
+                return [a, b] as [string, string];
+              }
+            }
+            if (rel.type === 'spouse' && rel.relatedXref === bare) {
+              const a = memberMap.get(rel.relatedXref);
+              const b = memberMap.get(rel.memberXref);
+              if (a !== undefined && b !== undefined) {
+                return [a, b] as [string, string];
+              }
+            }
+          }
+          return undefined;
+        };
+        citationReport = await applyCitationPlan(
+          citationEntries,
+          resolveMember,
+          resolveRelation,
+          {
+            treeId,
+            upsertSource: (tid, pointer) =>
+              citationApi.upsertSource(tid, pointer),
+            upsertCitation: (tid, spec) =>
+              citationApi.upsertCitation(tid, spec),
+          },
+        );
+        setCitationSummary(String(citationReport.createdCitations.length));
+      }
 
       // Re-fetch so the tree view shows everything that landed.
       await fetchMembers(treeId);
@@ -216,6 +290,11 @@ export const ImportControls: React.FC = () => {
                     {t('import.summary.failed', {
                       count: report.failedMembers.length,
                     })}
+                  </p>
+                )}
+                {citationSummary !== null && (
+                  <p data-testid="import-citation-summary">
+                    {`Citations created: ${citationSummary}`}
                   </p>
                 )}
               </div>
