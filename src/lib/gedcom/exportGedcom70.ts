@@ -36,6 +36,7 @@ import { famcStatPayload, dateCalPayload } from './stat-cal-import'
 import { resolveExportResn } from './resn-export-filter'
 import { isNoAssertionEvent } from './no-assertion'
 import type { ParsedNoAssertion } from './no-assertion'
+import type { ParsedCitation } from './citation'
 
 /** Registry-verified GEDCOM 7.0.18 month abbreviations for DateExact. */
 const MONTHS = [
@@ -120,6 +121,25 @@ export interface ExportGedcom70Input {
    * memberNoAssertions. Absent input keeps the output byte-identical.
    */
   familyNoAssertions?: Record<string, ParsedNoAssertion[]>
+  /**
+   * Optional event-level SOURCE citations keyed by `${memberId}:${TAG}`
+   * (v151-iii), e.g. 'I1:BIRT'. Payloads pass through verbatim (no
+   * normalization): each citation becomes one `n SOUR` structure under
+   * that event structure, with PAGE/QUAY/NOTE sub-lines when the
+   * parsed citation carries them. Citations for an event structure
+   * that was not created (a redacted member's BIRT, a DEAT with no
+   * recorded death) are skipped, keeping the v135 privacy parity.
+   * Absent input keeps the output byte-identical.
+   */
+  memberEventCitations?: Record<string, ParsedCitation[]>
+  /**
+   * Optional family event-level SOURCE citations keyed by
+   * `${familyKey}:${TAG}` (v151-iii), e.g. 'a,b:MARR'. The family key
+   * follows familyNoAssertions: sorted participant ids joined with a
+   * comma. Serialization follows memberEventCitations. Absent input
+   * keeps the output byte-identical.
+   */
+  familyEventCitations?: Record<string, ParsedCitation[]>
 }
 
 export interface ExportGedcom70Stats {
@@ -281,6 +301,53 @@ function addNoAssertions(sup: GEDCStruct, list: ParsedNoAssertion[]): void {
     if (!isNoAssertionEvent(assertion.event)) continue
     const no = new GEDCStruct('NO', sup, undefined, assertion.event)
     addText(no, 'DATE', assertion.date)
+  }
+}
+
+/** Event tags on INDI records that accept member event citations. */
+const MEMBER_CITATION_TAGS = ['BIRT', 'DEAT'] as const
+
+/** Event tags on FAM records that accept family event citations. */
+const FAMILY_CITATION_TAGS = ['MARR', 'DIV'] as const
+
+/**
+ * Writes one citation list as consecutive SOUR structures under an
+ * event structure (v151-iii). Payloads pass through verbatim: the
+ * pointer payload is written exactly as parsed (including '@VOID@'
+ * and free-form pointers), PAGE/QUAY/NOTE become sub-lines only when
+ * the parsed citation carries them.
+ */
+function addCitations(event: GEDCStruct, list: ParsedCitation[]): void {
+  for (const c of list) {
+    const sour = new GEDCStruct('SOUR', event, undefined, c.sourcePointer)
+    addText(sour, 'PAGE', c.page)
+    addText(sour, 'QUAY', c.quay)
+    addText(sour, 'NOTE', c.note)
+  }
+}
+
+/**
+ * Writes event-level SOURCE citations for one record (v151-iii).
+ * `citations` is keyed `${keyPrefix}:${TAG}`; each tag's citation list
+ * lands under the event structure of the same tag, in input order
+ * (multi-citation = consecutive SOUR lines). A tag with no structure
+ * in the record (event not created: redacted BIRT, missing DEAT, MARR
+ * from a never-married couple) gets nothing, so the citation cannot
+ * resurrect suppressed data. Absent/empty input writes nothing.
+ */
+function addEventCitations(
+  record: GEDCStruct,
+  citations: Record<string, ParsedCitation[]> | undefined,
+  keyPrefix: string,
+  tags: readonly string[],
+): void {
+  if (citations === undefined) return
+  for (const tag of tags) {
+    const list = citations[`${keyPrefix}:${tag}`]
+    if (list === undefined || list.length === 0) continue
+    const event = record.sub.find((s) => s.tag === tag)
+    if (event === undefined) continue
+    addCitations(event, list)
   }
 }
 
@@ -649,6 +716,15 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
       }
     }
 
+    // Event-level SOURCE citations (v151-iii): routed to the BIRT/DEAT
+    // structures that actually exist above; absent input writes nothing.
+    addEventCitations(
+      indi,
+      input.memberEventCitations,
+      m.id,
+      MEMBER_CITATION_TAGS,
+    )
+
     indiRecords.push(indi)
   }
 
@@ -697,6 +773,16 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     if (famNoList !== undefined && famNoList.length > 0) {
       addNoAssertions(fam, famNoList)
     }
+
+    // Event-level SOURCE citations (v151-iii): same family key as the
+    // NO assertions above, routed to the MARR/DIV structures that
+    // actually exist; absent input writes nothing.
+    addEventCitations(
+      fam,
+      input.familyEventCitations,
+      famNoKey,
+      FAMILY_CITATION_TAGS,
+    )
 
     famRecords.push(fam)
   }
