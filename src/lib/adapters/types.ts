@@ -499,3 +499,44 @@ export class NotFoundError extends AdapterError {
     this.name = 'NotFoundError';
   }
 }
+
+// ─── Citation surface (v155-iii-a) ────────────────────────
+// Server-backed citation surface for the GEDCOM import pipeline. Only the
+// REST adapter implements it; mock and supabase adapters get null from
+// getCitationApi so the import UI skips citation wiring instead of
+// crashing. Kontraknya mengikuti CitationApplyIO di citationApply.ts.
+
+/** Jenis event pemilik sitasi, selaras dengan kosakata event GEDCOM. */
+export type CitationEventType = 'BIRTH' | 'DEATH' | 'MARRIAGE' | 'DIVORCE';
+
+/** Satu spesifikasi sitasi yang dikirim ke server saat upsert. */
+export interface CitationSpec {
+  sourceId: string;
+  sourcePointer: string;
+  page: string | undefined;
+  quay: string | undefined;
+  note: string | undefined;
+  eventType: CitationEventType;
+  memberId: string;
+  partnerMemberId: string | undefined;
+}
+
+/**
+ * Permukaan sitasi ala AccountAdminApi: API berdiri sendiri, tidak
+ * menambah apa pun ke DataAdapter. Implementasi tidak pernah melempar
+ * pada kegagalan jaringan; pemanggil menerima bentuk kosong yang valid.
+ */
+export interface CitationApi {
+  /** Upsert satu sumber dan kembalikan id-nya; pointer diteruskan verbatim. */
+  upsertSource(treeId: string, pointer: string): Promise<string>;
+  /** Upsert satu sitasi; id dikembalikan, void saat server melewatkannya. */
+  upsertCitation(treeId: string, spec: CitationSpec): Promise<string | void>;
+  /** Upsert LifeEvent minimal agar sitasi punya event pemilik. */
+  upsertLifeEvent(
+    treeId: string,
+    memberId: string,
+    eventType: CitationEventType,
+    partnerMemberId?: string,
+    citationId?: string,
+  ): Promise<string>;
+}
