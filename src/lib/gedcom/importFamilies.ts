@@ -35,6 +35,8 @@ import type { ParsedEventDate } from './parseEventDate'
 import { placePayload } from './placePayload'
 import { parseNoLines } from './no-assertion'
 import type { ParsedNoAssertion } from './no-assertion'
+import { citationsOf } from './citation'
+import type { ParsedCitation } from './citation'
 
 /** One parsed FAM record: raw payloads plus structured event dates. */
 export interface ImportedFamily {
@@ -56,6 +58,8 @@ export interface ImportedFamily {
   resn?: string
   /** NO assertions level record FAM via parseNoLines (payload mentah diteruskan, tanpa normalisasi), kosong bila record nihil NO. */
   noAssertions?: ParsedNoAssertion[]
+  /** Sitasi SOUR event-level verbatim (MARR/DIV), tanpa normalisasi payload; kosong bila event nihil SOUR. */
+  citations?: ParsedCitation[]
 }
 
 /** First direct substructure with the given tag, or undefined. */
@@ -148,6 +152,7 @@ export function importFamilies(
       divorceDate: dateOf(div),
       resn: payloadOf(subWithTag(record, 'RESN')),
       noAssertions: noAssertionsOf(record),
+      citations: [...citationsOf(marr), ...citationsOf(div)],
     })
   }
   return out
