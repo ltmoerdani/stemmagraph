@@ -59,6 +59,9 @@ import {
   ConsentApi,
   ConsentStateView,
   ConsentMutationResult,
+  CitationApi,
+  CitationSpec,
+  CitationEventType,
   AdapterError,
   AuthError,
 } from './types';
@@ -73,11 +76,11 @@ const ACCOUNT_STATE_ERROR_CODES = new Set(['ACCOUNT_PENDING', 'ACCOUNT_DISABLED'
 interface RestAdapterOptions {
   baseUrl: string;
   headers?: Record<string, string>;
-  /** Called on 401 — return a new token (or null to force re-login) */
+  /** Called on 401: return a new token (or null to force re-login) */
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -509,5 +512,48 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
       ...(note === undefined ? {} : { note }),
     });
     return body;
+  }
+
+  // ── Citation surface (v155-iii-a) ───────────────────────
+  // Pure routing ke route /api/v1 di belakang CitationApplyIO: pointer
+  // dan spec diteruskan verbatim, bentuk return dipagari minimal valid,
+  // dan kegagalan jaringan tidak pernah naik ke pemanggil.
+
+  async upsertSource(treeId: string, pointer: string): Promise<string> {
+    try {
+      const body = await this.request<{ id: string }>('PUT', `/trees/${treeId}/sources/upsert`, { pointer });
+      return typeof body?.id === 'string' ? body.id : '';
+    } catch {
+      return '';
+    }
+  }
+
+  async upsertCitation(treeId: string, spec: CitationSpec): Promise<string | void> {
+    try {
+      const body = await this.request<{ id?: string }>('PUT', `/trees/${treeId}/citations/upsert`, spec);
+      return typeof body?.id === 'string' ? body.id : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async upsertLifeEvent(
+    treeId: string,
+    memberId: string,
+    eventType: CitationEventType,
+    partnerMemberId?: string,
+    citationId?: string,
+  ): Promise<string> {
+    try {
+      const body = await this.request<{ id: string }>('PUT', `/trees/${treeId}/life-events/upsert`, {
+        memberId,
+        eventType,
+        ...(partnerMemberId === undefined ? {} : { partnerMemberId }),
+        ...(citationId === undefined ? {} : { citationId }),
+      });
+      return typeof body?.id === 'string' ? body.id : '';
+    } catch {
+      return '';
+    }
   }
 }

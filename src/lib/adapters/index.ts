@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -179,6 +179,19 @@ export function setAdapter(adapter: DataAdapter): void {
   _adapter = adapter;
 }
 
+// ─── Citation surface (v155-iii-a) ────────────────────────
+
+/**
+ * Returns the citation surface of the active adapter, or null when the
+ * adapter has no server backend (mock, supabase): sources and citations
+ * live behind the /api/v1 routes. The import UI skips citation wiring
+ * for null instead of crashing.
+ */
+export function getCitationApi(): CitationApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 // ─── Re-export Types ──────────────────────────────────────
 
 export type {
@@ -225,6 +238,9 @@ export type {
   ConsentRecordView,
   ConsentStateView,
   ConsentMutationResult,
+  CitationApi,
+  CitationSpec,
+  CitationEventType,
 } from './types';
 
 export {
