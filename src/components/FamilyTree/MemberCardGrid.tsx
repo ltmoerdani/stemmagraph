@@ -2,6 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { GridMemberCard } from './GridMemberCard';
 import { useFamilyStore } from '../../store/familyStore';
 import { ChevronDown, SortAsc, Filter } from 'lucide-react';
+import {
+  applySearchFilter,
+  filterAndSort,
+  type SearchMember,
+  type SearchSortBy,
+} from '../../lib/genealogy/search-filter';
 
 type SortOption = 'name' | 'age' | 'location' | 'generation';
 type SortDirection = 'asc' | 'desc';
@@ -12,56 +18,68 @@ export const MemberCardGrid: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showSortMenu, setShowSortMenu] = useState(false);
 
-  // Filter and search members
+  // Filter, pencarian, dan sortir via engine fase i (search-filter.ts).
   const filteredMembers = useMemo(() => {
-    const filtered = members.filter(member => {
-      // Apply view mode filters
-      if (!viewMode.showAlive && member.isAlive) return false;
-      if (!viewMode.showDeceased && !member.isAlive) return false;
-      if (viewMode.selectedGeneration && member.generation !== viewMode.selectedGeneration) return false;
-      
-      // Apply search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const searchFields = [
-          member.name.toLowerCase(),
-          member.profession?.toLowerCase() ?? '',
-          member.currentLocation?.toLowerCase() ?? '',
-          member.nickname?.toLowerCase() ?? ''
-        ];
-        
-        return searchFields.some(field => field.includes(query));
-      }
-      
-      return true;
-    });
+    // Adapter: FamilyMember kompatibel dengan SearchMember untuk kebutuhan
+    // kanvas ini (engine hanya membaca gender saat opsi gender dipakai).
+    const searchMembers = members as unknown as SearchMember[];
 
-    // Sort members
-    filtered.sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortBy) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case 'age': {
-          const ageA = new Date().getFullYear() - new Date(a.birthDate).getFullYear();
-          const ageB = new Date().getFullYear() - new Date(b.birthDate).getFullYear();
-          comparison = ageA - ageB;
-          break;
+    // Pencarian teks via engine: name, profession, currentLocation, nickname.
+    const searched = applySearchFilter(searchMembers, searchQuery);
+
+    // Pemetaan sortBy komponen ke sortBy engine.
+    const engineSortBy: SearchSortBy =
+      sortBy === 'age'
+        ? 'birthDate'
+        : sortBy === 'location'
+          ? 'currentLocation'
+          : sortBy;
+
+    // Tampilkan semua: kedua status aktif dan tanpa generasi terpilih.
+    // Filter viewMode tidak dipanggil, sortir manual dengan comparator komponen.
+    if (viewMode.showAlive && viewMode.showDeceased && !viewMode.selectedGeneration) {
+      const sorted = [...searched];
+      sorted.sort((a, b) => {
+        let comparison = 0;
+
+        switch (sortBy) {
+          case 'name':
+            comparison = a.name.localeCompare(b.name);
+            break;
+          case 'age': {
+            const ageA = new Date().getFullYear() - new Date(a.birthDate ?? '').getFullYear();
+            const ageB = new Date().getFullYear() - new Date(b.birthDate ?? '').getFullYear();
+            comparison = ageA - ageB;
+            break;
+          }
+          case 'location':
+            comparison = (a.currentLocation ?? '').localeCompare(b.currentLocation ?? '');
+            break;
+          case 'generation':
+            comparison = a.generation - b.generation;
+            break;
         }
-        case 'location':
-          comparison = (a.currentLocation ?? '').localeCompare(b.currentLocation ?? '');
-          break;
-        case 'generation':
-          comparison = a.generation - b.generation;
-          break;
-      }
-      
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
 
-    return filtered;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+
+      return sorted;
+    }
+
+    if (viewMode.selectedGeneration) {
+      return filterAndSort(searched, {
+        viewMode: 'selectedGeneration',
+        sortBy: engineSortBy,
+        sortDirection,
+        generation: viewMode.selectedGeneration,
+      });
+    }
+
+    return filterAndSort(searched, {
+      viewMode: viewMode.showAlive ? 'showAlive' : 'showDeceased',
+      sortBy: engineSortBy,
+      sortDirection,
+    });
   }, [members, viewMode, searchQuery, sortBy, sortDirection]);
 
   const handleSort = (option: SortOption) => {
@@ -86,9 +104,9 @@ export const MemberCardGrid: React.FC = () => {
 
   const highlightText = (text: string, query: string) => {
     if (!query) return text;
-    
+
     const parts = text.split(new RegExp(`(${query})`, 'gi'));
-    return parts.map((part, index) => 
+    return parts.map((part, index) =>
       part.toLowerCase() === query.toLowerCase() ? (
         <mark key={`highlight-${part}-${index}`} className="bg-yellow-200 px-1 rounded">
           {part}
@@ -105,7 +123,7 @@ export const MemberCardGrid: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900">
             {filteredMembers.length} Family Members
           </h3>
-          
+
           {searchQuery && (
             <div className="text-sm text-gray-600">
               Search results for "{searchQuery}"
