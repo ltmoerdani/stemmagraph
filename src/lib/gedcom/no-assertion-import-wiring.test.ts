@@ -156,6 +156,7 @@ describe('no-assertion import wiring (v137-ii-a)', () => {
       deathDate: undefined,
       deathPlace: undefined,
       resn: 'CONFIDENTIAL',
+      citations: [],
     })
   })
 })
