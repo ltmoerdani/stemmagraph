@@ -11,6 +11,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import type { FamilyMember } from '../../../types/family';
 import { applySearchFilter, type SearchMember } from '../../../lib/genealogy/search-filter';
+import { MemberCardGrid } from '../MemberCardGrid';
+import { FamilyTable } from '../FamilyTable';
 
 const { mockState } = vi.hoisted(() => ({
   mockState: {
@@ -75,8 +77,7 @@ afterEach(() => {
 });
 
 describe('search wiring v150-ii', () => {
-  it('kasus 1 (wiring grid): query cocok name hanya menampilkan anggota yang cocok', async () => {
-    const { MemberCardGrid } = await import('../MemberCardGrid');
+  it('kasus 1 (wiring grid): query cocok name hanya menampilkan anggota yang cocok', () => {
     mockState.members = [
       member({ id: 'a', name: 'Budi Santoso' }),
       member({ id: 'b', name: 'Andi Wijaya' }),
@@ -114,8 +115,7 @@ describe('search wiring v150-ii', () => {
     expect(hasil.map((m) => m.id)).toEqual(['b']);
   });
 
-  it('kasus 5 (wiring grid): showAlive menurunkan isAlive dari deathDate', async () => {
-    const { MemberCardGrid } = await import('../MemberCardGrid');
+  it('kasus 5 (wiring grid): showAlive menurunkan isAlive dari deathDate', () => {
     mockState.members = [
       member({ id: 'a', name: 'Budi Santoso' }),
       member({ id: 'b', name: 'Andi Wijaya', deathDate: '2020-01-01', isAlive: false }),
@@ -126,8 +126,7 @@ describe('search wiring v150-ii', () => {
     expect(screen.queryByTestId('card-b')).toBeNull();
   });
 
-  it('kasus 6 (wiring grid): show all menghasilkan urutan deterministik (name asc)', async () => {
-    const { MemberCardGrid } = await import('../MemberCardGrid');
+  it('kasus 6 (wiring grid): show all menghasilkan urutan deterministik (name asc)', () => {
     mockState.members = [
       member({ id: 'c', name: 'Candra' }),
       member({ id: 'a', name: 'Andi' }),
@@ -140,8 +139,7 @@ describe('search wiring v150-ii', () => {
     expect(urutan).toEqual(['card-a', 'card-b', 'card-c']);
   });
 
-  it('kasus 7 (wiring tabel): query name hanya menampilkan baris yang cocok', async () => {
-    const { FamilyTable } = await import('../FamilyTable');
+  it('kasus 7 (wiring tabel): query name hanya menampilkan baris yang cocok', () => {
     mockState.members = [
       member({ id: 'a', name: 'Budi Santoso' }),
       member({ id: 'b', name: 'Andi Wijaya' }),
