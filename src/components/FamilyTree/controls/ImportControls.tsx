@@ -92,10 +92,13 @@ export const ImportControls: React.FC = () => {
         citationEntries = [];
       }
 
-      const plan = buildImportPlan(
-        importIndividuals(gedcom, (msg) => console.info('GEDCOM parse:', msg)),
-        importFamilies(gedcom, (msg) => console.info('GEDCOM parse:', msg)),
+      const individuals = importIndividuals(gedcom, (msg) =>
+        console.info('GEDCOM parse:', msg),
       );
+      const families = importFamilies(gedcom, (msg) =>
+        console.info('GEDCOM parse:', msg),
+      );
+      const plan = buildImportPlan(individuals, families);
 
       if (plan.members.length === 0) {
         setErrorKey('import.errors.empty');
@@ -137,25 +140,24 @@ export const ImportControls: React.FC = () => {
         );
         const resolveMember = (xref: string) =>
           memberMap.get(xref.replace(/^@|@$/g, ''));
-        const resolveRelation = (xref: string) => {
+        // FAM sitasi (MARR/DIV) membawa xref FAM; pasangan id DB diambil
+        // dari data families hasil parse (husband/wife) lalu dipetakan ke
+        // id DB lewat memberMap.
+        const famMap = new Map(
+          families
+            .filter((f) => f.xref !== undefined)
+            .map((f) => [f.xref, f]),
+        );
+        const resolveRelation = (xref: string): [string, string] | undefined => {
           const bare = xref.replace(/^@|@$/g, '');
-          for (const rel of plan.relationships) {
-            if (rel.type === 'spouse' && rel.memberXref === bare) {
-              const a = memberMap.get(rel.memberXref);
-              const b = memberMap.get(rel.relatedXref);
-              if (a !== undefined && b !== undefined) {
-                return [a, b] as [string, string];
-              }
-            }
-            if (rel.type === 'spouse' && rel.relatedXref === bare) {
-              const a = memberMap.get(rel.relatedXref);
-              const b = memberMap.get(rel.memberXref);
-              if (a !== undefined && b !== undefined) {
-                return [a, b] as [string, string];
-              }
-            }
-          }
-          return undefined;
+          const fam = famMap.get(bare);
+          if (fam === undefined) return undefined;
+          const a =
+            fam.husband !== undefined ? memberMap.get(fam.husband) : undefined;
+          const b =
+            fam.wife !== undefined ? memberMap.get(fam.wife) : undefined;
+          if (a === undefined || b === undefined) return undefined;
+          return [a, b] as [string, string];
         };
         citationReport = await applyCitationPlan(
           citationEntries,
