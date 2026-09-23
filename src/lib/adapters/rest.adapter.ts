@@ -76,7 +76,7 @@ const ACCOUNT_STATE_ERROR_CODES = new Set(['ACCOUNT_PENDING', 'ACCOUNT_DISABLED'
 interface RestAdapterOptions {
   baseUrl: string;
   headers?: Record<string, string>;
-  /** Called on 401 — return a new token (or null to force re-login) */
+  /** Called on 401: return a new token (or null to force re-login) */
   onTokenRefresh?: () => Promise<string | null>;
 }
 
