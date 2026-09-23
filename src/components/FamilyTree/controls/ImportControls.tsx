@@ -133,10 +133,13 @@ export const ImportControls: React.FC = () => {
       const citationApi = getCitationApi();
       let citationReport: CitationApplyReport | undefined;
       if (citationApi !== null) {
+        // Keys bare (strip @ dua sisi): xref dari parser sudah tanpa @,
+        // tapi payload SOUR bisa membawa bentuk @I1@; lookup resolver
+        // memakai bare, jadi build map harus konsisten bare juga.
         const memberMap = new Map(
           applyReport.createdMembers
             .filter((m) => m.xref !== undefined)
-            .map((m) => [m.xref, m.id]),
+            .map((m) => [m.xref.replace(/^@|@$/g, ''), m.id]),
         );
         const resolveMember = (xref: string) =>
           memberMap.get(xref.replace(/^@|@$/g, ''));
