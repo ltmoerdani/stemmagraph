@@ -6,6 +6,8 @@ import { InvitationsPanel } from './InvitationsPanel';
 import { ShareLinksPanel } from './ShareLinksPanel';
 import { ChangeReviewPanel } from './ChangeReviewPanel';
 import { DedupReviewMount } from '../FamilyTree/DedupReviewMount';
+import { TemplatePicker } from '../Onboarding/TemplatePicker';
+import type { SeedTemplate } from '../../lib/onboarding/seedTemplates';
 import { DigestSettingsPanel } from '../DigestSettingsPanel';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
@@ -16,7 +18,7 @@ import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
-  const { familyTrees, viewMode, setViewMode } = useDashboardStore();
+  const { familyTrees, viewMode, setViewMode, createFamilyTree } = useDashboardStore();
   const { t, i18n } = useTranslation();
   const [showCreateModal, setShowCreateModal] = useState(false);
   // Tree whose invitations/membership panel is open (P2-3 AC-6).
@@ -37,6 +39,28 @@ export const Dashboard: React.FC = () => {
     setShowCreateModal(true);
   };
 
+  // Onboarding seed wiring (v154-iii): pilih template di empty state lalu buat
+  // pohon dengan nama template. Data anggota seed belum dikonsumsi fase ini
+  // (design v154: konsumsi sample tree menyusul goal terpisah).
+  const [seedPicking, setSeedPicking] = useState(false);
+  const handleSelectSeedTemplate = async (template: SeedTemplate) => {
+    if (seedPicking) return;
+    try {
+      setSeedPicking(true);
+      await createFamilyTree(template.nama);
+    } catch {
+      // Kegagalan seed tidak boleh crash Dashboard; pengguna tetap di empty state.
+    } finally {
+      setSeedPicking(false);
+    }
+  };
+
+  const renderOnboardingPicker = () => (
+    <div className="text-left" data-testid="onboarding-template-picker">
+      <TemplatePicker onSelect={handleSelectSeedTemplate} />
+    </div>
+  );
+
   const handleOpenTree = (treeId: string) => {
     // Navigate to family tree interface
     navigate(`/family-tree/${treeId}`);
@@ -48,6 +72,7 @@ export const Dashboard: React.FC = () => {
 
   // Dedup decision log (v149-ii wiring, ADR 0009): ACCEPT membangun payload
   // change proposal merge_person lewat buildMergeProposal (pure) lalu dicatat
+
   // sebagai log terstruktur satu baris; tanpa eksekusi merge, tanpa mutasi
   // store. REJECT dan SKIP tetap memakai jalur log lama. Pair tanpa
   // separator '::' jatuh ke log lama tanpa throw.
@@ -224,6 +249,14 @@ export const Dashboard: React.FC = () => {
           {activeTab === 'activity' ? (
             <FeedPanel />
           ) : viewMode === 'card' ? (
+            familyTrees.length === 0 ? (
+              <div className="text-center py-12">
+                <TreePine className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.emptyTitle')}</h3>
+                <p className="text-gray-500 mb-6">{t('dashboard.emptyDesc')}</p>
+                {renderOnboardingPicker()}
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {/* Create New Card */}
               {renderCreateNewCard()}
@@ -301,6 +334,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               ))}
             </div>
+            )
           ) : (
             /* List View */
             <div className="bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden">
