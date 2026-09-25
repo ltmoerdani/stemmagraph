@@ -85,6 +85,20 @@ export interface ExportGedcom70Input {
    */
   famcStat?: Record<string, string>
   /**
+   * Optional per-link PEDI payloads keyed `${famXref}:${childId}`
+   * (v159-iv). Per GEDCOM 7, PEDI is a substructure of INDI-FAMC
+   * (NOT of CHIL; CHIL only allows PHRASE), so each payload is written
+   * verbatim as a PEDI substructure under the matching FAMC pointer in
+   * the child's INDI record, mirroring the FAMC-STAT loop above.
+   * famXref is the emitted FAM cross-reference id (F1, F2, ... assigned
+   * in FAM record order), the same id the FAMC pointer points at, so
+   * callers holding an imported FAM record can key by its own xref.
+   * A key that matches no emitted FAMC pointer is silently ignored; a
+   * child linked to several families gets the PEDI written under each
+   * matching pointer (per INDI-FAMC instance, as the spec allows).
+   */
+  famPedi?: Record<string, string>
+  /**
    * Optional member-level RESN payloads keyed by member id (v135,
    * wired through resolveExportResn). A string may carry multiple
    * comma-separated enumset values; arrays pass per value. This
@@ -713,6 +727,13 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
         // Enum payloads pass through verbatim; raw extTag payloads pass
         // through without normalization (GOAL v125, FAMC-STAT fidelity).
         addText(famc, 'STAT', famcStatPayload(statRaw).value)
+      }
+      // Per-link PEDI (v159-iv): written under the FAMC pointer (INDI
+      // side) verbatim, no normalization; an absent key or empty raw
+      // writes nothing. Spec: PEDI's only superstructure is INDI-FAMC.
+      const pediRaw = input.famPedi?.[`${fx}:${m.id}`]
+      if (pediRaw !== undefined && pediRaw !== '') {
+        addText(famc, 'PEDI', pediRaw)
       }
     }
 
