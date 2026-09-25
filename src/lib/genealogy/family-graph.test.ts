@@ -137,7 +137,7 @@ describe('buildFamilyGraph', () => {
     const a = buildFamilyGraph(indis);
     const b = buildFamilyGraph(indis);
     expect(a).toEqual(b);
-    expect(a.unions.map((u) => u.fam)).toEqual(['@F2@', '@F1@']);
+    expect(a.unions.map((u) => u.fam)).toEqual(['@F2@', '@F1@', '@F3@']);
   });
 
   it('mengumpulkan pasangan dari kedua arah relasi FAMS', () => {
