@@ -2,9 +2,13 @@
  * Pure search-filter engine untuk daftar anggota keluarga.
  * GOAL v150-STG-SEARCH-FILTER-ENGINE fase i.
  *
- * Pencarian teks dan filter terstruktur, deterministik, tanpa efek samping,
- * tanpa import berkas lain (pola mengikuti dedup-detect.ts).
+ * Pencarian teks dan filter terstruktur, deterministik, tanpa efek samping
+ * pada sistem luar (pola mengikuti dedup-detect.ts).
+ * Sejak v169-iii modul ini mengimpor kinship-alias-phrase (pure) untuk
+ * ekspansi query lema alias kekerabatan menjadi label kanonik id.
  */
+
+import { kinshipAliasPhrase } from './kinship-alias-phrase';
 
 export type SearchGender = 'M' | 'F' | 'X' | 'U';
 
@@ -125,6 +129,54 @@ export function applySearchFilter(
 
     return true;
   });
+}
+
+/**
+ * Ekspansi query alias kekerabatan (v169-iii).
+ *
+ * Bila query (setelah normalisasi internal resolveAlias) cocok persis satu
+ * lema KINSHIP_ALIASES, hasilnya [query asli, label kanonik id]. Urutan
+ * stabil [asli, label] dan deterministik. Bila label sama dengan query asli
+ * (contoh lema 'anak' berlabel 'anak'), label tidak diduplikasi.
+ * Query kosong atau tidak dikenali kembali sebagai [query] sehingga pemanggil
+ * berperilaku identik dengan pencarian tanpa ekspansi.
+ *
+ * Pure: input tidak dimutasi, output array baru.
+ */
+export function expandAliasQuery(query: string): string[] {
+  if (normalizeText(query) === '') {
+    return [query];
+  }
+  const label = kinshipAliasPhrase(query, 'id');
+  if (label === null || label === query) {
+    return [query];
+  }
+  return [query, label];
+}
+
+/**
+ * Pencarian alias-aware (v169-iii): jalankan applySearchFilter untuk tiap
+ * kandidat dari expandAliasQuery lalu gabungkan hasilnya dengan dedup by id
+ * pada urutan pertama-seen (kandidat [asli, label] diproses berurutan).
+ * Query non-alias menghasilkan perilaku identik dengan applySearchFilter.
+ *
+ * Pure: input tidak dimutasi, output array baru, deterministik.
+ */
+export function searchWithAliases(
+  members: SearchMember[],
+  query: string,
+  options: SearchFilterOptions = {},
+): SearchMember[] {
+  const seen = new Set<string>();
+  const result: SearchMember[] = [];
+  for (const candidate of expandAliasQuery(query)) {
+    for (const member of applySearchFilter(members, candidate, options)) {
+      if (seen.has(member.id)) continue;
+      seen.add(member.id);
+      result.push(member);
+    }
+  }
+  return result;
 }
 
 /**
