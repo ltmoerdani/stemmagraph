@@ -32,6 +32,8 @@ import { parseNoLines } from './no-assertion'
 import type { ParsedNoAssertion } from './no-assertion'
 import { citationsOf } from './citation'
 import type { ParsedCitation } from './citation'
+import { parseFamcStat } from './famcStat'
+import type { FamcStatResult } from './famcStat'
 
 /** One parsed INDI record: raw payloads plus structured event dates. */
 export interface ImportedIndividual {
@@ -55,6 +57,16 @@ export interface ImportedIndividual {
   noAssertions?: ParsedNoAssertion[]
   /** Sitasi SOUR event-level verbatim (BIRT/DEAT), tanpa normalisasi payload; kosong bila event nihil SOUR. */
   citations?: ParsedCitation[]
+  /** Relasi anak-orang tua FAMC, satu entri per FAMC berpointer, urut dokumen; kosong bila record nihil FAMC. */
+  famcStat?: ImportedFamcStat[]
+}
+
+/** Satu relasi FAMC: pointer FAM tanpa @, plus hasil urai STAT lewat parseFamcStat. */
+export interface ImportedFamcStat {
+  /** Pointer FAMC verbatim tanpa tanda @ (mis. '@F1@' menjadi 'F1'). */
+  fam: string
+  /** Hasil parseFamcStat: nilai enum atau nihil, plus warning. */
+  stat: FamcStatResult
 }
 
 /** First direct substructure with the given tag, or undefined. */
@@ -101,6 +113,24 @@ function noAssertionsOf(record: GEDCStruct): ParsedNoAssertion[] {
   return lines.length === 0 ? [] : parseNoLines(lines).assertions
 }
 
+/** FAMC pointer as the target FAM record's xref_id, or undefined when absent. */
+function famcPointerOf(famc: GEDCStruct): string | undefined {
+  const target = famc.payload
+  return target instanceof GEDCStruct ? target.xref_id : undefined
+}
+
+/** All FAMC links of an INDI as { fam, stat }, one entry per FAMC with a pointer. */
+function famcStatsOf(record: GEDCStruct): ImportedFamcStat[] {
+  const out: ImportedFamcStat[] = []
+  for (const famc of record.sub) {
+    if (famc.tag !== 'FAMC') continue
+    const fam = famcPointerOf(famc)
+    if (fam === undefined) continue
+    out.push({ fam, stat: parseFamcStat(famc) })
+  }
+  return out
+}
+
 /**
  * Parses GEDCOM 7.0 text and returns one ImportedIndividual per INDI
  * record, in file order. Non-INDI records are ignored. The optional
@@ -117,7 +147,7 @@ export function importIndividuals(
     if (record.tag !== 'INDI') continue
     const birt = subWithTag(record, 'BIRT')
     const deat = subWithTag(record, 'DEAT')
-    out.push({
+    const entry: ImportedIndividual = {
       xref: record.xref_id,
       name: payloadOf(subWithTag(record, 'NAME')),
       sex: payloadOf(subWithTag(record, 'SEX')),
@@ -128,7 +158,15 @@ export function importIndividuals(
       resn: payloadOf(subWithTag(record, 'RESN')),
       noAssertions: noAssertionsOf(record),
       citations: [...citationsOf(birt), ...citationsOf(deat)],
-    })
+    }
+    // v159-iii-a: famcStat opsional, hanya hadir bila INDI punya FAMC
+    // berpointer, supaya bentuk output untuk INDI tanpa FAMC byte-shape
+    // identik dengan perilaku lama (kontrak deep-equality test existing).
+    const famcStat = famcStatsOf(record)
+    if (famcStat.length > 0) {
+      entry.famcStat = famcStat
+    }
+    out.push(entry)
   }
   return out
 }
