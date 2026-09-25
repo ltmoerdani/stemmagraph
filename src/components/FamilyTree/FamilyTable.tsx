@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 import { compareNames } from '../../utils/collator';
 import {
-  applySearchFilter,
   filterAndSort,
+  searchWithAliases,
   type FilterSortOptions,
   type SearchMember,
   type SearchSortBy,
@@ -302,8 +302,9 @@ export const FamilyTable: React.FC = () => {
     // Adapter: FamilyMember kompatibel dengan SearchMember untuk kebutuhan tabel.
     const searchMembers = members as unknown as SearchMember[];
 
-    // Pencarian teks via engine: name, profession, currentLocation, nickname.
-    const searched = applySearchFilter(searchMembers, searchQuery ?? '');
+    // Pencarian teks alias-aware: kandidat query asli plus label kanonik bila
+    // query cocok satu lema KINSHIP_ALIASES, hasil digabung dedup by id.
+    const searched = searchWithAliases(searchMembers, searchQuery ?? '');
 
     // Pemetaan sortBy tabel ke sortBy engine.
     const engineSortBy: SearchSortBy =
