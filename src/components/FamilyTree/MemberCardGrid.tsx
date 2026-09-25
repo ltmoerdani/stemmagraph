@@ -3,8 +3,8 @@ import { GridMemberCard } from './GridMemberCard';
 import { useFamilyStore } from '../../store/familyStore';
 import { ChevronDown, SortAsc, Filter } from 'lucide-react';
 import {
-  applySearchFilter,
   filterAndSort,
+  searchWithAliases,
   type SearchMember,
   type SearchSortBy,
 } from '../../lib/genealogy/search-filter';
@@ -24,8 +24,9 @@ export const MemberCardGrid: React.FC = () => {
     // kanvas ini (engine hanya membaca gender saat opsi gender dipakai).
     const searchMembers = members as unknown as SearchMember[];
 
-    // Pencarian teks via engine: name, profession, currentLocation, nickname.
-    const searched = applySearchFilter(searchMembers, searchQuery);
+    // Pencarian teks alias-aware: kandidat query asli plus label kanonik bila
+    // query cocok satu lema KINSHIP_ALIASES, hasil digabung dedup by id.
+    const searched = searchWithAliases(searchMembers, searchQuery);
 
     // Pemetaan sortBy komponen ke sortBy engine.
     const engineSortBy: SearchSortBy =
