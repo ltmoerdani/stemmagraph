@@ -42,6 +42,7 @@ const INDI_KEYS = [
 
 /** Key set hasil import FAM apa adanya sejak v151-ii: citations ikut. */
 const FAM_KEYS = [
+  'childLinks',
   'children',
   'citations',
   'divorceDate',
