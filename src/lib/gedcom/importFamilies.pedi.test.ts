@@ -125,18 +125,52 @@ describe('importFamilies - PEDI dan ADOP-FAMC (v159 iii-b)', () => {
   })
 
   it('(j) round-trip: fromString lalu toString PEDI byte-identical', () => {
-    const plain = fam(['1 CHIL @I3@', '2 PEDI ADOPTED'])
+    // Catatan mekanika vendor: xref record hanya tercetak ulang bila record
+    // itu jadi target minimal satu pointer (#ref). Karena itu fixture di
+    // sini sengaja membuat semua INDI dan FAM tertunjuk (pola helper iii-a).
+    const plain = [
+      '0 HEAD',
+      '1 GEDC',
+      '2 VERS 7.0',
+      '0 @I1@ INDI',
+      '0 @I2@ INDI',
+      '0 @I3@ INDI',
+      '1 FAMC @F1@',
+      '0 @I4@ INDI',
+      '0 @F1@ FAM',
+      '1 HUSB @I1@',
+      '1 WIFE @I2@',
+      '1 CHIL @I3@',
+      '2 PEDI ADOPTED',
+      '1 CHIL @I4@',
+      '2 PEDI BIRTH',
+      '0 TRLR',
+      '',
+    ].join('\n')
     expect(GEDCStruct.fromString(plain, g7ConfGEDC).toString()).toBe(plain)
-    const lengkap = fam([
+    const lengkap = [
+      '0 HEAD',
+      '1 GEDC',
+      '2 VERS 7.0',
+      '0 @I1@ INDI',
+      '0 @I2@ INDI',
+      '0 @I3@ INDI',
+      '1 FAMC @F1@',
+      '0 @I4@ INDI',
+      '0 @F1@ FAM',
+      '1 HUSB @I1@',
+      '1 WIFE @I2@',
       '1 CHIL @I3@',
       '2 PEDI OTHER',
       '3 PHRASE anak diangkat menurut adat',
-      '1 CHIL @I4@',
-      '2 PEDI SEALING',
       '2 ADOP',
       '3 FAMC @F1@',
       '4 ADOP BOTH',
-    ])
+      '1 CHIL @I4@',
+      '2 PEDI SEALING',
+      '0 TRLR',
+      '',
+    ].join('\n')
     expect(GEDCStruct.fromString(lengkap, g7ConfGEDC).toString()).toBe(lengkap)
   })
 

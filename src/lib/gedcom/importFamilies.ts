@@ -37,6 +37,8 @@ import { parseNoLines } from './no-assertion'
 import type { ParsedNoAssertion } from './no-assertion'
 import { citationsOf } from './citation'
 import type { ParsedCitation } from './citation'
+import { resolvePedi, resolveAdop } from './relationship-enum'
+import type { EnumResolution, Pedi, AdopValue } from './relationship-enum'
 
 /** One parsed FAM record: raw payloads plus structured event dates. */
 export interface ImportedFamily {
@@ -60,6 +62,25 @@ export interface ImportedFamily {
   noAssertions?: ParsedNoAssertion[]
   /** Sitasi SOUR event-level verbatim (MARR/DIV), tanpa normalisasi payload; kosong bila event nihil SOUR. */
   citations?: ParsedCitation[]
+  /**
+   * Wiring PEDI dan ADOP-FAMC per CHIL (v159 fase iii-b): satu entri per
+   * struktur CHIL in-order. fam = xref record FAM tanpa @. pedi dari
+   * substructure PEDI (verbatim lewat resolvePedi; PHRASE menimpa field
+   * phrase bila ada). adop dari enum ADOP di ADOP.FAMC bila ada
+   * (resolveAdop). Entri tanpa PEDI/ADOP tetap dibuat; children tetap
+   * array pointer pola lama.
+   */
+  childLinks: ChildLink[]
+}
+
+/** Satu entri wiring CHIL: pointer keluarga plus resolusi PEDI/ADOP opsional. */
+export interface ChildLink {
+  /** FAM xref (tanpa @) milik keluarga tempat CHIL ini terdaftar. */
+  fam: string
+  /** Resolusi PEDI verbatim (resolvePedi), undefined bila nihil PEDI. */
+  pedi?: EnumResolution<Pedi>
+  /** Resolusi enum ADOP.FAMC (resolveAdop), undefined bila nihil. */
+  adop?: EnumResolution<AdopValue>
 }
 
 /** First direct substructure with the given tag, or undefined. */
@@ -97,6 +118,28 @@ function dateOf(event: GEDCStruct | undefined): ParsedEventDate | undefined {
 function placeOf(event: GEDCStruct | undefined): string | undefined {
   const raw = payloadOf(subWithTag(event, 'PLAC'))
   return raw === undefined ? undefined : placePayload(raw)
+}
+
+/**
+ * Wiring PEDI/ADOP-FAMC untuk satu CHIL (v159 fase iii-b): payload mentah
+ * diverbatim lalu lewat resolvePedi/resolveAdop (case-sensitive, tanpa
+ * normalisasi; nilai asing jadi phrase utuh, tak pernah throw). PHRASE di
+ * bawah PEDI menimpa field phrase bila ada. Enum ADOP dibaca dari
+ * substructure FAMC di bawah event ADOP; ADOP tanpa FAMC/enum diabaikan.
+ */
+function childLinkOf(child: GEDCStruct, famXref: string): ChildLink {
+  const link: ChildLink = { fam: famXref }
+  const pedi = subWithTag(child, 'PEDI')
+  if (pedi) {
+    const res = resolvePedi(payloadOf(pedi) ?? '')
+    const phrase = payloadOf(subWithTag(pedi, 'PHRASE'))
+    link.pedi = phrase === undefined ? res : { ...res, phrase }
+  }
+  const adopEvent = subWithTag(child, 'ADOP')
+  const famc = subWithTag(adopEvent, 'FAMC')
+  const adopRaw = payloadOf(subWithTag(famc, 'ADOP'))
+  if (adopRaw !== undefined) link.adop = resolveAdop(adopRaw)
+  return link
 }
 
 /**
@@ -138,15 +181,19 @@ export function importFamilies(
     }
     const marr = subWithTag(record, 'MARR')
     const div = subWithTag(record, 'DIV')
-    const children = record.sub
-      .filter((s) => s.tag === 'CHIL')
+    const childStructs = record.sub.filter((s) => s.tag === 'CHIL')
+    const children = childStructs
       .map((s) => pointerOf(s))
       .filter((p): p is string => p !== undefined)
+    const childLinks = childStructs
+      .map((s) => childLinkOf(s, record.xref_id))
+      .filter((l) => l.pedi !== undefined || l.adop !== undefined)
     out.push({
       xref: record.xref_id,
       husband: pointerOf(subWithTag(record, 'HUSB')),
       wife: pointerOf(subWithTag(record, 'WIFE')),
       children,
+      childLinks,
       marriageDate: dateOf(marr),
       marriagePlace: placeOf(marr),
       divorceDate: dateOf(div),
