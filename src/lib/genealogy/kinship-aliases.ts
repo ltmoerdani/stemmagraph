@@ -92,6 +92,18 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     kind: 'sibling',
     note: 'KBBI edisi III daring kbbi.web.id kolom Memuat lema kandung; Mk dan kl bentuk tidak baku pengalih, TODO verbatim belum terverifikasi',
   },
+  'buyut ri': {
+    kind: 'ancestor',
+    depth: 4,
+    region: 'Ri',
+    note: 'KBBI VI buyut2 makna 1 Ri: generasi keempat di atas ego, sumber notes/417 akses 2026-09-27',
+  },
+  'buyut jw': {
+    kind: 'ancestor',
+    depth: 3,
+    region: 'Jw',
+    note: 'KBBI VI buyut2 makna 2 Jw: orang tua dari nenek atau kakek, gen 3, sumber notes/417',
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
