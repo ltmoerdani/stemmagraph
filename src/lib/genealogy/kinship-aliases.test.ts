@@ -52,11 +52,16 @@ describe('KINSHIP_ALIASES', () => {
   })
 
   it('qualifier opa cak tersimpan', () => {
-    expect(resolveAlias('opa')).toEqual({ kind: 'grandparent', qualifier: 'cak' })
+    expect(resolveAlias('opa')).toEqual({ kind: 'grandparent', qualifier: 'cak', region: 'Betawi' })
   })
 
   it('qualifier eyang jw tersimpan', () => {
-    expect(resolveAlias('eyang')).toEqual({ kind: 'grandparent', qualifier: 'jw' })
+    expect(resolveAlias('eyang')).toEqual({
+      kind: 'grandparent',
+      qualifier: 'jw',
+      region: 'Jawa',
+      register: 'hormat',
+    })
   })
 
   it('qualifier misan sunda tersimpan beserta note', () => {

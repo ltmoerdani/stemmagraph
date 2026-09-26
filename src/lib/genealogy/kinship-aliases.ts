@@ -78,6 +78,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   'datuk nenek': { kind: 'ancestor' },
   'datuk poyang': { kind: 'ancestor' },
   leluhur: { kind: 'ancestor' },
+  karuhun: { kind: 'ancestor' },
+  indu: { kind: 'ancestor' },
+  opo: { kind: 'ancestor' },
+  umbu: { kind: 'ancestor' },
+  zatua: { kind: 'ancestor' },
+  pitarah: { kind: 'ancestor' },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
