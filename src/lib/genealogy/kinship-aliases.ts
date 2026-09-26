@@ -37,6 +37,10 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     kind: 'grandparent',
     note: 'homonim: makna leluhur saat konteks naik jauh',
   },
+  aki: {
+    kind: 'grandparent',
+    note: 'jangkar notes 412: aki1 rantai sinonim nenek laki-laki; kakek; datuk, resolve ke grandfather ber-gender',
+  },
   opa: { kind: 'grandparent', qualifier: 'cak' },
   oma: { kind: 'grandparent', qualifier: 'cak' },
   eyang: { kind: 'grandparent', qualifier: 'jw' },
@@ -49,6 +53,10 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     kind: 'cousin',
     qualifier: 'sunda',
     note: 'makna 2 Jawa: turun satu pangkat',
+  },
+  'sepupu kedua': {
+    kind: 'cousin',
+    note: 'label baku nasional sepupu, pasangan alias regional misan (keputusan leksikon PM)',
   },
   keponakan: { kind: 'sibling-child' },
   kemenakan: { kind: 'sibling-child' },
