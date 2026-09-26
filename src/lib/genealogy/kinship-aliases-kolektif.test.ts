@@ -65,7 +65,7 @@ describe('v174-ii rantai regional grandparent', () => {
   })
 
   it('opa tetap grandparent cak (regresi rantai lama)', () => {
-    expect(resolveAlias('opa')).toEqual({ kind: 'grandparent', qualifier: 'cak' })
+    expect(resolveAlias('opa')).toEqual({ kind: 'grandparent', qualifier: 'cak', region: 'Betawi' })
   })
 })
 

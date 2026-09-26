@@ -5,6 +5,8 @@ export interface AliasEntry {
   depth?: number
   qualifier?: 'cak' | 'jw' | 'mk' | 'sunda' | 'jawa' | 'antr'
   note?: string
+  region?: string
+  register?: 'hormat' | 'netral'
 }
 
 /**
@@ -28,24 +30,33 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   },
   kakek: { kind: 'grandparent' },
   nenek: { kind: 'grandparent' },
-  aki: { kind: 'grandparent' },
+  aki: { kind: 'grandparent', region: 'Sunda' },
   datuk: {
     kind: 'grandparent',
+    region: 'Melayu',
     note: 'homonim: makna 2 leluhur saat konteks naik jauh',
   },
   atok: {
     kind: 'grandparent',
+    region: 'Melayu',
     note: 'homonim: makna leluhur saat konteks naik jauh',
   },
-  opa: { kind: 'grandparent', qualifier: 'cak' },
-  oma: { kind: 'grandparent', qualifier: 'cak' },
-  eyang: { kind: 'grandparent', qualifier: 'jw' },
-  mbah: { kind: 'grandparent', qualifier: 'jw' },
+  opa: { kind: 'grandparent', qualifier: 'cak', region: 'Betawi' },
+  oma: { kind: 'grandparent', qualifier: 'cak', region: 'Betawi' },
+  eyang: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa', register: 'hormat' },
+  mbah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
   nini: {
     kind: 'grandparent',
+    region: 'Jawa Kuno, Banjar, Karo, Sunda',
     note: 'homonim: sapaan perempuan tua tidak dipakai; Jawa Kuno, Banjar, Karo, Sunda: nenek',
   },
-  ninik: { kind: 'grandparent', qualifier: 'mk', note: 'KBBI VI: nenek' },
+  ninik: {
+    kind: 'grandparent',
+    qualifier: 'mk',
+    region: 'Melayu/Minangkabau',
+    register: 'hormat',
+    note: 'KBBI VI: nenek',
+  },
   poyang: { kind: 'ancestor', depth: 4, note: 'makna 2 Mk: orang tua kakek atau nenek' },
   moyang: { kind: 'ancestor', note: 'homonim pangkat: jarak 2 berarti grandparent' },
   pupu: { kind: 'ancestor', note: 'homonim: kata dasar sepupu bukan kind cousin' },
@@ -67,6 +78,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   'datuk nenek': { kind: 'ancestor' },
   'datuk poyang': { kind: 'ancestor' },
   leluhur: { kind: 'ancestor' },
+  karuhun: { kind: 'ancestor' },
+  indu: { kind: 'ancestor' },
+  opo: { kind: 'ancestor' },
+  umbu: { kind: 'ancestor' },
+  zatua: { kind: 'ancestor' },
+  pitarah: { kind: 'ancestor' },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
