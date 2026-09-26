@@ -46,7 +46,8 @@ describe('KINSHIP_ALIASES', () => {
     expect(resolveAlias('po·yang')).toEqual(resolveAlias('poyang'))
     expect(resolveAlias('po·yang')).toEqual({
       kind: 'ancestor',
-      note: 'makna 2 Mk pangkat naik 3',
+      depth: 4,
+      note: 'makna 2 Mk: orang tua kakek atau nenek',
     })
   })
 

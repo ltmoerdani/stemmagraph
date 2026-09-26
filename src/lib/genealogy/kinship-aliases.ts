@@ -37,15 +37,16 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     kind: 'grandparent',
     note: 'homonim: makna leluhur saat konteks naik jauh',
   },
-  aki: {
-    kind: 'grandparent',
-    note: 'jangkar notes 412: aki1 rantai sinonim nenek laki-laki; kakek; datuk, resolve ke grandfather ber-gender',
-  },
   opa: { kind: 'grandparent', qualifier: 'cak' },
   oma: { kind: 'grandparent', qualifier: 'cak' },
   eyang: { kind: 'grandparent', qualifier: 'jw' },
   mbah: { kind: 'grandparent', qualifier: 'jw' },
-  poyang: { kind: 'ancestor', note: 'makna 2 Mk pangkat naik 3' },
+  nini: {
+    kind: 'grandparent',
+    note: 'homonim: sapaan perempuan tua tidak dipakai; Jawa Kuno, Banjar, Karo, Sunda: nenek',
+  },
+  ninik: { kind: 'grandparent', qualifier: 'mk', note: 'KBBI VI: nenek' },
+  poyang: { kind: 'ancestor', depth: 4, note: 'makna 2 Mk: orang tua kakek atau nenek' },
   moyang: { kind: 'ancestor', note: 'homonim pangkat: jarak 2 berarti grandparent' },
   pupu: { kind: 'ancestor', note: 'homonim: kata dasar sepupu bukan kind cousin' },
   sepupu: { kind: 'cousin' },
@@ -65,6 +66,7 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   'kakek moyang': { kind: 'ancestor' },
   'datuk nenek': { kind: 'ancestor' },
   'datuk poyang': { kind: 'ancestor' },
+  leluhur: { kind: 'ancestor' },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
