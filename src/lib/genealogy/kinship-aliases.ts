@@ -84,6 +84,14 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   umbu: { kind: 'ancestor' },
   zatua: { kind: 'ancestor' },
   pitarah: { kind: 'ancestor' },
+  dansanak: {
+    kind: 'sibling',
+    note: 'KBBI edisi III daring kbbi.web.id kolom Memuat lema kandung; Mk dan kl bentuk tidak baku pengalih, TODO verbatim belum terverifikasi',
+  },
+  'dansa-dansi': {
+    kind: 'sibling',
+    note: 'KBBI edisi III daring kbbi.web.id kolom Memuat lema kandung; Mk dan kl bentuk tidak baku pengalih, TODO verbatim belum terverifikasi',
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
