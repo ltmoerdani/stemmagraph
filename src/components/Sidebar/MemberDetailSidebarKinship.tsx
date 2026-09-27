@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useKinshipGraph } from '../../hooks/useKinshipGraph';
 import { listRelationships } from '../../lib/genealogy/kinship-calc';
 import { kinshipPhrase } from '../../lib/genealogy/kinship-phrase';
+import { aliasDisplay } from '../../lib/genealogy/kinship-alias-note';
 
 const MAX_ITEMS = 8;
 
@@ -12,6 +13,10 @@ const MAX_ITEMS = 8;
  * Pure UI: hanya membaca graph + selectedMember dari hook dan locale dari
  * i18n (pola KinshipPanel). Maksimal MAX_ITEMS relasi tampil; kind
  * 'unrelated' disembunyikan; bila kosong tampil satu baris teks kosong.
+ *
+ * v179-i: frasa yang dikenali aliasDisplay ditampilkan sebagai label baku
+ * plus satu span catatan alias (note, lalu region, lalu register). Frasa
+ * yang tidak dikenali tampil apa adanya tanpa span tambahan.
  */
 export function MemberDetailSidebarKinship() {
   const { graph, selectedMember } = useKinshipGraph();
@@ -29,9 +34,22 @@ export function MemberDetailSidebarKinship() {
       {related.length === 0 ? (
         <li>{locale === 'en' ? 'no other relationships' : 'tidak ada hubungan lain'}</li>
       ) : (
-        related.map((rel, idx) => (
-          <li key={`${rel.kind}-${rel.depth}-${idx}`}>{kinshipPhrase(rel, locale)}</li>
-        ))
+        related.map((rel, idx) => {
+          const frasa = kinshipPhrase(rel, locale);
+          const alias = aliasDisplay(frasa, locale);
+          if (alias === null) {
+            return <li key={`${rel.kind}-${rel.depth}-${idx}`}>{frasa}</li>;
+          }
+          const teksCatatan = alias.note ?? alias.region ?? alias.register;
+          return (
+            <li key={`${rel.kind}-${rel.depth}-${idx}`}>
+              {alias.label}
+              {teksCatatan !== null && (
+                <span data-testid="member-kinship-alias-note">{teksCatatan}</span>
+              )}
+            </li>
+          );
+        })
       )}
     </ul>
   );
