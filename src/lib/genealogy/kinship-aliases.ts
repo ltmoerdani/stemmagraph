@@ -228,6 +228,18 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     register: 'hormat',
     note: 'KBBI VI: sapaan kakak perempuan, hor (Gorontalo), makna 2 kakanda hor juga, satu gugus hor, evidence notes/2026-09-28-evidence-stg-v84ii',
   },
+  agi: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Karo',
+    note: 'Wiktionary btx noun younger sibling + Kamus Bahasa Karo-Indonesia 2001 hlm 12/20/180 glosa adik, dua sumber, evidence notes/437',
+  },
+  turang: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Karo',
+    note: 'Kamus Bahasa Karo-Indonesia 2001 hlm 238 lema saudara dan hlm 245, multi-sense panggilan sayang tercatat hlm 14/35, pencocokan exact-key aman, evidence notes/434 dan 435',
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
