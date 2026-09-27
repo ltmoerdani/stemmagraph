@@ -9,13 +9,15 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
+import type { AliasDisplay } from '../../lib/genealogy/kinship-alias-note';
+import type { RelationshipResult } from '../../lib/genealogy/kinship-calc';
 import {
   buildKinshipGraph,
+  makePartnerRelation,
   type ChildLink,
   type KinshipGraph,
 } from '../../lib/genealogy/kinship';
 import { MemberDetailSidebarKinship } from './MemberDetailSidebarKinship';
-import type { AliasDisplay } from '../../lib/genealogy/kinship-alias-note';
 import type { FamilyMember } from '../../types/family';
 
 const mocks = vi.hoisted(() => ({
@@ -25,6 +27,9 @@ const mocks = vi.hoisted(() => ({
   aliasStub: null as
     | null
     | ((phrase: string, locale: 'id' | 'en') => AliasDisplay | null),
+  phraseStub: null as
+    | null
+    | ((result: RelationshipResult, locale: 'id' | 'en') => string),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -52,6 +57,19 @@ vi.mock('../../lib/genealogy/kinship-alias-note', async (importOriginal) => {
   };
 });
 
+vi.mock('../../lib/genealogy/kinship-phrase', async (importOriginal) => {
+  const asli = await importOriginal<
+    typeof import('../../lib/genealogy/kinship-phrase')
+  >();
+  return {
+    ...asli,
+    kinshipPhrase: (result: RelationshipResult, lang: 'id' | 'en'): string =>
+      mocks.phraseStub !== null
+        ? mocks.phraseStub(result, lang)
+        : asli.kinshipPhrase(result, lang),
+  };
+});
+
 function member(id: string): FamilyMember {
   return { id } as unknown as FamilyMember;
 }
@@ -65,6 +83,7 @@ beforeEach(() => {
   mocks.graph = null;
   mocks.hookMember = null;
   mocks.aliasStub = null;
+  mocks.phraseStub = null;
 });
 
 afterEach(cleanup);
@@ -201,5 +220,60 @@ describe('MemberDetailSidebarKinship alias ui (v179-i)', () => {
     expect(lis.length).toBe(1);
     expect(ul.textContent).not.toContain('tidak ada hubungan kekerabatan');
     expect(ul.textContent).not.toContain('jauh');
+  });
+
+  it('kasus 9: frasa label baku in-law merender label plus span catatan in-law', () => {
+    mocks.graph = buildKinshipGraph(
+      ['anak', 'pasangan'],
+      [makePartnerRelation('anak', 'pasangan')],
+      [],
+    );
+    mocks.phraseStub = () => 'mertua';
+    renderSidebar('anak');
+    const ul = screen.getByLabelText('member-kinship');
+    expect(ul.textContent).toContain('mertua');
+    const spans = screen.getAllByTestId('member-kinship-inlaw-note');
+    expect(spans.length).toBe(1);
+    expect(spans[0].textContent).toBe('istilah fase pernikahan');
+    expect(
+      screen.queryAllByTestId('member-kinship-alias-note'),
+    ).toHaveLength(0);
+  });
+
+  it('kasus 10: besan merender span catatan dua set orang tua, alias nihil untuk frasa itu', () => {
+    mocks.graph = buildKinshipGraph(
+      ['anak', 'pasangan'],
+      [makePartnerRelation('anak', 'pasangan')],
+      [],
+    );
+    mocks.phraseStub = () => 'Besan';
+    renderSidebar('anak');
+    const spans = screen.getAllByTestId('member-kinship-inlaw-note');
+    expect(spans[0].textContent).toContain('dua set orang tua');
+    expect(spans[0].textContent).toContain('anak mereka kawin');
+  });
+
+  it('kasus 11: locale en label in-law dari inlawLabel en, prioritas alias tetap utama', () => {
+    mocks.graph = buildKinshipGraph(
+      ['anak', 'pasangan'],
+      [makePartnerRelation('anak', 'pasangan')],
+      [],
+    );
+    mocks.language = 'en';
+    mocks.phraseStub = () => 'menantu';
+    renderSidebar('anak');
+    let ul = screen.getByLabelText('member-kinship');
+    expect(ul.textContent).toContain("child's spouse");
+    cleanup();
+    // Prioritas alias: frasa yang dikenali alias tak pernah masuk jalur inlaw.
+    mocks.phraseStub = null;
+    mocks.aliasStub = (phrase) =>
+      phrase === 'suami atau istri' || phrase === 'husband or wife'
+        ? { label: 'pasangan', note: null, region: null, register: 'hormat' }
+        : null;
+    renderSidebar('anak');
+    ul = screen.getByLabelText('member-kinship');
+    expect(screen.getAllByTestId('member-kinship-alias-note')).toHaveLength(1);
+    expect(screen.queryAllByTestId('member-kinship-inlaw-note')).toHaveLength(0);
   });
 });

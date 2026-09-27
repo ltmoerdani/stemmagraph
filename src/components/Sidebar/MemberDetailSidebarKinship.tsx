@@ -3,6 +3,7 @@ import { useKinshipGraph } from '../../hooks/useKinshipGraph';
 import { listRelationships } from '../../lib/genealogy/kinship-calc';
 import { kinshipPhrase } from '../../lib/genealogy/kinship-phrase';
 import { aliasDisplay } from '../../lib/genealogy/kinship-alias-note';
+import { inlawDisplayForPhrase } from '../../lib/genealogy/kinship-inlaw-display';
 
 const MAX_ITEMS = 8;
 
@@ -38,6 +39,17 @@ export function MemberDetailSidebarKinship() {
           const frasa = kinshipPhrase(rel, locale);
           const alias = aliasDisplay(frasa, locale);
           if (alias === null) {
+            const inlaw = inlawDisplayForPhrase(frasa, locale);
+            if (inlaw !== null) {
+              return (
+                <li key={`${rel.kind}-${rel.depth}-${idx}`}>
+                  {inlaw.label}
+                  {inlaw.note !== null && (
+                    <span data-testid="member-kinship-inlaw-note">{inlaw.note}</span>
+                  )}
+                </li>
+              );
+            }
             return <li key={`${rel.kind}-${rel.depth}-${idx}`}>{frasa}</li>;
           }
           const teksCatatan = alias.note ?? alias.region ?? alias.register;
