@@ -104,6 +104,88 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Jw',
     note: 'KBBI VI buyut2 makna 2 Jw: orang tua dari nenek atau kakek, gen 3, sumber notes/417',
   },
+  kakang: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Jawa',
+    note: 'KBBI edisi III: kakak; Wiktionary ID etimologi Jawa Kuno kaka-ng, 6 rujukan kamus 1870 sampai 2006 (notes/427)',
+  },
+  kanda: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Jawa/Sunda',
+    note: 'Wiktionary ID: sinonim dinda, kutipan Wikisource (notes/427)',
+  },
+  kangmas: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Jawa',
+    note: 'Wiktionary ID: sinonim dua arah dengan mas (notes/427)',
+  },
+  mas: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Jawa',
+    note: 'Wiktionary ID: sinonim feminin mbak di blok sama, homonim sapaan umum (notes/427)',
+  },
+  kakanda: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Jawa',
+    register: 'hormat',
+    note: 'Wiktionary ID: etimologi kakak plus morfem -nda (notes/427)',
+  },
+  engkoh: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'Wiktionary ID label cak, TANPA kategori maskulin; sumber definisi eksplisit (notes/427)',
+  },
+  koko: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'Wiktionary ID label cak, ragam kokoh tidak dimasukkan (notes/427)',
+  },
+  aa: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'sunda',
+    register: 'netral',
+    note: 'KBBI VI + dua Wiktionary: basa budak (notes/427)',
+  },
+  aang: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'sunda',
+    register: 'netral',
+    note: 'Wiktionary ID saja: basa budak (notes/427)',
+  },
+  kaka: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'sunda',
+    note: 'Wiktionary ID: 8 bagian bahasa termasuk su brebes dan Lontara di mak (notes/427)',
+  },
+  akang: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'sunda',
+    register: 'hormat',
+    note: 'KBBI VI + EN + ID tiga sumber: aksara Sunda, contoh kalimat, {{Su}} di bagian id (notes/427)',
+  },
+  uda: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'sunda',
+    note: 'Wiktionary ID: blok sinonim lintas bahasa (notes/427)',
+  },
+  kang: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Tengger',
+    note: 'Wiktionary ID: nihil su, jangkar tes Tengger plus audio (notes/427)',
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
