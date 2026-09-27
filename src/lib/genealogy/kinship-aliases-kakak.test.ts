@@ -84,12 +84,15 @@ describe('kinship-aliases klaster kakak maskulin (v184-i)', () => {
     expect(r?.region).toBe('Tengger')
   })
 
-  it('tepat 13 entri sibling depth 1 di tabel, sesuai daftar klaster kakak', () => {
+  it('klaster kakak maskulin 13 entri sibling depth 1 tetap utuh, v184-ii tambah 7 feminin jadi total 20', () => {
     const siblingDepth1 = Object.entries(KINSHIP_ALIASES).filter(
       ([, entry]) => entry.kind === 'sibling' && entry.depth === 1,
     )
-    expect(siblingDepth1.length).toBe(13)
-    expect(siblingDepth1.map(([key]) => key).sort()).toEqual([...KAKAK_ENTRIES].sort())
+    expect(siblingDepth1.length).toBe(20)
+    const keys = new Set(siblingDepth1.map(([key]) => key))
+    for (const key of KAKAK_ENTRIES) {
+      expect(keys.has(key)).toBe(true)
+    }
   })
 
   it('semua 13 entri unik, tidak ada duplikat kunci', () => {
