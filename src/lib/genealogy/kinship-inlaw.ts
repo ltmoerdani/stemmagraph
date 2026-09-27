@@ -7,6 +7,8 @@
  *
  * Modifier ganda (dua sisi): besan dan bisan TIDAK jadi enum baru,
  * diturunkan dari pasangan modifier yang saling berhadapan.
+ * Makna KBBI: besan (bisan) adalah relasi antara dua set orang tua
+ * karena anak mereka kawin; menantu adalah suami atau istri anak.
  */
 
 /** Basis relasi yang bisa membawa modifier fase pernikahan. */
@@ -98,17 +100,19 @@ export function inlawLabels(
       // menantu: suami atau istri anak.
       return { id: 'menantu', en: "child's spouse" }
     case 'parent:spouseParent':
-      // bisan: mertua dari sisi pasangan anak (kombinasi ganda dua sisi).
+      // bisan (varian besan): relasi dua set orang tua karena anak
+      // mereka kawin (KBBI besan arti 2), kombinasi ganda dua sisi.
       return { id: 'bisan', en: "child's parent-in-law" }
     case 'child:childSpouse':
-      // besan dilihat dari keluarga seberang: anak kami menjadi menantu mereka.
+      // besan dilihat dari keluarga seberang: pasangan kami menjadi
+      // menantu bagi keluarga pasangan anak kami (dua set orang tua).
       return { id: 'besan', en: "child married to their child" }
     case 'self:spouseParent':
       // mertua: orang tua suami atau istri.
       return { id: 'mertua', en: "spouse's parent" }
     case 'self:childSpouse':
-      // besan: istri atau suami anak (kombinasi ganda, bukan enum kelima).
-      return { id: 'besan', en: "child's spouse" }
+      // menantu: suami atau istri anak (KBBI menantu), bukan besan.
+      return { id: 'menantu', en: "child's spouse" }
     default:
       return { id: 'relasi fase pernikahan', en: 'in-law relation' }
   }

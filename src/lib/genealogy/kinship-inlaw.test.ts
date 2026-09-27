@@ -31,8 +31,8 @@ describe('kinship-inlaw (GOAL v179-iii fase i, pure only)', () => {
     expect(inlawLabels(rel('sibling', 'spouse')).id).toBe('ipar')
   })
 
-  it('besan dari childSpouse tanpa enum kelima (kombinasi ganda)', () => {
-    expect(inlawLabels(rel('self', 'childSpouse')).id).toBe('besan')
+  it('menantu dari childSpouse tanpa enum kelima (kombinasi ganda)', () => {
+    expect(inlawLabels(rel('self', 'childSpouse')).id).toBe('menantu')
   })
 
   it('bisan turun dari kombinasi ganda dua sisi parent spouseParent', () => {
@@ -70,5 +70,17 @@ describe('kinship-inlaw (GOAL v179-iii fase i, pure only)', () => {
     expect(isComposedInlawLabel(rel('sibling', 'none'))).toBe(false)
     expect(hasInlawModifier('none')).toBe(false)
     expect(hasInlawModifier('spouse')).toBe(true)
+  })
+
+  it('besan dan bisan tetap relasi dua set orang tua setelah koreksi KBBI', () => {
+    // KBBI besan arti 2: hubungan keluarga antara dua orang tua karena
+    // anak mereka kawin; bukan sebutan untuk pasangan anak.
+    expect(inlawLabels(rel('child', 'childSpouse')).id).toBe('besan')
+    expect(inlawLabels(rel('parent', 'spouseParent')).id).toBe('bisan')
+  })
+
+  it('korespondensi label dua sisi: menantu di sini adalah bisan di sana', () => {
+    expect(inlawLabels(inlawCounterpart(rel('self', 'childSpouse'))).id).toBe('bisan')
+    expect(inlawLabels(inlawCounterpart(rel('parent', 'spouseParent'))).id).toBe('besan')
   })
 })
