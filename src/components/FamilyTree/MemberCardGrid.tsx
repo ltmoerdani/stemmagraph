@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { GridMemberCard } from './GridMemberCard';
 import { useFamilyStore } from '../../store/familyStore';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, SortAsc, Filter } from 'lucide-react';
 import {
   filterAndSort,
@@ -8,15 +9,29 @@ import {
   type SearchMember,
   type SearchSortBy,
 } from '../../lib/genealogy/search-filter';
+import { aliasDisplay } from '../../lib/genealogy/kinship-alias-note';
 
 type SortOption = 'name' | 'age' | 'location' | 'generation';
 type SortDirection = 'asc' | 'desc';
 
 export const MemberCardGrid: React.FC = () => {
   const { members, viewMode, searchQuery, selectedMember } = useFamilyStore();
+  const { i18n } = useTranslation();
+  const locale: 'id' | 'en' = i18n.language?.startsWith('en') ? 'en' : 'id';
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showSortMenu, setShowSortMenu] = useState(false);
+
+  // Catatan alias untuk hasil pencarian (v179-ii): tambahan info di atas
+  // label baku bila query dikenali aliasDisplay. Guard homonim: null bila
+  // tidak dikenali, tidak mengubah kartu hasil sama sekali.
+  const searchAlias = useMemo(
+    () => aliasDisplay(searchQuery ?? '', locale),
+    [searchQuery, locale],
+  );
+  const searchAliasNote = searchAlias
+    ? searchAlias.note ?? searchAlias.region ?? searchAlias.register
+    : null;
 
   // Filter, pencarian, dan sortir via engine fase i (search-filter.ts).
   const filteredMembers = useMemo(() => {
@@ -128,6 +143,14 @@ export const MemberCardGrid: React.FC = () => {
           {searchQuery && (
             <div className="text-sm text-gray-600">
               Search results for "{searchQuery}"
+              {searchAlias && searchAliasNote !== null && (
+                <span
+                  data-testid="member-card-grid-search-alias-note"
+                  className="ml-2 italic text-gray-500"
+                >
+                  ({searchAlias.label}: {searchAliasNote})
+                </span>
+              )}
             </div>
           )}
         </div>

@@ -11,6 +11,7 @@ import {
   type SearchMember,
   type SearchSortBy,
 } from '../../lib/genealogy/search-filter';
+import { aliasDisplay } from '../../lib/genealogy/kinship-alias-note';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -275,7 +276,8 @@ export const FamilyTable: React.FC = () => {
     selectedMember, 
     setSelectedMember 
   } = useFamilyStore();
-  const { t } = useTranslation('canvas');
+  const { t, i18n } = useTranslation('canvas');
+  const locale: 'id' | 'en' = i18n.language?.startsWith('en') ? 'en' : 'id';
 
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'name', direction: 'asc' });
@@ -295,6 +297,17 @@ export const FamilyTable: React.FC = () => {
   });
 
   const tableRef = useRef<HTMLDivElement>(null);
+
+  // Catatan alias untuk hasil pencarian (v179-ii): tambahan info di atas
+  // label baku bila query dikenali aliasDisplay. Guard homonim: null bila
+  // tidak dikenali, tidak mengubah baris hasil sama sekali.
+  const searchAlias = useMemo(
+    () => aliasDisplay(searchQuery ?? '', locale),
+    [searchQuery, locale],
+  );
+  const searchAliasNote = searchAlias
+    ? searchAlias.note ?? searchAlias.region ?? searchAlias.register
+    : null;
 
   // Filter, pencarian, dan sortir via engine fase i (search-filter.ts).
   // Filter kolom (columnFilters) tetap lokal karena engine tidak memuat fitur itu.
@@ -514,6 +527,14 @@ export const FamilyTable: React.FC = () => {
             {searchQuery && (
               <div className="text-sm text-gray-600">
                 {t('table.searchResultsFor', { query: searchQuery })}
+                {searchAlias && searchAliasNote !== null && (
+                  <span
+                    data-testid="family-table-search-alias-note"
+                    className="ml-2 italic text-gray-500"
+                  >
+                    ({searchAlias.label}: {searchAliasNote})
+                  </span>
+                )}
               </div>
             )}
           </div>
