@@ -240,6 +240,7 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'Kamus Bahasa Karo-Indonesia 2001 hlm 238 lema saudara dan hlm 245, multi-sense panggilan sayang tercatat hlm 14/35, pencocokan exact-key aman, evidence notes/434 dan 435',
   },
+  dik: { kind: 'sibling', depth: 1, note: 'KBBI VI: kependekan adik, kata sapaan saudara teman lebih muda, satu makna nihil homonim, evidence notes/2026-09-28-evidence-stg-klaster-adik-pm' },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
