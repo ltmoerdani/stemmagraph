@@ -186,6 +186,48 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Tengger',
     note: 'Wiktionary ID: nihil su, jangkar tes Tengger plus audio (notes/427)',
   },
+  uni: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Mk',
+    note: 'KBBI VI: kakak perempuan, Mk (Makassar), evidence notes/2026-09-28-evidence-stg-v184ii',
+  },
+  cici: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Cn',
+    note: 'KBBI VI makna 3 padanan taci (Cn), 4 makna homonim butiran jagung selaput paruh, pencocokan exact-key aman, evidence notes/2026-09-28-evidence-stg-v184ii',
+  },
+  taci: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Cn',
+    note: 'KBBI VI: kakak perempuan Cn (Cina), bentuk tidak baku ci, evidence notes/2026-09-28-evidence-stg-v184ii',
+  },
+  mbak: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'KBBI VI sapaan perempuan lebih tua Jw + perempuan muda umum, guard homonim sapaan umum di test, evidence notes/2026-2026-09-28-evidence-stg-v184ii',
+  },
+  mbakyu: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Jw',
+    note: 'KBBI VI: mbak, Jw, evidence notes/2026-09-28-evidence-stg-v184ii',
+  },
+  embak: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'KBBI VI: sapaan kakak perempuan lebih tua, cak (cakapan), evidence notes/2026-09-28-evidence-stg-v184-ii',
+  },
+  ayunda: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'hor',
+    register: 'hormat',
+    note: 'KBBI VI: sapaan kakak perempuan, hor (Gorontalo), makna 2 kakanda hor juga, satu gugus hor, evidence notes/2026-09-28-evidence-stg-v84ii',
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
