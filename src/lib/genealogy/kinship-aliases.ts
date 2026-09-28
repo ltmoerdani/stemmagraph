@@ -253,6 +253,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'kelompok kekerabatan Karo: senina semarga lingkup sub merga silima, relasi antar anggota dipetakan kind sibling, Kamus Bahasa Karo-Indonesia 2001 + Wikipedia Rakut Sitelu, evidence notes/440',
   },
+  nande: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Karo',
+    note: 'nande = ibu dalam kekerabatan Karo (sembuyak nande = ibu bersaudara kandung), relasi antar anggota kelompok dipetakan kind sibling, Kamus Karo Online + Wikipedia Rakut Sitelu, evidence notes/442',
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
