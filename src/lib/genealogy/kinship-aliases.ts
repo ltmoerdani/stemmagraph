@@ -241,6 +241,18 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     note: 'Kamus Bahasa Karo-Indonesia 2001 hlm 238 lema saudara dan hlm 245, multi-sense panggilan sayang tercatat hlm 14/35, pencocokan exact-key aman, evidence notes/434 dan 435',
   },
   dik: { kind: 'sibling', depth: 1, note: 'KBBI VI: kependekan adik, kata sapaan saudara teman lebih muda, satu makna nihil homonim, evidence notes/2026-09-28-evidence-stg-klaster-adik-pm' },
+  sembuyak: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Karo',
+    note: 'kelompok kekerabatan Karo: sembuyak segalur keluarga inti satu keturunan merga, relasi antar anggota dipetakan kind sibling, Kamus Bahasa Karo-Indonesia 2001 + Wikipedia Suku Karo, evidence notes/440',
+  },
+  senina: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Karo',
+    note: 'kelompok kekerabatan Karo: senina semarga lingkup sub merga silima, relasi antar anggota dipetakan kind sibling, Kamus Bahasa Karo-Indonesia 2001 + Wikipedia Rakut Sitelu, evidence notes/440',
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
