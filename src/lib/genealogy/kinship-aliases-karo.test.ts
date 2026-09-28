@@ -62,16 +62,16 @@ describe('alias Karo (v185-i)', () => {
     expect(a).toEqual(b)
   })
 
-  it('negatif: kaka tidak ikut terdaftar sebagai entri Karo, area baru tepat 2', () => {
+  it('negatif: kaka tidak ikut terdaftar sebagai entri Karo, area Karo: 2 basis v185-i, +2 sembuyak senina v186-i = 4', () => {
     const kaka = resolveAlias('kaka')
-    if (kaka !== null) {
+ if (kaka !== null) {
       expect(kaka.region).not.toBe('Karo')
     }
     const karo = Object.entries(KINSHIP_ALIASES).filter(
       ([, e]) => e.region === 'Karo',
     )
-    expect(karo.length).toBe(2)
-    expect(karo.map(([k]) => k).sort()).toEqual(['agi', 'turang'])
+    expect(karo.length).toBe(4)
+    expect(karo.map(([k]) => k).sort()).toEqual(['agi', 'sembuyak', 'senina', 'turang'])
   })
 
   it('struktur entri agi persis 4 field kind depth region note', () => {
