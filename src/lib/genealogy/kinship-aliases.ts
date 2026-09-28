@@ -259,6 +259,30 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'nande = ibu dalam kekerabatan Karo (sembuyak nande = ibu bersaudara kandung), relasi antar anggota kelompok dipetakan kind sibling, Kamus Karo Online + Wikipedia Rakut Sitelu, evidence notes/442',
   },
+  bapa: {
+    kind: 'parent',
+    depth: 1,
+    region: 'Karo',
+    note: 'bapa = ayah dalam kekerabatan Karo, cakupan ayah kandung, saudara ayah, laki-laki semarga selevel, dan suami saudara ibu, Sembiring 1991 The Bible Translator + Pandiangan 2024 JJETL legenda D, evidence notes/444 dan notes/445',
+  },
+  mama: {
+    kind: 'parent-sibling',
+    depth: 1,
+    region: 'Karo',
+    note: 'mama = saudara ibu dalam kekerabatan Karo sekaligus ayah mertua pada pusat kawin preferensial, Sembiring 1991 The Bible Translator + Pandiangan 2024 JJETL legenda J, evidence notes/444 dan notes/445',
+  },
+  mami: {
+    kind: 'parent-sibling',
+    depth: 1,
+    region: 'Karo',
+    note: 'mami = istri mama (istri saudara ibu) dalam kekerabatan Karo, Sembiring 1991 The Bible Translator + Pandiangan 2024 JJETL legenda O, evidence notes/444 dan notes/445',
+  },
+  permen: {
+    kind: 'sibling-child',
+    depth: 1,
+    region: 'Karo',
+    note: 'permen = menantu perempuan dalam kekerabatan Karo, istri anak maupun istri anak saudara, Sembiring 1991 The Bible Translator + Pandiangan 2024 JJETL legenda W, evidence notes/444 dan notes/445',
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
