@@ -300,6 +300,11 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'kaka Karo = kakak; dua sumber: Wiktionary ID entri btx dengan audio penutur LL-Q33012 btx HaidirAndiNovianto-kaka.wav plus Kamus Bahasa Karo Indonesia 2001 OCR hlm 61 97 105 110, referensi notes/446',
     },
+    impal: {
+      kind: 'cousin',
+      region: 'Karo',
+      note: 'impal Karo = sepupu silang, anak paman atau anak mama; dua sumber: Kamus Bahasa Karo Indonesia 2001 OCR hlm 82 panggilan anak paman plus Sembiring 1991 Biblical Kinship Terms sepupu silang, referensi notes/447',
+    },
   },
 }
 
