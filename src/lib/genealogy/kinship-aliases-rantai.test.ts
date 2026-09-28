@@ -103,7 +103,7 @@ describe('kinship-aliases rantai atas (v174-iii)', () => {
     expect(kinds).toContain('buyut')
     expect(kinds).toContain('poyang')
     expect(kinds).toContain('datuk poyang')
-    // baseline develop a84f0bc (v174-ii) 39 lema; add-only v174-iii +2 buyut = 41; v184-i +13 klaster kakak maskulin = 54; v184-ii +7 kakak feminin = 61; karo agi+turang +2 di eeb3677 lupa bump = 63; v185-i +1 dik = 64; v186-i +2 sembuyak senina = 66; v187-i +1 nande = 67
-    expect(kinds.length).toBe(67)
+    // baseline develop a84f0bc (v174-ii) 39 lema; add-only v174-iii +2 buyut = 41; v184-i +13 klaster kakak maskulin = 54; v184-ii +7 kakak feminin = 61; karo agi+turang +2 di eeb3677 lupa bump = 63; v185-i +1 dik = 64; v186-i +2 sembuyak senina = 66; v187-i +1 nande = 67; v188-i +4 bapa mama mami permen = 71
+    expect(kinds.length).toBe(71)
   })
 })
