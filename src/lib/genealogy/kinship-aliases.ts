@@ -285,6 +285,24 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   },
 }
 
+/**
+ * Alias kekerabatan regional: map region ke map key ke AliasEntry.
+ * Regional TIDAK menambah key map utama KINSHIP_ALIASES sehingga aliasKinds tetap.
+ * Karo kaka: dua sumber, Wiktionary ID entri btx dengan audio penutur
+ * LL-Q33012 btx HaidirAndiNovianto-kaka.wav plus Kamus Bahasa Karo Indonesia 2001
+ * OCR hlm 61 97 105 110, referensi notes/446.
+ */
+export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>> = {
+  Karo: {
+    kaka: {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Karo',
+      note: 'kaka Karo = kakak; dua sumber: Wiktionary ID entri btx dengan audio penutur LL-Q33012 btx HaidirAndiNovianto-kaka.wav plus Kamus Bahasa Karo Indonesia 2001 OCR hlm 61 97 105 110, referensi notes/446',
+    },
+  },
+}
+
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
 function normalize(phrase: string): string {
   return phrase
@@ -294,8 +312,15 @@ function normalize(phrase: string): string {
     .replace(/\s+/g, ' ')
 }
 
-export function resolveAlias(phrase: string): AliasEntry | null {
+export function resolveAlias(phrase: string, region?: string): AliasEntry | null {
   const key = normalize(phrase)
+  if (region !== undefined) {
+    const regional = KINSHIP_ALIASES_REGIONAL[region]
+    const regionalEntry = regional === undefined ? undefined : regional[key]
+    if (regionalEntry !== undefined) {
+      return regionalEntry
+    }
+  }
   const entry = KINSHIP_ALIASES[key]
   return entry === undefined ? null : entry
 }
