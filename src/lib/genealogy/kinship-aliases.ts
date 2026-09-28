@@ -305,6 +305,18 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'impal Karo = sepupu silang, anak paman atau anak mama; dua sumber: Kamus Bahasa Karo Indonesia 2001 OCR hlm 82 panggilan anak paman plus Sembiring 1991 Biblical Kinship Terms sepupu silang, referensi notes/447',
     },
+    kempu: {
+      kind: 'grandchild',
+      depth: 1,
+      region: 'Karo',
+      note: 'kempu Karo = cucu; tiga sumber: Kamus Bahasa Karo Indonesia 2001 OCR hlm 108 glosa cucu dengan contoh kalimat, Wiktionary ID entri btx makna cucu contoh sama, Sembiring 1991 Biblical Kinship Terms cucu, referensi notes/448',
+    },
+    bibi: {
+      kind: 'parent-sibling',
+      depth: 1,
+      region: 'Karo',
+      note: 'bibi Karo = saudara ibu atau saudara ayah (Sembiring 1991 mencakup juga ibu mertua); dua sumber dokumen: Kamus Bahasa Karo Indonesia 2001 OCR hlm 36 entri bercontoh plus Sembiring 1991, wajib namespace terpisah dari homograf Indonesia karena tidak ada di map utama, referensi notes/448',
+    },
   },
 }
 
