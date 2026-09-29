@@ -317,6 +317,24 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'bibi Karo = saudara ibu atau saudara ayah (Sembiring 1991 mencakup juga ibu mertua); dua sumber dokumen: Kamus Bahasa Karo Indonesia 2001 OCR hlm 36 entri bercontoh plus Sembiring 1991, wajib namespace terpisah dari homograf Indonesia karena tidak ada di map utama, referensi notes/448',
     },
+    nini: {
+      kind: 'grandparent',
+      depth: 1,
+      region: 'Karo',
+      note: 'nini Karo = panggilan nenek; EMPAT jangkar: Sembiring 1991 plus OCR Kamus Karo 2001 15 halaman plus KBVI ni.ni plus KamusKaro lema nini; guard homonim topi (sampai 4 makna non-kekerabatan), referensi notes/450',
+    },
+    'nini ribu': {
+      kind: 'grandparent',
+      depth: 1,
+      region: 'Karo',
+      note: 'nini ribu = panggilan nenek submarga Perangin-angin; DUA SUMBER: OCR Kamus Karo 2001 hlm 166 192 plus KamusKaro gloss cocok panggilan nenek, referensi notes/450',
+    },
+    'nini bulang': {
+      kind: 'grandparent',
+      depth: 1,
+      region: 'Karo',
+      note: 'nini bulang = panggilan nenek Perangin-angin dan Karo pinggil; DUA SUMBER: Pandiangan 2024 plus KamusKaro lema bulang (topi, kakek); asimetri tudung terbukti sehingga nini tudung TIDAK menjadi entri, referensi notes/450',
+    },
   },
 }
 
