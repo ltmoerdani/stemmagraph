@@ -335,6 +335,30 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'nini bulang = panggilan nenek Perangin-angin dan Karo pinggil; DUA SUMBER: Pandiangan 2024 plus KamusKaro lema bulang (topi, kakek); asimetri tudung terbukti sehingga nini tudung TIDAK menjadi entri, referensi notes/450',
     },
+    'bapa tua': {
+      kind: 'parent',
+      depth: 1,
+      region: 'Karo',
+      note: 'bapa tua Karo = saudara ayah yang lebih tua; DUA SUMBER literatur: Sembiring 1991 The Bible Translator plus Pandiangan 2024 JJETL; bukti negatif dua katalog online: KamusKaro bapa-tua 404 dan KamusLengkap bapa-tua 404; kandidat terpisah dari pak tua, larangan gabung tanpa sumber ketiga; penguat makna tua dari lema tua Karo (abang yang tertua, KamusKaro); referensi notes/454 dan notes/451',
+    },
+    'bapa nguda': {
+      kind: 'parent',
+      depth: 1,
+      region: 'Karo',
+      note: 'bapa nguda Karo = komposit bapa plus nguda; SATU SUMBER literatur: Sembiring 1991; bukti negatif dua katalog online: KamusKaro bapa-nguda 404 dan KamusLengkap bapa-nguda 404; penguat makna tua dari lema tua Karo (abang yang tertua, KamusKaro); referensi notes/454',
+    },
+    'pak tua': {
+      kind: 'parent',
+      depth: 1,
+      region: 'Karo',
+      note: 'pak tua Karo = konsep mirip bapa tua dengan register berbeda; SATU SUMBER: Pandiangan 2024; larangan gabung dengan bapa tua tanpa sumber penyatu; bukti negatif online: lema pak 404 di KamusKaro dan pak-tua 404 di dua katalog; penguat makna tua dari lema tua Karo (abang yang tertua, KamusKaro); referensi notes/451',
+    },
+    'pak uda': {
+      kind: 'parent',
+      depth: 1,
+      region: 'Karo',
+      note: 'pak uda Karo = komposit pak plus uda; SATU SUMBER: Pandiangan 2024; penguat makna tua dari lema tua Karo (abang yang tertua, KamusKaro); referensi notes/449',
+    },
   },
 }
 
