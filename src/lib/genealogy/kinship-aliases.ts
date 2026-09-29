@@ -359,6 +359,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'pak uda Karo = komposit pak plus uda; SATU SUMBER: Pandiangan 2024; penguat makna tua dari lema tua Karo (abang yang tertua, KamusKaro); referensi notes/449',
     },
+    sukut: {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Karo',
+      note: 'sukut Karo = kutub ketiga rakut sitelu (tuan rumah upacara), relasi antar anggota dipetakan kind sibling; DUA SUMBER jurnal: Lubis 2018 Jurnal Sosiologi Agama UIN Suka DOI 10.14421/jsa.2017.112-06 plus Tarigan 2017 Dewa Ruci ISI Surakarta DOI 10.33153/dewaruci.v12i1.2515; referensi notes/459',
+    },
   },
 }
 
