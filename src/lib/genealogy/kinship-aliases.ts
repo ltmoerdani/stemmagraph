@@ -377,6 +377,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'turangku Karo = relasi pragmatik rebu avoidance lintas gender ego (WBW, HZH, WMBD, HFZS/SWM), pasangan tidak boleh bicara langsung; EMPAT SUMBER buku via Open Library Search Inside: Singarimbun 1975 hlm 282 entri 21 turangku WBW HZH WMBD HFZS plus Kipp 1993 hlm 326 HZH pragmatik rebu avoidance berlaku lintas gender ego plus Rae Breath Becomes the Wind hlm 324 WBW tidak bicara langsung plus Iwabuchi 1994 hlm 320 WBW WMBD SWM; referensi notes/464 dan notes/2026-09-30-evidence-stg-sepemeren-turangku-searchinside-recovery.md',
     },
+    batangna: {
+      kind: 'child',
+      depth: 1,
+      region: 'Karo',
+      note: 'batangna Karo = dual makna: literal batang/trunk pohon dan makna khusus bagian utama mas kawin sinonim unjuken; makna literal TIGA SUMBER buku via Open Library Search Inside: Singarimbun 1975 payment also called batangna or unjuken, batangna means trunk plus Neumann 1910 Berita si Mehoeli koran Batak-Karo sabap arah boewahna itandai batangna, jejak korpus Karo tertua plus van der Tuuk 1864 Tobasche spraakkunst batangna makna literal batang harambir; makna khusus bagian utama mas kawin sinonim unjuken SATU SUMBER Singarimbun 1975; referensi notes/468',
+    },
   },
   Toba: {
     butet: {
