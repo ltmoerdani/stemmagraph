@@ -365,6 +365,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'sukut Karo = kutub ketiga rakut sitelu (tuan rumah upacara), relasi antar anggota dipetakan kind sibling; DUA SUMBER jurnal: Lubis 2018 Jurnal Sosiologi Agama UIN Suka DOI 10.14421/jsa.2017.112-06 plus Tarigan 2017 Dewa Ruci ISI Surakarta DOI 10.33153/dewaruci.v12i1.2515; referensi notes/459',
     },
+    diberu: {
+      kind: 'partner',
+      depth: 1,
+      region: 'Karo',
+      note: 'diberu Karo = perempuan, lazim sebutan suami kepada istri secara kolokial; TIGA SUMBER buku via Open Library Search Inside: Singarimbun 1975 indeks hlm 282 entri 27 silangen W diberu colloquial plus Steedly 2013 Rifle Reports glosarium hlm 426 DIBERU K woman plus Katoppo 1980 Compassionate and Free hlm 102 diberu tukur the bought woman; referensi notes/464',
+    },
   },
   Toba: {
     butet: {
