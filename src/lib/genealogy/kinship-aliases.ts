@@ -395,6 +395,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'sepemeren Karo = anak perempuan dari kakak perempuan kandung ibu (MZD, anak perempuan dari saudari perempuan ibu), setara sepupu; frasa pemakaian turang sepemeren; DUA SUMBER buku via Open Library Search Inside: Singarimbun 1975 Kinship, descent, and alliance among the Karo Batak label diagram impal sepemeren dua kali di halaman kerabat samping plus kalimat pemakaian 1961 nine were related as turang sepemeren because their mothers were clan sisters plus Iwabuchi 1994 The people of the Alas Valley pemeRen equivalent to sepemeren (rujukan Singarimbun 1975: 202-3) plus tabel lurang sepemeren MZD; referensi notes/466',
     },
+    eda: {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Karo',
+      note: 'eda Karo = dual makna affine: istri saudara laki-laki dan saudara perempuan dari suami, plus jejak kolonial 1861; TIGA SUMBER lintas era: KBBI VI e.da 1 Bt dua makna istri dari saudara laki-laki dan saudara perempuan dari suami (notes/447) plus OCR Kamus Karo 2001 hlm 64 panggilan terhadap istri abang bercontoh kalimat (notes/447) plus van der Tuuk 1861 vol 0 glosa Belanda broeder\'s vrouw, schoonzuster, plus anak perempuan saudari ayah, plus bentuk vokatif eda (notes/475, segmen byte 205000 sampai 249999, HTTP Range first-hand)',
+    },
   },
   Toba: {
     butet: {
