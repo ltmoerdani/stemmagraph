@@ -73,7 +73,7 @@ describe('kinship-aliases sukut Karo (v192-i regional map, kutub ketiga rakut si
 
   it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key (v196-i bump, sukut tetap)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys).toEqual(['bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'impal', 'kaka', 'kempu', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
-    expect(keys.length).toBe(17)
+    expect(keys).toEqual(['bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kempu', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
+    expect(keys.length).toBe(18)
   })
 })

@@ -71,6 +71,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
       'batangna',
       'bibi',
       'diberu',
+      'eda',
       'impal',
       'kaka',
       'kempu',
@@ -84,7 +85,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(17)
+    expect(keys.length).toBe(18)
   })
 
   it('entri komposit tidak menimpa lema utama bapa: kind depth region tetap', () => {
