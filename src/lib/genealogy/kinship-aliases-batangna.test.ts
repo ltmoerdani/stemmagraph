@@ -76,9 +76,9 @@ describe('kinship-aliases batangna Karo (v196-i, jalur buku Search Inside)', () 
     expect(b).toEqual(KINSHIP_ALIASES_REGIONAL.Karo.batangna)
   })
 
-  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 16 key, batangna masuk (v196-i add-only)', () => {
+  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key, batangna masuk (v196-i add-only)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys.length).toBe(16)
+    expect(keys.length).toBe(17)
     expect(keys).toContain('batangna')
     expect(keys).toContain('turangku')
   })
