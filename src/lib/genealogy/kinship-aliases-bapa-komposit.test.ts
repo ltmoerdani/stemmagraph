@@ -63,12 +63,13 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
     expect(resolveAlias('pak uda', 'Jawa')).toBeNull()
   })
 
-  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 12 key setelah 4 komposit bapa plus sukut (v192-i add-only)', () => {
+  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 13 key setelah 4 komposit bapa plus sukut (v192-i add-only)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
     expect(keys).toEqual([
       'bapa nguda',
       'bapa tua',
       'bibi',
+      'diberu',
       'impal',
       'kaka',
       'kempu',
@@ -79,7 +80,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
       'pak uda',
       'sukut',
     ])
-    expect(keys.length).toBe(12)
+    expect(keys.length).toBe(13)
   })
 
   it('entri komposit tidak menimpa lema utama bapa: kind depth region tetap', () => {

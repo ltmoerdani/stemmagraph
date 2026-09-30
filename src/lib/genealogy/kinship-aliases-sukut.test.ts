@@ -71,9 +71,9 @@ describe('kinship-aliases sukut Karo (v192-i regional map, kutub ketiga rakut si
     expect(resolveAlias('sukut', 'Karo')).toEqual(KINSHIP_ALIASES_REGIONAL.Karo.sukut)
   })
 
-  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 12 key (v192-i add-only sukut)', () => {
+  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 13 key (v192-i add-only sukut)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys).toEqual(['bapa nguda', 'bapa tua', 'bibi', 'impal', 'kaka', 'kempu', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sukut'])
-    expect(keys.length).toBe(12)
+    expect(keys).toEqual(['bapa nguda', 'bapa tua', 'bibi', 'diberu', 'impal', 'kaka', 'kempu', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sukut'])
+    expect(keys.length).toBe(13)
   })
 })
