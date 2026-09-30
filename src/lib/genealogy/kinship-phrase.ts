@@ -41,6 +41,8 @@ export function kinshipPhrase(result: RelationshipResult, lang: 'id' | 'en'): st
       return descendantPhrase(result.depth, lang)
     case 'unrelated':
       return lang === 'id' ? 'tidak ada hubungan kekerabatan' : 'no known relationship'
+    case 'property':
+      return lang === 'id' ? 'harta mas kawin' : 'bridewealth property'
     default:
       return lang === 'id' ? 'hubungan tidak dikenal' : 'unknown relationship'
   }
