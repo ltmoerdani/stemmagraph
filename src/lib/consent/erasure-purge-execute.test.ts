@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { executeErasurePurge, type ErasurePurgeExecuteDeps } from './erasure-purge-execute';
+import { executeErasurePurge, type ErasurePurgeExecuteDeps, type MemberPurgeableData } from './erasure-purge-execute';
 import { ERASURE_PURGE_FIELDS } from './erasure-purge-plan';
 import type { ErasureEventRow, ErasureEventType } from './erasure-wiring';
 
@@ -79,8 +79,8 @@ function makeEnv(
         (row) => REPLAY_TYPES.includes(row.type) && row.payloadJson.includes('"memberId":"m-1"'),
       );
     },
-    async getMember() {
-      return member;
+    async getMember(): Promise<MemberPurgeableData | null> {
+      return member as unknown as MemberPurgeableData;
     },
     async updateMember(_id, updated) {
       calls.update += 1;
@@ -88,7 +88,7 @@ function makeEnv(
     },
     async appendEvent(row) {
       calls.appended += 1;
-      ledger.push({ ...row });
+      ledger.push({ ...row } as unknown as ErasureEventRow);
     },
     nowIso: () => now,
   };
@@ -179,7 +179,9 @@ describe('executeErasurePurge', () => {
 
     await executeErasurePurge('m-1', env.deps);
 
-    const auditRows = env.ledger.filter((row) => row.type === 'erasure.purged');
+    const auditRows = (env.ledger as Array<{ type: string; payloadJson: string }>).filter(
+      (row) => row.type === 'erasure.purged',
+    );
     expect(auditRows).toHaveLength(1);
     const payload = JSON.parse(auditRows[0].payloadJson) as Record<string, unknown>;
     expect(payload.memberId).toBe('m-1');

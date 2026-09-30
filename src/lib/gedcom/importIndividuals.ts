@@ -52,7 +52,7 @@ export interface ImportedIndividual {
   /** DEAT.PLAC through placePayload, or undefined when absent/empty. */
   deathPlace: string | undefined
   /** RESN payload verbatim (mapping is the consumer's job, not this parser), or undefined when absent. */
-  resn: string | undefined
+  resn?: string | undefined
   /** NO assertions hasil parseNoLines (payload mentah diteruskan, tanpa normalisasi), kosong bila record nihil NO. */
   noAssertions?: ParsedNoAssertion[]
   /** Sitasi SOUR event-level verbatim (BIRT/DEAT), tanpa normalisasi payload; kosong bila event nihil SOUR. */

@@ -1,3 +1,4 @@
+import type { PartnerRelation, RelationshipType } from './relationship'
 export type { PartnerRelation, RelationshipType } from './relationship'
 export type { GenealogicalEvent } from './event-model'
 export { EVENT_TYPES, isEventType, makeEvent } from './event-model'

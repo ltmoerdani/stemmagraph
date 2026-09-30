@@ -70,7 +70,7 @@ export interface ImportedFamily {
    * (resolveAdop). Entri tanpa PEDI/ADOP tetap dibuat; children tetap
    * array pointer pola lama.
    */
-  childLinks: ChildLink[]
+  childLinks?: ChildLink[]
 }
 
 /** Satu entri wiring CHIL: pointer keluarga plus resolusi PEDI/ADOP opsional. */
@@ -179,6 +179,8 @@ export function importFamilies(
       logger?.('skip FAM record without xref')
       continue
     }
+    // Const agar narrowing tipe xref_id bertahan di dalam callback map.
+    const famXref: string = record.xref_id
     const marr = subWithTag(record, 'MARR')
     const div = subWithTag(record, 'DIV')
     const childStructs = record.sub.filter((s) => s.tag === 'CHIL')
@@ -186,7 +188,7 @@ export function importFamilies(
       .map((s) => pointerOf(s))
       .filter((p): p is string => p !== undefined)
     const childLinks = childStructs
-      .map((s) => childLinkOf(s, record.xref_id))
+      .map((s) => childLinkOf(s, famXref))
       .filter((l) => l.pedi !== undefined || l.adop !== undefined)
     out.push({
       xref: record.xref_id,

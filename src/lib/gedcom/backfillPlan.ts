@@ -44,8 +44,8 @@ export interface BackfillAction {
   treeId: string
   memberName: string
   eventType: BackfillEventType
-  /** Hasil urai S1F2-A; originalDateString verbatim dari teks sumber. */
-  date: ParsedEventDate
+  /** Kolom PartialDate siap create Prisma; originalDateString verbatim. */
+  date: PartialDateColumns
 }
 
 /** Satu slot yang tidak jadi ditulis, beserta alasannya. */
@@ -160,7 +160,7 @@ export function buildBackfillPlan(members: readonly BackfillMemberInput[]): Back
         treeId: member.treeId,
         memberName: member.name,
         eventType: slot.eventType,
-        date: parseEventDate(source),
+        date: toPartialDateColumns(parseEventDate(source)),
       })
     }
   }

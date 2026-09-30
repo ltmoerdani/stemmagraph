@@ -30,7 +30,7 @@ describe('v191-i alias regional Karo: nini (panggilan nenek)', () => {
       expect(Object.keys(e).sort()).toEqual(['depth', 'kind', 'note', 'region']);
       expect(e.depth).toBe(1);
       expect(typeof e.note).toBe('string');
-      expect(e.note.length).toBeGreaterThan(0);
+      expect(e.note?.length).toBeGreaterThan(0);
     }
   });
 

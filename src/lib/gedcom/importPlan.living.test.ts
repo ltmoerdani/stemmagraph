@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildImportPlan } from './importPlan'
-import type { ImportedIndividual, ImportedFamily } from './importIndividuals'
-import type {} from './importFamilies'
+import type { ImportedIndividual } from './importIndividuals'
+import type { ImportedFamily } from './importFamilies'
 
 // Helper: satu individual minimal dengan xref dan opsi death.
 function indi(xref: string, opts: { death?: unknown; birth?: unknown; resn?: unknown } = {}): ImportedIndividual {

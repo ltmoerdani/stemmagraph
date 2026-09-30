@@ -32,7 +32,11 @@ export interface ConsentEventInput {
  * the ConsentRecord table and never enter the audit store, mirroring how
  * change-review snapshots stay out of the store (ADR 0009, ADR 0012).
  */
-export function buildConsentEvent(input: ConsentEventInput): EventEnvelope {
+export type ConsentEventEnvelope = Omit<EventEnvelope, 'payload'> & {
+  payload: ConsentEventPayload;
+};
+
+export function buildConsentEvent(input: ConsentEventInput): ConsentEventEnvelope {
   const payload: ConsentEventPayload = {
     consentId: input.consentId,
     memberId: input.memberId,

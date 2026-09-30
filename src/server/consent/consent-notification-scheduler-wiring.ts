@@ -39,7 +39,7 @@ export interface ConsentNotificationSchedulerOptions {
   /** Jarak antar tick, default 3600000 ms (1 jam). */
   intervalMs?: number;
   /** Saluran log, default console.log dengan prefiks. */
-  log?: (msg: string) => void;
+  log?: (msg: string, extra?: unknown) => void;
   /** Sumber waktu penilaian, dapat diinjeksi agar deterministik. */
   nowIso?: () => string;
   /** Sumber daftar link aktif, dapat diinjeksi untuk pengujian. */
@@ -96,7 +96,7 @@ export function createConsentNotificationScheduler(
   const intervalMs = options.intervalMs ?? 3600000;
   const fetchActiveLinks = options.fetchActiveLinks ?? buildDefaultFetchActiveLinks(options.prisma);
   const nowIso = options.nowIso ?? (() => new Date().toISOString());
-  const log = options.log ?? ((msg: string) => console.log(`[consent-notification-scheduler] ${msg}`));
+  const log = options.log ?? ((msg: string, _extra?: unknown) => console.log(`[consent-notification-scheduler] ${msg}`));
 
   let running = false;
   let activeTick = false;

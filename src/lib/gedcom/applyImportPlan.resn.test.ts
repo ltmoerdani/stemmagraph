@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { applyImportPlan } from './applyImportPlan'
-import type { ImportApplyIO } from './applyImportPlan'
+import type { CreateMemberInput, ImportApplyIO } from './applyImportPlan'
 import type { ImportPlan, PlannedMember } from './importPlan'
 
 function member(
@@ -23,8 +23,8 @@ function member(
   }
 }
 
-function makeIO(): { io: ImportApplyIO; inputs: Parameters<ImportApplyIO['createMember']> } {
-  const inputs: Parameters<ImportApplyIO['createMember']>[] = []
+function makeIO(): { io: ImportApplyIO; inputs: CreateMemberInput[] } {
+  const inputs: CreateMemberInput[] = []
   const io: ImportApplyIO = {
     treeId: 'tree-1',
     createMember: (input) => {
@@ -51,7 +51,7 @@ describe('v130-ii: CreateMemberInput meneruskan privacyStatus', () => {
     const { io, inputs } = makeIO()
     await applyImportPlan(planOf([member('I1')]), io)
     expect(inputs[0]?.privacyStatus).toBeUndefined()
-    expect('privacyStatus' in (inputs[0] as object)).toBe(true)
+    expect(inputs[0] !== undefined && 'privacyStatus' in inputs[0]).toBe(true)
   })
 
   it('beberapa member: nilai per member tidak tertukar', async () => {

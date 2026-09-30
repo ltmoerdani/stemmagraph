@@ -238,6 +238,8 @@ export type {
   ConsentRecordView,
   ConsentStateView,
   ConsentMutationResult,
+  ShareLinkAdminApi,
+  ShareLinkRecord,
   CitationApi,
   CitationSpec,
   CitationEventType,

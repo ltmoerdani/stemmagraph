@@ -43,7 +43,7 @@ export type ErasureRouteResult =
       message: string;
     }
   | { status: 200; code: 'get'; payload: ErasureRouteGetResponse }
-  | { status: 200 | 201; code: 'write'; payload: ErasureRouteWriteResponse }
+  | { status: 200 | 201 | 409; code: 'write'; payload: ErasureRouteWriteResponse }
   | { status: 500; code: 'internal'; message: string };
 
 /** Minimal router contract the host framework must satisfy. */

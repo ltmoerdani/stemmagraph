@@ -38,7 +38,7 @@ function rel(
   relatedId: string,
   type: MemberRelationship['type'],
 ): MemberRelationship {
-  return { id, memberId, relatedId, type }
+  return { id, treeId: 'tree-1', memberId, relatedId, type }
 }
 
 function couple(maritalStatus: 'married' | 'divorced'): {

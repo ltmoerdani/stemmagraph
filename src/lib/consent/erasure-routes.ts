@@ -37,7 +37,8 @@ export interface ErasureRouteNotFoundResponse {
 
 export type ErasureRouteGetResponse =
   | ErasureRouteSuccessResponse
-  | ErasureRouteNotFoundResponse;
+  | ErasureRouteNotFoundResponse
+  | ErasureRouteConflictResponse;
 
 export interface ErasureRouteConflictResponse {
   status: 409;

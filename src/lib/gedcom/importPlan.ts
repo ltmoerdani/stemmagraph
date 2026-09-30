@@ -123,6 +123,11 @@ function plannedMember(individual: ImportedIndividual): PlannedMember {
 export function buildImportPlan(
   individuals: ImportedIndividual[],
   families: ImportedFamily[],
+  /**
+   * Tidak dipakai; disediakan demi kompatibilitas pemanggil lama yang
+   * masih meneruskan daftar kosong sebagai argumen ketiga.
+   */
+  _legacySkipped?: unknown[],
 ): ImportPlan {
   const safeIndividuals = Array.isArray(individuals) ? individuals : []
   const safeFamilies = Array.isArray(families) ? families : []

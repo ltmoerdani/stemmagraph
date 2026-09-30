@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import type { FamilyMember } from '../../../types/family';
+import type { FamilyMember } from '../../../../types/family';
 
 const mockGetConsent = vi.fn();
 const mockMembers: FamilyMember[] = [];

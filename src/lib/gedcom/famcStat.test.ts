@@ -21,9 +21,9 @@ function firstFamc(gedcom: string): GEDCStruct | undefined {
 
 /** Bantu: struct FAMC minimal tanpa STAT, digantung di INDI-HEAD. */
 function famcOnly(): GEDCStruct {
-  const head = new GEDCStruct('HEAD', undefined)
+  const head = new GEDCStruct('HEAD', null)
   const indi = new GEDCStruct('INDI', head)
-  return new GEDCStruct('FAMC', indi, undefined, '@F1@')
+  return new GEDCStruct('FAMC', indi, '@F1@')
 }
 
 /** Bantu: tambah STAT berpayload string ke struct FAMC. */
@@ -172,9 +172,9 @@ describe('serializeFamcStat', () => {
   })
 
   it('serializeFamcStatStruct: struct STAT dengan payload benar', () => {
-    const head = new GEDCStruct('HEAD', undefined)
+    const head = new GEDCStruct('HEAD', null)
     const indi = new GEDCStruct('INDI', head)
-    const famc = new GEDCStruct('FAMC', indi, undefined, '@F1@')
+    const famc = new GEDCStruct('FAMC', indi, '@F1@')
     const stat = serializeFamcStatStruct('PROVEN', famc)
     expect(stat).toBeDefined()
     expect(stat?.tag).toBe('STAT')
@@ -182,9 +182,9 @@ describe('serializeFamcStat', () => {
   })
 
   it('serializeFamcStatStruct: nihil menghasilkan undefined tanpa struct baru', () => {
-    const head = new GEDCStruct('HEAD', undefined)
+    const head = new GEDCStruct('HEAD', null)
     const indi = new GEDCStruct('INDI', head)
-    const famc = new GEDCStruct('FAMC', indi, undefined, '@F1@')
+    const famc = new GEDCStruct('FAMC', indi, '@F1@')
     const before = famc.sub.length
     expect(serializeFamcStatStruct(undefined, famc)).toBeUndefined()
     expect(famc.sub.length).toBe(before)
