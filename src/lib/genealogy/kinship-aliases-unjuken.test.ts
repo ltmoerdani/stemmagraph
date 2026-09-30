@@ -118,6 +118,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'batangna',
       'bibi',
       'diberu',
+      'eda',
       'impal',
       'kaka',
       'kempu',
@@ -131,7 +132,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(17)
+    expect(keys.length).toBe(18)
   })
 
   it('guard: objek Toba tetap 1 key butet dan map regional tetap dua region (v197-ii nihil sentuh)', () => {
