@@ -53,10 +53,10 @@ describe('kinship-aliases Karo lanjutan (v189-ii kempu bibi)', () => {
     expect(r?.region).toBe('Karo')
   })
 
-  it('jumlah key bagian Karo di KINSHIP_ALIASES_REGIONAL tetap 15: kaka impal kempu bibi nini nini ribu nini bulang plus 4 komposit bapa plus sukut plus turangku plus batangna (v196-i)', () => {
+  it('jumlah key bagian Karo di KINSHIP_ALIASES_REGIONAL tetap 16: kaka impal kempu bibi nini nini ribu nini bulang plus 4 komposit bapa plus sukut plus turangku plus batangna (v196-i)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys).toEqual(['bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'impal', 'kaka', 'kempu', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sukut', 'turangku'])
-    expect(keys.length).toBe(15)
+    expect(keys).toEqual(['bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'impal', 'kaka', 'kempu', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sukut', 'turangku', 'unjuken'])
+    expect(keys.length).toBe(16)
   })
 
   it('rantai aliasKinds() panjang tetap 71: entri kempu bibi Karo regional tidak menambah map utama', () => {
