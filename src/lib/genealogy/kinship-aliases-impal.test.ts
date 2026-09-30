@@ -74,9 +74,9 @@ describe('kinship-aliases impal Karo (v189-i regional map)', () => {
     expect(r?.region).toContain('Karo')
   })
 
-  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 13 key, kaka impal kempu bibi nini nini ribu nini bulang plus 4 komposit bapa plus sukut (v192-i add-only)', () => {
+  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 14 key, kaka impal kempu bibi nini nini ribu nini bulang plus 4 komposit bapa plus sukut plus turangku (v195-i bump)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys).toEqual(['bapa nguda', 'bapa tua', 'bibi', 'diberu', 'impal', 'kaka', 'kempu', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sukut'])
-    expect(keys.length).toBe(13)
+    expect(keys).toEqual(['bapa nguda', 'bapa tua', 'bibi', 'diberu', 'impal', 'kaka', 'kempu', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sukut', 'turangku'])
+    expect(keys.length).toBe(14)
   })
 })
