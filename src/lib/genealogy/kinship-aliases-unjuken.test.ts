@@ -110,7 +110,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
     expect(b).toEqual(KINSHIP_ALIASES_REGIONAL.Karo.unjuken)
   })
 
-  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 16 key setelah unjuken masuk (v197-ii add-only)', () => {
+  it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key setelah unjuken masuk (v197-ii add-only)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
     expect(keys).toEqual([
       'bapa nguda',
@@ -126,11 +126,12 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'nini ribu',
       'pak tua',
       'pak uda',
+      'sepemeren',
       'sukut',
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(16)
+    expect(keys.length).toBe(17)
   })
 
   it('guard: objek Toba tetap 1 key butet dan map regional tetap dua region (v197-ii nihil sentuh)', () => {
