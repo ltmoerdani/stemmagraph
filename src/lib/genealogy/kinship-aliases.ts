@@ -383,6 +383,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'batangna Karo = dual makna: literal batang/trunk pohon dan makna khusus bagian utama mas kawin sinonim unjuken; makna literal TIGA SUMBER buku via Open Library Search Inside: Singarimbun 1975 payment also called batangna or unjuken, batangna means trunk plus Neumann 1910 Berita si Mehoeli koran Batak-Karo sabap arah boewahna itandai batangna, jejak korpus Karo tertua plus van der Tuuk 1864 Tobasche spraakkunst batangna makna literal batang harambir; makna khusus bagian utama mas kawin sinonim unjuken SATU SUMBER Singarimbun 1975; referensi notes/468',
     },
+    unjuken: {
+      kind: 'property',
+      depth: 0,
+      region: 'Karo',
+      note: 'unjuken Karo = aset mas kawin, masuk leksikon kind property, sinonim makna khusus batangna; DUA SUMBER: Singarimbun 1975 Kinship, descent, and alliance among the Karo Batak (judul resmi via OpenLibrary OL1779270W) payment also called batangna or unjuken untuk makna aset mas kawin, plus Joustra 1926 Kamus Karo lema oendjoek bentuk ejaan lama, status nice-to-have belum terverifikasi full-text; depth 0 karena frasa kind property tidak bergantung depth',
+    },
   },
   Toba: {
     butet: {
