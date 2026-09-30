@@ -389,6 +389,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'unjuken Karo = aset mas kawin, masuk leksikon kind property, sinonim makna khusus batangna; DUA SUMBER: Singarimbun 1975 Kinship, descent, and alliance among the Karo Batak (judul resmi via OpenLibrary OL1779270W) payment also called batangna or unjuken untuk makna aset mas kawin, plus Joustra 1926 Kamus Karo lema oendjoek bentuk ejaan lama, status nice-to-have belum terverifikasi full-text; depth 0 karena frasa kind property tidak bergantung depth',
     },
+    sepemeren: {
+      kind: 'cousin',
+      depth: 1,
+      region: 'Karo',
+      note: 'sepemeren Karo = anak perempuan dari kakak perempuan kandung ibu (MZD, anak perempuan dari saudari perempuan ibu), setara sepupu; frasa pemakaian turang sepemeren; DUA SUMBER buku via Open Library Search Inside: Singarimbun 1975 Kinship, descent, and alliance among the Karo Batak label diagram impal sepemeren dua kali di halaman kerabat samping plus kalimat pemakaian 1961 nine were related as turang sepemeren because their mothers were clan sisters plus Iwabuchi 1994 The people of the Alas Valley pemeRen equivalent to sepemeren (rujukan Singarimbun 1975: 202-3) plus tabel lurang sepemeren MZD; referensi notes/466',
+    },
   },
   Toba: {
     butet: {
