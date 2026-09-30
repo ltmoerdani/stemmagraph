@@ -35,7 +35,7 @@ export const RESN_LEVELS: readonly ResnLevel[] = [
  */
 export function privacyStatusToResn(
   status: string | null | undefined,
-): ResnLevel | null {
+): 'PRIVACY' | null {
   if (status === 'shared') return null
   return 'PRIVACY'
 }
@@ -62,7 +62,7 @@ export function privacyStatusToResn(
  */
 export function resnToPrivacyStatus(
   resn: string | null | undefined,
-): 'shared' | 'private' | null {
+): 'private' | null {
   if (resn == null) return null
   switch (resn.toUpperCase()) {
     case 'CONFIDENTIAL':

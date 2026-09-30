@@ -10,6 +10,8 @@
 
 import type { DedupCandidate } from "./dedup-detect";
 
+export type { DedupCandidate };
+
 export const STRONG_THRESHOLD = 80;
 export const REVIEW_MIN_SCORE = 60;
 

@@ -49,10 +49,12 @@ export function projectConsentNotifications(
   if (!validateConsentEvent(event.payload)) {
     throw new Error('projectConsentNotifications refuses an envelope whose payload fails validateConsentEvent');
   }
+  // Const agar narrowing tipe event.type bertahan sampai callback map.
+  const notificationType: 'CONSENT_GRANTED' | 'CONSENT_REVOKED' = event.type;
   const payloadJson = JSON.stringify(event.payload);
   return audience.treeOwners
     .filter((owner) => owner.id !== event.actorUserId)
-    .map((owner) => ({ userId: owner.id, type: event.type, payloadJson }));
+    .map((owner) => ({ userId: owner.id, type: notificationType, payloadJson }));
 }
 
 /**

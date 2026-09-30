@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { applyImportPlan } from './applyImportPlan'
-import type { ImportApplyIO } from './applyImportPlan'
+import type { CreateMemberInput, ImportApplyIO } from './applyImportPlan'
 import type { ImportPlan, PlannedMember } from './importPlan'
 
 function member(
@@ -29,8 +29,8 @@ function member(
   }
 }
 
-function makeIO(): { io: ImportApplyIO; inputs: Parameters<ImportApplyIO['createMember']>[] } {
-  const inputs: Parameters<ImportApplyIO['createMember']>[] = []
+function makeIO(): { io: ImportApplyIO; inputs: CreateMemberInput[] } {
+  const inputs: CreateMemberInput[] = []
   const io: ImportApplyIO = {
     treeId: 'tree-1',
     createMember: (input) => {
@@ -109,16 +109,16 @@ describe('v139-ii: living safe default masuk pipeline import', () => {
   it('kasus 7: regresi input tanpa kedua field, tidak ada key fabrikasi', async () => {
     const { io, inputs } = makeIO()
     await applyImportPlan(
-      planOf([{ xref: 'I1', name: 'Nama I1', gender: 'other' }]),
+      planOf([{ xref: 'I1', name: 'Nama I1', gender: 'other' } as unknown as PlannedMember]),
       io,
     )
-    expect('livingSuggested' in (inputs[0] as object)).toBe(false)
+    expect(inputs[0] !== undefined && 'livingSuggested' in inputs[0]).toBe(false)
     expect(inputs[0]?.privacyStatus).toBeUndefined()
   })
 
   it('kasus 8: livingSuggested pada PlannedMember terbaca memberInput (terbukti lewat hasil)', async () => {
     const { io, inputs } = makeIO()
     await applyImportPlan(planOf([member('I1', { livingSuggested: true })]), io)
-    expect((inputs[0] as Record<string, unknown>).privacyStatus).toBe('private')
+    expect((inputs[0] as unknown as Record<string, unknown>).privacyStatus).toBe('private')
   })
 })

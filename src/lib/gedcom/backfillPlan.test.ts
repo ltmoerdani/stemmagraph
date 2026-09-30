@@ -25,8 +25,8 @@ describe('buildBackfillPlan - aksi', () => {
     expect(plan.actions).toHaveLength(2)
     const birth = plan.actions.find((a) => a.eventType === 'BIRTH')
     const death = plan.actions.find((a) => a.eventType === 'DEATH')
-    expect(birth?.date).toMatchObject({ dateKind: 'EXACT', year: 1900, month: 1, day: 12 })
-    expect(death?.date).toMatchObject({ dateKind: 'EXACT', year: 1994 })
+    expect(birth?.date).toMatchObject({ dateKind: 'EXACT', yearStart: 1900, monthStart: 1, dayStart: 12 })
+    expect(death?.date).toMatchObject({ dateKind: 'EXACT', yearStart: 1994 })
     expect(birth?.treeId).toBe('t1')
     expect(death?.memberId).toBe('m1')
   })
@@ -36,7 +36,7 @@ describe('buildBackfillPlan - aksi', () => {
     expect(plan.actions).toHaveLength(1)
     expect(plan.actions[0]?.eventType).toBe('BIRTH')
     expect(plan.actions[0]?.date.originalDateString).toBe('  abt   1900  ')
-    expect(plan.actions[0]?.date).toMatchObject({ dateKind: 'ABOUT', year: 1900 })
+    expect(plan.actions[0]?.date).toMatchObject({ dateKind: 'ABOUT', yearStart: 1900 })
   })
 
   it('teks tak terurai tetap jadi aksi ABOUT tanpa mengarang presisi', () => {
@@ -100,7 +100,7 @@ describe('buildBackfillPlan - skip dan idempotensi', () => {
 describe('toPartialDateColumns', () => {
   it('EXACT lengkap: kolom start terisi, end null, original verbatim', () => {
     const plan = buildBackfillPlan([member()])
-    const cols = toPartialDateColumns(plan.actions[0]?.date as Parameters<typeof toPartialDateColumns>[0])
+    const cols = plan.actions[0]?.date as PartialDateColumns
     expect(cols).toEqual({
       dateKind: 'EXACT',
       yearStart: 1900,

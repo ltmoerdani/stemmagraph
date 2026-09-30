@@ -20,6 +20,11 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // Prefix underscore = param sengaja tidak dipakai (compat signature, mock rest args).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       // React Compiler rules — downgrade to warn for Phase 1, will fix in security hardening phase
       'react-hooks/purity': 'warn',
       'react-hooks/set-state-in-effect': 'warn',

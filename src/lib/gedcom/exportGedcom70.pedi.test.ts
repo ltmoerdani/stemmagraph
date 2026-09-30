@@ -36,7 +36,7 @@ function rel(
   relatedId: string,
   type: MemberRelationship['type'],
 ): MemberRelationship {
-  return { id, memberId, relatedId, type }
+  return { id, treeId: 'tree-1', memberId, relatedId, type }
 }
 
 /** Keluarga couple a+b dengan anak c (jadi F1, anak c = I3). */

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { GridMemberCard } from './GridMemberCard';
+import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, SortAsc, Filter } from 'lucide-react';
@@ -96,7 +97,9 @@ export const MemberCardGrid: React.FC = () => {
       sortBy: engineSortBy,
       sortDirection,
     });
-  }, [members, viewMode, searchQuery, sortBy, sortDirection]);
+// Kembalikan bentuk FamilyMember: elemen hasil tetap objek members asli,
+    // hanya tipenya yang dilebarkan kembali untuk konsumsi GridMemberCard.
+    }, [members, viewMode, searchQuery, sortBy, sortDirection]) as unknown as FamilyMember[];
 
   const handleSort = (option: SortOption) => {
     if (sortBy === option) {

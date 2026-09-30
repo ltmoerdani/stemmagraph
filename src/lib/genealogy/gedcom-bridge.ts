@@ -1,5 +1,5 @@
-import { parseGenealogicalDate, toGedcomDateValue, roundTrip, type GenealogicalDate, type Gender } from './genealogical-date'
-import { normalizeGender, toGedcomSex } from './gender'
+import { parseGenealogicalDate, toGedcomDateValue, roundTrip, type GenealogicalDate } from './genealogical-date'
+import { normalizeGender, toGedcomSex, type Gender } from './gender'
 
 /**
  * Bridge PURE GEDCOM untuk genealogy: tanpa import dari server/, tanpa prisma.

@@ -11,13 +11,16 @@ import {
   type ErasurePurgeSchedulerDeps,
   type ErasurePurgeSchedulerSummary,
 } from './erasure-purge-scheduler';
-import { executeErasurePurge } from '../../lib/consent/erasure-purge-execute';
+import { executeErasurePurge, type ErasurePurgeAuditRow, type MemberPurgeableData } from '../../lib/consent/erasure-purge-execute';
 import type { ErasureEventType } from '../../lib/consent/erasure-wiring';
 
 /** Bentuk prisma minimal untuk scheduler purge: familyMember dan event ledger. */
 export interface ErasurePurgeSchedulerPrismaClient {
   familyMember: {
-    findMany(args?: { select?: { id?: boolean } }): Promise<Array<{ id: string }>>;
+    findMany(args?: {
+      select?: { id?: boolean };
+      where?: { id: string };
+    }): Promise<Array<{ id: string } & Record<string, unknown>>>;
   };
   event: {
     findMany(args: {
@@ -96,13 +99,13 @@ export function buildDefaultErasurePurgeSchedulerDeps(
             payloadJson: row.payloadJson,
           }));
         },
-        getMember: async (id: string) => {
+        getMember: async (id: string): Promise<MemberPurgeableData | null> => {
           const member = await prisma.familyMember.findMany({
             where: { id },
           });
-          return (member[0] as unknown as Record<string, unknown>) ?? null;
+          return (member[0] as unknown as MemberPurgeableData) ?? null;
         },
-        updateMember: async (id: string, updated: Record<string, unknown>) => {
+        updateMember: async (id: string, updated: MemberPurgeableData) => {
           // Menggunakan prisma raw update atau pendekatan penyetujuan data member
           // Mengambil field PII yang relevan dan melakukan update pada familyMember
           const safeData: Record<string, unknown> = {};
@@ -125,7 +128,7 @@ export function buildDefaultErasurePurgeSchedulerDeps(
             });
           }
         },
-        appendEvent: async (row: { type: string; payloadJson: string }) => {
+        appendEvent: async (row: ErasurePurgeAuditRow) => {
           await prisma.event.create({
             data: {
               type: row.type,

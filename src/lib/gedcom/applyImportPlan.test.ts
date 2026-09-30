@@ -63,7 +63,7 @@ function makeFakeIO(opts: {
     treeId: opts.treeId ?? 'tree-1',
     async createMember(input) {
       memberInputs.push(input)
-      if (opts.failMemberNames?.includes(input.name)) {
+      if (opts.failMemberNames?.includes(input.name ?? '')) {
         throw new Error(`boom-member:${input.name}`)
       }
       const id = `m${++seq}`

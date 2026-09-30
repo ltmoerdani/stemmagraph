@@ -408,7 +408,9 @@ export const FamilyTable: React.FC = () => {
     return engineResult.filter(
       (member) => applyColumnFilters(member as unknown as FamilyMember),
     );
-  }, [members, viewMode, searchQuery, columnFilters, sortConfig]);
+    // Kembalikan bentuk FamilyMember: elemen hasil tetap objek members asli,
+    // hanya tipenya yang dilebarkan kembali untuk konsumsi TableRow.
+  }, [members, viewMode, searchQuery, columnFilters, sortConfig]) as unknown as FamilyMember[];
 
   // Pagination
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);

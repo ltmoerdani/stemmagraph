@@ -44,7 +44,7 @@ describe('v174-ii rantai regional grandparent', () => {
   it('aki resolve grandparent dengan guard homonim accu', () => {
     const r = resolveAlias('aki')
     expect(r).not.toBeNull()
-    expect(r.kind).toBe('grandparent')
+    expect(r?.kind).toBe('grandparent')
   })
 
   it('hanya satu entri aki di KINSHIP_ALIASES (regresi dup aki)', () => {
@@ -55,8 +55,8 @@ describe('v174-ii rantai regional grandparent', () => {
   it('nini resolve grandparent dengan guard homonim sapaan', () => {
     const r = resolveAlias('nini')
     expect(r).not.toBeNull()
-    expect(r.kind).toBe('grandparent')
-    expect(r.note).toContain('sapaan')
+    expect(r?.kind).toBe('grandparent')
+    expect(r?.note).toContain('sapaan')
   })
 
   it('ninik resolve grandparent mk', () => {

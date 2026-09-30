@@ -39,12 +39,14 @@ export interface CreateMemberInput {
   birthDate?: string
   deathDate?: string
   birthPlace?: string
+  /** Status privasi awal hasil RESN + living gate; wiring layer boleh memetakan ke kolom privacyStatus. */
+  privacyStatus?: 'shared' | 'private'
 }
 
 /** Laporan jujur hasil penerapan plan; dilempar tidak pernah terjadi. */
 export interface ImportApplyReport {
   createdMembers: { xref: string | undefined; id: string }[]
-  duplicateXrefs: string[]
+  duplicateXrefs: (string | undefined)[]
   failedMembers: { xref: string | undefined; error: string }[]
   createdRelations: number
   skippedRelations: { memberXref: string; relatedXref: string; reason: string }[]
@@ -112,7 +114,7 @@ export async function applyImportPlan(
     : []
 
   const createdMembers: ImportApplyReport['createdMembers'] = []
-  const duplicateXrefs: string[] = []
+  const duplicateXrefs: (string | undefined)[] = []
   const failedMembers: ImportApplyReport['failedMembers'] = []
   const memberWarnings: ImportApplyReport['memberWarnings'] = []
   const ids = new Map<string, string>()
@@ -120,11 +122,12 @@ export async function applyImportPlan(
   // Fase 1: semua member. Xref duplikat dibuat sekali; duplikatnya warning
   // dan tercatat di createdMembers memakai id kemunculan pertama.
   for (const member of safeMembers) {
-    const existingId = member.xref !== undefined ? ids.get(member.xref) : undefined
+    const xref = member.xref
+    const existingId = xref !== undefined ? ids.get(xref) : undefined
     if (existingId !== undefined) {
-      duplicateXrefs.push(member.xref)
-      memberWarnings.push({ xref: member.xref, warning: 'duplicate-xref' })
-      createdMembers.push({ xref: member.xref, id: existingId })
+      duplicateXrefs.push(xref)
+      memberWarnings.push({ xref, warning: 'duplicate-xref' })
+      createdMembers.push({ xref, id: existingId })
       continue
     }
 

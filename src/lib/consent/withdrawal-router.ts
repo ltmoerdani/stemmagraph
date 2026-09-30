@@ -17,6 +17,8 @@ import {
 } from './withdrawal-tracking';
 import { NotFoundError } from '../adapters/types';
 
+export type { WithdrawalEvent };
+
 /** Handler context: member scope, acting user, and raw request body. */
 export interface WithdrawalRouteContext {
   memberId: string;

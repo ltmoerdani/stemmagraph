@@ -21,27 +21,27 @@ const mocks = vi.hoisted(() => ({
   fetchMembers: vi.fn(async () => undefined),
   records: [] as Array<{ tag?: string }>,
   citationEntries: [] as unknown[],
-  buildCitationPlanFromRecords: vi.fn(() => [] as unknown[]),
+  buildCitationPlanFromRecords: vi.fn((..._args: unknown[]) => [] as unknown[]),
   families: [] as Array<{
     xref: string;
     husband: string | undefined;
     wife: string | undefined;
     children: string[];
   }>,
-  buildImportPlan: vi.fn(() => ({
+  buildImportPlan: vi.fn((..._args: unknown[]) => ({
     members: [{ id: 'p1', name: 'A' }],
     relationships: [] as unknown[],
   })),
-  applyImportPlan: vi.fn(),
+  applyImportPlan: vi.fn((..._args: unknown[]) => undefined as unknown),
   citationApi: null as CitationApiStub | null,
-  applyCitationPlan: vi.fn(async () => ({
+  applyCitationPlan: vi.fn(async (..._args: unknown[]) => ({
     createdSources: ['S1'],
     createdCitations: [{ id: 'cit-1' }],
     skippedCitations: [],
     failedSources: [],
     failedCitations: [],
   })),
-  gedcomFromString: vi.fn(() => [] as Array<{ tag?: string }>),
+  gedcomFromString: vi.fn((..._args: unknown[]) => [] as Array<{ tag?: string }>),
 }));
 
 vi.mock('lucide-react', () => ({
@@ -194,7 +194,7 @@ describe('ImportControls wiring sitasi v155-iii-b', () => {
     await importViaInput();
     expect(mocks.applyCitationPlan).toHaveBeenCalledTimes(1);
     const [entries, resolveMember, resolveRelation, io] =
-      mocks.applyCitationPlan.mock.calls[0] as [
+      mocks.applyCitationPlan.mock.calls[0] as unknown as [
         unknown[],
         (x: string) => string | undefined,
         (x: string) => [string, string] | undefined,
@@ -213,7 +213,7 @@ describe('ImportControls wiring sitasi v155-iii-b', () => {
   it('kasus 3: resolveMember strip @ dua sisi; xref tanpa @ tetap cocok', async () => {
     mocks.citationApi = stubApi();
     await importViaInput();
-    const [, resolveMember] = mocks.applyCitationPlan.mock.calls[0] as [
+    const [, resolveMember] = mocks.applyCitationPlan.mock.calls[0] as unknown as [
       unknown[],
       (x: string) => string | undefined,
     ];
