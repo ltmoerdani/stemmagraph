@@ -371,6 +371,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'diberu Karo = perempuan, lazim sebutan suami kepada istri secara kolokial; TIGA SUMBER buku via Open Library Search Inside: Singarimbun 1975 indeks hlm 282 entri 27 silangen W diberu colloquial plus Steedly 2013 Rifle Reports glosarium hlm 426 DIBERU K woman plus Katoppo 1980 Compassionate and Free hlm 102 diberu tukur the bought woman; referensi notes/464',
     },
+    turangku: {
+      kind: 'partner',
+      depth: 1,
+      region: 'Karo',
+      note: 'turangku Karo = relasi pragmatik rebu avoidance lintas gender ego (WBW, HZH, WMBD, HFZS/SWM), pasangan tidak boleh bicara langsung; EMPAT SUMBER buku via Open Library Search Inside: Singarimbun 1975 hlm 282 entri 21 turangku WBW HZH WMBD HFZS plus Kipp 1993 hlm 326 HZH pragmatik rebu avoidance berlaku lintas gender ego plus Rae Breath Becomes the Wind hlm 324 WBW tidak bicara langsung plus Iwabuchi 1994 hlm 320 WBW WMBD SWM; referensi notes/464 dan notes/2026-09-30-evidence-stg-sepemeren-turangku-searchinside-recovery.md',
+    },
   },
   Toba: {
     butet: {
