@@ -3,9 +3,9 @@ import type { KinshipKind } from './kinship-calc';
 import { KINSHIP_LABELS, kinshipLabel, kinshipLabelWithDepth } from './kinship-labels';
 
 describe('kinship-labels', () => {
-  it('t1: semua 13 kind punya entri id dan en string non-kosong', () => {
+  it('t1: semua 14 kind punya entri id dan en string non-kosong', () => {
     const kinds = Object.keys(KINSHIP_LABELS) as KinshipKind[];
-    expect(kinds).toHaveLength(13);
+    expect(kinds).toHaveLength(14);
     for (const kind of kinds) {
       expect(typeof KINSHIP_LABELS[kind].id).toBe('string');
       expect(typeof KINSHIP_LABELS[kind].en).toBe('string');

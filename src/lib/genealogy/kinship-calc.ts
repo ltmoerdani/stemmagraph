@@ -14,6 +14,7 @@ export type KinshipKind =
   | 'ancestor'
   | 'descendant'
   | 'unrelated'
+  | 'property'
 
 export interface RelationshipResult {
   kind: KinshipKind
