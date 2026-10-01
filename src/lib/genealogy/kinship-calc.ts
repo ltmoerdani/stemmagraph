@@ -15,6 +15,7 @@ export type KinshipKind =
   | 'descendant'
   | 'unrelated'
   | 'property'
+  | 'pernikahan'
 
 export interface RelationshipResult {
   kind: KinshipKind

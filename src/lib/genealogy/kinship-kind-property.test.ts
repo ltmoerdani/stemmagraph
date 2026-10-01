@@ -25,10 +25,11 @@ const FALLBACK_EN = 'unknown relationship';
 describe('kinship kind property', () => {
   it('t1: property terdaftar di KINSHIP_LABELS', () => {
     expect(Object.keys(KINSHIP_LABELS)).toContain('property');
+    expect(Object.keys(KINSHIP_LABELS)).toContain('pernikahan');
   });
 
-  it('t2: jumlah kind kini 14 (13 lama plus property)', () => {
-    expect(Object.keys(KINSHIP_LABELS)).toHaveLength(14);
+  it('t2: jumlah kind kini 15 (13 lama plus property dan pernikahan)', () => {
+    expect(Object.keys(KINSHIP_LABELS)).toHaveLength(15);
     expect(OLD_KINDS).toHaveLength(13);
     for (const kind of OLD_KINDS) {
       expect(Object.keys(KINSHIP_LABELS)).toContain(kind);

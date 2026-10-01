@@ -15,6 +15,7 @@ export const KINSHIP_LABELS: Record<KinshipKind, { id: string; en: string }> = {
   descendant: { id: 'keturunan', en: 'descendant' },
   unrelated: { id: 'tidak berhubungan', en: 'unrelated' },
   property: { id: 'harta mas kawin', en: 'bridewealth property' },
+  pernikahan: { id: 'relasi karena perkawinan', en: 'affinal relation' },
 };
 
 export function kinshipLabel(kind: KinshipKind, locale: 'id' | 'en'): string {
