@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { KINSHIP_ALIASES_REGIONAL, resolveAlias } from './kinship-aliases'
+import { expectNoteContains, regionalNote } from './__tests__/alias-entry'
 
 describe('kinship-aliases eda Karo (v199-i, kind sibling, dual makna affine, tiga sumber lintas era)', () => {
   it('resolveAlias eda region Karo kembalikan kind sibling', () => {
@@ -27,40 +28,27 @@ describe('kinship-aliases eda Karo (v199-i, kind sibling, dual makna affine, tig
   })
 
   it('note memuat jejak sumber 1: KBBI VI e.da 1 Bt dengan rujukan notes/447', () => {
-    const note = KINSHIP_ALIASES_REGIONAL.Karo.eda.note
-    expect(note).toContain('KBBI VI')
-    expect(note).toContain('e.da 1 Bt')
-    expect(note).toContain('notes/447')
+    expectNoteContains('Karo', 'eda', ['KBBI VI', 'e.da 1 Bt', 'notes/447'])
   })
 
   it('note memuat jejak sumber 2: OCR Kamus Karo 2001 hlm 64 panggilan terhadap istri abang', () => {
-    const note = KINSHIP_ALIASES_REGIONAL.Karo.eda.note
-    expect(note).toContain('Kamus Karo 2001')
-    expect(note).toContain('hlm 64')
-    expect(note).toContain('istri abang')
+    expectNoteContains('Karo', 'eda', ['Kamus Karo 2001', 'hlm 64', 'istri abang'])
   })
 
   it('note memuat jejak sumber 3: van der Tuuk 1861 dengan rujukan notes/475', () => {
-    const note = KINSHIP_ALIASES_REGIONAL.Karo.eda.note
-    expect(note).toContain('van der Tuuk 1861')
-    expect(note).toContain('notes/475')
-    expect(note).toContain('vokatif')
+    expectNoteContains('Karo', 'eda', ['van der Tuuk 1861', 'notes/475', 'vokatif'])
   })
 
   it('note memuat glosa Belanda broeder\'s vrouw dan schoonzuster', () => {
-    const note = KINSHIP_ALIASES_REGIONAL.Karo.eda.note
-    expect(note).toContain('broeder\'s vrouw')
-    expect(note).toContain('schoonzuster')
+    expectNoteContains('Karo', 'eda', ['broeder\'s vrouw', 'schoonzuster'])
   })
 
   it('note menyebut tiga sumber dan dual makna affine', () => {
-    const note = KINSHIP_ALIASES_REGIONAL.Karo.eda.note
-    expect(note).toContain('TIGA SUMBER')
-    expect(note).toContain('dual makna affine')
+    expectNoteContains('Karo', 'eda', ['TIGA SUMBER', 'dual makna affine'])
   })
 
   it('note tidak memuat karakter em dash maupun pengganti dua tanda minus', () => {
-    const note = KINSHIP_ALIASES_REGIONAL.Karo.eda.note
+    const note = regionalNote('Karo', 'eda')
     expect(note.includes('\u2014')).toBe(false)
     expect(note.includes('--')).toBe(false)
   })

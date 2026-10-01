@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { buildBackfillPlan, toPartialDateColumns } from './backfillPlan'
-import type { BackfillMemberInput } from './backfillPlan'
+import type { BackfillMemberInput, PartialDateColumns } from './backfillPlan'
 
 function member(overrides: Partial<BackfillMemberInput> = {}): BackfillMemberInput {
   return {
