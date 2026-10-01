@@ -415,6 +415,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'butet Toba = panggilan sayang anak perempuan (bungsu), register netral kelembagaan; DUA SUMBER daring independen: Wikikamus bahasa Indonesia revisi 1166752 (butet = panggilan sayang untuk anak perempuan) plus BatakKeren 23 Januari 2025 (anak perempuan bungsu); penguat Barus 2017 glosarium; referensi notes/2026-09-29-evidence-stg-v192-butet-tongat-rebu',
     },
+    pariban: {
+      kind: 'cousin',
+      depth: 1,
+      region: 'Toba',
+      note: 'pariban Toba = sepupu silang cross-cousin, anak kakak beradik laki perempuan berbeda marga, kawin ideal dicatat adat Toba; TIGA SUMBER: Wati 2017 Syiar Hukum Unisba DOI 10.29313/sh.v15i1.2216 plus Situngkir Putrijanji 2026 JIM DOI 10.38035/jim.v5i1.1942 plus Vergouwen 1964 Springer DOI 10.1007/978-94-015-1035-6, arah matrilateral vs patrilateral tidak dipaksakan di enum, dicatat di komentar per Vergouwen',
+    },
   },
 }
 
