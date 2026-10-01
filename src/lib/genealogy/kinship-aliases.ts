@@ -401,6 +401,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'eda Karo = dual makna affine: istri saudara laki-laki dan saudara perempuan dari suami, plus jejak kolonial 1861; TIGA SUMBER lintas era: KBBI VI e.da 1 Bt dua makna istri dari saudara laki-laki dan saudara perempuan dari suami (notes/447) plus OCR Kamus Karo 2001 hlm 64 panggilan terhadap istri abang bercontoh kalimat (notes/447) plus van der Tuuk 1861 vol 0 glosa Belanda broeder\'s vrouw, schoonzuster, plus anak perempuan saudari ayah, plus bentuk vokatif eda (notes/475, segmen byte 205000 sampai 249999, HTTP Range first-hand)',
     },
+    lemirat: {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'lemirat Karo = praktik levirat, janda mati suami jatuh ke saudara lelaki mendiang umumnya yang bungsu, tanpa bayar ulang mas kawin; DUA SUMBER lintas era: van der Tuuk 1861 vol 0 glosa Belanda eene vrouw tot zich nemen door het afsterven van haren man zonder voor haar te betalen, tiga unsur wanita diambil karena suami mati plus tanpa bayar ulang plus dianggap warisan regtens menurut hukum adat, plus bentuk transitif tercatat (notes/475, segmen byte 265000 sampai 309999, HTTP Range first-hand) plus Joustra 1926 monografi adat hlm 32 janda vervalt aan een zijner broeders den jongsten meestal dengan perluasan ke keponakan dan anggota marga lain bila tidak ada serta kewajiban nafkah bila enggan menikah (notes/476, Batakspiegel page 32, snippet kontrol adat)',
+    },
   },
   Toba: {
     butet: {
