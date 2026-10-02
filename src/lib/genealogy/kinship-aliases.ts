@@ -433,6 +433,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'butet Toba = panggilan sayang anak perempuan (bungsu), register netral kelembagaan; DUA SUMBER daring independen: Wikikamus bahasa Indonesia revisi 1166752 (butet = panggilan sayang untuk anak perempuan) plus BatakKeren 23 Januari 2025 (anak perempuan bungsu); penguat Barus 2017 glosarium; referensi notes/2026-09-29-evidence-stg-v192-butet-tongat-rebu',
     },
+    namboru: {
+      kind: 'parent-sibling',
+      depth: 1,
+      region: 'Toba',
+      note: 'namboru Toba = saudara perempuan ayah (father sister, FZ), sapaan hormat; EMPAT SUMBER: kamusbatak www /indonesia/namboru.html glosa saudari ayah plus contoh kalimat native akses 3 Okt 2026 plus van der Tuuk 1861 vol 2 baris 43749 glosa vader zuster plus Tuuk vol 1 salinan Michigan baris 43993 glosa sama plus Meerwaldt 1904 baris 8343 entri lema Namboru tante zuster van iemands vader, referensi notes/2026-10-03-evidence-tuuk-vol2-seg5-10-namboru-lae-tulang-ngelingkah.md',
+    },
     pariban: {
       kind: 'cousin',
       depth: 1,
