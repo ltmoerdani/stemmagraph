@@ -123,6 +123,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'kaka',
       'kempu',
       'lemirat',
+      'ngalih',
       'ngerbani',
       'nini',
       'nini bulang',
@@ -134,7 +135,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(20)
+    expect(keys.length).toBe(21) // v207-i bump 20 jadi 21 (ngalih)
   })
 
   it('guard: objek Toba tetap 3 key butet ompung suhut pariban dan map regional tetap dua region (v206-i bump, ompung suhut add-only)', () => {
