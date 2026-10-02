@@ -53,7 +53,7 @@ describe('kinship-aliases diberu Karo (v194-i salvase PM, jalur buku Search Insi
 
   it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key, diberu masuk (v196-i bump)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys.length).toBe(19)
+    expect(keys.length).toBe(20)
     expect(keys).toContain('diberu')
   })
 
