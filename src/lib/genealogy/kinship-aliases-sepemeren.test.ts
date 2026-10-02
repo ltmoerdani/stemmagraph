@@ -132,6 +132,7 @@ describe('kinship-aliases sepemeren Karo (v198-i, kind cousin makna MZD, dua sum
       'kaka',
       'kempu',
       'lemirat',
+      'ngerbani',
       'nini',
       'nini bulang',
       'nini ribu',
@@ -142,7 +143,7 @@ describe('kinship-aliases sepemeren Karo (v198-i, kind cousin makna MZD, dua sum
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(19)
+    expect(keys.length).toBe(20)
   })
 
   it('guard: objek Toba tetap 2 key butet pariban dan map regional tetap dua region (v205-i bump, pariban add-only)', () => {
