@@ -137,7 +137,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
   })
 
   it('guard: objek Toba tetap 1 key butet dan map regional tetap dua region (v197-ii nihil sentuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['butet'])
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['butet', 'pariban'])
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Toba'])
   })
 })
