@@ -421,6 +421,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
     },
   },
   Toba: {
+    amangboru: {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Toba',
+      note: 'amangboru Toba = suami dari saudara perempuan ayah (father sister husband, FBH), simpul affinal satu pernikahan: ego terhubung lewat ikatan kawin saudari ayah, tanpa garis darah; sumber: van der Tuuk 1861 Bataksch-Nederduitsch woordenboek vol 2 h631 plus Bruner 1974 Indonesian Homecoming h38 plus Iwabuchi 1994 h320 plus Bibliografi 1974 h506 plus Museum Barbier-Muller 2002 h382 plus Nainggolan 2014 GSTF Journal on Education DOI 10.7603/s40742-014-0003-9 plus detikcom 14 Jun 2023',
+    },
     butet: {
       kind: 'child',
       depth: 1,
