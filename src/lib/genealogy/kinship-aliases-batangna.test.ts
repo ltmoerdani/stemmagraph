@@ -83,8 +83,8 @@ describe('kinship-aliases batangna Karo (v196-i, jalur buku Search Inside)', () 
     expect(keys).toContain('turangku')
   })
 
-  it('guard: objek Toba tetap 1 key butet dan map regional tetap dua region (v196-i nihil sentuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['butet', 'pariban'])
+  it('guard: objek Toba tetap 3 key butet ompung suhut pariban dan map regional tetap dua region (v206-i bump, ompung suhut add-only)', () => {
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['butet', 'ompung suhut', 'pariban'])
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Toba'])
   })
 })
