@@ -439,6 +439,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'ompung suhut Toba = kakek nenek dari sisi ayah (grandparent paternal), komposit ompung plus suhut; TIGA JANGKAR independen: kamusbatak.org entri Ompung suhut kakek dari ayah kamus Toba modern (akses 1 Okt 2026) plus Purbawidya 2019 BRIN ISSN 2252-3758 DOI 10.24164/pw.v8i2.309 suhut komponen bersama dalihan na tolu Angkola-Mandailing plus Asketik 2024 IAIN Kediri ISSN 2579-7050 DOI 10.30762/asketik.v8i1.1433 frasa literal sitolu Suhut Sitolu Harajaon konteks dalihan na tolu Toba, penguat kolonial tertua van der Tuuk 1861 vol 0 hlm 438 dan 455 dua titik (suhut tuan rumah penyelenggara pesta, notes/479), referensi notes/479',
     },
+    iboto: {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Toba',
+      note: 'iboto Toba = saudara lawan jenis cross-sibling, kakak atau adik beda gender dalam pasangan laki perempuan, sapaan vokatif umum; ENAM SUMBER: Wiktionary EN lema iboto bagian Toba Batak glosa sister of a man oldid 91176215 plus kamusbatak www entri iboto 12 makna cross-sibling akses 2 Okt 2026 plus Meerwaldt 1904 h58 glosa saudara lawan jenis plus bentuk klitik ito itong plus Vergouwen 1964 glosa cross-sibling mutually iboto plus Holle lists vol 9 ANU 1986 daftar kins Samosir plus Dammerboer 1879 Alkitab Angkola korpus native Markus 10, referensi notes/500 dan notes/501',
+    },
   },
 }
 
