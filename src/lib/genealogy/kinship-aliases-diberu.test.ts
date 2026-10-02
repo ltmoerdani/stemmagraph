@@ -58,7 +58,7 @@ describe('kinship-aliases diberu Karo (v194-i salvase PM, jalur buku Search Insi
   })
 
   it('guard: objek Toba tetap 3 key butet ompung suhut pariban dan map regional tetap dua region (v206-i bump, ompung suhut add-only)', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['butet', 'ompung suhut', 'pariban'])
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['amangboru', 'butet', 'ompung suhut', 'pariban'])
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Toba'])
   })
 })
