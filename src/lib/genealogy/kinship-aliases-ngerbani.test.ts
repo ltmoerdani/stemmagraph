@@ -60,12 +60,12 @@ describe('kinship-aliases ngerbani Karo (v203-i, kind pernikahan, sororal polygy
     expect(resolveAlias('lemirat', 'Karo')?.kind).toBe('pernikahan')
   })
 
-  it('13. guard: objek Karo berisi tepat 20 key setelah ngerbani masuk (v203-i add-only, sebelumnya 19), urutan sort deterministik tanpa duplikat', () => {
+  it('13. guard: objek Karo berisi tepat 21 key (v203-i ngerbani add-only, v207-i ngalih add-only menaikkan 20 jadi 21), urutan sort deterministik tanpa duplikat', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
     expect(new Set(keys).size).toBe(keys.length)
     const sorted = [...keys].sort()
-    expect(sorted).toEqual(['bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kempu', 'lemirat', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
-    expect(keys.length).toBe(20)
+    expect(sorted).toEqual(['bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kempu', 'lemirat', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
+    expect(keys.length).toBe(21) // v207-i bump 20 jadi 21 (ngalih)
   })
 
   it('14. idempoten struktur: dua resolveAlias berurutan hasil identik (deep equal)', () => {
