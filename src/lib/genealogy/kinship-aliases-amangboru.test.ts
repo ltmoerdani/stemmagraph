@@ -81,11 +81,12 @@ describe('kinship-aliases amangboru Toba (v209-i, kind pernikahan, FBH, simpul a
     expect(note).not.toContain('--')
   })
 
-  it('12. guard Toba berisi tepat 5 key terurut (pasca merge develop v210-i, iboto add-only)', () => {
+  it('12. guard Toba berisi tepat 6 key terurut (v212-i bump, namboru add-only)', () => {
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual([
       'amangboru',
       'butet',
       'iboto',
+      'namboru',
       'ompung suhut',
       'pariban',
     ])
