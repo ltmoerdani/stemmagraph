@@ -35,8 +35,9 @@ describe('kinship-aliases ompung suhut Toba (v206-i, komposit grandparent, tiga 
     expect(resolveAlias('OMPUNG SUHUT', 'Toba')).not.toBeNull()
   })
 
-  it('6. guard Toba berisi tepat 3 key terurut', () => {
+  it('6. guard Toba berisi tepat 4 key terurut (v209-i bump)', () => {
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual([
+      'amangboru',
       'butet',
       'ompung suhut',
       'pariban',
@@ -70,7 +71,7 @@ describe('kinship-aliases ompung suhut Toba (v206-i, komposit grandparent, tiga 
     expect(b).toEqual(KINSHIP_ALIASES_REGIONAL.Toba['ompung suhut'])
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)
     expect(new Set(keys).size).toBe(keys.length)
-    expect(keys).toHaveLength(3)
+    expect(keys).toHaveLength(4)
   })
 
   it('11. kind grandparent anggota sah union: label id kakek nenek, en grandparent', async () => {
