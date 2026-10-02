@@ -407,6 +407,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'lemirat Karo = praktik levirat, janda mati suami jatuh ke saudara lelaki mendiang umumnya yang bungsu, tanpa bayar ulang mas kawin; DUA SUMBER lintas era: van der Tuuk 1861 vol 0 glosa Belanda eene vrouw tot zich nemen door het afsterven van haren man zonder voor haar te betalen, tiga unsur wanita diambil karena suami mati plus tanpa bayar ulang plus dianggap warisan regtens menurut hukum adat, plus bentuk transitif tercatat (notes/475, segmen byte 265000 sampai 309999, HTTP Range first-hand) plus Joustra 1926 monografi adat hlm 32 janda vervalt aan een zijner broeders den jongsten meestal dengan perluasan ke keponakan dan anggota marga lain bila tidak ada serta kewajiban nafkah bila enggan menikah (notes/476, Batakspiegel page 32, snippet kontrol adat)',
     },
+    ngalih: {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'ngalih Karo = kawin menduda levirate, laki-laki mengawini janda istri saudara laki-laki yang telah meninggal, entri di dalam lema kawin kamuskaro; DUA SUMBER independen: kamuskaro.com lema kawin (ngalih = mengawini janda saudara yang telah meninggal, akses 1 Okt 2026, pola sama dengan ngerbani) plus Singarimbun 1975 Kinship Descent and Alliance among the Karo Batak UC Press DOI 10.2307/jj.13167910 bab Marriage DOI 10.2307/jj.13167910.14 konteks levirate dan pernikahan ulang janda Karo (terverifikasi Crossref 1 Okt 2026), penguat kolonial opsional Joustra 1907 Karo-Bataksch woordenboek DOI Brill 10.1163/9789004599130 terverifikasi Crossref 2 Okt 2026 kandidat glosa menunggu akses fulltext',
+    },
     ngerbani: {
       kind: 'pernikahan',
       depth: 1,
