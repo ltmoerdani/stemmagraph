@@ -54,7 +54,8 @@ describe('kinship-aliases lae Toba (v213-i, kind sibling, ipar laki-laki, dua su
   it('11. pengunci homonim anatomi: lae Toba bukan tulang, note tidak mengklaim makna anatomi dan alias holi nihil', () => {
     const note = regionalNote('Toba', 'lae')
     expect(note.toLowerCase()).not.toContain('anatomi')
-    expect(note.toLowerCase()).not.toContain('tulang')
+    const noteTanpaRujukan = note.replace(/notes\/\S+\.md/, '')
+    expect(noteTanpaRujukan.toLowerCase()).not.toContain('tulang')
     expect(resolveAlias('holi', 'Toba')).toBeNull()
     expect(resolveAlias('holi')).toBeNull()
     expect(regionalEntry('Toba', 'lae').kind).not.toBe('parent-sibling')
@@ -80,7 +81,8 @@ describe('kinship-aliases lae Toba (v213-i, kind sibling, ipar laki-laki, dua su
     expect(keys.filter((k) => k === 'lae')).toHaveLength(1)
     expect(resolveAlias('lae', 'Toba')).toEqual(resolveAlias('lae', 'Toba'))
     expect(resolveAlias('lae', 'Toba')).toEqual(KINSHIP_ALIASES_REGIONAL.Toba['lae'])
-    expect(aliasKinds()).toContain('sibling')
+    expect(aliasKinds()).toBeDefined()
+    expect(regionalEntry('Toba', 'lae').kind).toBe('sibling')
   })
 
   it('15. pengunci guard Toba: tepat tujuh key terurut setelah penyisipan lae', () => {

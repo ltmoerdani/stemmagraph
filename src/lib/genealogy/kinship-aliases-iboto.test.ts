@@ -45,6 +45,7 @@ describe('kinship-aliases iboto Toba (v210-i, cross-sibling, enam sumber)', () =
       'amangboru',
       'butet',
       'iboto',
+      'lae',
       'namboru',
       'ompung suhut',
       'pariban',

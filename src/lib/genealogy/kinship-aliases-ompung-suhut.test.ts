@@ -40,6 +40,7 @@ describe('kinship-aliases ompung suhut Toba (v206-i, komposit grandparent, tiga 
       'amangboru',
       'butet',
       'iboto',
+      'lae',
       'namboru',
       'ompung suhut',
       'pariban',
