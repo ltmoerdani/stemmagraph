@@ -57,9 +57,10 @@ describe('kinship-aliases butet Toba (v193-i regional map, panggilan sayang anak
     expect(r?.kind).toBe('sibling')
   })
 
-  it('guard: objek Toba di KINSHIP_ALIASES_REGIONAL berisi 3 key butet ompung suhut pariban (v206-i bump)', () => {
+  it('guard: objek Toba berisi tepat 5 key amangboru butet iboto ompung suhut pariban (v209-i bump, amangboru add-only)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()
-    expect(keys).toEqual(['amangboru', 'butet', 'ompung suhut', 'pariban'])
+    expect(keys).toEqual(['amangboru', 'butet', 'iboto', 'ompung suhut', 'pariban'])
+origin/develop
   })
 
   it('guard: objek Karo tetap 17 key (v196-i bump), tidak tersentuh penambahan Toba', () => {
