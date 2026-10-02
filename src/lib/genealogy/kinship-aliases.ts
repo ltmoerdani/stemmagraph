@@ -427,6 +427,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'pariban Toba = sepupu silang cross-cousin, anak kakak beradik laki perempuan berbeda marga, kawin ideal dicatat adat Toba; TIGA SUMBER: Wati 2017 Syiar Hukum Unisba DOI 10.29313/sh.v15i1.2216 plus Situngkir Putrijanji 2026 JIM DOI 10.38035/jim.v5i1.1942 plus Vergouwen 1964 Springer DOI 10.1007/978-94-015-1035-6, arah matrilateral vs patrilateral tidak dipaksakan di enum, dicatat di komentar per Vergouwen',
     },
+    'ompung suhut': {
+      kind: 'grandparent',
+      depth: 2,
+      region: 'Toba',
+      note: 'ompung suhut Toba = kakek nenek dari sisi ayah (grandparent paternal), komposit ompung plus suhut; TIGA JANGKAR independen: kamusbatak.org entri Ompung suhut kakek dari ayah kamus Toba modern (akses 1 Okt 2026) plus Purbawidya 2019 BRIN ISSN 2252-3758 DOI 10.24164/pw.v8i2.309 suhut komponen bersama dalihan na tolu Angkola-Mandailing plus Asketik 2024 IAIN Kediri ISSN 2579-7050 DOI 10.30762/asketik.v8i1.1433 frasa literal sitolu Suhut Sitolu Harajaon konteks dalihan na tolu Toba, penguat kolonial tertua van der Tuuk 1861 vol 0 hlm 438 dan 455 dua titik (suhut tuan rumah penyelenggara pesta, notes/479), referensi notes/479',
+    },
   },
 }
 

@@ -146,8 +146,8 @@ describe('kinship-aliases sepemeren Karo (v198-i, kind cousin makna MZD, dua sum
     expect(keys.length).toBe(20)
   })
 
-  it('guard: objek Toba tetap 2 key butet pariban dan map regional tetap dua region (v205-i bump, pariban add-only)', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['butet', 'pariban'])
+  it('guard: objek Toba tetap 3 key butet ompung suhut pariban dan map regional tetap dua region (v206-i bump, ompung suhut add-only)', () => {
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['butet', 'ompung suhut', 'pariban'])
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Toba'])
   })
 })
