@@ -138,9 +138,8 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
     expect(keys.length).toBe(21) // v207-i bump 20 jadi 21 (ngalih)
   })
 
-  it('guard: objek Toba tetap 4 key butet iboto ompung suhut pariban dan map regional tetap dua region (v206-i bump, ompung suhut add-only)', () => {
+  it('guard: objek Toba tetap 5 key amangboru butet iboto ompung suhut pariban dan map regional tetap dua region (v209-i bump, amangboru add-only)', () => {
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['amangboru', 'butet', 'iboto', 'ompung suhut', 'pariban'])
-origin/develop
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Toba'])
   })
 })
