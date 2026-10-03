@@ -103,7 +103,7 @@ describe('kinship-aliases haha Toba (v219-i, kind sibling, kakak laki-laki, dua 
 
   it('14. pengunci guard Toba: tepat sepuluh key terurut, haha di posisi alfabetis', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)
-    expect(keys).toHaveLength(10)
+    expect(keys).toHaveLength(11) // v220-i bump: pahompu masuk
     expect([...keys].sort()).toEqual([
       'amangboru',
       'boru',
@@ -113,6 +113,7 @@ describe('kinship-aliases haha Toba (v219-i, kind sibling, kakak laki-laki, dua 
       'lae',
       'namboru',
       'ompung suhut',
+      'pahompu',
       'pariban',
       'tulang',
     ])
