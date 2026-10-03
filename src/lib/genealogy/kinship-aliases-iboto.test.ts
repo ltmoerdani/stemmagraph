@@ -45,6 +45,7 @@ describe('kinship-aliases iboto Toba (v210-i, cross-sibling, enam sumber)', () =
       'amangboru',
       'boru',
       'butet',
+      'haha',
       'iboto',
       'lae',
       'namboru',
@@ -91,7 +92,7 @@ describe('kinship-aliases iboto Toba (v210-i, cross-sibling, enam sumber)', () =
     expect(b).toEqual(KINSHIP_ALIASES_REGIONAL.Toba['iboto'])
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)
     expect(new Set(keys).size).toBe(keys.length)
-    expect(keys).toHaveLength(9) // v215-i bump: boru masuk
+    expect(keys).toHaveLength(10) // v219-i bump: haha masuk
   })
 
   it('13. kind sibling anggota sah union: label id saudara, en sibling', async () => {

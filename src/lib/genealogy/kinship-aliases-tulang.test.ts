@@ -78,13 +78,14 @@ describe('kinship-aliases tulang Toba (v214-i, kind parent-sibling, saudara laki
     expect(keys).not.toContain('holi')
   })
 
-  it('12. pengunci guard Toba: tepat sembilan key terurut, toHaveLength 9 dan toEqual array', () => {
+  it('12. pengunci guard Toba: tepat sepuluh key terurut, toHaveLength 10 dan toEqual array', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)
-    expect(keys).toHaveLength(9)
+    expect(keys).toHaveLength(10)
     expect([...keys].sort()).toEqual([
       'amangboru',
       'boru',
       'butet',
+      'haha',
       'iboto',
       'lae',
       'namboru',
