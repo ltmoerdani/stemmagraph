@@ -76,6 +76,7 @@ describe('kinship-aliases namboru Toba (v212-i, kind parent-sibling, empat sumbe
       'namboru',
       'ompung suhut',
       'pariban',
+      'tulang',
     ])
   })
 })
