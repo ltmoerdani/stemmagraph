@@ -451,6 +451,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'pariban Toba = sepupu silang cross-cousin, anak kakak beradik laki perempuan berbeda marga, kawin ideal dicatat adat Toba; TIGA SUMBER: Wati 2017 Syiar Hukum Unisba DOI 10.29313/sh.v15i1.2216 plus Situngkir Putrijanji 2026 JIM DOI 10.38035/jim.v5i1.1942 plus Vergouwen 1964 Springer DOI 10.1007/978-94-015-1035-6, arah matrilateral vs patrilateral tidak dipaksakan di enum, dicatat di komentar per Vergouwen',
     },
+    tulang: {
+      kind: 'parent-sibling',
+      depth: 1,
+      region: 'Toba',
+      note: 'tulang Toba = saudara laki-laki ibu (maternal uncle, MB), sapaan hormat kepada paman dari pihak ibu; DUA SUMBER: Wiktionary lema tulang bagian Toba Batak glosa maternal uncle plus KBBI VI lema tulang2 Bt saudara laki-laki dari ibu; cakupan makna MB saja, sense mertua ditahan karena single-source dan belum dimasukkan; homonim anatomi holi (tulang = bone) dicatat dan tidak dipetakan; referensi notes/2026-10-03-evidence-tuuk-vol2-seg5-10-namboru-lae-tulang-ngelingkah.md',
+    },
     'ompung suhut': {
       kind: 'grandparent',
       depth: 2,
