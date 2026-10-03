@@ -476,6 +476,14 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       note: 'iboto Toba = saudara lawan jenis cross-sibling, kakak atau adik beda gender dalam pasangan laki perempuan, sapaan vokatif umum; ENAM SUMBER: Wiktionary EN lema iboto bagian Toba Batak glosa sister of a man oldid 91176215 plus kamusbatak www entri iboto 12 makna cross-sibling akses 2 Okt 2026 plus Meerwaldt 1904 h58 glosa saudara lawan jenis plus bentuk klitik ito itong plus Vergouwen 1964 glosa cross-sibling mutually iboto plus Holle lists vol 9 ANU 1986 daftar kins Samosir plus Dammerboer 1879 Alkitab Angkola korpus native Markus 10, referensi notes/500 dan notes/501',
     },
   },
+  Simalungun: {
+    anggi: {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Simalungun',
+      note: 'anggi Simalungun = adik kandung gender-netral (little brother or sister), sapaan antar saudara beda lahir, layer bahasa Simalungun terpisah eksplisit dari observasi internal Toba; DUA SUMBER: Wiktionary EN lema anggi bagian Simalungun Batak glosa little brother or sister oldid 84794146 plus Kamus Bahasa Simalungun-Indonesia 2015 hlm 1 Balai Bahasa Sumatra Utara, referensi reports/draft-goal-v216i-stg-anggi-2026-10-03',
+    },
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
