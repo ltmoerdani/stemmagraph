@@ -122,6 +122,7 @@ describe('kinship-aliases sepemeren Karo (v198-i, kind cousin makna MZD, dua sum
   it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key setelah sepemeren masuk (v198-i add-only, sebelumnya 16)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
     expect(keys).toEqual([
+      'anak beru',
       'bapa nguda',
       'bapa tua',
       'batangna',
@@ -144,7 +145,7 @@ describe('kinship-aliases sepemeren Karo (v198-i, kind cousin makna MZD, dua sum
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(21) // v207-i bump 20 jadi 21 (ngalih)
+    expect(keys.length).toBe(22) // v225-i bump 21 jadi 22 (anak beru)
   })
 
   it('guard: objek Toba tetap 5 key amangboru butet iboto ompung suhut pariban dan map regional tetap dua region (v209-i bump, amangboru add-only)', () => {

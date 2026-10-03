@@ -113,6 +113,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
   it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key setelah unjuken masuk (v197-ii add-only)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
     expect(keys).toEqual([
+      'anak beru',
       'bapa nguda',
       'bapa tua',
       'batangna',
@@ -135,7 +136,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(21) // v207-i bump 20 jadi 21 (ngalih)
+    expect(keys.length).toBe(22) // v225-i bump 21 jadi 22 (anak beru)
   })
 
   it('guard: objek Toba tetap 5 key amangboru butet iboto ompung suhut pariban dan map regional tetap dua region (v209-i bump, amangboru add-only)', () => {

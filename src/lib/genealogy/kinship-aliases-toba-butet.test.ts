@@ -64,7 +64,7 @@ describe('kinship-aliases butet Toba (v193-i regional map, panggilan sayang anak
 
   it('guard: objek Karo tetap 17 key (v196-i bump), tidak tersentuh penambahan Toba', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys.length).toBe(21) // v207-i bump 20 jadi 21 (ngalih)
+    expect(keys.length).toBe(22) // v225-i bump 21 jadi 22 (anak beru)
     expect(keys).toContain('sukut')
   })
 
