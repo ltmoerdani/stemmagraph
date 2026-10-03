@@ -70,6 +70,6 @@ describe('kinship-aliases butet Toba (v193-i regional map, panggilan sayang anak
 
   it('guard: map regional kini berisi tepat dua region Karo dan Toba', () => {
     const regions = Object.keys(KINSHIP_ALIASES_REGIONAL).sort()
-    expect(regions).toEqual(['Karo', 'Toba'])
+    expect(regions).toEqual(['Karo', 'Simalungun', 'Toba'])
   })
 })
