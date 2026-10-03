@@ -34,8 +34,11 @@ describe('alias Karo (v185-i)', () => {
     expect(e?.region).toBe('Karo')
   })
 
-  it('negatif: kalimbubu nihil, istilah afinal ditahan goal terpisah', () => {
-    expect(resolveAlias('kalimbubu')).toBeNull()
+  it('negatif lama dibalik v222-i: kalimbubu kini terdaftar kind pernikahan Karo', () => {
+    const e = resolveAlias('kalimbubu', 'Karo')
+    expect(e).not.toBeNull()
+    expect(e?.kind).toBe('pernikahan')
+    expect(e?.depth).toBe(1)
   })
 
   it('negatif: aguni nihil, homonim Wiktionary bukan alias terdaftar', () => {
