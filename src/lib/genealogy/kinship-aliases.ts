@@ -439,6 +439,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'namboru Toba = saudara perempuan ayah (father sister, FZ), sapaan hormat; EMPAT SUMBER: kamusbatak www /indonesia/namboru.html glosa saudari ayah plus contoh kalimat native akses 3 Okt 2026 plus van der Tuuk 1861 vol 2 baris 43749 glosa vader zuster plus Tuuk vol 1 salinan Michigan baris 43993 glosa sama plus Meerwaldt 1904 baris 8343 entri lema Namboru tante zuster van iemands vader, referensi notes/2026-10-03-evidence-tuuk-vol2-seg5-10-namboru-lae-tulang-ngelingkah.md',
     },
+    lae: {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Toba',
+      note: 'lae Toba = ipar laki-laki (zwager, brother-in-law), sapaan affine; DUA SUMBER: kamusbatak www /indonesia/lae.html glosa ipar akses 3 Okt 2026 plus Meerwaldt 1904 baris 8029 entri lema Lae zwager (salinan Harvard archive.org, terkonfirmasi first-hand), referensi notes/2026-10-03-evidence-tuuk-vol2-seg5-10-namboru-lae-tulang-ngelingkah.md',
+    },
     pariban: {
       kind: 'cousin',
       depth: 1,
