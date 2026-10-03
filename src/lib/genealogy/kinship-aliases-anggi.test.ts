@@ -77,10 +77,10 @@ describe('kinship-aliases anggi Simalungun (v216-i, kind sibling, adik kandung g
     expect(resolveAlias('kaka', 'Karo')).not.toBeNull()
   })
 
-  it('11. guard region Simalungun: tepat satu key, dua bentuk', () => {
-    const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Simalungun)
-    expect(keys).toHaveLength(1)
-    expect(keys).toEqual(['anggi'])
+  it('11. guard region Simalungun: tepat dua key (abang, anggi), terurut', () => {
+    const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Simalungun).sort()
+    expect(keys).toHaveLength(2)
+    expect(keys).toEqual(['abang', 'anggi'])
   })
 
   it('12. guard daftar region: Karo, Simalungun, Toba', () => {

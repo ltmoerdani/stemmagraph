@@ -483,6 +483,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Simalungun',
       note: 'anggi Simalungun = adik kandung gender-netral (little brother or sister), sapaan antar saudara beda lahir, layer bahasa Simalungun terpisah eksplisit dari observasi internal Toba; DUA SUMBER: Wiktionary EN lema anggi bagian Simalungun Batak glosa little brother or sister oldid 84794146 plus Kamus Bahasa Simalungun-Indonesia 2015 hlm 1 Balai Bahasa Sumatra Utara, referensi reports/draft-goal-v216i-stg-anggi-2026-10-03',
     },
+    abang: {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Simalungun',
+      note: 'abang Simalungun = kakak laki-laki (elder brother), register sapaan hormat; SINGLE ANCHOR terverifikasi: Kamus Bahasa Simalungun-Indonesia 2015 Balai Bahasa Sumut hlm 1 entri abang [abaG] n abang marabang v berabang memanggil abang (ekstraksi PM dari PDF archive, tmp_kamus_hlm1.txt); Wiktionary EN section Simalungun Batak TIDAK dihitung sumber kedua karena mengutip kamus 2015 yang sama (Reference Zufri Hidayat et al. 2015, verifikasi API W1703); homonim KBBI: abang2 Jawa, abang3 Lay, abang5 Ldy (guard di test)',
+    },
   },
 }
 
