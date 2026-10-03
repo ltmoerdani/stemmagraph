@@ -487,6 +487,13 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'iboto Toba = saudara lawan jenis cross-sibling, kakak atau adik beda gender dalam pasangan laki perempuan, sapaan vokatif umum; ENAM SUMBER: Wiktionary EN lema iboto bagian Toba Batak glosa sister of a man oldid 91176215 plus kamusbatak www entri iboto 12 makna cross-sibling akses 2 Okt 2026 plus Meerwaldt 1904 h58 glosa saudara lawan jenis plus bentuk klitik ito itong plus Vergouwen 1964 glosa cross-sibling mutually iboto plus Holle lists vol 9 ANU 1986 daftar kins Samosir plus Dammerboer 1879 Alkitab Angkola korpus native Markus 10, referensi notes/500 dan notes/501',
     },
+    'dongan sa-': {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Toba',
+      register: 'netral',
+      note: 'dongan sa- Toba = kolektif kawan se-perut, se-pusar, se-kandungan (buikgenoot), bloedverwant saudara serumah kandungan, prefiks sa- berarti satu; kind sibling depth 1 register netral; TIGA SUMBER: Stap 1912 Nederlandsch-Tobasche woordenlijst hlm 85 dua entri (Bloedverwant: dongan sapoesok saboetoeha saboltok; marga: dongan samarga saboltok sapoesok saboetoeha, tondong untuk marga beda) plus Holle lists vol 9 ANU 1986 hlm 354 butir 53-62 (poesok pusar, boetoeha perut, tali pusar) plus Tuuk 1897 Kawi-Balineesch-Nederlandsch hlm 853 glosa buikgenoot pembanding Batak; homonim guard: dongan polos tetap null (terkunci negatif di test boru) dan bukan istilah pertemanan umum; tondong belum entri; referensi notes/517 dan notes/518',
+    },
   },
   Simalungun: {
     anggi: {
