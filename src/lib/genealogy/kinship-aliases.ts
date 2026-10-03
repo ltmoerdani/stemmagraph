@@ -451,6 +451,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'pariban Toba = sepupu silang cross-cousin, anak kakak beradik laki perempuan berbeda marga, kawin ideal dicatat adat Toba; TIGA SUMBER: Wati 2017 Syiar Hukum Unisba DOI 10.29313/sh.v15i1.2216 plus Situngkir Putrijanji 2026 JIM DOI 10.38035/jim.v5i1.1942 plus Vergouwen 1964 Springer DOI 10.1007/978-94-015-1035-6, arah matrilateral vs patrilateral tidak dipaksakan di enum, dicatat di komentar per Vergouwen',
     },
+    pahompu: {
+      kind: 'grandchild',
+      depth: 2,
+      region: 'Toba',
+      note: 'pahompu Toba = cucu (grandchild), panggilan untuk anak dari anak laki-laki maupun perempuan, gender netral; kind grandchild depth 2 mengikuti preseden relasi dua generasi dua arah seperti ompung suhut grandparent depth 2; DUA SUMBER: bahasabataktoba.com entri pahompu glosa cucu (akses 3 Okt 2026) plus Wikikamus bahasa Indonesia lema pahompu Nomina panggilan untuk cucu oldid 1327552 contoh boan pahompu i tu huta dah; penguat Pasaribu dkk 2025 Jurnal Tambusai 9(1) frasa paebathon pahompu; van der Tuuk 1861 nihil lema pahompu dan KBBI nihil dicatat jujur; arah semantik dijaga test negatif: bukan anak langsung (butet child) dan bukan kakek nenek (ompung suhut grandparent)',
+    },
     haha: {
       kind: 'sibling',
       depth: 1,
