@@ -305,6 +305,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'impal Karo = sepupu silang, anak paman atau anak mama; dua sumber: Kamus Bahasa Karo Indonesia 2001 OCR hlm 82 panggilan anak paman plus Sembiring 1991 Biblical Kinship Terms sepupu silang, referensi notes/447',
     },
+    kalimbubu: {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'kalimbubu Karo = pihak pemberi perempuan (wife givers) dalam Rakut Sitelu, resiprokal dengan anak beru pihak pengambil perempuan (wife takers), simpul affinal pernikahan tanpa garis darah; kalimbubu pihak pemberi sangat dihormati; varian komposit puang kalimbubu = kalimbubu of the kalimbubu terdokumentasi di note ini tanpa entri key terpisah; LIMA SUMBER: Woollams 1996 A Grammar of Karo Batak Pacific Linguistics C-130 hdl 1885/145878 baris 220-224 (terms kalimbubu dan anak beru reciprocal relationship rendered approximately wife givers and wife takers, koreksi Singarimbun 1975:111 terjemahan misleading) plus Singarimbun 1975 Kinship Descent and Alliance among the Karo Batak UC Press DOI 10.2307/jj.13167910.12 bab Anakberu-Kalimbubu Relations plus Meiliana 2020 LITERA UNY 19(1) DOI 10.21831/ltr.v19i1.30478 baris 181-184 (pihak Kalimbubu pemberi perempuan sangat dihormati) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 (struktur kalimbubu anak beru disaksikan senina) plus Simbolika Barus-Sitepu 2023 DOI 10.31289/simbolika.v9i2.10139 (Mehamat Man Kalimbubu); arah reciprocity: kalimbubu adalah pemberi, anak beru adalah pengambil',
+    },
     kempu: {
       kind: 'grandchild',
       depth: 1,

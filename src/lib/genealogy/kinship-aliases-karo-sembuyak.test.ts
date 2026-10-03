@@ -48,7 +48,7 @@ describe('alias Karo kelompok kekerabatan (v186-i)', () => {
     expect(resolveAlias('sembuyak2')).toBeNull()
   })
 
-  it('negatif: kalin tidak terdaftar (kalimbubu ditahan butuh kind pernikahan)', () => {
+  it('negatif: kalin tidak terdaftar (potongan lemma kalin bukan key; kalimbubu penuh live sejak v222-i)', () => {
     expect(resolveAlias('kalin')).toBeNull()
   })
 
