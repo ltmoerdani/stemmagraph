@@ -102,6 +102,6 @@ describe('kinship-aliases iboto Toba (v210-i, cross-sibling, enam sumber)', () =
 
   it('14. aliasKinds tidak berubah: map regional tidak bocor ke alias global', () => {
     const kinds = Object.keys(KINSHIP_ALIASES_REGIONAL)
-    expect(kinds.sort()).toEqual(['Karo', 'Toba'])
+    expect(kinds.sort()).toEqual(['Karo', 'Simalungun', 'Toba'])
   })
 })
