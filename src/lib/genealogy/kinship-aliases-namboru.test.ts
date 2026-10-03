@@ -70,6 +70,7 @@ describe('kinship-aliases namboru Toba (v212-i, kind parent-sibling, empat sumbe
   it('14. pengunci guard Toba: tepat enam key terurut setelah penyisipan namboru', () => {
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual([
       'amangboru',
+      'boru',
       'butet',
       'iboto',
       'lae',

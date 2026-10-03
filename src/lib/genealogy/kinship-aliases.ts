@@ -457,6 +457,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'tulang Toba = saudara laki-laki ibu (maternal uncle, MB), sapaan hormat kepada paman dari pihak ibu; DUA SUMBER: Wiktionary lema tulang bagian Toba Batak glosa maternal uncle plus KBBI VI lema tulang2 Bt saudara laki-laki dari ibu; cakupan makna MB saja, sense mertua ditahan karena single-source dan belum dimasukkan; homonim anatomi holi (tulang = bone) dicatat dan tidak dipetakan; referensi notes/2026-10-03-evidence-tuuk-vol2-seg5-10-namboru-lae-tulang-ngelingkah.md',
     },
+    boru: {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Toba',
+      note: 'boru Toba = anak boru, kelompok penerima istri (wife-takers) dalam sistem Dalihan Na Tolu, kategori relasi affinal pemberian istri dari hula-hula ke pihak boru; cakupan makna: kategori relasi pemberian istri, glosa Tuuk dochter (putri) dan schoonzuster (ipar perempuan) dicatat di note ini tanpa dipetakan ke enum terpisah; TIGA SUMBER eksternal: Vergouwen 1964 The Social Organisation and Customary Law of the Toba-Batak of Northern Sumatra (anak boru, boru parsadaan, boru sihabolonan, boru gomgoman) plus Bruner 1974 (boru group pria dan wanita, in-marrying boru families) plus Barbier-Mueller 2011 (nama Boru X pada genealogi perempuan); plus rujukan kamus van der Tuuk 1861 vol 2 glosa dochter bruid schoonzuster namora dan notes/504 notes/505',
+    },
     'ompung suhut': {
       kind: 'grandparent',
       depth: 2,

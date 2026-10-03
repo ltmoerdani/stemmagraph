@@ -85,9 +85,10 @@ describe('kinship-aliases lae Toba (v213-i, kind sibling, ipar laki-laki, dua su
     expect(regionalEntry('Toba', 'lae').kind).toBe('sibling')
   })
 
-  it('15. pengunci guard Toba: tepat delapan key terurut setelah penyisipan tulang', () => {
+  it('15. pengunci guard Toba: tepat sembilan key terurut setelah penyisipan boru', () => {
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual([
       'amangboru',
+      'boru',
       'butet',
       'iboto',
       'lae',

@@ -84,6 +84,7 @@ describe('kinship-aliases amangboru Toba (v209-i, kind pernikahan, FBH, simpul a
   it('12. guard Toba berisi tepat 6 key terurut (v212-i bump, namboru add-only)', () => {
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual([
       'amangboru',
+      'boru',
       'butet',
       'iboto',
       'lae',
@@ -102,8 +103,8 @@ describe('kinship-aliases amangboru Toba (v209-i, kind pernikahan, FBH, simpul a
     expect(regionalEntry('Toba', 'amangboru').qualifier).toBeUndefined()
   })
 
-  it('14. negatif pengunci: istilah dekat (amang, boru) tidak ikut terdaftar di Toba (v214-i: tulang keluar dari daftar negatif karena kini terdaftar)', () => {
-    for (const k of ['amang', 'boru']) {
+  it('14. negatif pengunci: istilah dekat (amang) tidak ikut terdaftar di Toba (v214-i: tulang, v215-i: boru keluar dari daftar negatif karena kini terdaftar)', () => {
+    for (const k of ['amang']) {
       expect(resolveAlias(k, 'Toba'), `Toba.${k}`).toBeNull()
     }
   })
