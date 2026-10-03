@@ -451,6 +451,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'pariban Toba = sepupu silang cross-cousin, anak kakak beradik laki perempuan berbeda marga, kawin ideal dicatat adat Toba; TIGA SUMBER: Wati 2017 Syiar Hukum Unisba DOI 10.29313/sh.v15i1.2216 plus Situngkir Putrijanji 2026 JIM DOI 10.38035/jim.v5i1.1942 plus Vergouwen 1964 Springer DOI 10.1007/978-94-015-1035-6, arah matrilateral vs patrilateral tidak dipaksakan di enum, dicatat di komentar per Vergouwen',
     },
+    haha: {
+      kind: 'sibling',
+      depth: 1,
+      region: 'Toba',
+      note: 'haha Toba = kakak laki-laki (elder brother), sapaan sibling; DUA SUMBER: Stap 1912 Nederlandsch-Tobasche woordenlijst (aps8659.0001.001 umich.edu) glosa oudere broeder haha plus Vergouwen 1964 (socialorganisati0000verg) cross-sibling elder dahahang dan anggi the younger; homonim haha tawa (Indonesia) dijaga test negatif; non-regresi anggi Simalungun',
+    },
     tulang: {
       kind: 'parent-sibling',
       depth: 1,
