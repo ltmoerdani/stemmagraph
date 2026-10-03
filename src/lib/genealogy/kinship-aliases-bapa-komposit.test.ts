@@ -66,6 +66,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
   it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key setelah 4 komposit bapa plus sukut plus turangku plus batangna (v196-i add-only)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
     expect(keys).toEqual([
+      'anak beru',
       'bapa nguda',
       'bapa tua',
       'batangna',
@@ -88,7 +89,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(21) // v207-i bump 20 jadi 21 (ngalih)
+    expect(keys.length).toBe(22) // v225-i bump 21 jadi 22 (anak beru)
   })
 
   it('entri komposit tidak menimpa lema utama bapa: kind depth region tetap', () => {
