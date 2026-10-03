@@ -419,6 +419,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'ngerbani Karo = kawin ganda dua wanita kakak beradik dikawini satu pria (sororal polygyny), entri muncul di dalam lema kawin kamuskaro; DUA SUMBER independen: kamuskaro.com lema kawin (ngerbani = dua wanita kakak beradik dikawini satu pria, akses 1 Okt 2026) plus Singarimbun 1975 Kinship Descent and Alliance among the Karo Batak UC Press DOI 10.2307/jj.13167910 bab Marriage DOI 10.2307/jj.13167910.14 (sororal polygyny Karo), penguat akademik Murdock 1949 Social Structure h418-428 teorema preferential sororal polygyny plus van den Berghe 1979 Human Family Systems h282 co-wives bersaudara plus Kipp 1990 OL1873773M konteks Karo polygyny era kolonial',
     },
+    'anak beru': {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'anak beru Karo = pihak pengambil perempuan (penerima perempuan untuk diperistri) dalam Rakut Sitelu, resiprokal dengan kalimbubu pemberi perempuan, simpul affinal pernikahan tanpa garis darah; Anak Beru disebut pula hakim moral; EMPAT SUMBER: Meiliana 2020 LITERA UNY 19(1) DOI 10.21831/ltr.v19i1.30478 CC BY-SA baris 168-171 teks ekstraksi (pihak pengambil perempuan atau penerima perempuan untuk diperistri, hakim moral) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 (struktur kalimbubu, anak beru; disaksikan senina, Anak Beru dan Kalimbubu) plus Woollams 1996 A Grammar of Karo Batak Pacific Linguistics C-130 hdl 1885/145878 baris 220-224 (kalimbubu dan anak beru reciprocal, wife givers dan wife takers) plus Singarimbun 1975 Kinship Descent and Alliance among the Karo Batak UC Press DOI 10.2307/jj.13167910 (bab Anakberu-Kalimbubu); arah reciprocity: anak beru adalah pengambil, kalimbubu adalah pemberi',
+    },
   },
   Toba: {
     amangboru: {
