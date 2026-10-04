@@ -136,6 +136,7 @@ describe('kinship-aliases sepemeren Karo (v198-i, kind cousin makna MZD, dua sum
       'kalimbubu singalo perkempun',
       'kempu',
       'lemirat',
+      'mehamat man kalimbubu',
       'ngalih',
       'ngerbani',
       'nini',
@@ -149,7 +150,7 @@ describe('kinship-aliases sepemeren Karo (v198-i, kind cousin makna MZD, dua sum
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(26) // v226-i bump 23 jadi 26 (komposit kalimbubu)
+    expect(keys.length).toBe(27) // v227-i bump 26 jadi 27 (komposit mehamat)
   })
 
   it('guard: objek Toba tetap 5 key amangboru butet iboto ompung suhut pariban dan map regional tetap dua region (v209-i bump, amangboru add-only)', () => {
