@@ -467,6 +467,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'kalimbubu singalo perkempun Karo = adik laki-laki dari ibu pengantin wanita, kategori kalimbubu dalam upacara adat pernikahan; komposit tiga kata, key kalimbubu depth 1 tidak berubah; DUA SUMBER: Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 883, 1503-1508, 1613 (perkempun, adik dari ibu pengantin wanita) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 baris 208 dan 221 (pinggan untuk tegun singalo perkempun)',
     },
+    'kalimbubu siperdemui': {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'kalimbubu siperdemui Karo = kalimbubu pernikahan dari pihak sukut, sembuyak, dan senina, sebutan paman berdasarkan kekerabatan dari pihak perempuan yang dinikahi; kind pernikahan depth 1 mengikuti kalimbubu dasar sebagai simpul affinal; DUA SUMBER: Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 2098 dan 3213-3214 (siperdemui paman berdasarkan kekerabatan dari pihak perempuan yang dinikahi) plus Rambe et al. 2025 JAMPARING 3(1) DOI 10.57235/jamparing.v3i1.4771 baris 198-199 (all kalimbubu by marriage of the sukut, sembuyak and senina); DISPARITAS SUMBER: Ginting menyamakan Si Er Pedemui dengan si Erkimbang sedangkan JAMPARING memisahkan Sierkimbang (istri) dan Siperdemui; entri erkimbang terpisah sengaja tidak dibuat mengikuti sumber yang memisahkan',
+    },
     'puang kalimbubu': {
       kind: 'pernikahan',
       depth: 2,

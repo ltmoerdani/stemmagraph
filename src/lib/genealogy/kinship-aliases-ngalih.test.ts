@@ -67,10 +67,10 @@ describe('kinship-aliases ngalih Karo (v207-i, kind pernikahan, levirate kawin m
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
     expect(new Set(keys).size).toBe(keys.length)
     const sorted = [...keys].sort()
-    expect(sorted).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu simada dareh', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kempu', 'lemirat', 'mehamat man kalimbubu', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'singerana', 'sukut', 'turangku', 'unjuken'])
+    expect(sorted).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu simada dareh', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kalimbubu siperdemui', 'kempu', 'lemirat', 'mehamat man kalimbubu', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'singerana', 'sukut', 'turangku', 'unjuken'])
     const i = sorted.indexOf('ngalih')
     expect(sorted[i - 1]).toBe('mehamat man kalimbubu') // v227-i sisip alfabetis antara lemirat dan ngalih
     expect(sorted[i + 1]).toBe('ngerbani')
-    expect(keys.length).toBe(29) // v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias singerana)
+    expect(keys.length).toBe(30) // v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias singerana) (alias kalimbubu siperdemui)
   })
 })

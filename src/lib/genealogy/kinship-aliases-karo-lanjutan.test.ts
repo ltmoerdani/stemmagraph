@@ -55,8 +55,8 @@ describe('kinship-aliases Karo lanjutan (v189-ii kempu bibi)', () => {
 
   it('jumlah key bagian Karo di KINSHIP_ALIASES_REGIONAL tetap 16: kaka impal kempu bibi nini nini ribu nini bulang plus 4 komposit bapa plus sukut plus turangku plus batangna (v196-i)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu simada dareh', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kempu', 'lemirat', 'mehamat man kalimbubu', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'singerana', 'sukut', 'turangku', 'unjuken'])
-    expect(keys.length).toBe(29) // v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias singerana)
+    expect(keys).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu simada dareh', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kalimbubu siperdemui', 'kempu', 'lemirat', 'mehamat man kalimbubu', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'singerana', 'sukut', 'turangku', 'unjuken'])
+    expect(keys.length).toBe(30) // v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias singerana) (alias kalimbubu siperdemui)
   })
 
   it('rantai aliasKinds() panjang tetap 73: entri kempu bibi Karo regional tidak menambah map utama', () => {
