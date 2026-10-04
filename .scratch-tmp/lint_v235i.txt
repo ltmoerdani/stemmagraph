@@ -1,0 +1,245 @@
+
+> stemmagraph@0.1.0 lint
+> eslint .
+
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/App.tsx
+  42:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/App.tsx:42:9
+  40 |       if (!familyTree) {
+  41 |         pushRoute('/dashboard');
+> 42 |         setCurrentView('dashboard');
+     |         ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  43 |         return;
+  44 |       }
+  45 |  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/components/FamilyTree/FamilyTable.tsx
+  440:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/components/FamilyTree/FamilyTable.tsx:440:5
+  438 |
+  439 |   useEffect(() => {
+> 440 |     setCurrentPage(1);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  441 |   }, [searchQuery, columnFilters, viewMode]);
+  442 |
+  443 |   return (  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/components/FamilyTree/ReactFlowFamilyTree.tsx
+  401:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/components/FamilyTree/ReactFlowFamilyTree.tsx:401:5
+  399 |     setNodes(result.nodes);
+  400 |     setEdges(layoutDirection === 'TB' ? initialEdges : result.edges);
+> 401 |     setTiers(result.tiers);
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  402 |
+  403 |     setTimeout(() => {
+  404 |       fitView({ padding: 0.2 });  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/components/FamilyTree/modals/MemberEditModal.tsx
+  93:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/components/FamilyTree/modals/MemberEditModal.tsx:93:7
+  91 |   useEffect(() => {
+  92 |     if (isOpen) {
+> 93 |       setFormData(member);
+     |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  94 |       setErrors({});
+  95 |     }
+  96 |   }, [member, isOpen]);  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-scratch-w1378/src/lib/gedcom/vendor/gedcstruct.js
+  261:18  error  Parsing error: Invalid regular expression: /(?:[\n\r]\p{WSpace}*|$)/: Invalid property name
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/App.tsx
+  42:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/App.tsx:42:9
+  40 |       if (!familyTree) {
+  41 |         pushRoute('/dashboard');
+> 42 |         setCurrentView('dashboard');
+     |         ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  43 |         return;
+  44 |       }
+  45 |  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/components/FamilyTree/FamilyTable.tsx
+  440:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/components/FamilyTree/FamilyTable.tsx:440:5
+  438 |
+  439 |   useEffect(() => {
+> 440 |     setCurrentPage(1);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  441 |   }, [searchQuery, columnFilters, viewMode]);
+  442 |
+  443 |   return (  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/components/FamilyTree/ReactFlowFamilyTree.tsx
+  401:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/components/FamilyTree/ReactFlowFamilyTree.tsx:401:5
+  399 |     setNodes(result.nodes);
+  400 |     setEdges(layoutDirection === 'TB' ? initialEdges : result.edges);
+> 401 |     setTiers(result.tiers);
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  402 |
+  403 |     setTimeout(() => {
+  404 |       fitView({ padding: 0.2 });  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/components/FamilyTree/modals/MemberEditModal.tsx
+  93:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/components/FamilyTree/modals/MemberEditModal.tsx:93:7
+  91 |   useEffect(() => {
+  92 |     if (isOpen) {
+> 93 |       setFormData(member);
+     |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  94 |       setErrors({});
+  95 |     }
+  96 |   }, [member, isOpen]);  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/.qa-archive/.qa-vii/src/lib/gedcom/vendor/gedcstruct.js
+  261:18  error  Parsing error: Invalid regular expression: /(?:[\n\r]\p{WSpace}*|$)/: Invalid property name
+
+/home/zeroclaw/projects/stemmagraph/src/App.tsx
+  42:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/src/App.tsx:42:9
+  40 |       if (!familyTree) {
+  41 |         pushRoute('/dashboard');
+> 42 |         setCurrentView('dashboard');
+     |         ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  43 |         return;
+  44 |       }
+  45 |  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/src/components/FamilyTree/FamilyTable.tsx
+  480:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/src/components/FamilyTree/FamilyTable.tsx:480:5
+  478 |
+  479 |   useEffect(() => {
+> 480 |     setCurrentPage(1);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  481 |   }, [searchQuery, columnFilters, viewMode]);
+  482 |
+  483 |   return (  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/src/components/FamilyTree/ReactFlowFamilyTree.tsx
+  401:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/src/components/FamilyTree/ReactFlowFamilyTree.tsx:401:5
+  399 |     setNodes(result.nodes);
+  400 |     setEdges(layoutDirection === 'TB' ? initialEdges : result.edges);
+> 401 |     setTiers(result.tiers);
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  402 |
+  403 |     setTimeout(() => {
+  404 |       fitView({ padding: 0.2 });  react-hooks/set-state-in-effect
+
+/home/zeroclaw/projects/stemmagraph/src/components/FamilyTree/modals/MemberEditModal.tsx
+   93:20  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/src/components/FamilyTree/modals/MemberEditModal.tsx:93:20
+  91 |   useEffect(() => {
+  92 |     if (!isOpen || dedupMembers.length === 0) {
+> 93 |       if (!isOpen) setDedupWarning([]);
+     |                    ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  94 |       return;
+  95 |     }
+  96 |     const selfId = formData.id;  react-hooks/set-state-in-effect
+  186:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/zeroclaw/projects/stemmagraph/src/components/FamilyTree/modals/MemberEditModal.tsx:186:7
+  184 |   useEffect(() => {
+  185 |     if (isOpen) {
+> 186 |       setFormData(member);
+      |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  187 |       setErrors({});
+  188 |     }
+  189 |   }, [member, isOpen]);                                                        react-hooks/set-state-in-effect
+
+✖ 15 problems (2 errors, 13 warnings)
+

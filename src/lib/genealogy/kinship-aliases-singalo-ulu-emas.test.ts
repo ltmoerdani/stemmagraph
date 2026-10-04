@@ -93,9 +93,9 @@ describe('kinship-aliases kalimbubu singalo ulu emas Karo (v236-i, komposit kali
     expect(sorted[i + 1]).toBe('kalimbubu siperdemui')
   })
 
-  it('guard: objek Karo naik tepat 32 jadi 33 key, tanpa duplikat', () => {
+  it('guard: objek Karo naik tepat 33 jadi 34 key, tanpa duplikat', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
     expect(new Set(keys).size).toBe(keys.length)
-    expect(keys.length).toBe(33) // v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas); v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang)
+    expect(keys.length).toBe(34) // v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas); v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang)
   })
 })
