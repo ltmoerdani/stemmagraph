@@ -122,6 +122,6 @@ describe('kinship-aliases kalimbubu singalo perninin Karo (v238-i, pernikahan de
   it('guard: objek Karo naik tepat 34 jadi 35 key, tanpa duplikat', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
     expect(new Set(keys).size).toBe(keys.length)
-    expect(keys.length).toBe(35) // v238-i bump 34 jadi 35 (alias kalimbubu singalo perninin); v237-i bump 33 jadi 34 (alias kalimbubu singalo perbibin); v236-i bump 32 jadi 33 (singalo ulu emas); v235-i bump 31 jadi 32 (anak beru menteri); v234-i bump 30 jadi 31 (puang ni puang)
+    expect(keys.length).toBe(36) // v239-i bump 35 jadi 36 (alias perkembaren); v238-i bump 34 jadi 35 (alias kalimbubu singalo perninin); v237-i bump 33 jadi 34 (alias kalimbubu singalo perbibin); v236-i bump 32 jadi 33 (singalo ulu emas); v235-i bump 31 jadi 32 (anak beru menteri); v234-i bump 30 jadi 31 (puang ni puang)
   })
 })
