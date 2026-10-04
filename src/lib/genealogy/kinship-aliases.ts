@@ -3,7 +3,7 @@ import type { KinshipKind } from './kinship-calc'
 export interface AliasEntry {
   kind: KinshipKind
   depth?: number
-  qualifier?: 'cak' | 'jw' | 'mk' | 'sunda' | 'jawa' | 'antr'
+  qualifier?: 'cak' | 'jw' | 'mk' | 'sunda' | 'jawa' | 'antr' | 'cn'
   note?: string
   region?: string
   register?: 'hormat' | 'netral'
@@ -45,6 +45,9 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   oma: { kind: 'grandparent', qualifier: 'cak', region: 'Betawi' },
   eyang: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa', register: 'hormat' },
   mbah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
+  embah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
+  engkong: { kind: 'grandparent', qualifier: 'cn', region: 'Tionghoa' },
+  inyik: { kind: 'grandparent', qualifier: 'mk', region: 'Melayu/Minangkabau', register: 'hormat' },
   nini: {
     kind: 'grandparent',
     region: 'Jawa Kuno, Banjar, Karo, Sunda',
