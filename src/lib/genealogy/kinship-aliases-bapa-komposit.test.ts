@@ -76,6 +76,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
       'impal',
       'kaka',
       'kalimbubu',
+      'kalimbubu simada dareh',
       'kalimbubu singalo bere-bere',
       'kalimbubu singalo perkempun',
       'kempu',
@@ -95,7 +96,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(28) // v229-i bump 27 jadi 28 (alias singerana)
+    expect(keys.length).toBe(29) // v232-i bump 28 jadi 29 (alias kalimbubu simada dareh)
   })
 
   it('entri komposit tidak menimpa lema utama bapa: kind depth region tetap', () => {
