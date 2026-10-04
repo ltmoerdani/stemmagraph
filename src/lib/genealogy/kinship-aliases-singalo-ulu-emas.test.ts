@@ -89,7 +89,7 @@ describe('kinship-aliases kalimbubu singalo ulu emas Karo (v236-i, komposit kali
   it('guard posisi alfabetis: sisip alfabetis antara singalo perkempun dan siperdemui', () => {
     const sorted = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
     const i = sorted.indexOf('kalimbubu singalo ulu emas')
-    expect(sorted[i - 1]).toBe('kalimbubu singalo perkempun')
+    expect(sorted[i - 1]).toBe('kalimbubu singalo perninin') // v238-i sisip sebelum ulu emas
     expect(sorted[i + 1]).toBe('kalimbubu siperdemui')
   })
 

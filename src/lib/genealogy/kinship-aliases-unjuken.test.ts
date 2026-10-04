@@ -126,7 +126,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'kalimbubu',
       'kalimbubu simada dareh',
       'kalimbubu singalo bere-bere',
-      'kalimbubu singalo perbibin', 'kalimbubu singalo perkempun', 'kalimbubu singalo ulu emas', 'kalimbubu siperdemui',
+      'kalimbubu singalo perbibin', 'kalimbubu singalo perkempun', 'kalimbubu singalo perninin', 'kalimbubu singalo ulu emas', 'kalimbubu siperdemui',
       'kempu',
       'lemirat',
       'mehamat man kalimbubu',
