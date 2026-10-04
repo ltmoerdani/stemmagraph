@@ -94,7 +94,7 @@ describe('kinship-aliases kalimbubu siperdemui Karo (v233-i, pernikahan depth 1,
     expect(keys).toContain('kalimbubu siperdemui')
     const sorted = [...keys].sort()
     const i = sorted.indexOf('kalimbubu siperdemui')
-    expect(sorted[i - 1]).toBe('kalimbubu singalo perkempun')
+    expect(sorted[i - 1]).toBe('kalimbubu singalo ulu emas') // v236-i: pendahulu alfabetis siperdemui kini singalo ulu emas (ulu < siperdemui), sebelumnya perkempun
     expect(sorted[i + 1]).toBe('kempu')
   })
 })
