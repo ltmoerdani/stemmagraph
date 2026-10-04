@@ -71,7 +71,7 @@ describe('kinship-aliases eda Karo (v199-i, kind sibling, dual makna affine, tig
 
   it('guard: objek Karo berisi tepat 19 key setelah lemirat masuk (v202-i add-only, sebelumnya 18)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
-    expect(keys.length).toBe(28) // v229-i bump 27 jadi 28 (alias singerana)
+    expect(keys.length).toBe(29) // v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias singerana)
     expect(keys).toContain('eda')
     expect(keys).toContain('lemirat')
   })
