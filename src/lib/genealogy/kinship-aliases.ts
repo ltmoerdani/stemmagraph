@@ -479,6 +479,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'puang kalimbubu Karo = kalimbubu dari kalimbubu, lapis kedua pemberi perempuan dalam Rakut Sitelu; v226-i membalik keputusan v222-i yang hanya mendokumentasikan varian ini di note kalimbubu; TIGA SUMBER: Woollams 1996 A Grammar of Karo Batak Pacific Linguistics C-130 hdl 1885/145878 baris 11015-11016 (the puang kalimbubu are the kalimbubu of the kalimbubu, our mother\'s maternal uncles) plus Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 801, 1428, 1491 (mberkat sinuan mengawini putri puang kalimbubu) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 baris 207-208, 213 (tegun puang kalimbubu)',
     },
+    'puang ni puang': {
+      kind: 'pernikahan',
+      depth: 2,
+      region: 'Karo',
+      note: 'puang ni puang Karo = kalimbubu dari puang kalimbubu, tier ketiga pemberi perempuan dalam tutur siwaluh setelah kalimbubu dan puang kalimbubu; kind pernikahan depth 2 konsisten pola puang kalimbubu depth 2; TIGA SUMBER: Rambe et al. 2025 JAMPARING 3(1) DOI 10.57235/jamparing.v3i1.4771 baris 188 (Kalimbubu of Puang Kalimbubu) dan baris 184 (tiers Kalimbubu, Puang Kalimbubu, Puang Ni Puang) plus Charismo Habeahan baris 78-80 (tutur siwaluh: Kalimbubu, Puang Kalimbubu, Puang ni puang, Senina, Sembuyak, anak beru, anak beru menteri, anak beru singukuri) plus Tarigan 2020 EUDL DOI 10.4108/eai.20-9-2019.2296621 baris 80-88 (puang ni puang means the kalimbubu of puang kalimbubu of groom\'s family)',
+    },
     'mehamat man kalimbubu': {
       kind: 'pernikahan',
       depth: 2,
