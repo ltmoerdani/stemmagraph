@@ -67,7 +67,7 @@ describe('kinship-aliases ngalih Karo (v207-i, kind pernikahan, levirate kawin m
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
     expect(new Set(keys).size).toBe(keys.length)
     const sorted = [...keys].sort()
-    expect(sorted).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kempu', 'lemirat', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
+    expect(sorted).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kempu', 'lemirat', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
     const i = sorted.indexOf('ngalih')
     expect(sorted[i - 1]).toBe('lemirat')
     expect(sorted[i + 1]).toBe('ngerbani')

@@ -64,7 +64,7 @@ describe('kinship-aliases ngerbani Karo (v203-i, kind pernikahan, sororal polygy
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
     expect(new Set(keys).size).toBe(keys.length)
     const sorted = [...keys].sort()
-    expect(sorted).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kempu', 'lemirat', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
+    expect(sorted).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kempu', 'lemirat', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
     expect(keys.length).toBe(26) // v226-i bump 23 jadi 26 (komposit kalimbubu)
   })
 
