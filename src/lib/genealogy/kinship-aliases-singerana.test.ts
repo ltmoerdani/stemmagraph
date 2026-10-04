@@ -83,7 +83,7 @@ describe('kinship-aliases singerana Karo (v229-i, peran adat anak beru dalam per
 
   it('guard: objek Karo naik tepat 27 jadi 28 key, singerana sisip alfabetis antara sepemeren dan sukut', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
-    expect(keys.length).toBe(34) // v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
+    expect(keys.length).toBe(35) // v238-i bump 34 jadi 35 (alias kalimbubu singalo perninin); v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
     expect(keys).toContain('singerana')
     const sorted = [...keys].sort()
     const i = sorted.indexOf('singerana')
