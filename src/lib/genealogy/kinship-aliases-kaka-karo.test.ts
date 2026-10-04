@@ -46,8 +46,8 @@ describe('kinship-aliases kaka Karo (v188-ii regional map)', () => {
     expect(r?.kind).not.toBe('parent')
   })
 
-  it('rantai aliasKinds() panjang tetap 71: regional TIDAK menambah key map utama', () => {
-    expect(aliasKinds().length).toBe(71)
+  it('rantai aliasKinds() panjang tetap 73: regional TIDAK menambah key map utama', () => {
+    expect(aliasKinds().length).toBe(73)
     expect(aliasKinds()).not.toContain('kaka karo')
   })
 

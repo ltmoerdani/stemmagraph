@@ -59,8 +59,8 @@ describe('kinship-aliases Karo lanjutan (v189-ii kempu bibi)', () => {
     expect(keys.length).toBe(28) // v229-i bump 27 jadi 28 (alias singerana)
   })
 
-  it('rantai aliasKinds() panjang tetap 71: entri kempu bibi Karo regional tidak menambah map utama', () => {
-    expect(aliasKinds().length).toBe(71)
+  it('rantai aliasKinds() panjang tetap 73: entri kempu bibi Karo regional tidak menambah map utama', () => {
+    expect(aliasKinds().length).toBe(73)
     expect(aliasKinds()).not.toContain('kempu')
     expect(aliasKinds()).not.toContain('bibi')
   })

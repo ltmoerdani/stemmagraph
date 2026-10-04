@@ -105,8 +105,8 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
     expect(KINSHIP_ALIASES.bapa).not.toBe(KINSHIP_ALIASES_REGIONAL.Karo['bapa tua'])
   })
 
-  it('rantai aliasKinds() tetap 71: 4 komposit regional tidak menambah map utama', () => {
-    expect(aliasKinds().length).toBe(71)
+  it('rantai aliasKinds() tetap 73: 4 komposit regional tidak menambah map utama', () => {
+    expect(aliasKinds().length).toBe(73)
     expect(aliasKinds()).not.toContain('bapa tua')
     expect(aliasKinds()).not.toContain('pak uda')
   })

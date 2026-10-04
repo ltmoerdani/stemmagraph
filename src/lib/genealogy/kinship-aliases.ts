@@ -79,6 +79,15 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   'datuk poyang': { kind: 'ancestor' },
   leluhur: { kind: 'ancestor' },
   karuhun: { kind: 'ancestor' },
+  kumpi: {
+    kind: 'ancestor',
+    region: 'Jakarta',
+    note: 'KBBI VI kum.pi1: moyang laki-laki atau perempuan (gender-netral); DUA JANGKAR: KBBI VI entri kumpi kbbi.kemendikdasmen.go.id/entri/kumpi plus tesaurus resmi Badan Bahasa klaster TUA (berpasangan buyut, notes/527); homonim kum.pi2 karung daun nipah wadah terasi tidak dipetakan; pola moyang: tanpa depth eksplisit',
+  },
+  onyang: {
+    kind: 'ancestor',
+    note: 'KBBI VI: ark moyang (arkais); DUA JANGKAR INSTITUSIONAL: KBBI VI entri onyang kbbi.kemendikdasmen.go.id/entri/onyang plus tesaurus resmi Badan Bahasa klaster TUA (notes/526 527); status jujur: nihil sumber akademik independen ketiga (Wiktionary impor KBBI bukan independen, Glosbe 404, OpenAlex nihil konteks Sunda), pola perlakuan inyik',
+  },
   indu: { kind: 'ancestor' },
   opo: { kind: 'ancestor' },
   umbu: { kind: 'ancestor' },
