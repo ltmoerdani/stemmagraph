@@ -71,7 +71,7 @@ describe('kinship-aliases anak beru Karo (v225-i, kind pernikahan depth 1, resip
 
   it('key eksak satu, di map regional Karo, bukan map utama', () => {
     const karoKeys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).filter((k) => k.includes('anak'))
-    expect(karoKeys).toEqual(['anak beru'])
+    expect(karoKeys).toEqual(['anak beru', 'anak beru menteri']) // v235-i +1 anak beru menteri
   })
 
   it('struktur entri persis 4 field depth kind note region', () => {
