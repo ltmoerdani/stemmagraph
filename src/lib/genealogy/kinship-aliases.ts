@@ -449,6 +449,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'puang kalimbubu Karo = kalimbubu dari kalimbubu, lapis kedua pemberi perempuan dalam Rakut Sitelu; v226-i membalik keputusan v222-i yang hanya mendokumentasikan varian ini di note kalimbubu; TIGA SUMBER: Woollams 1996 A Grammar of Karo Batak Pacific Linguistics C-130 hdl 1885/145878 baris 11015-11016 (the puang kalimbubu are the kalimbubu of the kalimbubu, our mother\'s maternal uncles) plus Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 801, 1428, 1491 (mberkat sinuan mengawini putri puang kalimbubu) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 baris 207-208, 213 (tegun puang kalimbubu)',
     },
+    'mehamat man kalimbubu': {
+      kind: 'pernikahan',
+      depth: 2,
+      region: 'Karo',
+      note: 'mehamat man kalimbubu Karo = sikap hormat kepada kalimbubu, formula komposit tiga kata dalam adat Rakut Sitelu; kalimbubu adalah pemberi perempuan, sangat dihormati sebagai pembawa berkat dan disebut Dibata Ni Idah (Tuhan yang terlihat); komposit ini tidak mengubah key kalimbubu depth 1, dan komponen formula lain (metenget ersenina, metami man anak beru) tidak didaftarkan di entri ini; DUA SUMBER UTAMA: Rambe et al. 2025 JAMPARING 3(1) DOI 10.57235/jamparing.v3i1.4771 baris 343-350 (mehamat man kalimbubu means respect for the kalimbubu, pemberi perempuan, pembawa berkat, Dibata Ni Idah) plus Barus dan Sitepu 2023 SIMBOLIKA 9(2) hlm 80-90 DOI 10.31289/simbolika.v9i2.10139 (gaya komunikasi mehamat man kalimbubu umumnya nonverbal memakai benda bermakna; status jujur: full text diblokir Cloudflare 403 di ojs.uma.ac.id, sitasi berbasis abstrak terverifikasi Crossref); PENGUAT: Pane 2025 JERUMI 3(1) DOI 10.57235/jerumi.v3i1.6375 baris 70-74 (kalimbubu pemberi dara sangat dihormati disebut dibata ni idah, anak beru penerima dara)',
+    },
   },
   Toba: {
     amangboru: {
