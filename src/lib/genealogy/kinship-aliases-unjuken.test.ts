@@ -137,6 +137,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'nini ribu',
       'pak tua',
       'pak uda',
+      'perkembaren',
       'puang kalimbubu',
       'puang ni puang',
       'sepemeren',
@@ -145,7 +146,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(35) // v238-i bump 34 jadi 35 (alias kalimbubu singalo perninin); v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
+    expect(keys.length).toBe(36) // v239-i bump 35 jadi 36 (alias perkembaren); v238-i bump 34 jadi 35 (alias kalimbubu singalo perninin); v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
   })
 
   it('guard: objek Toba tetap 5 key amangboru butet iboto ompung suhut pariban dan map regional tetap dua region (v209-i bump, amangboru add-only)', () => {

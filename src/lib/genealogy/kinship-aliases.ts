@@ -377,6 +377,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'pak uda Karo = komposit pak plus uda; SATU SUMBER: Pandiangan 2024; penguat makna tua dari lema tua Karo (abang yang tertua, KamusKaro); referensi notes/449',
     },
+    perkembaren: {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'perkembaren Karo = bagian mas kawin yang diserahkan kepada anak beru dari keluarga ayah pengantin perempuan, istilah adat kawin sirembah kulau; lemma polos tidak dipetakan di luar konteks adat kawin; TIGA SUMBER: pemudamergasilima.id artikel 3 Jul 2023 rujukan Buku Mutiara Hijau Budaya Karo 2012 (Perkembaren ialah bagian mas kawin yang diserahkan kepada anak beru dari keluarga ayah pengantin perempuan) plus Taushiah UISU 12(2) 2022 DOI 10.30743/taushiah.v12i2.6370 (Sirembah Kulau dan Perkembaren setara bibi dari ayah atau turang ayah) plus Language Literacy UISU 6(2) 2022 DOI 10.30743/ll.v6i2.5974 Sample 10 (perkembaren a part of dowry given to anak beru); DISPARITAS dicatat jujur: PMS menempatkan perkembaren sebagai bagian mas kawin, Taushiah menempatkannya sebagai istilah kekerabatan (bibi dari ayah atau turang ayah), entri ini mengikuti penempatan PMS bagian mas kawin dengan kind pernikahan pada konteks sirembah kulau',
+    },
     sukut: {
       kind: 'sibling',
       depth: 1,
