@@ -467,6 +467,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'kalimbubu singalo bere-bere Karo = paman pengantin (saudara laki-laki ibu pengantin), kategori kalimbubu dalam upacara adat pernikahan; komposit tiga kata, key kalimbubu depth 1 tidak berubah; TIGA SUMBER: Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 882, 1044, 1613 (Kalimbubu singalo bere-bere, paman pengantin) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 baris 205 (Kalimbubu Singalo Bere-bere) plus korpus notes/oa/oa1-unimed.txt',
     },
+    'kalimbubu singalo perbibin': {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'kalimbubu singalo perbibin Karo = kakak perempuan dari ibu pengantin wanita (sister of the bride\'s mother), sisereh pihak kalimbubu; komposit tiga kata, key kalimbubu depth 1 tidak berubah; variasi ejaan perbibin/perbibin sah satu kanonik; EMPAT SUMBER: JAMPARING Rambe et al. 2025 DOI 10.57235/jamparing.v3i1.4771 baris 211 verbatim plus Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 1503 dan 1510 verbatim plus Tarigan 2019 EUDL NICCT DOI 10.4108/eai.20-9-2019.2296621 baris 87-88 verbatim plus penguat Language Literacy UISU 6(2) 2022 DOI 10.30743/ll.v6i2.5974 daftar istilah gantang tumba memuat singalo perbibin (abstrak dan kesimpulan, tanpa glos); arah posisi: pihak kalimbubu pemberi wanita, key depth 1 mengikuti kalimbubu dasar',
+    },
     'kalimbubu singalo perkempun': {
       kind: 'pernikahan',
       depth: 2,

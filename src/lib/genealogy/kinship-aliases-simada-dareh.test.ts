@@ -82,7 +82,7 @@ describe('kinship-aliases kalimbubu simada dareh Karo (v232-i, pernikahan depth 
 
   it('guard: objek Karo naik tepat 28 jadi 29 key, simada dareh sisip alfabetis antara kalimbubu dan singalo bere-bere', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
-    expect(keys.length).toBe(33) // v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
+    expect(keys.length).toBe(34) // v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
     expect(keys).toContain('kalimbubu simada dareh')
     const sorted = [...keys].sort()
     const i = sorted.indexOf('kalimbubu simada dareh')

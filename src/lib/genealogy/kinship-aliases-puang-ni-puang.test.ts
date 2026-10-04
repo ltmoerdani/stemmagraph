@@ -104,7 +104,7 @@ describe('kinship-aliases puang ni puang Karo (v234-i, pernikahan depth 2, kalim
 
   it('guard: objek Karo naik tepat 30 jadi 31 key, puang ni puang sisip alfabetis antara puang kalimbubu dan sepemeren', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
-    expect(keys.length).toBe(33) // v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang)
+    expect(keys.length).toBe(34) // v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang)
     expect(keys).toContain('puang ni puang')
     const sorted = [...keys].sort()
     const i = sorted.indexOf('puang ni puang')
