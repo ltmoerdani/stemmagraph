@@ -449,6 +449,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'anak beru Karo = pihak pengambil perempuan (penerima perempuan untuk diperistri) dalam Rakut Sitelu, resiprokal dengan kalimbubu pemberi perempuan, simpul affinal pernikahan tanpa garis darah; Anak Beru disebut pula hakim moral; EMPAT SUMBER: Meiliana 2020 LITERA UNY 19(1) DOI 10.21831/ltr.v19i1.30478 CC BY-SA baris 168-171 teks ekstraksi (pihak pengambil perempuan atau penerima perempuan untuk diperistri, hakim moral) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 (struktur kalimbubu, anak beru; disaksikan senina, Anak Beru dan Kalimbubu) plus Woollams 1996 A Grammar of Karo Batak Pacific Linguistics C-130 hdl 1885/145878 baris 220-224 (kalimbubu dan anak beru reciprocal, wife givers dan wife takers) plus Singarimbun 1975 Kinship Descent and Alliance among the Karo Batak UC Press DOI 10.2307/jj.13167910 (bab Anakberu-Kalimbubu); arah reciprocity: anak beru adalah pengambil, kalimbubu adalah pemberi',
     },
+    'anak beru menteri': {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'anak beru menteri Karo = anak beru dari anak beru, komposit anak beru fase ii, berperan sebagai dukungan dan pemberi saran dalam landan (musyawarah adat); tutur siwaluh mencantumkan anak beru menteri terpisah dari anak beru; kind pernikahan depth 1 mengikuti pola komposit anak beru; DUA SUMBER: Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 1403 (Anak Beru dari Anak Beru) dan baris 1407-1410 (dukungan dan pemberi saran dalam landan) plus Charismo Habeahan baris 80 (tutur siwaluh meliputi Kalimbubu, Puang Kalimbubu, Puang ni puang, Senina, Sembuyak, anak beru, anak beru menteri, anak beru singukuri); arah posisi: tetap pihak anak beru pengambil perempuan, key anak beru depth 1 tidak berubah',
+    },
     'kalimbubu simada dareh': {
       kind: 'pernikahan',
       depth: 1,
