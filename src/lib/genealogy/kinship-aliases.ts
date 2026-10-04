@@ -449,6 +449,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'anak beru Karo = pihak pengambil perempuan (penerima perempuan untuk diperistri) dalam Rakut Sitelu, resiprokal dengan kalimbubu pemberi perempuan, simpul affinal pernikahan tanpa garis darah; Anak Beru disebut pula hakim moral; EMPAT SUMBER: Meiliana 2020 LITERA UNY 19(1) DOI 10.21831/ltr.v19i1.30478 CC BY-SA baris 168-171 teks ekstraksi (pihak pengambil perempuan atau penerima perempuan untuk diperistri, hakim moral) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 (struktur kalimbubu, anak beru; disaksikan senina, Anak Beru dan Kalimbubu) plus Woollams 1996 A Grammar of Karo Batak Pacific Linguistics C-130 hdl 1885/145878 baris 220-224 (kalimbubu dan anak beru reciprocal, wife givers dan wife takers) plus Singarimbun 1975 Kinship Descent and Alliance among the Karo Batak UC Press DOI 10.2307/jj.13167910 (bab Anakberu-Kalimbubu); arah reciprocity: anak beru adalah pengambil, kalimbubu adalah pemberi',
     },
+    'kalimbubu simada dareh': {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'kalimbubu simada dareh Karo = kalimbubu pemberi perempuan di jalur ayah yang sekaligus sedarah dengan ego, dareh berarti darah, sebutan hanya dipakai untuk perempuan; kind pernikahan depth 1 mengikuti kalimbubu dasar sebagai simpul affinal pemberi wanita; DUA SUMBER: Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 2095-2096 dan 3212-3213 (pemberi wanita terhadap generasi ayah atau pihak clan marga dari ibu kandung ego) plus Rambe et al. 2025 JAMPARING 3(1) DOI 10.57235/jamparing.v3i1.4771 baris 196 (Kalimbubu Simada Dareh only available for women, Merga dari jalur ayah pihak perempuan, from her father\'s lineage); arah pemberi: pemberi wanita jalur ayah, pihak pengambil tetap anak beru',
+    },
     'kalimbubu singalo bere-bere': {
       kind: 'pernikahan',
       depth: 2,
