@@ -71,6 +71,6 @@ describe('kinship-aliases ngalih Karo (v207-i, kind pernikahan, levirate kawin m
     const i = sorted.indexOf('ngalih')
     expect(sorted[i - 1]).toBe('lemirat')
     expect(sorted[i + 1]).toBe('ngerbani')
-    expect(keys.length).toBe(23) // v222-i bump 22 jadi 23 (kalimbubu)
+    expect(keys.length).toBe(26) // v226-i bump 23 jadi 26 (komposit kalimbubu)
   })
 })

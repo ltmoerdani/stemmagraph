@@ -80,7 +80,7 @@ describe('kinship-aliases turangku Karo (v195-i, jalur buku Search Inside)', () 
 
   it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key, turangku masuk (v196-i bump)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys.length).toBe(23) // v222-i bump 22 jadi 23 (kalimbubu)
+    expect(keys.length).toBe(26) // v226-i bump 23 jadi 26 (komposit kalimbubu)
     expect(keys).toContain('turangku')
     expect(keys).toContain('diberu')
   })
