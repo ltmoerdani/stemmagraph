@@ -64,8 +64,8 @@ describe('kinship-aliases ngerbani Karo (v203-i, kind pernikahan, sororal polygy
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)
     expect(new Set(keys).size).toBe(keys.length)
     const sorted = [...keys].sort()
-    expect(sorted).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kempu', 'lemirat', 'mehamat man kalimbubu', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
-    expect(keys.length).toBe(27) // v227-i bump 26 jadi 27 (komposit mehamat)
+    expect(sorted).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kempu', 'lemirat', 'mehamat man kalimbubu', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'singerana', 'sukut', 'turangku', 'unjuken'])
+    expect(keys.length).toBe(28) // v229-i bump 27 jadi 28 (alias singerana)
   })
 
   it('14. idempoten struktur: dua resolveAlias berurutan hasil identik (deep equal)', () => {
