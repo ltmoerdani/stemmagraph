@@ -401,6 +401,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'sepemeren Karo = anak perempuan dari kakak perempuan kandung ibu (MZD, anak perempuan dari saudari perempuan ibu), setara sepupu; frasa pemakaian turang sepemeren; DUA SUMBER buku via Open Library Search Inside: Singarimbun 1975 Kinship, descent, and alliance among the Karo Batak label diagram impal sepemeren dua kali di halaman kerabat samping plus kalimat pemakaian 1961 nine were related as turang sepemeren because their mothers were clan sisters plus Iwabuchi 1994 The people of the Alas Valley pemeRen equivalent to sepemeren (rujukan Singarimbun 1975: 202-3) plus tabel lurang sepemeren MZD; referensi notes/466',
     },
+    singerana: {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'singerana Karo = Anak Beru yang berbicara, juru bicara pihak anak beru (pihak pengambil perempuan) dalam prosesi adat pernikahan Karo, dituntut berkomunikasi dengan bahasa santun (mehamat); peran adat dalam Rakut Sitelu, key anak beru depth 1 tidak berubah, singerana adalah entri peran tersendiri dan bukan pengganti anak beru; TRI-SOURCE: Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 439 (yang dominan berbicara pada saat prosesi adat berjalan adalah Anak Beru Singerana, Anak Beru yang berbicara) dan baris 935-937 (Anak Beru Singerana dituntut dapat berkomunikasi dengan bahasa santun mehamat) dan baris 3338 tabel istilah no 76 (Singerana: yang berbicara, juru bicara) plus Rambe et al. 2025 JAMPARING 3(1) DOI 10.57235/jamparing.v3i1.4771 baris 254 (Anak Beru Singerana: who is appointed/determined/suspended from an Anak Beru Tua) plus Tarigan 2020 NICCT EAI/EUDL DOI 10.4108/eai.20-9-2019.2296621 baris 173 (anakberu singerana of the bride family, arah tindak tutur ngerana, ejaan varian anakberu tanpa spasi dicatat jujur); arah peran: singerana bagian dari pihak anak beru pengambil perempuan, bukan pihak kalimbubu pemberi perempuan',
+    },
     eda: {
       kind: 'sibling',
       depth: 1,

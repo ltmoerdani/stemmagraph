@@ -76,7 +76,7 @@ describe('kinship-aliases impal Karo (v189-i regional map)', () => {
 
   it('guard: objek Karo di KINSHIP_ALIASES_REGIONAL berisi tepat 17 key, kaka impal kempu bibi nini nini ribu nini bulang plus 4 komposit bapa plus sukut plus turangku plus batangna (v196-i bump)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
-    expect(keys).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kempu', 'lemirat', 'mehamat man kalimbubu', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'sukut', 'turangku', 'unjuken'])
-    expect(keys.length).toBe(27) // v227-i bump 26 jadi 27 (komposit mehamat)
+    expect(keys).toEqual(['anak beru', 'bapa nguda', 'bapa tua', 'batangna', 'bibi', 'diberu', 'eda', 'impal', 'kaka', 'kalimbubu', 'kalimbubu singalo bere-bere', 'kalimbubu singalo perkempun', 'kempu', 'lemirat', 'mehamat man kalimbubu', 'ngalih', 'ngerbani', 'nini', 'nini bulang', 'nini ribu', 'pak tua', 'pak uda', 'puang kalimbubu', 'sepemeren', 'singerana', 'sukut', 'turangku', 'unjuken'])
+    expect(keys.length).toBe(28) // v229-i bump 27 jadi 28 (alias singerana)
   })
 })
