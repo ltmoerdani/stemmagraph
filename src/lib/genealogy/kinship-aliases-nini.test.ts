@@ -74,10 +74,10 @@ describe('v191-i alias regional Karo: nini (panggilan nenek)', () => {
     expect(resolveAlias('nini tudung', 'Karo')).toBeNull();
   });
 
-  it('puang kalimbubu nihil sbg key terpisah (v222-i: varian komposit terdokumentasi di note kalimbubu), resolve penuh lewat kalimbubu', () => {
-    expect(KINSHIP_ALIASES_REGIONAL.Karo['puang kalimbubu']).toBeUndefined();
-    expect(resolveAlias('puang kalimbubu', 'Karo')).toBeNull();
-    expect(resolveAlias('kalimbubu', 'Karo')?.note).toContain('puang kalimbubu');
+  it('puang kalimbubu menjadi key terpisah sejak v226-i (balik keputusan v222-i), resolve penuh depth 2', () => {
+    expect(KINSHIP_ALIASES_REGIONAL.Karo['puang kalimbubu']).toBeDefined();
+    expect(resolveAlias('puang kalimbubu', 'Karo')).not.toBeNull();
+    expect(resolveAlias('puang kalimbubu', 'Karo')?.depth).toBe(2);
   });
 
   it('guard homonim topi tetap nihil di blok Karo', () => {

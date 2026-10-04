@@ -31,10 +31,12 @@ describe('kinship-aliases kalimbubu Karo (v222-i, kind pernikahan depth 1, resip
     expect(note).toContain('10.31289/simbolika.v9i2.10139')
   })
 
-  it('komposit puang kalimbubu terdokumentasi di note, bukan key terpisah', () => {
-    const note = resolveAlias('kalimbubu', 'Karo')?.note ?? ''
-    expect(note).toContain('puang kalimbubu')
-    expect(KINSHIP_ALIASES_REGIONAL.Karo['puang kalimbubu']).toBeUndefined()
+  it('komposit puang kalimbubu menjadi key terpisah sejak v226-i, resolve penuh depth 2', () => {
+    expect(KINSHIP_ALIASES_REGIONAL.Karo['puang kalimbubu']).toBeDefined()
+    const e = resolveAlias('puang kalimbubu', 'Karo')
+    expect(e).not.toBeNull()
+    expect(e?.kind).toBe('pernikahan')
+    expect(e?.depth).toBe(2)
   })
 
   it('negatif homonim: kalim polos nihil, bukan key', () => {
