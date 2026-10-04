@@ -473,6 +473,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Karo',
       note: 'kalimbubu singalo perkempun Karo = adik laki-laki dari ibu pengantin wanita, kategori kalimbubu dalam upacara adat pernikahan; komposit tiga kata, key kalimbubu depth 1 tidak berubah; DUA SUMBER: Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 883, 1503-1508, 1613 (perkempun, adik dari ibu pengantin wanita) plus Wahyuni 2023 Puteri Hijau Unimed 8(2) DOI 10.24114/ph.v8i2.47936 baris 208 dan 221 (pinggan untuk tegun singalo perkempun)',
     },
+    'kalimbubu singalo ulu emas': {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Karo',
+      note: 'kalimbubu singalo ulu emas Karo = kalimbubu pihak mempelai pria, saudara laki-laki ibu si empo, sierkimbang bapa si empo atau simupus si empo per JAMPARING 2025 baris 214, padanan pihak mempelai pria dari singalo bere-bere dan singalo perkempun; ulu emas berarti kepala emas, upeti adat ke paman; kind pernikahan depth 1 karena sierkimbang bapa sejajar ayah bagi mempelai pria; variasi ejaan si ngalo ulu emas pada Ginting dan Tarigan cukup dicatat di note tanpa key terpisah; TIGA SUMBER: Ginting 2017 OSF Preprints DOI 10.31227/osf.io/mz6kh_v1 baris 2123 dan 2145 plus Rambe et al. 2025 JAMPARING 3(1) DOI 10.57235/jamparing.v3i1.4771 baris 214 plus Tarigan 2019 EUDL NICCT DOI 10.4108/eai.20-9-2019.2296621 baris 81',
+    },
     'kalimbubu siperdemui': {
       kind: 'pernikahan',
       depth: 1,
