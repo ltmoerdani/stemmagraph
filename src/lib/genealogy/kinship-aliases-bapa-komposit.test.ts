@@ -67,6 +67,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).sort()
     expect(keys).toEqual([
       'anak beru',
+      'anak beru menteri',
       'bapa nguda',
       'bapa tua',
       'batangna',
@@ -97,7 +98,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
       'turangku',
       'unjuken',
     ])
-    expect(keys.length).toBe(31) // v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
+    expect(keys.length).toBe(32) // v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
   })
 
   it('entri komposit tidak menimpa lema utama bapa: kind depth region tetap', () => {
