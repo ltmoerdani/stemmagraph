@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { KINSHIP_ALIASES, KINSHIP_ALIASES_REGIONAL, resolveAlias } from './kinship-aliases'
+import { KINSHIP_ALIASES_REGIONAL, resolveAlias } from './kinship-aliases'
 
 describe('kinship-aliases singerana Karo (v229-i, peran adat anak beru dalam pernikahan, depth 1)', () => {
   it('entri singerana terdaftar di blok Karo dengan empat field lengkap', () => {
@@ -18,9 +18,9 @@ describe('kinship-aliases singerana Karo (v229-i, peran adat anak beru dalam per
     expect(e?.depth).toBe(1)
   })
 
-  it('tanpa region juga resolve (blok Karo kanonis untuk istilah ini)', () => {
-    expect(resolveAlias('singerana')?.kind).toBe('pernikahan')
-    expect(resolveAlias('singerana')?.region).toBe('Karo')
+  it('negatif konvensi regional: tanpa region nihil, entri Karo butuh argumen region eksplisit', () => {
+    expect(resolveAlias('singerana')).toBeNull()
+    expect(resolveAlias('singerana', 'Toba')).toBeNull()
   })
 
   it('normalisasi case-insensitive dan trim tetap resolve', () => {
