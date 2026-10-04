@@ -88,6 +88,6 @@ describe('kinship-aliases komposit kalimbubu Karo (v226-i, pernikahan depth 2)',
   })
 
   it('guard jumlah key Karo menjadi 26', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).length).toBe(30) // v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Karo).length).toBe(31) // v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias kalimbubu siperdemui)
   })
 })
