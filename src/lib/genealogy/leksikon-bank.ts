@@ -87,6 +87,11 @@ export function resetLeksikonBank(): void {
   bank = SEED.map(cloneEntry);
 }
 
+/** Salinan dalam seluruh bank (read-only bagi pemanggil), dipakai modul bridge. */
+export function getLeksikonBank(): LeksikonEntry[] {
+  return bank.map(cloneEntry);
+}
+
 /** Resolve lewat lemma atau anggota alias, dua arah. */
 export function lookupLeksikon(query: string): LeksikonEntry | undefined {
   const q = normalizeQuery(query);
