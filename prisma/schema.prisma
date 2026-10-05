@@ -109,6 +109,7 @@ model FamilyMember {
   treeId          String
   name            String
   nickname        String?
+  marga           String?
   birthDate       String
   deathDate       String?
   // GEDCOM-aligned optional columns (v116-ii). JSON of GenealogicalDate

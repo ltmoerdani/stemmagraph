@@ -78,7 +78,7 @@ const seedMembers: FamilyMemberRecord[] = [
   },
   {
     id: '3', treeId: 'wijaya-family', name: 'Andi Wijaya',
-    nickname: 'Mr. Andi', birthDate: '1970-05-15', birthPlace: 'Jakarta',
+    nickname: 'Mr. Andi', marga: 'Siregar', birthDate: '1970-05-15', birthPlace: 'Jakarta',
     currentLocation: 'South Jakarta', profession: 'Entrepreneur', education: "Bachelor's in Economics",
     gender: 'male', isAlive: true, generation: 2, maritalStatus: 'married',
     email: 'andi.wijaya@email.com', phone: '+62812345678',
@@ -295,6 +295,7 @@ export class MockAdapter implements DataAdapter {
       treeId,
       name: input.name,
       nickname: input.nickname,
+      marga: input.marga,
       gender: input.gender,
       birthDate: input.birthDate,
       birthPlace: input.birthPlace,

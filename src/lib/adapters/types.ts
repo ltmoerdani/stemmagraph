@@ -66,6 +66,7 @@ export interface FamilyMemberRecord {
   treeId: string;
   name: string;
   nickname?: string;
+  marga?: string;
   birthDate: string;
   deathDate?: string;
   /** GEDCOM-aligned optional columns (v116-ii): JSON of GenealogicalDate. */
@@ -95,6 +96,7 @@ export interface FamilyMemberRecord {
 export interface CreateMemberInput {
   name: string;
   nickname?: string;
+  marga?: string;
   gender: 'male' | 'female' | 'other';
   birthDate: string;
   birthPlace?: string;
