@@ -2,6 +2,7 @@ export interface FamilyMember {
   id: string;
   name: string;
   nickname?: string;
+  marga?: string;
   birthDate: string;
   deathDate?: string;
   birthPlace?: string;
