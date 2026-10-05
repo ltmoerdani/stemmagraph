@@ -26,7 +26,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   canggah: {
     kind: 'descendant',
     depth: 4,
-    note: 'padanan tidak langsung, sumber definisi bukan lema',
+    note: 'jangkar resmi KBBI VI: canggah2 = piut, cucu dari cucu',
+  },
+  anggas: {
+    kind: 'descendant',
+    depth: 5,
+    note: 'jangkar KBBI VI anggas1: generasi keenam atau keturunan kelima; homonim anggas2 karang buatan dan anggas3 tali perut tidak dipakai',
   },
   kakek: { kind: 'grandparent' },
   nenek: { kind: 'grandparent' },
