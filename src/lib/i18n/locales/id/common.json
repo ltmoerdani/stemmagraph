@@ -465,5 +465,9 @@
     "confirmAction": "Ya, cabut tautan",
     "cancel": "Batal",
     "unavailable": "Kelola tautan bagikan butuh koneksi server dan tidak tersedia di adapter ini."
+  },
+  "form": {
+    "margaLabel": "Marga",
+    "margaHelper": "Nama marga sesuai etnis: marga (Toba, Angkola, Mandailing), merga (Karo, Pakpak), morga (Simalungun). Padanan umumnya fam."
   }
 }

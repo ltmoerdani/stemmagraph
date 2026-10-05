@@ -465,5 +465,9 @@
     "confirmAction": "Yes, revoke link",
     "cancel": "Cancel",
     "unavailable": "Share link management needs the server connection and is unavailable on this adapter."
+  },
+  "form": {
+    "margaLabel": "Clan name",
+    "margaHelper": "Clan name by ethnic variant: marga (Toba, Angkola, Mandailing), merga (Karo, Pakpak), morga (Simalungun). The general equivalent is fam."
   }
 }
