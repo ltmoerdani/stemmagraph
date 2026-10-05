@@ -11,6 +11,7 @@ const buildInitialFormData = (editingMember?: FamilyMember): FormData => {
   return {
     name: editingMember.name ?? '',
     nickname: editingMember.nickname ?? '',
+    marga: editingMember.marga ?? '',
     gender: (editingMember.gender ?? 'male') as FormData['gender'],
     birthDate: editingMember.birthDate ?? '',
     birthPlace: editingMember.birthPlace ?? '',
@@ -39,6 +40,7 @@ interface UnifiedMemberModalProps {
 interface FormData {
   name: string;
   nickname: string;
+  marga: string;
   gender: 'male' | 'female';
   birthDate: string;
   birthPlace: string;
@@ -50,6 +52,7 @@ interface FormData {
 const initialFormData: FormData = {
   name: '',
   nickname: '',
+  marga: '',
   gender: 'male',
   birthDate: '',
   birthPlace: '',
@@ -158,6 +161,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
       const memberData: Partial<FamilyMember> = {
         name: formData.name.trim(),
         nickname: formData.nickname.trim() || undefined,
+        marga: formData.marga.trim() || undefined,
         gender: formData.gender,
         birthDate: formData.birthDate || undefined,
         birthPlace: formData.birthPlace.trim() || undefined,
@@ -174,6 +178,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           const afterJson: Record<string, unknown> = {
             name: formData.name.trim(),
             nickname: formData.nickname.trim() || null,
+            marga: formData.marga.trim() || null,
             gender: formData.gender,
             birthDate: formData.birthDate || null,
             birthPlace: formData.birthPlace.trim() || null,
@@ -199,6 +204,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           id: `member-${crypto.randomUUID()}`,
           name: formData.name.trim(),
           nickname: formData.nickname.trim() || undefined,
+          marga: formData.marga.trim() || undefined,
           gender: formData.gender,
           birthDate: formData.birthDate,
           birthPlace: formData.birthPlace.trim() || undefined,
@@ -361,6 +367,25 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                   placeholder="Nickname or alias"
                   disabled={isSubmitting}
                 />
+              </div>
+
+              {/* Marga */}
+              <div>
+                <label htmlFor="marga" className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('form.margaLabel')}
+                </label>
+                <input
+                  id="marga"
+                  type="text"
+                  value={formData.marga}
+                  onChange={(e) => updateFormData({ marga: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  aria-describedby="marga-helper"
+                  disabled={isSubmitting}
+                />
+                <p id="marga-helper" className="mt-1 text-xs text-gray-500">
+                  {t('form.margaHelper')}
+                </p>
               </div>
 
               {/* Gender */}
