@@ -65,6 +65,9 @@ export const MemberDetailSidebar: React.FC = () => {
           {selectedMember.nickname && (
             <p className="text-gray-600">"{selectedMember.nickname}"</p>
           )}
+          {selectedMember.marga && (
+            <p className="text-gray-600">{selectedMember.marga}</p>
+          )}
         </div>
 
         {/* Basic Information */}
