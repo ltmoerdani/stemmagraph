@@ -56,7 +56,7 @@ describe('kinship-aliases-karo-inti (v188-i)', () => {
   })
 
   it('rantai: aliasKinds total 73 pasca v188-i', () => {
-    expect(aliasKinds().length).toBe(76)
+    expect(aliasKinds().length).toBe(77)
   })
 
   it('determinisme: resolveAlias bapa dua panggilan hasil identik', () => {

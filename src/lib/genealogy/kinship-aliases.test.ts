@@ -84,7 +84,6 @@ describe('KINSHIP_ALIASES', () => {
     'piat',
     'senenek',
     'semoyang',
-    'anggas',
     'miut',
     'ranggas',
     'cicit2',
