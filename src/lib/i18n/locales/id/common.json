@@ -468,6 +468,8 @@
   },
   "form": {
     "margaLabel": "Marga",
-    "margaHelper": "Nama marga sesuai etnis: marga (Toba, Angkola, Mandailing), merga (Karo, Pakpak), morga (Simalungun). Padanan umumnya fam."
+    "margaHelper": "Nama marga sesuai etnis: marga (Toba, Angkola, Mandailing), merga (Karo, Pakpak), morga (Simalungun). Padanan umumnya fam.",
+    "margaSuggestLabel": "Saran:",
+    "margaSuggestAria": "Gunakan saran marga"
   }
 }
