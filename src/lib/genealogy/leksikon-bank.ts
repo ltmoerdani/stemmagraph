@@ -244,8 +244,9 @@ export function normalizeMarga(raw: string): string {
 
 /**
  * Bandingkan dua marga secara longgar. Mengembalikan false bila salah
- * satu nilai undefined atau kosong setelah trim; true bila versi
- * lowercase dan spasi-collapse keduanya identik, sehingga
+ * satu nilai undefined atau kosong setelah trim; true bila kunci
+ * perbandingan keduanya identik. Kunci dibentuk dari lowercase,
+ * spasi-collapse, dan hyfen yang diperlakukan setara spasi, sehingga
  * "Perangin-angin", "perangin-angin", dan "perangin  angin"
  * dianggap sama.
  */
@@ -254,8 +255,8 @@ export function isSameMarga(
   b: string | undefined,
 ): boolean {
   if (a === undefined || b === undefined) return false;
-  const na = normalizeMarga(a).toLowerCase();
-  const nb = normalizeMarga(b).toLowerCase();
-  if (na === '' || nb === '') return false;
-  return na === nb;
+  const keyA = normalizeMarga(a).toLowerCase().replace(/[\s-]+/g, ' ').trim();
+  const keyB = normalizeMarga(b).toLowerCase().replace(/[\s-]+/g, ' ').trim();
+  if (keyA === '' || keyB === '') return false;
+  return keyA === keyB;
 }
