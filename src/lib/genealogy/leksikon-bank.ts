@@ -232,3 +232,31 @@ export function suggestMargaValues(
   }
   return [...canonical.values()].sort((a, b) => a.localeCompare(b));
 }
+
+/**
+ * Normalisasi ringan sebuah marga: buang spasi di kedua ujung lalu
+ * lipat rangkaian spasi menjadi satu spasi. Bentuk huruf dipertahankan
+ * apa adanya; fungsi ini tidak mengubah case.
+ */
+export function normalizeMarga(raw: string): string {
+  return raw.trim().replace(/\s+/g, ' ');
+}
+
+/**
+ * Bandingkan dua marga secara longgar. Mengembalikan false bila salah
+ * satu nilai undefined atau kosong setelah trim; true bila kunci
+ * perbandingan keduanya identik. Kunci dibentuk dari lowercase,
+ * spasi-collapse, dan hyfen yang diperlakukan setara spasi, sehingga
+ * "Perangin-angin", "perangin-angin", dan "perangin  angin"
+ * dianggap sama.
+ */
+export function isSameMarga(
+  a: string | undefined,
+  b: string | undefined,
+): boolean {
+  if (a === undefined || b === undefined) return false;
+  const keyA = normalizeMarga(a).toLowerCase().replace(/[\s-]+/g, ' ').trim();
+  const keyB = normalizeMarga(b).toLowerCase().replace(/[\s-]+/g, ' ').trim();
+  if (keyA === '' || keyB === '') return false;
+  return keyA === keyB;
+}
