@@ -215,22 +215,23 @@ export function addEntry(entry: LeksikonEntry): AddEntryResult {
 
 /**
  * Kumpulkan marga unik dari seluruh bank sebagai saran pengisian
- * margaNote. Nilai di-trim, kosong dibuang, dedup case-insensitive
- * dengan bentuk kanonik dari entri pertama yang menang, hasil diurut
- * alfabetis dengan localeCompare.
- * Parameter opsional hanya untuk keterujian; tanpa argumen membaca bank.
+ * margaNote. Nilai di-trim, kosong dibuang, dedup longgar lewat
+ * isSameMarga sehingga varian case, spasi, dan hyfen melipat ke satu
+ * nilai; bentuk dari entri pertama yang menang jadi kanonik. Sort
+ * localeCompare dijalankan setelah dedup. Parameter opsional hanya
+ * untuk keterujian; tanpa argumen membaca bank.
  */
 export function suggestMargaValues(
   entries: LeksikonEntry[] = getLeksikonBank(),
 ): string[] {
-  const canonical = new Map<string, string>();
+  const canonical: string[] = [];
   for (const entry of entries) {
     const note = entry.margaNote?.trim();
     if (!note) continue;
-    const key = note.toLowerCase();
-    if (!canonical.has(key)) canonical.set(key, note);
+    if (canonical.some((s) => isSameMarga(s, note))) continue;
+    canonical.push(note);
   }
-  return [...canonical.values()].sort((a, b) => a.localeCompare(b));
+  return canonical.sort((a, b) => a.localeCompare(b));
 }
 
 /**
