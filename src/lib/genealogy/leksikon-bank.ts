@@ -78,6 +78,46 @@ const SEED: LeksikonEntry[] = [
       },
     ],
   },
+  {
+    lemma: 'bengkila',
+    makna: 'paman; suami dari saudara bapak (afinal ayah-berbagi).',
+    dictionaryRecorded: false,
+    sources: [
+      {
+        karya: 'KamusLengkap Karo-Indonesia',
+        lokasi: 'halaman lema bengkila, sesi 264 6 Okt 2026',
+        kutipan: 'paman; suami dari saudara bapak',
+      },
+      {
+        karya: 'Jamparing, Rambe 2025, DOI 10.57235/jamparing.v3i1.4771',
+        lokasi: 'teks lengkap, baris 173-174',
+        kutipan:
+          "Kaden are Bulang (grandfather), Nini (grandmother), Bapa (father), Nande (mother), Bengkila (the husband of the father's sister)",
+      },
+      {
+        karya: 'Noviani 2025, PIPSI, DOI 10.26737/jpipsi.v10i1.6574',
+        lokasi: 'teks lengkap, baris 547',
+        kutipan: 'with greetings such as uncle, aunt, bengkila.',
+      },
+    ],
+  },
+  {
+    lemma: 'silih',
+    makna: 'saudara laki-laki dari istri (afinal sisi istri).',
+    dictionaryRecorded: false,
+    sources: [
+      {
+        karya: 'KamusLengkap Karo-Indonesia',
+        lokasi: 'halaman lema silih, sesi 264 6 Okt 2026',
+        kutipan: 'saudara laki-laki dari istri',
+      },
+      {
+        karya: 'Ginting 2017, OSF, DOI 10.31227/osf.io/mz6kh_v1',
+        lokasi: 'teks lengkap, baris 596-598',
+        kutipan: 'Laki-laki atau saudara dari istri, dan sebaliknya.',
+      },
+    ],
+  },
 ];
 
 let bank: LeksikonEntry[] = SEED.map(cloneEntry);
