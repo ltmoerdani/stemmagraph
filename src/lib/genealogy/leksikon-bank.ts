@@ -25,6 +25,8 @@ export interface LeksikonEntry {
   alias?: string[];
   dictionaryRecorded: boolean;
   sources: LeksikonSource[];
+  /** Catatan marga atau submarga terkait lema tutur. */
+  margaNote?: string;
 }
 
 export type AddEntryResult =
@@ -132,6 +134,25 @@ const SEED: LeksikonEntry[] = [
         karya: 'Limbeng 2010, jlimbeng.blogspot.com',
         lokasi: 'tabel perkade-kaden',
         kutipan: 'Empung (Karo Jahe: Nono, kakek buyut)',
+      },
+    ],
+  },
+  {
+    lemma: 'nini ribu',
+    makna: 'panggilan terhadap nenek yang bermarga submarga Perangin-angin (pola tutur nini plus beru disingkat)',
+    dictionaryRecorded: false,
+    margaNote: 'Perangin-angin',
+    sources: [
+      {
+        karya: 'KamusKaro.net Kamus Bahasa Karo Online',
+        lokasi: 'halaman lema nini-ribu (www.kamuskaro.net/indonesia/nini-ribu.html)',
+        kutipan:
+          'nini ribu adalah: panggilan terhadap nenek yang bermarga submarga perangin-angin',
+      },
+      {
+        karya: 'Limbeng, SEKILAS ADAT BUDAYA KARO',
+        lokasi: 'blog jlimbeng.blogspot.com posting 22 Maret 2010, bagian sapaan butir 2',
+        kutipan: 'Beru Perangin-angin dipanggil Nini Ribu',
       },
     ],
   },

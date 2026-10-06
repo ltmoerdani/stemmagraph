@@ -166,8 +166,15 @@ describe('leksikon-bank', () => {
 
   it('kasus 22: entri lama tidak berubah setelah seed empung', () => {
     const bank = getLeksikonBank();
-    expect(bank).toHaveLength(5);
-    expect(bank.map((e) => e.lemma)).toEqual(['Batang', 'Kali Lumut', 'bengkila', 'silih', 'empung']);
+    expect(bank).toHaveLength(6);
+    expect(bank.map((e) => e.lemma)).toEqual([
+      'Batang',
+      'Kali Lumut',
+      'bengkila',
+      'silih',
+      'empung',
+      'nini ribu',
+    ]);
     expect(bank[0].sources).toHaveLength(2);
     expect(bank[1].alias).toEqual(['Eik Simawangon']);
   });
@@ -210,17 +217,69 @@ describe('leksikon-bank', () => {
     expect(lookupLeksikon('Aek Nauli')).toBeUndefined();
   });
 
-  it('kasus 28: seed naik tepat 1 jadi 5, urutan dan entri lama utuh', () => {
+  it('kasus 28: seed naik tepat 1 jadi 6, urutan dan entri lama utuh', () => {
     const bank = getLeksikonBank();
-    expect(bank).toHaveLength(5);
+    expect(bank).toHaveLength(6);
     expect(bank.map((e) => e.lemma)).toEqual([
       'Batang',
       'Kali Lumut',
       'bengkila',
       'silih',
       'empung',
+      'nini ribu',
     ]);
     expect(bank[2].sources).toHaveLength(3);
     expect(bank[4].sources).toHaveLength(2);
+    expect(bank[5].sources).toHaveLength(2);
+  });
+
+  it('kasus 29: lookup nini ribu ketemu, makna dan dictionaryRecorded terisi', () => {
+    const hit = lookupLeksikon('nini ribu');
+    expect(hit?.lemma).toBe('nini ribu');
+    expect(hit?.makna).toContain('panggilan terhadap nenek');
+    expect(hit?.dictionaryRecorded).toBe(false);
+    expect(lookupLeksikon('  NINI RIBU ')?.lemma).toBe('nini ribu');
+  });
+
+  it('kasus 30: margaNote nini ribu terbaca Perangin-angin', () => {
+    expect(lookupLeksikon('nini ribu')?.margaNote).toBe('Perangin-angin');
+  });
+
+  it('kasus 31: nini ribu punya sources minimal 2 (KamusKaro.net dan Limbeng)', () => {
+    const sources = lookupLeksikon('nini ribu')?.sources ?? [];
+    expect(sources.length).toBeGreaterThanOrEqual(2);
+    expect(sources[0].karya).toContain('KamusKaro.net');
+    expect(sources[1].karya).toContain('Limbeng');
+    expect(sources[1].lokasi).toContain('22 Maret 2010');
+  });
+
+  it('kasus 32: kutipan sumber pertama nini ribu memuat substring perangin-angin', () => {
+    const sources = lookupLeksikon('nini ribu')?.sources ?? [];
+    expect(sources[0].kutipan).toContain('perangin-angin');
+    expect(sources[0].kutipan).toBe(
+      'nini ribu adalah: panggilan terhadap nenek yang bermarga submarga perangin-angin',
+    );
+    expect(sources[1].kutipan).toBe('Beru Perangin-angin dipanggil Nini Ribu');
+  });
+
+  it('kasus 33: parity entri lama tanpa margaNote tetap sah (Batang)', () => {
+    const batang = lookupLeksikon('Batang');
+    expect(batang).toBeDefined();
+    expect(batang?.margaNote).toBeUndefined();
+  });
+
+  it('kasus 34: duplikat lemma nini ribu ditolak duplicate-lemma', () => {
+    const res = addEntry({
+      lemma: 'Nini Ribu',
+      makna: 'lain',
+      dictionaryRecorded: true,
+      sources: [],
+    });
+    expect(res).toEqual({ ok: false, error: 'duplicate-lemma', lemma: 'Nini Ribu' });
+    expect(lookupLeksikon('nini ribu')?.makna).not.toBe('lain');
+  });
+
+  it('kasus 35: getLeksikonBank panjang naik tepat 1 dari 5 menjadi 6', () => {
+    expect(getLeksikonBank()).toHaveLength(6);
   });
 });
