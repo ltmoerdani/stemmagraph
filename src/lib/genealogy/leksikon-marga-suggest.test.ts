@@ -60,4 +60,32 @@ describe('leksikon-marga-suggest', () => {
     resetLeksikonBank();
     expect(suggestMargaValues()).toEqual(['Perangin-angin']);
   });
+
+  it('kasus 6: varian spasi dan hyfen melipat via isSameMarga, bentuk pertama menang', () => {
+    addEntry(entryWithMarga('kale', 'Perangin-angin'));
+    addEntry(entryWithMarga('duman', 'perangin  angin'));
+    addEntry(entryWithMarga('beru', 'PERANGIN ANGIN'));
+    addEntry(entryWithMarga('sibayak', 'Perangin-Angin'));
+    expect(suggestMargaValues()).toEqual(['Perangin-angin']);
+  });
+
+  it('kasus 7: dedup sebelum sort, bentuk kanonik dipakai dalam localeCompare', () => {
+    addEntry(entryWithMarga('raja', 'ginting'));
+    addEntry(entryWithMarga('pandega', 'GINTING'));
+    addEntry(entryWithMarga('kerina', 'Siregar'));
+    expect(suggestMargaValues()).toEqual([
+      'ginting',
+      'Perangin-angin',
+      'Siregar',
+    ]);
+  });
+
+  it('kasus 8: dedup longgar bekerja pada parameter entries langsung', () => {
+    const entries: LeksikonEntry[] = [
+      entryWithMarga('x', 'Karo Karo'),
+      entryWithMarga('y', 'karo karo'),
+      entryWithMarga('z', 'Karo-Karo'),
+    ];
+    expect(suggestMargaValues(entries)).toEqual(['Karo Karo']);
+  });
 });
