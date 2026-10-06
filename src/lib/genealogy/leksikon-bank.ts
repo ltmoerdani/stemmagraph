@@ -118,6 +118,23 @@ const SEED: LeksikonEntry[] = [
       },
     ],
   },
+  {
+    lemma: 'empung',
+    makna: 'kakek buyut; dalam istilah Karo Jahe disebut Nono.',
+    dictionaryRecorded: false,
+    sources: [
+      {
+        karya: 'Tuuk 1861, vol 2 Bijvoegsel',
+        lokasi: 'hlm 543, leaf 557, baris 72119',
+        kutipan: 'voeg in : (empung)',
+      },
+      {
+        karya: 'Limbeng 2010, jlimbeng.blogspot.com',
+        lokasi: 'tabel perkade-kaden',
+        kutipan: 'Empung (Karo Jahe: Nono, kakek buyut)',
+      },
+    ],
+  },
 ];
 
 let bank: LeksikonEntry[] = SEED.map(cloneEntry);
