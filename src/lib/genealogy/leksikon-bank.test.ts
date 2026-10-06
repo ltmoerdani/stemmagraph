@@ -164,11 +164,63 @@ describe('leksikon-bank', () => {
     expect(lookupLeksikon('Aek Nauli')).toBeUndefined();
   });
 
-  it('kasus 22: seed naik tepat 2 entri dan entri lama tidak berubah', () => {
+  it('kasus 22: entri lama tidak berubah setelah seed empung', () => {
     const bank = getLeksikonBank();
-    expect(bank).toHaveLength(4);
-    expect(bank.map((e) => e.lemma)).toEqual(['Batang', 'Kali Lumut', 'bengkila', 'silih']);
+    expect(bank).toHaveLength(5);
+    expect(bank.map((e) => e.lemma)).toEqual(['Batang', 'Kali Lumut', 'bengkila', 'silih', 'empung']);
     expect(bank[0].sources).toHaveLength(2);
     expect(bank[1].alias).toEqual(['Eik Simawangon']);
+  });
+
+  it('kasus 23: lookup empung ketemu, makna dan dictionaryRecorded terisi', () => {
+    const hit = lookupLeksikon('empung');
+    expect(hit?.lemma).toBe('empung');
+    expect(hit?.makna).toContain('kakek buyut');
+    expect(hit?.dictionaryRecorded).toBe(false);
+    expect(lookupLeksikon('  EMPUNG ')?.lemma).toBe('empung');
+  });
+
+  it('kasus 24: empung punya 2 sumber (Tuuk 1861 Bijvoegsel dan Limbeng 2010)', () => {
+    const sources = lookupLeksikon('empung')?.sources ?? [];
+    expect(sources.length).toBeGreaterThanOrEqual(2);
+    expect(sources).toHaveLength(2);
+    expect(sources[0].karya).toContain('Tuuk 1861');
+    expect(sources[1].karya).toContain('Limbeng');
+  });
+
+  it('kasus 25: kutipan empung memuat substring kunci verbatim tiap sumber', () => {
+    const sources = lookupLeksikon('empung')?.sources ?? [];
+    expect(sources[0].kutipan).toContain('voeg in');
+    expect(sources[0].kutipan).toBe('voeg in : (empung)');
+    expect(sources[0].lokasi).toContain('hlm 543');
+    expect(sources[1].kutipan).toContain('Empung (Karo Jahe: Nono, kakek buyut)');
+    expect(sources[1].lokasi).toContain('perkade-kaden');
+  });
+
+  it('kasus 26: duplikat lemma empung ditolak duplicate-lemma', () => {
+    const res = addEntry({ lemma: 'Empung', makna: 'lain', dictionaryRecorded: true, sources: [] });
+    expect(res).toEqual({ ok: false, error: 'duplicate-lemma', lemma: 'Empung' });
+    expect(lookupLeksikon('empung')?.makna).not.toBe('lain');
+  });
+
+  it('kasus 27: reset bank tetap memuat empung, entri tambahan hilang', () => {
+    addEntry({ lemma: 'Aek Nauli', dictionaryRecorded: false, sources: [] });
+    resetLeksikonBank();
+    expect(lookupLeksikon('empung')).toBeDefined();
+    expect(lookupLeksikon('Aek Nauli')).toBeUndefined();
+  });
+
+  it('kasus 28: seed naik tepat 1 jadi 5, urutan dan entri lama utuh', () => {
+    const bank = getLeksikonBank();
+    expect(bank).toHaveLength(5);
+    expect(bank.map((e) => e.lemma)).toEqual([
+      'Batang',
+      'Kali Lumut',
+      'bengkila',
+      'silih',
+      'empung',
+    ]);
+    expect(bank[2].sources).toHaveLength(3);
+    expect(bank[4].sources).toHaveLength(2);
   });
 });
