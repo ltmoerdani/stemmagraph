@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown, SortAsc, Filter } from 'lucide-react';
 import {
   filterAndSort,
-  searchWithAliases,
   type SearchMember,
   type SearchSortBy,
 } from '../../lib/genealogy/search-filter';
+import { searchMembersWithLeksikon } from '../../lib/genealogy/leksikon-search-bridge';
 import { aliasDisplay } from '../../lib/genealogy/kinship-alias-note';
 
 type SortOption = 'name' | 'age' | 'location' | 'generation';
@@ -40,9 +40,9 @@ export const MemberCardGrid: React.FC = () => {
     // kanvas ini (engine hanya membaca gender saat opsi gender dipakai).
     const searchMembers = members as unknown as SearchMember[];
 
-    // Pencarian teks alias-aware: kandidat query asli plus label kanonik bila
-    // query cocok satu lema KINSHIP_ALIASES, hasil digabung dedup by id.
-    const searched = searchWithAliases(searchMembers, searchQuery);
+    // Pencarian leksikon-aware (v249-i): kandidat query asli plus lemma dan
+    // alias bank leksikon bila query resolve satu entri, dedup by id.
+    const searched = searchMembersWithLeksikon(searchMembers, searchQuery);
 
     // Pemetaan sortBy komponen ke sortBy engine.
     const engineSortBy: SearchSortBy =
