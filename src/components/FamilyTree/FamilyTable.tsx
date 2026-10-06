@@ -6,11 +6,11 @@ import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 import { compareNames } from '../../utils/collator';
 import {
   filterAndSort,
-  searchWithAliases,
   type FilterSortOptions,
   type SearchMember,
   type SearchSortBy,
 } from '../../lib/genealogy/search-filter';
+import { searchMembersWithLeksikon } from '../../lib/genealogy/leksikon-search-bridge';
 import { aliasDisplay } from '../../lib/genealogy/kinship-alias-note';
 import { 
   ChevronUp, 
@@ -315,9 +315,9 @@ export const FamilyTable: React.FC = () => {
     // Adapter: FamilyMember kompatibel dengan SearchMember untuk kebutuhan tabel.
     const searchMembers = members as unknown as SearchMember[];
 
-    // Pencarian teks alias-aware: kandidat query asli plus label kanonik bila
-    // query cocok satu lema KINSHIP_ALIASES, hasil digabung dedup by id.
-    const searched = searchWithAliases(searchMembers, searchQuery ?? '');
+    // Pencarian leksikon-aware (v249-i): kandidat query asli plus lemma dan
+    // alias bank leksikon bila query resolve satu entri, dedup by id.
+    const searched = searchMembersWithLeksikon(searchMembers, searchQuery ?? '');
 
     // Pemetaan sortBy tabel ke sortBy engine.
     const engineSortBy: SearchSortBy =
