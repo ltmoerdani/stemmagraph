@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { X, AlertCircle, CheckCircle, Clock, User, Calendar, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { getChangeReviewApi } from '../../lib/adapters';
+import { suggestMargaValues } from '../../lib/genealogy/leksikon-bank';
 
 const buildInitialFormData = (editingMember?: FamilyMember): FormData => {
   if (!editingMember) return initialFormData;
@@ -85,6 +86,9 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   const [reasonNote, setReasonNote] = useState('');
   const [proposeSent, setProposeSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // v250-ii: saran marga dari bank leksikon, dihitung sekali per mount.
+  const margaSuggestions = useMemo(() => suggestMargaValues(), []);
 
   // Reset form state when the modal opens or the editing target changes.
   // Using the setState-during-render pattern (guarded by a ref) avoids
@@ -386,6 +390,23 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                 <p id="marga-helper" className="mt-1 text-xs text-gray-500">
                   {t('form.margaHelper')}
                 </p>
+                {margaSuggestions.length > 0 && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-gray-500">{t('form.margaSuggestLabel')}</span>
+                    {margaSuggestions.map((saran) => (
+                      <button
+                        key={saran}
+                        type="button"
+                        onClick={() => updateFormData({ marga: saran })}
+                        aria-label={`${t('form.margaSuggestAria')} ${saran}`}
+                        className="px-2 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"
+                        disabled={isSubmitting}
+                      >
+                        {saran}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Gender */}
