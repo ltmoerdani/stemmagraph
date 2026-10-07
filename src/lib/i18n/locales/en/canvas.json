@@ -39,6 +39,7 @@
     "clearSelection": "Clear Selection",
     "membersTitle_one": "{{count}} Family Member",
     "membersTitle_other": "{{count}} Family Members",
+    "margaChipPrefix": "Marga: {{marga}}",
     "searchResultsFor": "Search results for \"{{query}}\"",
     "show": "Show:",
     "all": "All",

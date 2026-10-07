@@ -39,6 +39,7 @@
     "clearSelection": "Batal Pilih",
     "membersTitle_one": "{{count}} Anggota Keluarga",
     "membersTitle_other": "{{count}} Anggota Keluarga",
+    "margaChipPrefix": "Marga: {{marga}}",
     "searchResultsFor": "Hasil pencarian untuk \"{{query}}\"",
     "show": "Tampilkan:",
     "all": "Semua",

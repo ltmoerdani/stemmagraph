@@ -6,6 +6,7 @@ import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 import { compareNames } from '../../utils/collator';
 import {
   filterAndSort,
+  matchesMargaTolerant,
   type FilterSortOptions,
   type SearchMember,
   type SearchSortBy,
@@ -165,6 +166,16 @@ const TableRow: React.FC<TableRowProps> = ({
             {member.nickname && (
               <div className="text-xs text-gray-500 italic">
                 "{highlightText(member.nickname, searchQuery)}"
+              </div>
+            )}
+            {searchQuery && matchesMargaTolerant(member.marga, searchQuery) && (
+              <div className="mt-1">
+                <span
+                  data-testid={`marga-chip-${member.id}`}
+                  className="inline-block px-2 py-0.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded"
+                >
+                  {t('table.margaChipPrefix', { marga: member.marga })}
+                </span>
               </div>
             )}
           </div>

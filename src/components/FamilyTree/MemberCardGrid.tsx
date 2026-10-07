@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown, SortAsc, Filter } from 'lucide-react';
 import {
   filterAndSort,
+  matchesMargaTolerant,
   type SearchMember,
   type SearchSortBy,
 } from '../../lib/genealogy/search-filter';
@@ -17,7 +18,7 @@ type SortDirection = 'asc' | 'desc';
 
 export const MemberCardGrid: React.FC = () => {
   const { members, viewMode, searchQuery, selectedMember } = useFamilyStore();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation(['canvas', 'common']);
   const locale: 'id' | 'en' = i18n.language?.startsWith('en') ? 'en' : 'id';
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -212,12 +213,23 @@ export const MemberCardGrid: React.FC = () => {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-6">
           {filteredMembers.map((member) => (
-            <GridMemberCard
-              key={member.id}
-              member={member}
-              isSelected={selectedMember?.id === member.id}
-              highlightText={(text) => highlightText(text, searchQuery)}
-            />
+            <div key={member.id} className="relative">
+              <GridMemberCard
+                member={member}
+                isSelected={selectedMember?.id === member.id}
+                highlightText={(text) => highlightText(text, searchQuery)}
+              />
+              {searchQuery && matchesMargaTolerant(member.marga, searchQuery) && (
+                <div className="px-3 pb-2">
+                  <span
+                    data-testid={`marga-chip-${member.id}`}
+                    className="inline-block px-2 py-0.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded"
+                  >
+                    {t('table.margaChipPrefix', { marga: member.marga })}
+                  </span>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
