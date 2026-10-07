@@ -6,6 +6,7 @@ import {
   lookupLeksikon,
   normalizeQuery,
   resetLeksikonBank,
+  suggestMargaValues,
 } from './leksikon-bank';
 
 describe('leksikon-bank', () => {
@@ -285,9 +286,43 @@ describe('leksikon-bank', () => {
     expect(getLeksikonBank()).toHaveLength(7);
   });
 
-  it.todo('kasus 36: lookup kela dan Kela (normalisasi) ketemu, 3 sources');
-  it.todo('kasus 37: negatif homonim, kela bu tidak resolve');
-  it.todo('kasus 38: guard suggestMargaValues tidak memunculkan lemma kela');
-  it.todo('kasus 39: kutipan 3 sumber kela verbatim');
+
+
+  it('kasus 36: lookup kela dan Kela (normalisasi) ketemu, makna dan 3 sources', () => {
+    const hit = lookupLeksikon('kela');
+    expect(hit?.lemma).toBe('kela');
+    expect(hit?.makna).toBe('menantu laki-laki (istilah kekerabatan Karo)');
+    expect(hit?.dictionaryRecorded).toBe(false);
+    expect(hit?.margaNote).toBeUndefined();
+    expect(hit?.sources).toHaveLength(3);
+    expect(lookupLeksikon('Kela ')?.lemma).toBe('kela');
+  });
+
+  it('kasus 37: negatif homonim, kela bu tidak resolve ke entri mana pun', () => {
+    expect(lookupLeksikon('kela bu')).toBeUndefined();
+    expect(lookupLeksikon('kela bu ')).toBeUndefined();
+  });
+
+  it('kasus 38: guard suggestMargaValues tidak memunculkan apa pun dari lemma kela', () => {
+    const values = suggestMargaValues();
+    expect(values).not.toContain('kela');
+    expect(values).not.toContain('Kela');
+    expect(values).toEqual(['Perangin-angin']);
+  });
+
+  it('kasus 39: kutipan 3 sumber kela verbatim (Ginting, Woollams, Jamparing dan Rambe)', () => {
+    const sources = lookupLeksikon('kela')?.sources ?? [];
+    expect(sources).toHaveLength(3);
+    expect(sources[0].karya).toContain('Ginting 2017');
+    expect(sources[0].kutipan).toBe(
+      'masing masing agar dapat menerima calon kela (menantu laki-laki) dan calon (menantu perempuan)',
+    );
+    expect(sources[1].karya).toContain('Woollams 1996');
+    expect(sources[1].kutipan).toBe('kela ia : erkelakenca');
+    expect(sources[2].karya).toContain('Jamparing dan Rambe 2025');
+    expect(sources[2].kutipan).toBe(
+      'Bere-bere mamana, one Kela mamina Sendalanen nandangi kalimbubu',
+    );
+  });
 
 });
