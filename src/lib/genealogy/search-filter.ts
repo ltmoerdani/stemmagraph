@@ -82,6 +82,47 @@ function matchesField(member: SearchMember, query: string, field: keyof SearchMe
 }
 
 /**
+ * Kunci normalisasi marga untuk pencocokan toleran ortografi: lowercase,
+ * rangkaian spasi dan hyfen dilipat menjadi satu spasi, lalu trim.
+ * Pola mengikuti isSameMarga pada leksikon-bank.ts sehingga bentuk
+ * ber-hyfen, ber-spasi, dan rapat dianggap setara.
+ */
+function margaKey(value: string | null | undefined): string {
+  return (value ?? '')
+    .toLowerCase()
+    .replace(/[\s-]+/g, ' ')
+    .trim();
+}
+
+/**
+ * Pencocokan marga toleran ortografi (v252-iii).
+ *
+ * Kedua sisi dinormalisasi lewat margaKey, lalu dicocokkan dua arah:
+ * kunci query adalah substring dari kunci tercatat ATAU sebaliknya.
+ * Arah balik menutup kasus query komposit 'Sembiring Meliala' terhadap
+ * tercatat 'Sembiring' yang tidak tertangani matchesField. Lapis kedua
+ * membandingkan kunci rapat tanpa pemisah sehingga tiga ortografi satu
+ * marga (Peranginangin, Perangin-angin, Perangin Angin) saling cocok.
+ * Kosong atau null di salah satu sisi mengembalikan false.
+ *
+ * Pure: tanpa efek samping, deterministik.
+ */
+export function matchesMargaTolerant(
+  recorded: string | null | undefined,
+  query: string | null | undefined,
+): boolean {
+  const keyRecorded = margaKey(recorded);
+  const keyQuery = margaKey(query);
+  if (keyRecorded === '' || keyQuery === '') return false;
+  if (keyRecorded.includes(keyQuery) || keyQuery.includes(keyRecorded)) {
+    return true;
+  }
+  const cRecorded = keyRecorded.replace(/ /g, '');
+  const cQuery = keyQuery.replace(/ /g, '');
+  return cRecorded.includes(cQuery) || cQuery.includes(cRecorded);
+}
+
+/**
  * Terapkan pencarian teks dan filter terstruktur pada daftar anggota.
  *
  * Query dinormalisasi (lowercase, trim) lalu dicocokkan sebagai substring
@@ -105,7 +146,7 @@ export function applySearchFilter(
         matchesField(member, normalizedQuery, 'profession') ||
         matchesField(member, normalizedQuery, 'currentLocation') ||
         matchesField(member, normalizedQuery, 'nickname') ||
-        matchesField(member, normalizedQuery, 'marga');
+        matchesMargaTolerant(member.marga, normalizedQuery);
       if (!textMatch) {
         return false;
       }
