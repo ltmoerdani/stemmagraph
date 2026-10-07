@@ -166,7 +166,7 @@ describe('leksikon-bank', () => {
 
   it('kasus 22: entri lama tidak berubah setelah seed empung', () => {
     const bank = getLeksikonBank();
-    expect(bank).toHaveLength(6);
+    expect(bank).toHaveLength(7);
     expect(bank.map((e) => e.lemma)).toEqual([
       'Batang',
       'Kali Lumut',
@@ -174,6 +174,7 @@ describe('leksikon-bank', () => {
       'silih',
       'empung',
       'nini ribu',
+      'kela',
     ]);
     expect(bank[0].sources).toHaveLength(2);
     expect(bank[1].alias).toEqual(['Eik Simawangon']);
@@ -217,9 +218,9 @@ describe('leksikon-bank', () => {
     expect(lookupLeksikon('Aek Nauli')).toBeUndefined();
   });
 
-  it('kasus 28: seed naik tepat 1 jadi 6, urutan dan entri lama utuh', () => {
+  it('kasus 28: seed naik tepat 1 jadi 7, urutan dan entri lama utuh', () => {
     const bank = getLeksikonBank();
-    expect(bank).toHaveLength(6);
+    expect(bank).toHaveLength(7);
     expect(bank.map((e) => e.lemma)).toEqual([
       'Batang',
       'Kali Lumut',
@@ -227,6 +228,7 @@ describe('leksikon-bank', () => {
       'silih',
       'empung',
       'nini ribu',
+      'kela',
     ]);
     expect(bank[2].sources).toHaveLength(3);
     expect(bank[4].sources).toHaveLength(2);
@@ -279,7 +281,13 @@ describe('leksikon-bank', () => {
     expect(lookupLeksikon('nini ribu')?.makna).not.toBe('lain');
   });
 
-  it('kasus 35: getLeksikonBank panjang naik tepat 1 dari 5 menjadi 6', () => {
-    expect(getLeksikonBank()).toHaveLength(6);
+  it('kasus 35: getLeksikonBank panjang naik tepat 1 dari 6 menjadi 7', () => {
+    expect(getLeksikonBank()).toHaveLength(7);
   });
+
+  it.todo('kasus 36: lookup kela dan Kela (normalisasi) ketemu, 3 sources');
+  it.todo('kasus 37: negatif homonim, kela bu tidak resolve');
+  it.todo('kasus 38: guard suggestMargaValues tidak memunculkan lemma kela');
+  it.todo('kasus 39: kutipan 3 sumber kela verbatim');
+
 });

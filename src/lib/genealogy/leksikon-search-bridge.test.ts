@@ -87,7 +87,7 @@ describe('expandQueryWithLeksikon', () => {
   it('kasus 9: hasil ekspansi salinan dalam, mutasi tidak merusak bank', () => {
     const terms = expandQueryWithLeksikon('Kali Lumut');
     terms.push('racun');
-    expect(getLeksikonBank()).toHaveLength(6);
+    expect(getLeksikonBank()).toHaveLength(7);
     expect(expandQueryWithLeksikon('Kali Lumut')).toHaveLength(2);
   });
 });

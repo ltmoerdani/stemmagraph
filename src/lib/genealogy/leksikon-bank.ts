@@ -156,6 +156,29 @@ const SEED: LeksikonEntry[] = [
       },
     ],
   },
+  {
+    lemma: 'kela',
+    makna: 'menantu laki-laki (istilah kekerabatan Karo)',
+    dictionaryRecorded: false,
+    sources: [
+      {
+        karya: 'Ginting 2017, Adat Perkawinan Karo',
+        lokasi: 'teks lengkap, baris 770-771',
+        kutipan:
+          'masing masing agar dapat menerima calon kela (menantu laki-laki) dan calon (menantu perempuan)',
+      },
+      {
+        karya: 'Woollams 1996, A Grammar of Karo Batak',
+        lokasi: 'teks lengkap, baris 3908',
+        kutipan: 'kela ia : erkelakenca',
+      },
+      {
+        karya: 'Jamparing dan Rambe 2025',
+        lokasi: 'teks lengkap, baris 233',
+        kutipan: 'Bere-bere mamana, one Kela mamina Sendalanen nandangi kalimbubu',
+      },
+    ],
+  },
 ];
 
 let bank: LeksikonEntry[] = SEED.map(cloneEntry);
