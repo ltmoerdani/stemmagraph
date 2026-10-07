@@ -22,6 +22,7 @@ export interface SearchMember {
   nickname?: string | null;
   profession?: string | null;
   currentLocation?: string | null;
+  marga?: string | null;
   birthPlace?: string | null;
   birthDate?: string | null;
   deathDate?: string | null;
@@ -103,7 +104,8 @@ export function applySearchFilter(
         matchesField(member, normalizedQuery, 'name') ||
         matchesField(member, normalizedQuery, 'profession') ||
         matchesField(member, normalizedQuery, 'currentLocation') ||
-        matchesField(member, normalizedQuery, 'nickname');
+        matchesField(member, normalizedQuery, 'nickname') ||
+        matchesField(member, normalizedQuery, 'marga');
       if (!textMatch) {
         return false;
       }
