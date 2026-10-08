@@ -9,6 +9,7 @@
  */
 
 import { kinshipAliasPhrase } from './kinship-alias-phrase';
+import { isSameMarga, varianEquiv } from './leksikon-bank';
 
 export type SearchGender = 'M' | 'F' | 'X' | 'U';
 
@@ -125,6 +126,32 @@ export function matchesMargaTolerant(
 }
 
 /**
+ * Pencocokan marga dengan lapis varian ejaan (v252-vi).
+ *
+ * Bila matchesMargaTolerant gagal, cek kelompok varian terkurasi lewat
+ * varianEquiv di KEDUA arah: varian dari query dicocokkan ke tercatat,
+ * dan varian dari tercatat dicocokkan ke query. Contoh kasus yang lolos
+ * lapis ini: query 'Galingging' terhadap tercatat 'Sigalingging' (satu
+ * marga dua ejaan). Kasus Garingging tidak tersentuh karena sengaja
+ * tidak dikelompokkan di MARGA_VARIAN_EQUIV seed.
+ *
+ * Pure: tanpa efek samping, deterministik.
+ */
+function matchesMargaVarian(
+  recorded: string | null | undefined,
+  query: string | null | undefined,
+): boolean {
+  if (matchesMargaTolerant(recorded, query)) return true;
+  if (margaKey(recorded) === '' || margaKey(query) === '') return false;
+  const varianQuery = varianEquiv(query ?? undefined);
+  if (varianQuery.some((v) => isSameMarga(v, recorded ?? undefined))) {
+    return true;
+  }
+  const varianRecorded = varianEquiv(recorded ?? undefined);
+  return varianRecorded.some((v) => isSameMarga(v, query ?? undefined));
+}
+
+/**
  * Terapkan pencarian teks dan filter terstruktur pada daftar anggota.
  *
  * Query dinormalisasi (lowercase, trim) lalu dicocokkan sebagai substring
@@ -148,7 +175,8 @@ export function applySearchFilter(
         matchesField(member, normalizedQuery, 'profession') ||
         matchesField(member, normalizedQuery, 'currentLocation') ||
         matchesField(member, normalizedQuery, 'nickname') ||
-        matchesMargaTolerant(member.marga, normalizedQuery);
+        matchesMargaTolerant(member.marga, normalizedQuery) ||
+        matchesMargaVarian(member.marga, normalizedQuery);
       if (!textMatch) {
         return false;
       }
@@ -173,7 +201,7 @@ export function applySearchFilter(
     }
 
     if (options.marga !== undefined && normalizeText(options.marga) !== '') {
-      if (!matchesMargaTolerant(member.marga, options.marga)) {
+      if (!matchesMargaVarian(member.marga, options.marga)) {
         return false;
       }
     }
