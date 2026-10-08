@@ -35,9 +35,9 @@ describe('kinship-aliases nondong Langkat (v252-ix, kind grandparent depth 1)', 
     expect(resolveAlias('nondong', 'Simalungun')).toBeNull()
   })
 
-  it('5. guard homonim: kata langkat lain homograf tidak ikut terindeks (hanya nondong satu key di blok Langkat)', () => {
-    const keys = Object.keys(KINSHIP_ALIASES_REGIONAL['Langkat'] ?? {})
-    expect(keys).toEqual(['nondong'])
+  it('5. guard homonim: kata langkat lain homograf tidak ikut terindeks (v252-ix: nondong, v252-x bump: plus bulang)', () => {
+    const keys = Object.keys(KINSHIP_ALIASES_REGIONAL['Langkat'] ?? {}).sort()
+    expect(keys).toEqual(['bulang', 'nondong'])
   })
 
   it('6. guard daftar region: Karo, Langkat, Simalungun, Toba', () => {
