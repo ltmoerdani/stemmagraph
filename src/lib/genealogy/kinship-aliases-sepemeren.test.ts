@@ -160,6 +160,6 @@ describe('kinship-aliases sepemeren Karo (v198-i, kind cousin makna MZD, dua sum
 
   it('guard: objek Toba tetap 5 key amangboru butet iboto ompung suhut pariban dan map regional tetap dua region (v209-i bump, amangboru add-only)', () => {
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['amangboru', 'boru', 'butet', 'dongan sa-', 'haha', 'iboto', 'lae', 'namboru', 'ompung suhut', 'pahompu','pariban', 'tulang'])
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Simalungun', 'Toba'])
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Langkat', 'Simalungun', 'Toba']) // v252-ix bump: Langkat masuk)
   })
 })

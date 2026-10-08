@@ -84,7 +84,7 @@ describe('kinship-aliases anggi Simalungun (v216-i, kind sibling, adik kandung g
   })
 
   it('12. guard daftar region: Karo, Simalungun, Toba', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Simalungun', 'Toba'])
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Langkat', 'Simalungun', 'Toba']) // v252-ix bump: Langkat masuk)
   })
 
   it('13. idempoten: resolveAlias deterministik dan sama dengan entri map, qualifier undefined', () => {

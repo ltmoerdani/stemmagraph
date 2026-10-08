@@ -89,6 +89,6 @@ describe('kinship-aliases ompung suhut Toba (v206-i, komposit grandparent, tiga 
   })
 
   it('12. guard region map tetap tepat dua region: Karo dan Toba', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Simalungun', 'Toba'])
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Langkat', 'Simalungun', 'Toba']) // v252-ix bump: Langkat masuk)
   })
 })

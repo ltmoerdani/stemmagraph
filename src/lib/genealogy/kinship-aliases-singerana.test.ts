@@ -92,7 +92,7 @@ describe('kinship-aliases singerana Karo (v229-i, peran adat anak beru dalam per
   })
 
   it('guard regional map tetap tiga region, Toba tidak tersentuh', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Simalungun', 'Toba'])
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Langkat', 'Simalungun', 'Toba']) // v252-ix bump: Langkat masuk)
     expect(KINSHIP_ALIASES_REGIONAL.Toba.singerana).toBeUndefined()
   })
 })
