@@ -284,3 +284,55 @@ export function isSameMarga(
   if (keyA === '' || keyB === '') return false;
   return keyA === keyB;
 }
+
+/**
+ * Kelompok varian ejaan terkurasi satu marga (v252-vi). Anggota satu
+ * kelompok adalah ejaan berbeda untuk marga yang sama, bukan marga
+ * berbeda. Bank entry tidak digabung dan tidak diubah; kelompok ini
+ * hanya lapisan baca untuk pencarian.
+ *
+ * Sumber (akses 8 Okt 2026):
+ * - Wikipedia ID Sigalingging (riset R-020): Galingging dan Sigalingging
+ *   adalah satu marga dua ejaan, jadi dipasangkan di sini.
+ * - Wikipedia ID Saragih oldid 30001542 (verifikasi PM first-hand):
+ *   Garingging adalah cabang asli marga Saragih Simalungun, sedangkan
+ *   Sigalingging adalah marga Toba kelompok Parna. Garingging sengaja
+ *   TIDAK dikelompokkan bersama keduanya dan dipakai sebagai kasus
+ *   negatif pengunci di testfile.
+ */
+export const MARGA_VARIAN_EQUIV: string[][] = [
+  ['Galingging', 'Sigalingging'],
+];
+
+/**
+ * Kembalikan varian ejaan lain untuk sebuah marga (v252-vi).
+ *
+ * Bila input cocok (via isSameMarga) dengan salah satu anggota kelompok
+ * di MARGA_VARIAN_EQUIV, seluruh anggota lain kelompok itu dikembalikan
+ * memakai bentuk kanonik seed. Di luar itu, fungsi tetap mengembalikan
+ * kandidat komposit rapat: bentuk input setelah normalizeMarga lalu
+ * semua spasi dan hyfen dibuang, berguna untuk pencocokan bentuk rapat
+ * seperti PeranginAngin. Input undefined atau kosong setelah trim
+ * mengembalikan array kosong.
+ *
+ * Pure: tanpa I/O, tanpa mutasi bank, deterministik.
+ */
+export function varianEquiv(marga: string | undefined): string[] {
+  if (marga === undefined) return [];
+  const normalized = normalizeMarga(marga);
+  if (normalized === '') return [];
+  const hasil: string[] = [];
+  for (const kelompok of MARGA_VARIAN_EQUIV) {
+    if (!kelompok.some((anggota) => isSameMarga(anggota, marga))) continue;
+    for (const anggota of kelompok) {
+      if (isSameMarga(anggota, marga)) continue;
+      if (hasil.some((s) => isSameMarga(s, anggota))) continue;
+      hasil.push(anggota);
+    }
+  }
+  const rapat = normalized.replace(/[\s-]+/g, '');
+  if (rapat !== '' && !hasil.some((s) => isSameMarga(s, rapat))) {
+    hasil.push(rapat);
+  }
+  return hasil;
+}
