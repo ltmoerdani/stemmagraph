@@ -623,6 +623,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Langkat',
       note: 'nondong Langkat = kakek (grandparent), istilah leksikon kekerabatan Langkat Malay; DUA SUMBER eksternal dual-anchor diikat region langkat sesuai keputusan W061x (sumber berformat <source>:<nama>, bahasa mengikuti anchor pertama); kontrol negatif resmi: KBBI nihil lema nondong (verifikasi Sena 8 Okt 2026 09:4x, kbbi resmi jalur kemendikdasmen), homograf langkat lain tidak ikut terindeks sbg alias (dikunci kasus negatif di testfile); non-duplikat terverifikasi grep rc nihil di kinship-aliases dan leksikon-bank (PM first-hand 8 Okt 2026); referensi draft Sena draft-stg-v252ix dan Log Supervisi BOARD-stemmagraph 8 Okt 2026',
     },
+    bulang: {
+      kind: 'grandparent',
+      depth: 1,
+      region: 'Karo-Langkat',
+      note: 'bulang Karo-Langkat = panggilan kakek (grandfather), istilah suku Karo di Langkat dan sekitarnya; DUA SUMBER: Wikipedia ID Orat Tutur oldid 27551096 (Bulang, Laki, Bayak, Bolang: panggilan kepada kakek; halaman sama menegaskan Nondong = panggilan nenek Langkat) plus Woollams 1996 baris 319 (grandfather eastern nini bularJ, lowlands western in Langkat bolarJ, satu lema ortografi bularJ bolarJ bulang bolang, bolang cukup dicatat sbg ortografi sama tidak jadi key); homonim KBBI bulang1 domain lain TERVERIFIKASI (kain dililit kepala, perhiasan emas pengantin, tali pengikat taji ayam sabung, kbbi.web.id 200 OK, sidebar homograf bulang2) dan korpus Karo akademik Woollams baris 4892 to wear a bulang headdress, makna headgear atau taji TIDAK dipetakan ke set kekerabatan (guard homonim di testfile pola om1 om2 dan uak1 uak2); saringan internal: key standalone bulang nihil di kinship-aliases sebelum entri, komposit live nini bulang JANGAN disentuh; varian laki dan bayak DITAHAN risiko homonim umum nihil kontrol; referensi kontrak v252-x dan Log Supervisi BOARD-stemmagraph 8 Okt 2026',
+    },
   },
 }
 
