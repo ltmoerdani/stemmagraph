@@ -609,6 +609,12 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
     } else if (m.name) {
       const name = new GEDCStruct('NAME', indi, undefined, m.name)
       addText(name, 'NICK', m.nickname)
+      // SURN carries the marga verbatim as a NAME substructure
+      // (v252-vii). addText skips empty values, so members without a
+      // marga keep the previous byte-identical output. Redacted members
+      // reach no branch here: the marga can identify a person on its
+      // own, mirroring the NICK suppression above.
+      addText(name, 'SURN', m.marga)
     }
 
     new GEDCStruct('SEX', indi, undefined, sexPayload(m.gender))
