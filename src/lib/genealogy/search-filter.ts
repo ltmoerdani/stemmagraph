@@ -40,6 +40,8 @@ export interface SearchFilterOptions {
   generation?: number;
   /** true = masih hidup (deathDate null), false = sudah meninggal. */
   isAlive?: boolean;
+  /** Filter marga toleran ortografi (v252-v), dicocokkan via matchesMargaTolerant. */
+  marga?: string;
 }
 
 /** Mode tampilan untuk filterAndSort. */
@@ -168,6 +170,12 @@ export function applySearchFilter(
 
     if (options.isAlive !== undefined && isMemberAlive(member) !== options.isAlive) {
       return false;
+    }
+
+    if (options.marga !== undefined && normalizeText(options.marga) !== '') {
+      if (!matchesMargaTolerant(member.marga, options.marga)) {
+        return false;
+      }
     }
 
     return true;
