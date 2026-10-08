@@ -40,6 +40,7 @@
     "membersTitle_one": "{{count}} Family Member",
     "membersTitle_other": "{{count}} Family Members",
     "margaChipPrefix": "Marga: {{marga}}",
+    "filterMarga": "Marga:",
     "searchResultsFor": "Search results for \"{{query}}\"",
     "show": "Show:",
     "all": "All",

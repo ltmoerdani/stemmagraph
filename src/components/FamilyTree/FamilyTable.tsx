@@ -11,6 +11,7 @@ import {
   type SearchMember,
   type SearchSortBy,
 } from '../../lib/genealogy/search-filter';
+import { suggestMargaValues } from '../../lib/genealogy/leksikon-bank';
 import { searchMembersWithLeksikon } from '../../lib/genealogy/leksikon-search-bridge';
 import { aliasDisplay } from '../../lib/genealogy/kinship-alias-note';
 import { 
@@ -295,6 +296,8 @@ export const FamilyTable: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  // Filter marga lokal (v252-v): satu dimensi, nilai kosong berarti semua.
+  const [margaFilter, setMargaFilter] = useState('');
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     photo: true,
@@ -320,15 +323,37 @@ export const FamilyTable: React.FC = () => {
     ? searchAlias.note ?? searchAlias.region ?? searchAlias.register
     : null;
 
+  // Saran marga dari bank leksikon (v252-v): dedup tolerant suggestMargaValues,
+  // deterministik (sort localeCompare di dalam bank). Nilai kosong tidak mungkin.
+  const margaOptions = useMemo(() => suggestMargaValues(), []);
+
+  // Pencarian leksikon-aware (v249-i) di-hoist jadi memo (v252-v) supaya
+  // lapis filter marga bisa dipasang di atasnya: kandidat query asli plus
+  // lemma dan alias bank leksikon bila query resolve satu entri, dedup by id.
+  const searched = useMemo(
+    () => searchMembersWithLeksikon(members as unknown as SearchMember[], searchQuery ?? ''),
+    [members, searchQuery],
+  );
+
+  // Lapis filter marga (v252-v): diterapkan pada hasil pencarian sebelum
+  // sortir, konsisten untuk kedua jalur tampil (semua dan engine). Guard
+  // homonim kela tetap hidup: filter hanya menyentuh field marga anggota.
+  const margaFiltered = useMemo(() => {
+    if (margaFilter.trim() === '') {
+      return searched;
+    }
+    return searched.filter((member) =>
+      matchesMargaTolerant(member.marga, margaFilter),
+    );
+  }, [searched, margaFilter]);
+
   // Filter, pencarian, dan sortir via engine fase i (search-filter.ts).
   // Filter kolom (columnFilters) tetap lokal karena engine tidak memuat fitur itu.
   const filteredMembers = useMemo(() => {
     // Adapter: FamilyMember kompatibel dengan SearchMember untuk kebutuhan tabel.
-    const searchMembers = members as unknown as SearchMember[];
-
-    // Pencarian leksikon-aware (v249-i): kandidat query asli plus lemma dan
-    // alias bank leksikon bila query resolve satu entri, dedup by id.
-    const searched = searchMembersWithLeksikon(searchMembers, searchQuery ?? '');
+    // Pencarian (searched) dan filter marga (margaFiltered) kini memo hoisted
+    // v252-v; blok ini memakai margaFiltered sebagai input tunggal.
+    const searched = margaFiltered;
 
     // Pemetaan sortBy tabel ke sortBy engine.
     const engineSortBy: SearchSortBy =
@@ -421,7 +446,7 @@ export const FamilyTable: React.FC = () => {
     );
     // Kembalikan bentuk FamilyMember: elemen hasil tetap objek members asli,
     // hanya tipenya yang dilebarkan kembali untuk konsumsi TableRow.
-  }, [members, viewMode, searchQuery, columnFilters, sortConfig]) as unknown as FamilyMember[];
+  }, [margaFiltered, viewMode, columnFilters, sortConfig]) as unknown as FamilyMember[];
 
   // Pagination
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
@@ -489,7 +514,7 @@ export const FamilyTable: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, columnFilters, viewMode]);
+  }, [searchQuery, columnFilters, viewMode, margaFilter]);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -553,6 +578,23 @@ export const FamilyTable: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">{t('table.filterMarga')}</span>
+              <select
+                data-testid="family-table-marga-filter"
+                value={margaFilter}
+                onChange={(e) => setMargaFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">{t('table.all')}</option>
+                {margaOptions.map((marga) => (
+                  <option key={marga} value={marga}>
+                    {marga}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">{t('table.show')}</span>
               <select
