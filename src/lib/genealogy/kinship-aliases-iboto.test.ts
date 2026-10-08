@@ -105,6 +105,6 @@ describe('kinship-aliases iboto Toba (v210-i, cross-sibling, enam sumber)', () =
 
   it('14. aliasKinds tidak berubah: map regional tidak bocor ke alias global', () => {
     const kinds = Object.keys(KINSHIP_ALIASES_REGIONAL)
-    expect(kinds.sort()).toEqual(['Karo', 'Simalungun', 'Toba'])
+    expect(kinds.sort()).toEqual(['Karo', 'Langkat', 'Simalungun', 'Toba']) // v252-ix bump: Langkat masuk)
   })
 })

@@ -616,6 +616,14 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       note: 'abang Simalungun = kakak laki-laki (elder brother), register sapaan hormat; SINGLE ANCHOR terverifikasi: Kamus Bahasa Simalungun-Indonesia 2015 Balai Bahasa Sumut hlm 1 entri abang [abaG] n abang marabang v berabang memanggil abang (ekstraksi PM dari PDF archive, tmp_kamus_hlm1.txt); Wiktionary EN section Simalungun Batak TIDAK dihitung sumber kedua karena mengutip kamus 2015 yang sama (Reference Zufri Hidayat et al. 2015, verifikasi API W1703); homonim KBBI: abang2 Jawa, abang3 Lay, abang5 Ldy (guard di test)',
     },
   },
+  Langkat: {
+    nondong: {
+      kind: 'grandparent',
+      depth: 1,
+      region: 'Langkat',
+      note: 'nondong Langkat = kakek (grandparent), istilah leksikon kekerabatan Langkat Malay; DUA SUMBER eksternal dual-anchor diikat region langkat sesuai keputusan W061x (sumber berformat <source>:<nama>, bahasa mengikuti anchor pertama); kontrol negatif resmi: KBBI nihil lema nondong (verifikasi Sena 8 Okt 2026 09:4x, kbbi resmi jalur kemendikdasmen), homograf langkat lain tidak ikut terindeks sbg alias (dikunci kasus negatif di testfile); non-duplikat terverifikasi grep rc nihil di kinship-aliases dan leksikon-bank (PM first-hand 8 Okt 2026); referensi draft Sena draft-stg-v252ix dan Log Supervisi BOARD-stemmagraph 8 Okt 2026',
+    },
+  },
 }
 
 /** Normalisasi frasa: trim, lowercase, buang titik tengah, rapat spasi ganda. */
