@@ -550,7 +550,7 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       kind: 'sibling',
       depth: 1,
       region: 'Toba',
-      note: 'lae Toba = ipar laki-laki (zwager, brother-in-law), sapaan affine; DUA SUMBER: kamusbatak www /indonesia/lae.html glosa ipar akses 3 Okt 2026 plus Meerwaldt 1904 baris 8029 entri lema Lae zwager (salinan Harvard archive.org, terkonfirmasi first-hand), referensi notes/2026-10-03-evidence-tuuk-vol2-seg5-10-namboru-lae-tulang-ngelingkah.md',
+      note: 'Dual-source makna inti: KBBI VI makna 1 (suami dari saudara perempuan, saudara laki-laki istri, konteks Batak) sejalan Wiktionary EN Toba Batak brother-in-law (wife\'s brother or sister\'s husband) yang mengutip Warneck 1906 hal. 108. Wiktionary EN oldid 92350735 menambah pembatas register: lae juga sapaan untuk laki-laki dari klan lain dipakai penutur laki-laki (used by male speakers), konsisten dengan status sapaan affine entri ini tanpa mengubah kind maupun enum. Susunan sumber: kamusbatak (glosa ipar) sumber 1, Wiktionary EN oldid 92350735 sumber 2 tersier per 8 Okt 2026, Meerwaldt 1904 entri Lae zwager (IA batakschetaal00jhme leaf 176, akses 9 Okt 2026) sumber 3, primer Warneck p. 108 [tidak terverifikasi langsung, resolver KB Den Haag gagal diakses].',
     },
     pariban: {
       kind: 'cousin',
