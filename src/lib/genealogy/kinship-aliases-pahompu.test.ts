@@ -94,7 +94,7 @@ describe('kinship-aliases pahompu Toba (v220-i, kind grandchild, cucu, dua sumbe
 
   it('13. pengunci guard Toba: tepat 12 key terurut, pahompu di posisi alfabetis', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)
-    expect(keys).toHaveLength(12) // v221-i bump: dongan sa- masuk
+    expect(keys).toHaveLength(13) // v221-i bump: dongan sa- masuk
     expect([...keys].sort()).toEqual([
       'amangboru',
       'boru',
@@ -105,6 +105,7 @@ describe('kinship-aliases pahompu Toba (v220-i, kind grandchild, cucu, dua sumbe
       'lae',
       'namboru',
       'ompung suhut',
+      'opung',
       'pahompu',
       'pariban',
       'tulang',

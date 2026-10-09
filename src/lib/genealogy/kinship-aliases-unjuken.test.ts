@@ -150,7 +150,7 @@ describe('kinship-aliases unjuken Karo (v197-ii, kind property leksikon mas kawi
   })
 
   it('guard: objek Toba tetap 5 key amangboru butet iboto ompung suhut pariban dan map regional tetap dua region (v209-i bump, amangboru add-only)', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['amangboru', 'boru', 'butet', 'dongan sa-', 'haha', 'iboto', 'lae', 'namboru', 'ompung suhut', 'pahompu','pariban', 'tulang'])
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['amangboru', 'boru', 'butet', 'dongan sa-', 'haha', 'iboto', 'lae', 'namboru', 'ompung suhut', 'opung', 'pahompu','pariban', 'tulang'])
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Langkat', 'Simalungun', 'Toba']) // v252-ix bump: Langkat masuk)
   })
 })

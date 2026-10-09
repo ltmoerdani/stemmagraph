@@ -81,7 +81,7 @@ describe('kinship-aliases boru Toba (v215-i, kind pernikahan, anak boru, kelompo
 
   it('11. guard Toba: tepat sepuluh key terurut, toHaveLength 10 dan toEqual array', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)
-    expect(keys).toHaveLength(12) // v221-i bump: dongan sa- masuk // v220-i bump: pahompu masuk
+    expect(keys).toHaveLength(13) // v221-i bump: dongan sa- masuk // v220-i bump: pahompu masuk
     expect([...keys].sort()).toEqual([
       'amangboru',
       'boru',
@@ -92,6 +92,7 @@ describe('kinship-aliases boru Toba (v215-i, kind pernikahan, anak boru, kelompo
       'lae',
       'namboru',
       'ompung suhut',
+      'opung',
       'pahompu',
       'pariban',
       'tulang',

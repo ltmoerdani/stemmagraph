@@ -96,6 +96,7 @@ describe('kinship-aliases lae Toba (v213-i, kind sibling, ipar laki-laki, dua su
       'lae',
       'namboru',
       'ompung suhut',
+      'opung',
       'pahompu',
       'pariban',
       'tulang',
