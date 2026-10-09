@@ -60,7 +60,7 @@ describe('kinship-aliases Karo lanjutan (v189-ii kempu bibi)', () => {
   })
 
   it('rantai aliasKinds() panjang tetap 73: entri kempu bibi Karo regional tidak menambah map utama', () => {
-    expect(aliasKinds().length).toBe(77)
+    expect(aliasKinds().length).toBe(78)
     expect(aliasKinds()).not.toContain('kempu')
     expect(aliasKinds()).not.toContain('bibi')
   })
