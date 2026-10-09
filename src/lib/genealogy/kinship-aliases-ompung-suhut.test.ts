@@ -46,6 +46,7 @@ describe('kinship-aliases ompung suhut Toba (v206-i, komposit grandparent, tiga 
       'lae',
       'namboru',
       'ompung suhut',
+      'opung',
       'pahompu',
       'pariban',
       'tulang',
@@ -79,7 +80,7 @@ describe('kinship-aliases ompung suhut Toba (v206-i, komposit grandparent, tiga 
     expect(b).toEqual(KINSHIP_ALIASES_REGIONAL.Toba['ompung suhut'])
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)
     expect(new Set(keys).size).toBe(keys.length)
-    expect(keys).toHaveLength(12) // v221-i bump: dongan sa- masuk // v220-i bump: pahompu masuk // v219-i bump: haha masuk di atas v215-i boru
+    expect(keys).toHaveLength(13) // v221-i bump: dongan sa- masuk // v220-i bump: pahompu masuk // v219-i bump: haha masuk di atas v215-i boru
   })
 
   it('11. kind grandparent anggota sah union: label id kakek nenek, en grandparent', async () => {

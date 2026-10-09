@@ -92,6 +92,7 @@ describe('kinship-aliases amangboru Toba (v209-i, kind pernikahan, FBH, simpul a
       'lae',
       'namboru',
       'ompung suhut',
+      'opung',
       'pahompu',
       'pariban',
       'tulang',
