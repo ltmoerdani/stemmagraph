@@ -33,16 +33,16 @@ describe('kinship-aliases lae Toba (v213-i, kind sibling, ipar laki-laki, dua su
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)).not.toContain('lae')
   })
 
-  it('7. note memuat jejak sumber 1: kamusbatak lae.html glosa ipar', () => {
-    expectNoteContains('Toba', 'lae', ['kamusbatak', 'lae.html', 'ipar', 'akses 3 Okt 2026'])
+  it('7. note memuat jejak sumber 1: kamusbatak glosa ipar (v253-i)', () => {
+    expectNoteContains('Toba', 'lae', ['kamusbatak', 'glosa ipar', 'sumber 1'])
   })
 
-  it('8. note memuat jejak sumber 2: Meerwaldt 1904 baris 8029 glosa zwager', () => {
-    expectNoteContains('Toba', 'lae', ['Meerwaldt 1904', 'baris 8029', 'zwager', 'brother-in-law'])
+  it('8. note memuat jejak sumber 3: Meerwaldt 1904 entri Lae zwager IA leaf 176 (v253-i)', () => {
+    expectNoteContains('Toba', 'lae', ['Meerwaldt 1904', 'entri Lae zwager', 'IA batakschetaal00jhme leaf 176', 'akses 9 Okt 2026'])
   })
 
-  it('9. note menyebut dua sumber dan referensi evidence notes', () => {
-    expectNoteContains('Toba', 'lae', ['DUA SUMBER', 'notes/2026-10-03-evidence-tuuk-vol2-seg5-10-namboru-lae-tulang-ngelingkah.md'])
+  it('9. note menyebut sumber 2 tersier Wiktionary EN oldid per 8 Okt 2026 (v253-i)', () => {
+    expectNoteContains('Toba', 'lae', ['Wiktionary EN oldid 92350735', 'sumber 2 tersier per 8 Okt 2026'])
   })
 
   it('10. note tidak memuat karakter em dash maupun pengganti dua tanda minus', () => {
@@ -100,5 +100,20 @@ describe('kinship-aliases lae Toba (v213-i, kind sibling, ipar laki-laki, dua su
       'pariban',
       'tulang',
     ])
+  })
+
+  it('16. v253-i dual-source makna inti: KBBI VI makna 1 sejalan Wiktionary EN mengutip Warneck 1906 hal. 108', () => {
+    expectNoteContains('Toba', 'lae', ['Dual-source makna inti', 'KBBI VI makna 1', 'suami dari saudara perempuan, saudara laki-laki istri, konteks Batak', "wife's brother or sister's husband", 'Warneck 1906 hal. 108'])
+  })
+
+  it('17. v253-i pembatas register sapaan klan lain dipakai penutur laki-laki, kind depth region tetap (v253-i)', () => {
+    expectNoteContains('Toba', 'lae', ['pembatas register', 'klan lain', 'used by male speakers', 'tanpa mengubah kind maupun enum'])
+    expect(regionalEntry('Toba', 'lae').kind).toBe('sibling')
+    expect(regionalEntry('Toba', 'lae').depth).toBe(1)
+    expect(regionalEntry('Toba', 'lae').region).toBe('Toba')
+  })
+
+  it("18. v253-i status primer Warneck dicatat jujur: tidak terverifikasi langsung, resolver KB Den Haag gagal diakses", () => {
+    expectNoteContains('Toba', 'lae', ['primer Warneck p. 108', '[tidak terverifikasi langsung, resolver KB Den Haag gagal diakses]'])
   })
 })
