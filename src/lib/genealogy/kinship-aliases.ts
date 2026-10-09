@@ -595,6 +595,11 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'ompung suhut Toba = kakek nenek dari sisi ayah (grandparent paternal), komposit ompung plus suhut; TIGA JANGKAR independen: kamusbatak.org entri Ompung suhut kakek dari ayah kamus Toba modern (akses 1 Okt 2026) plus Purbawidya 2019 BRIN ISSN 2252-3758 DOI 10.24164/pw.v8i2.309 suhut komponen bersama dalihan na tolu Angkola-Mandailing plus Asketik 2024 IAIN Kediri ISSN 2579-7050 DOI 10.30762/asketik.v8i1.1433 frasa literal sitolu Suhut Sitolu Harajaon konteks dalihan na tolu Toba, penguat kolonial tertua van der Tuuk 1861 vol 0 hlm 438 dan 455 dua titik (suhut tuan rumah penyelenggara pesta, notes/479), referensi notes/479',
     },
+    opung: {
+      kind: 'grandparent',
+      region: 'Toba',
+      note: 'opung Toba = kakek; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/opung akses 9 Okt 2026 (o.pung n Bt kakek, satu lema nihil homograf bernomor) plus Wiktionary ID lema Ompung oldid 1133439 (kakek nenek, orang yang dituakan); disparitas ejaan ompung (dobel m) vs kanon opung mengikuti KBBI keputusan PM; komposit ompung suhut depth 2 entri terpisah JANGAN disentuh; register nihil label KBBI, depth implisit satu generasi pola kakek; referensi kontrak v253-iii dan Log Supervisi BOARD-stemmagraph 9 Okt 2026',
+    },
     iboto: {
       kind: 'sibling',
       depth: 1,
