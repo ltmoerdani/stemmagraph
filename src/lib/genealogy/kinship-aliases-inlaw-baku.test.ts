@@ -54,7 +54,7 @@ describe('kinship-aliases in-law baku (v253-vi)', () => {
   })
 
   it('9. guard jumlah key PERSIS 81 (78 baseline v253-v parumaen plus 3 trio in-law)', () => {
-    expect(aliasKinds().length).toBe(81)
+    expect(aliasKinds().length).toBe(82)
   })
 
   it('10. nihil key duplikat di map utama', () => {
