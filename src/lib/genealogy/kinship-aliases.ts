@@ -3,7 +3,7 @@ import type { KinshipKind } from './kinship-calc'
 export interface AliasEntry {
   kind: KinshipKind
   depth?: number
-  qualifier?: 'cak' | 'jw' | 'mk' | 'sunda' | 'jawa' | 'antr' | 'cn'
+  qualifier?: 'cak' | 'jw' | 'mk' | 'sunda' | 'jawa' | 'antr' | 'cn' | 'minangkabau'
   note?: string
   region?: string
   register?: 'hormat' | 'netral'
@@ -164,6 +164,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     qualifier: 'jw',
     region: 'Jawa',
     note: 'pakde Jawa = sapaan kakak laki-laki ibu atau ayah (paman senioritas kakak), akronim bapak gede; DUA SUMBER: KBBI edisi III mirror kbbi.web.id/pakde akses 9 Okt 2026 (pak·de akronim bapak gede, sapaan kepada kakak laki-laki ibu atau ayah; uak) plus Wiktionary ID oldid 1231552 (nomina akr bapak gede, definisi identik, merujuk jangkar resmi KBBI VI kbbi.kemendikdasmen.go.id/entri/pakde); pembeda dari paman umum pada senioritas kakak; sinonim uak TIDAK dipetakan (lema sendiri KBBI VI etimologi Jawa Kuno uwa netral gender, risiko redundansi silang ala AC-44), pakcik tidak berentri KBBI VI; homonim pakde Kankanaey di Wiktionary EN (upacara kurban) TIDAK dipetakan, guard testfile; referensi kontrak v253-ii dan Log Supervisi BOARD-stemmagraph 9 Okt 2026',
+  },
+  mamak: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'minangkabau',
+    region: 'Minangkabau',
+    note: 'paman Minangkabau = saudara ibu laki-laki (maternal uncle), padanan paman maskulin Minangkabau; glosa paman, register Mk; kind parent-sibling depth 1 konsisten gugus paman (emang dan mang nihil entri di tip per verifikasi Raka 10 Okt 2026, preseden pakde dan tulang); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/mamak akses 10 Okt 2026 (verifikasi first-hand PM; percobaan akses server Raka terhalang halaman BatasSehari, dicatat jujur) plus Wiktionary ID revids 1467750 (nomina makna 1 saudara ibu laki-laki; flag rfv impor dari KBBI tercatat jujur; bagian min mengonfirmasi paman atau saudara laki-laki dari ibu); GUARD MAKNA: makna 4 KBBI (n Bt ibu) TIDAK dipetakan karena makna ibu bukan relasi paman, makna 2 (ark, mak tua) dan makna 3 (kl, sapaan raja kepada pegawai kerajaan tua) bukan kekerabatan; homonim bagian bahasa lain Wiktionary (bjn empuk, mqg ibu, pse paman, jax ibu kandung, min paman dan ibu aneuk jamee) TIDAK dipetakan; qualifier minangkabau ditambahkan ke union interface di berkas ini sesuai kontrak, region Minangkabau pola inyik; referensi kontrak v253-vii dan Log Supervisi BOARD-stemmagraph 10 Okt 2026',
   },
   koko: {
     kind: 'sibling',
