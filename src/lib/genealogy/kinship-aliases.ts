@@ -577,6 +577,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'haha Toba = kakak laki-laki (elder brother), sapaan sibling; DUA SUMBER: Stap 1912 Nederlandsch-Tobasche woordenlijst (aps8659.0001.001 umich.edu) glosa oudere broeder haha plus Vergouwen 1964 (socialorganisati0000verg) cross-sibling elder dahahang dan anggi the younger; homonim haha tawa (Indonesia) dijaga test negatif; non-regresi anggi Simalungun',
     },
+    'hula-hula': {
+      kind: 'pernikahan',
+      depth: 1,
+      region: 'Toba',
+      note: 'hula-hula Toba = kelompok kekerabatan pemberi gadis (wife-givers) dalam perkawinan adat Batak, pasangan kategori boru sebagai pihak penerima istri dalam sistem Dalihan Na Tolu; kind pernikahan depth 1 mengikuti boru (kategori relasi affinal pemberian istri); TIGA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/hula-hula (hula-hula1 n Bt kelompok kekerabatan pemberi gadis dalam perkawinan adat Batak, akses 9 Okt 2026) plus Wikipedia ID Pernikahan adat Batak Toba oldid 29331041 peran ritus hula-hula sebagai pihak pemberi istri plus Wikipedia ID Dalihan Na Tolu oldid 28663463 somba marhulahula kelompok pemberi istri sumber hagabeon; penguat akademik Vergouwen 1964 DOI 10.1007/978-94-015-1035-6; homonim hula-hula2 tarian Hawaii (domain total berbeda) dicatat dan TIDAK dipetakan; kanon bentuk terhubung tanpa titik sesuai KBBI, varian hulahula tanpa strip tidak dijadikan key; non-regresi boru kind pernikahan tetap utuh',
+    },
     tulang: {
       kind: 'parent-sibling',
       depth: 1,

@@ -74,6 +74,7 @@ describe('kinship-aliases namboru Toba (v212-i, kind parent-sibling, empat sumbe
       'butet',
       'dongan sa-',
       'haha',
+      'hula-hula',
       'iboto',
       'lae',
       'namboru',

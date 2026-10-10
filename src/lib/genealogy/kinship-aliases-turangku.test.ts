@@ -86,7 +86,7 @@ describe('kinship-aliases turangku Karo (v195-i, jalur buku Search Inside)', () 
   })
 
   it('guard: objek Toba tetap 5 key amangboru butet iboto ompung suhut pariban dan map regional tetap dua region (v209-i bump, amangboru add-only)', () => {
-    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['amangboru', 'boru', 'butet', 'dongan sa-', 'haha', 'iboto', 'lae', 'namboru', 'ompung suhut', 'opung', 'pahompu','pariban', 'tulang'])
+    expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()).toEqual(['amangboru', 'boru', 'butet', 'dongan sa-', 'haha', 'hula-hula', 'iboto', 'lae', 'namboru', 'ompung suhut', 'opung', 'pahompu','pariban', 'tulang'])
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL).sort()).toEqual(['Karo', 'Langkat', 'Simalungun', 'Toba']) // v252-ix bump: Langkat masuk)
   })
 })
