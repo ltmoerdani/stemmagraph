@@ -57,13 +57,14 @@ describe('kinship-aliases opung (v253-iii, grandparent Toba, nihil depth eksplis
 
   it('5. guard bump: key Toba PERSIS 13 alfabetis, urutan ompung suhut lalu opung lalu pahompu', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba).sort()
-    expect(keys).toHaveLength(13)
+    expect(keys).toHaveLength(14)
     expect(keys).toEqual([
       'amangboru',
       'boru',
       'butet',
       'dongan sa-',
       'haha',
+      'hula-hula',
       'iboto',
       'lae',
       'namboru',

@@ -92,6 +92,7 @@ describe('kinship-aliases lae Toba (v213-i, kind sibling, ipar laki-laki, dua su
       'butet',
       'dongan sa-',
       'haha',
+      'hula-hula',
       'iboto',
       'lae',
       'namboru',
