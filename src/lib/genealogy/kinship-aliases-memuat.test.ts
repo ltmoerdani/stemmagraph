@@ -28,8 +28,10 @@ describe('kinship-aliases memuat alias (v174-ii)', () => {
     expect(resolveAlias('ibu')).toBeNull()
   })
 
-  it('negatif: mertua resolveAlias null (entri pernikahan digeser fase lain)', () => {
-    expect(resolveAlias('mertua')).toBeNull()
+  it('mertua live sejak v253-vi: kind property', () => {
+    const r = resolveAlias('mertua')
+    expect(r).not.toBeNull()
+    expect(r?.kind).toBe('property')
   })
 
   it('negatif hyphen: nenek-moyang null (key tabel pakai spasi, resolver tidak membelah hyphen)', () => {
