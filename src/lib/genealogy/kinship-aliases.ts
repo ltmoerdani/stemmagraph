@@ -289,6 +289,10 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'bapa = ayah dalam kekerabatan Karo, cakupan ayah kandung, saudara ayah, laki-laki semarga selevel, dan suami saudara ibu, Sembiring 1991 The Bible Translator + Pandiangan 2024 JJETL legenda D, evidence notes/444 dan notes/445',
   },
+  besan: {
+    kind: 'property',
+    note: 'KBBI VI dua makna: orang tua dari menantu dan hubungan dua orang tua karena anak kawin; homonim be.san2 masakan khas Betawi sayur bersantan tidak dipetakan; bentuk tidak baku bisan cukup dicatat di note ini; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id (akses 9 Okt 2026) plus Wiktionary ID oldid 1312530',
+  },
   mama: {
     kind: 'parent-sibling',
     depth: 1,
@@ -300,6 +304,14 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     depth: 1,
     region: 'Karo',
     note: 'mami = istri mama (istri saudara ibu) dalam kekerabatan Karo, Sembiring 1991 The Bible Translator + Pandiangan 2024 JJETL legenda O, evidence notes/444 dan notes/445',
+  },
+  menantu: {
+    kind: 'property',
+    note: 'KBBI VI: istri atau suami dari anak kita; etimologi Jawa Kuno mantu konsisten dengan entri mantu; bentuk tidak baku minantu cukup dicatat di note ini; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id plus Wiktionary ID oldid 1350531',
+  },
+  mertua: {
+    kind: 'property',
+    note: 'KBBI VI: orang tua istri atau suami; ragam mentua dicatat di note ini; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id plus Wiktionary ID oldid 1463005',
   },
   permen: {
     kind: 'sibling-child',
