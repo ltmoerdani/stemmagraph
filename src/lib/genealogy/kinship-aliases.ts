@@ -565,6 +565,12 @@ export const KINSHIP_ALIASES_REGIONAL: Record<string, Record<string, AliasEntry>
       region: 'Toba',
       note: 'pariban Toba = sepupu silang cross-cousin, anak kakak beradik laki perempuan berbeda marga, kawin ideal dicatat adat Toba; TIGA SUMBER: Wati 2017 Syiar Hukum Unisba DOI 10.29313/sh.v15i1.2216 plus Situngkir Putrijanji 2026 JIM DOI 10.38035/jim.v5i1.1942 plus Vergouwen 1964 Springer DOI 10.1007/978-94-015-1035-6, arah matrilateral vs patrilateral tidak dipaksakan di enum, dicatat di komentar per Vergouwen',
     },
+    parumaen: {
+      kind: 'property',
+      depth: 1,
+      region: 'Toba',
+      note: 'parumaen Toba = menantu perempuan, istri dari anak laki-laki sendiri, resiprokal kategori pemberian istri Dalihan Na Tolu: pihak pemberi istri hula-hula berhadapan dengan pihak penerima istri boru, menantu perempuan posisinya di sisi anak boru; kind property depth 1; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/parumaen (pa.ru.ma.en n Bt menantu perempuan, akses 10 Okt 2026) plus Wikipedia ID Partuturan Toba oldid 28958723 lembar partuturan; non-regresi hula-hula pemberi gadis dan boru penerima istri tetap utuh',
+    },
     pahompu: {
       kind: 'grandchild',
       depth: 2,

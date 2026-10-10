@@ -100,6 +100,7 @@ describe('kinship-aliases lae Toba (v213-i, kind sibling, ipar laki-laki, dua su
       'opung',
       'pahompu',
       'pariban',
+      'parumaen',
       'tulang',
     ])
   })
