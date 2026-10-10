@@ -55,8 +55,8 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
     expect(note).toContain('TIDAK dipetakan')
   })
 
-  it('7. jumlah total key naik PERSIS 1 dari baseline kontrak 77', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(78)
+  it('7. jumlah total key 81 pasca v253-vi trio in-law (pakde v253-ii dulu naik PERSIS 1 dari baseline kontrak 77)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(81)
   })
 
   it('8. regional nihil untuk pakde: key tidak masuk blok regional mana pun', () => {

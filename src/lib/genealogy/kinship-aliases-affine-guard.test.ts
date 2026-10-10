@@ -15,8 +15,10 @@ describe('kinship-aliases affine guard (v174-iv)', () => {
     expect(resolveAlias('ibu')).toBeNull()
   })
 
-  it('3. polysemy: mertua null (entri pernikahan digeser fase lain)', () => {
-    expect(resolveAlias('mertua')).toBeNull()
+  it('3. mertua live sejak v253-vi: kind property', () => {
+    const r = resolveAlias('mertua')
+    expect(r).not.toBeNull()
+    expect(r?.kind).toBe('property')
   })
 
   it('4. polysemy: ambil kata dasar null', () => {
@@ -27,8 +29,8 @@ describe('kinship-aliases affine guard (v174-iv)', () => {
     expect(resolveAlias('minantu')).toBeNull()
   })
 
-  it('6. polysemy: besan null dan besan2 null (homonim masakan tidak terdaftar)', () => {
-    expect(resolveAlias('besan')).toBeNull()
+  it('6. besan live sejak v253-vi kind property, besan2 homonim masakan tetap null', () => {
+    expect(resolveAlias('besan')?.kind).toBe('property')
     expect(resolveAlias('besan2')).toBeNull()
   })
 

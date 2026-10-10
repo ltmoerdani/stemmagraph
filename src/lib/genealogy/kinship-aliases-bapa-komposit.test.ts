@@ -110,7 +110,7 @@ describe('kinship-aliases bapa komposit Karo (v191-ii salvase PM)', () => {
   })
 
   it('rantai aliasKinds() tetap 73: 4 komposit regional tidak menambah map utama', () => {
-    expect(aliasKinds().length).toBe(78)
+    expect(aliasKinds().length).toBe(81)
     expect(aliasKinds()).not.toContain('bapa tua')
     expect(aliasKinds()).not.toContain('pak uda')
   })
