@@ -68,7 +68,7 @@ describe('kinship-aliases hula-hula Toba (v253-iv, kind pernikahan, wife-givers,
 
   it('10. pengunci guard Toba: tepat 14 key terurut, hula-hula antara haha dan iboto', () => {
     const keys = Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)
-    expect(keys).toHaveLength(14) // v253-iv bump: hula-hula masuk // v253-iii bump: opung masuk
+    expect(keys).toHaveLength(15) // v253-v bump: parumaen masuk // v253-iv bump: hula-hula masuk // v253-iii bump: opung masuk
     expect([...keys].sort()).toEqual([
       'amangboru',
       'boru',
@@ -83,6 +83,7 @@ describe('kinship-aliases hula-hula Toba (v253-iv, kind pernikahan, wife-givers,
       'opung',
       'pahompu',
       'pariban',
+      'parumaen',
       'tulang',
     ])
     expect(keys.filter((k) => k === 'hula-hula')).toHaveLength(1)

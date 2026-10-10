@@ -96,6 +96,7 @@ describe('kinship-aliases amangboru Toba (v209-i, kind pernikahan, FBH, simpul a
       'opung',
       'pahompu',
       'pariban',
+      'parumaen',
       'tulang',
     ])
   })
