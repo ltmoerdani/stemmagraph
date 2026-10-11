@@ -312,6 +312,18 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'mami = istri mama (istri saudara ibu) dalam kekerabatan Karo, Sembiring 1991 The Bible Translator + Pandiangan 2024 JJETL legenda O, evidence notes/444 dan notes/445',
   },
+  emang: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'sunda',
+    note: 'paman Sunda; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/emang akses 10 Okt 2026 (e.mang n Sd paman, tunggal nihil homograf bernomor) plus Wiktionary ID oldid 1322355 (bagian Bahasa Sunda nomina tatakrama, basa budak paman, sinonim amang; bagian Bahasa Indonesia hanya adverbia memang tidak dipakai); kind parent-sibling depth 1 konsisten gugus pakde mamak tulang; nihil homonim kekerabatan lain, guard testfile; referensi kontrak v253-viii dan Log Supervisi BOARD-stemmagraph 11 Okt 2026',
+  },
+  mang: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'sunda',
+    note: 'paman Sunda kependekan emang; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/mang akses 10 Okt 2026 (makna 1 n Sd kp emang, paman KERABATAN) plus Wiktionary ID oldid 1404703 (bagian Bahasa Indonesia nomina akr emang, paman, rujukan resmi KBBI VI, templat rfv dicatat sbg catatan bukan penghalang pola pakde); GUARD HOMONIM: makna 2 KBBI n Sd kata sapaan kepada laki-laki usianya kurang lebih sebaya paman TIDAK dipetakan (homonim sapaan bukan relasi kekerabatan), ditulis eksplisit di note ini dan dikunci testfile; kata depan mang tidak berentri; referensi kontrak v253-viii dan Log Supervisi BOARD-stemmagraph 11 Okt 2026',
+  },
   menantu: {
     kind: 'property',
     note: 'KBBI VI: istri atau suami dari anak kita; etimologi Jawa Kuno mantu konsisten dengan entri mantu; bentuk tidak baku minantu cukup dicatat di note ini; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id plus Wiktionary ID oldid 1350531',
