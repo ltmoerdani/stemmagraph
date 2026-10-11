@@ -172,6 +172,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Minangkabau',
     note: 'paman Minangkabau = saudara ibu laki-laki (maternal uncle), padanan paman maskulin Minangkabau; glosa paman, register Mk; kind parent-sibling depth 1 konsisten gugus paman (emang dan mang nihil entri di tip per verifikasi Raka 10 Okt 2026, preseden pakde dan tulang); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/mamak akses 10 Okt 2026 (verifikasi first-hand PM; percobaan akses server Raka terhalang halaman BatasSehari, dicatat jujur) plus Wiktionary ID revids 1467750 (nomina makna 1 saudara ibu laki-laki; flag rfv impor dari KBBI tercatat jujur; bagian min mengonfirmasi paman atau saudara laki-laki dari ibu); GUARD MAKNA: makna 4 KBBI (n Bt ibu) TIDAK dipetakan karena makna ibu bukan relasi paman, makna 2 (ark, mak tua) dan makna 3 (kl, sapaan raja kepada pegawai kerajaan tua) bukan kekerabatan; homonim bagian bahasa lain Wiktionary (bjn empuk, mqg ibu, pse paman, jax ibu kandung, min paman dan ibu aneuk jamee) TIDAK dipetakan; qualifier minangkabau ditambahkan ke union interface di berkas ini sesuai kontrak, region Minangkabau pola inyik; referensi kontrak v253-vii dan Log Supervisi BOARD-stemmagraph 10 Okt 2026',
   },
+  bako: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'minangkabau',
+    region: 'Minangkabau',
+    note: 'bako Minangkabau = keluarga dari pihak ayah (paternal side), paman sisi ayah, pasangan maskulen sisi ayah bagi gugus paman (emang mang pakde mamak tulang), kind parent-sibling depth 1 pola mamak; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/bako akses 11 Okt 2026 (ba.ko1 n Mk keluarga dari pihak ayah) plus Wiktionary ID revids 1345690 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1345690 (bagian bahasa Minangkabau, halaman nihil bagian Bahasa Indonesia, nomina keluarga pihak ayah, kalimat contoh Minang sabalun manikah awak paralu batamu jo bako); GUARD HOMOGRAF KBBI TIDAK dipetakan: ba.ko2 tonggak kayu penyangga panggar, ba.ko3 Ka kulit delima hitam, ba.ko4 Sbw sambal ikan bakar, ba.ko5 Jw tembakau kering, semua bukan relasi kekerabatan; GUARD HOMONIM ANTARBAHASA TIDAK dipetakan: bako bahasa Sunda dan bako bahasa Using sama-sama tembakau; sumber ketiga opsional skripsi UNAND eprint 469753 TIDAK dikutip karena kutipan verbatim gagal diverifikasi saat eksekusi (host etd.unand.ac.id nihil terjawab), dicatat jujur; Wiktionary Minangkabau min.wiktionary entri bako pronomina TIDAK dipakai sbg sumber (jebakan sitasi tercatat kontrak); referensi kontrak v253-ix dan Log Supervisi BOARD-stemmagraph 11 Okt 2026',
+  },
   koko: {
     kind: 'sibling',
     depth: 1,
