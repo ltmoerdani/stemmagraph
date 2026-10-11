@@ -179,6 +179,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Jawa',
     note: 'pakde Jawa = sapaan kakak laki-laki ibu atau ayah (paman senioritas kakak), akronim bapak gede; DUA SUMBER: KBBI edisi III mirror kbbi.web.id/pakde akses 9 Okt 2026 (pak·de akronim bapak gede, sapaan kepada kakak laki-laki ibu atau ayah; uak) plus Wiktionary ID oldid 1231552 (nomina akr bapak gede, definisi identik, merujuk jangkar resmi KBBI VI kbbi.kemendikdasmen.go.id/entri/pakde); pembeda dari paman umum pada senioritas kakak; sinonim uak TIDAK dipetakan (lema sendiri KBBI VI etimologi Jawa Kuno uwa netral gender, risiko redundansi silang ala AC-44), pakcik tidak berentri KBBI VI; homonim pakde Kankanaey di Wiktionary EN (upacara kurban) TIDAK dipetakan, guard testfile; referensi kontrak v253-ii dan Log Supervisi BOARD-stemmagraph 9 Okt 2026',
   },
+  paklik: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'jw',
+    region: 'Jawa',
+    note: 'paklik Jawa = sapaan adik laki-laki ibu atau ayah (paman junioritas adik), akronim bapak cilik; kind parent-sibling depth 1 pola pakde, pasangan senioritas kakak-adik dalam gugus paman (paman, mamak, emang, mang, bako); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/paklik akses 11 Okt 2026 (pak.lik n Jw akr DUA makna: (1) bapak cilik; (2) sapaan adik laki-laki ibu atau ayah; paman) plus Wiktionary ID revid 1040734 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1040734 (bagian bahasa Indonesia: akronim bapak cilik, sapaan kepada adik laki-laki ibu atau ayah; paman); GUARD MAKNA: makna 1 KBBI bapak cilik DIPISAHKAN dari makna 2 dan TIDAK dipetakan sbg relasi, yang dipetakan HANYA makna 2 sapaan adik laki-laki ibu atau ayah; Wiktionary menggabungkan kedua makna dalam satu baris, TIDAK diikuti; GUARD HOMONIM: bagian bahasa Jawa di halaman Wiktionary sama (Adik laki-laki bapak, paman) BUKAN blok bahasa Indonesia, TIDAK dipetakan; referensi kontrak v253-xiv dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
   amak: {
     kind: 'parent',
     depth: 1,
