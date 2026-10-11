@@ -172,6 +172,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Jawa',
     note: 'pakde Jawa = sapaan kakak laki-laki ibu atau ayah (paman senioritas kakak), akronim bapak gede; DUA SUMBER: KBBI edisi III mirror kbbi.web.id/pakde akses 9 Okt 2026 (pak·de akronim bapak gede, sapaan kepada kakak laki-laki ibu atau ayah; uak) plus Wiktionary ID oldid 1231552 (nomina akr bapak gede, definisi identik, merujuk jangkar resmi KBBI VI kbbi.kemendikdasmen.go.id/entri/pakde); pembeda dari paman umum pada senioritas kakak; sinonim uak TIDAK dipetakan (lema sendiri KBBI VI etimologi Jawa Kuno uwa netral gender, risiko redundansi silang ala AC-44), pakcik tidak berentri KBBI VI; homonim pakde Kankanaey di Wiktionary EN (upacara kurban) TIDAK dipetakan, guard testfile; referensi kontrak v253-ii dan Log Supervisi BOARD-stemmagraph 9 Okt 2026',
   },
+  amak: {
+    kind: 'parent',
+    depth: 1,
+    qualifier: 'minangkabau',
+    region: 'Minangkabau',
+    note: 'amak Minangkabau = ibu, padanan feminin gugus parent Minangkabau (mamak bako etek); qualifier minangkabau konsisten pola live bako mamak etek (koreksi PM atas kontrak v253-xi yang menulis mk); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/amak akses 10 Okt 2026 (a.mak1 n Mk ibu, SATU lema relasi) plus Wiktionary ID revid 1471283 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1471283 (bahasa min panggilan ibu kandung plus wanita sebaya ibu, penguat register sapaan masuk note); GUARD HOMOGRAF KBBI TIDAK dipetakan: a.mak2 n Ach alat perahu bukan relasi kekerabatan; API Wiktionary menolak oldid sitasi sehingga wajib api.php revids; referensi kontrak v253-xi dan Log Supervisi BOARD-stemmagraph 10 Okt 2026',
+  },
   mamak: {
     kind: 'parent-sibling',
     depth: 1,

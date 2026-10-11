@@ -53,7 +53,7 @@ describe('kinship-aliases mamak (v253-vii, parent-sibling depth 1 Minangkabau)',
     expect(resolveAlias('emang')?.kind).toBe('parent-sibling')
     expect(resolveAlias('mang')?.kind).toBe('parent-sibling')
     expect(resolveAlias('mak')).toBeNull()
-    expect(resolveAlias('amak')).toBeNull()
+    expect(resolveAlias('amak')?.kind).toBe('parent') // amak live pasca v253-xi
     expect(KINSHIP_ALIASES['emang']).toBeDefined()
     expect(KINSHIP_ALIASES['mang']).toBeDefined()
   })
@@ -74,7 +74,7 @@ describe('kinship-aliases mamak (v253-vii, parent-sibling depth 1 Minangkabau)',
   })
 
   it('8. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 85 pasca v253-ix', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(87)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(88)
     expect(aliasKinds().length).toBe(87)
   })
 
