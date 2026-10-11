@@ -52,6 +52,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   mbah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
   embah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
   engkong: { kind: 'grandparent', qualifier: 'cn', region: 'Tionghoa' },
+  andung: {
+    kind: 'grandparent',
+    depth: 1,
+    qualifier: 'mk',
+    region: 'Melayu/Minangkabau',
+    note: 'andung Melayu/Minangkabau = nenek, padanan feminin gugus grandparent regional (inyik ninik), pola inyik; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/andung akses 10 Okt 2026 (an.dung Mk n nenek, SATU lema relasi, verifikasi first-hand Raka HTTP 200) plus Wiktionary ID revid 1299035 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1299035 (bahasa Indonesia nomina nenek; flag rfv impor dari KBBI tercatat jujur; rujukan R:KBBI Daring; revid dicatat sebagai referensi silang); GUARD HOMONIM: andung Bakumpai (bahasa bkr Wiktionary, nama pohon) TIDAK dipetakan, kasus negatif eksplisit di testfile; makna Melayu Deli/Langkat Wiktionary terjemahan nenek masuk note sebagai penguat, BUKAN kind terpisah; register nihil label KBBI sehingga tanpa register; referensi kontrak v253-xii dan Log Supervisi BOARD-stemmagraph 10 Okt 2026',
+  },
   inyik: { kind: 'grandparent', qualifier: 'mk', region: 'Melayu/Minangkabau', register: 'hormat' },
   nini: {
     kind: 'grandparent',
