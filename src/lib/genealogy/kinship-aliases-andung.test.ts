@@ -81,8 +81,9 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
     expect(resolveAlias('inyik')?.kind).toBe('grandparent')
     expect(resolveAlias('inyik')?.qualifier).toBe('mk')
     expect(resolveAlias('inyik')?.register).toBe('hormat')
-    expect(resolveAlias('ompung suhut')?.kind).toBe('grandparent')
-    expect(resolveAlias('ompung suhut')?.depth).toBe(2)
+    expect(resolveAlias('ompung suhut', 'Toba')?.kind).toBe('grandparent')
+    expect(resolveAlias('ompung suhut', 'Toba')?.depth).toBe(2)
+    expect(resolveAlias('ompung suhut')).toBeNull()
     expect(resolveAlias('ninik')?.kind).toBe('grandparent')
     expect(resolveAlias('nenek')?.kind).toBe('grandparent')
   })
@@ -92,7 +93,7 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
     expect(aliasKinds().length).toBe(89)
   })
 
-  it('11. daftar key gugus grandparent global toEqual pasca v253-xii (14 key, andung menyisip antara engkong dan inyik)', () => {
+  it('11. daftar key gugus grandparent global toEqual pasca v253-xii (15 key, andung menyisip antara engkong dan inyik)', () => {
     const gp = Object.keys(KINSHIP_ALIASES).filter(
       (k) => KINSHIP_ALIASES[k]?.kind === 'grandparent'
     )
@@ -111,8 +112,9 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
       'andung',
       'inyik',
       'nini',
+      'ninik',
     ])
-    expect(gp).toHaveLength(14)
+    expect(gp).toHaveLength(15)
   })
 
   it('12. anti-dup: andung tepat satu kali, nihil di blok regional mana pun', () => {
