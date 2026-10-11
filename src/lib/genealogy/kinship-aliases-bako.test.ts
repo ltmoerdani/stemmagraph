@@ -1,0 +1,76 @@
+import { describe, it, expect } from 'vitest'
+import {
+  KINSHIP_ALIASES,
+  KINSHIP_ALIASES_REGIONAL,
+  resolveAlias,
+  aliasKinds,
+} from './kinship-aliases'
+import { kinshipAliasPhrase } from './kinship-alias-phrase'
+
+/**
+ * v253-ix: bako (uncle pihak ayah Minangkabau, dual-source, kontrak PM
+ * kontrak-v253ix-stg-bako-2026-10-10.md). Total key global naik PERSIS +1
+ * (84 jadi 85), entri di map global dengan region Minangkabau pola mamak
+ * (v253-vii); blok KINSHIP_ALIASES_REGIONAL.Minangkabau nihil di tip dan
+ * tidak dibuat di task ini.
+ */
+describe('kinship-aliases bako (v253-ix, parent-sibling depth 1 Minangkabau)', () => {
+  it('1. entri live: bako di map global, kind parent-sibling, depth 1, qualifier minangkabau, region Minangkabau', () => {
+    const e = KINSHIP_ALIASES['bako']
+    expect(e).toBeDefined()
+    expect(e.kind).toBe('parent-sibling')
+    expect(e.depth).toBe(1)
+    expect(e.qualifier).toBe('minangkabau')
+    expect(e.region).toBe('Minangkabau')
+  })
+
+  it('2. resolveAlias bako dengan region Minangkabau: entri global terjangkau lewat fallback blok nihil', () => {
+    const r = resolveAlias('bako', 'Minangkabau')
+    expect(r).not.toBeNull()
+    expect(r?.kind).toBe('parent-sibling')
+    expect(r?.depth).toBe(1)
+    expect(r?.region).toBe('Minangkabau')
+    expect(KINSHIP_ALIASES_REGIONAL['Minangkabau']).toBeUndefined()
+  })
+
+  it('3. note memuat glosa KBBI keluarga pihak ayah dan penanda dua sumber', () => {
+    const note = resolveAlias('bako')?.note ?? ''
+    expect(note).toContain('keluarga dari pihak ayah')
+    expect(note).toContain('DUA SUMBER')
+    expect(note).toContain('kbbi.kemendikdasmen.go.id/entri/bako')
+    expect(note).toContain('ba.ko1 n Mk keluarga dari pihak ayah')
+    expect(note).toContain('1345690')
+    expect(note).toContain('api.php')
+  })
+
+  it('4. guard homograf KBBI: empat homograf bernomor cukup tercatat TIDAK dipetakan', () => {
+    const note = resolveAlias('bako')?.note ?? ''
+    expect(note).toContain('GUARD HOMOGRAF')
+    expect(note).toContain('ba.ko2')
+    expect(note).toContain('ba.ko3')
+    expect(note).toContain('ba.ko4')
+    expect(note).toContain('ba.ko5')
+    expect(note).toContain('tonggak')
+    expect(note).toContain('delima')
+    expect(note).toContain('sambal ikan')
+    expect(note).toContain('tembakau kering')
+    expect(KINSHIP_ALIASES['ba.ko2']).toBeUndefined()
+    expect(KINSHIP_ALIASES['ba.ko3']).toBeUndefined()
+    expect(KINSHIP_ALIASES['ba.ko4']).toBeUndefined()
+    expect(KINSHIP_ALIASES['ba.ko5']).toBeUndefined()
+  })
+
+  it('5. negatif tanpa region sesuai semantik resolver aktual: bako global resolve, tetangga nihil tetap nihil', () => {
+    expect(resolveAlias('bako')).not.toBeNull()
+    expect(resolveAlias('beko')).toBeNull()
+    expect(resolveAlias('bakok')).toBeNull()
+    expect(resolveAlias('bakak')).toBeNull()
+  })
+
+  it('6. guard homonim antarbahasa Wiktionary: bako Sunda dan bako Using tembakau TIDAK dipetakan', () => {
+    const note = resolveAlias('bako')?.note ?? ''
+    expect(note).toContain('GUARD HOMONIM ANTARBAHASA')
+    expect(note).toContain('Sunda')
+    expect(note).toContain('Using')
+    expect(note).toContain('tembakau')
+  })
