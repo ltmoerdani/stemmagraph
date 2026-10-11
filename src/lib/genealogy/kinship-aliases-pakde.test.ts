@@ -29,13 +29,14 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
     expect(resolveAlias('pak·de')).toEqual(resolveAlias('pakde'))
   })
 
-  it('4. guard homonim nihil: query pakde hanya mengembalikan entri pakde', () => {
+  it('4. guard homonim nihil: query pakde hanya mengembalikan entri pakde (pasca v253-xiv: paklik jw Jawa juga live, gugus 2 entri)', () => {
     const entries = Object.values(KINSHIP_ALIASES).filter(
       (e) =>
         e.kind === 'parent-sibling' && e.region === 'Jawa' && e.qualifier === 'jw',
     )
-    expect(entries).toHaveLength(1)
-    expect(entries[0]).toEqual(resolveAlias('pakde'))
+    expect(entries).toHaveLength(2)
+    expect(entries).toContainEqual(resolveAlias('pakde'))
+    expect(entries).toContainEqual(resolveAlias('paklik'))
   })
 
   it('5. uak dan pakcik DITAHAN: nihil sbg key, query keduanya nihil alias', () => {
@@ -56,7 +57,7 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
   })
 
   it('7. jumlah total key 85 pasca v253-ix bako (v253-vi trio in-law dulu naik PERSIS 1 dari baseline kontrak 77 ke 81)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(90)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(91)
   })
 
   it('8. regional nihil untuk pakde: key tidak masuk blok regional mana pun', () => {
