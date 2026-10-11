@@ -88,9 +88,9 @@ describe('kinship-aliases emang dan mang (v253-viii, parent-sibling depth 1 Sund
     expect(resolveAlias('tulang', 'Toba')?.kind).toBe('parent-sibling')
   })
 
-  it('9. guard bump total key PERSIS +2: 82 menjadi 84 di map global dan aliasKinds', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(84)
-    expect(aliasKinds().length).toBe(84)
+  it('9. guard bump total key: 85 pasca v253-ix bako di map global dan aliasKinds', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(85)
+    expect(aliasKinds().length).toBe(85)
   })
 
   it('10. anti-dup: emang dan mang muncul tepat satu kali global dan nihil di semua blok regional', () => {

@@ -5,8 +5,6 @@ import {
   resolveAlias,
   aliasKinds,
 } from './kinship-aliases'
-import { kinshipAliasPhrase } from './kinship-alias-phrase'
-
 /**
  * v253-ix: bako (uncle pihak ayah Minangkabau, dual-source, kontrak PM
  * kontrak-v253ix-stg-bako-2026-10-10.md). Total key global naik PERSIS +1
