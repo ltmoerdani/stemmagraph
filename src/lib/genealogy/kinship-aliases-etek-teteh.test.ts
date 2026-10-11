@@ -18,7 +18,7 @@ import {
 } from './kinship-aliases';
 import { expandAliasQuery } from './search-filter';
 
-const GUARD_KEYS = 88;
+const GUARD_KEYS = 89;
 
 describe('kinship aliases: etek (posisi 21)', () => {
     it('kasus 1: resolveAlias etek positif kind parent-sibling depth 1 Minangkabau', () => {
@@ -48,7 +48,7 @@ describe('kinship aliases: etek (posisi 21)', () => {
         expect(expandAliasQuery('etek')).toContain('etek');
     });
 
-    it('kasus 6: guard jumlah key global PERSIS 88 pasca v253-xi', () => {
+    it('kasus 6: guard jumlah key global PERSIS 89 pasca v253-xii', () => {
         expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(GUARD_KEYS);
     });
 
