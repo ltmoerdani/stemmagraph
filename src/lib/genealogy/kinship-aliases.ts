@@ -158,6 +158,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     qualifier: 'cak',
     note: 'Wiktionary ID label cak, TANPA kategori maskulin; sumber definisi eksplisit (notes/427)',
   },
+  etek: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'minangkabau',
+    region: 'Minangkabau',
+    note: 'etek Minangkabau = adik perempuan ayah atau adik perempuan ibu (bibi), pasangan femenin gugus paman Minangkabau (mamak bako), kind parent-sibling depth 1 pola bako; qualifier minangkabau konsisten pola live bako mamak (koreksi PM atas kontrak v253-x yang menulis mk, dicatat jujur di Log Supervisi 11 Okt); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/etek akses 11 Okt 2026 (e.tek n Mk adik perempuan ayah atau adik perempuan ibu; bibi; makcik; entri tunggal nihil homograf bernomor) plus Wiktionary ID revids 1134648 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1134648 (bagian Minangkabau, definisi identik adik perempuan ayah atau ibu); GUARD SINONIM KBBI (bibi, makcik) TIDAK dipetakan sbg key, hanya glosa; GUARD HOMONIM ANTARBAHASA Wiktionary TIDAK dipetakan: etek bahasa Simalungun adj kecil, etek bahasa Tao n otak; flag rfv Wiktionary tercatat jujur di note; referensi kontrak v253-x dan Log Supervisi BOARD-stemmagraph 11 Okt 2026',
+  },
   pakde: {
     kind: 'parent-sibling',
     depth: 1,
@@ -241,6 +248,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     depth: 1,
     region: 'Cn',
     note: 'KBBI VI: kakak perempuan Cn (Cina), bentuk tidak baku ci, evidence notes/2026-09-28-evidence-stg-v184ii',
+  },
+  teteh: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'sunda',
+    region: 'Sunda',
+    note: 'teteh Sunda = panggilan kakak perempuan (sibling senioritas perempuan), pola akak/kangmas sisi femenin; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/teteh akses 11 Okt 2026 (te.teh1 n Sd panggilan kakak perempuan, homograf bernomor) plus Wiktionary ID revids 1455452 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1455452 (bagian Bahasa Indonesia nomina panggilan kakak perempuan; bagian Bahasa Jawa adj dua makna dipakai sbg jangkar guard); GUARD HOMOGRAF KBBI TIDAK dipetakan: te.teh2 a Jw sudah jelas ucapannya bisa mahir, bukan kekerabatan, kasus negatif testfile; GUARD VARIAN: tete (Sasak) tidak dipetakan; referensi kontrak v253-x dan Log Supervisi BOARD-stemmagraph 11 Okt 2026',
   },
   mbak: {
     kind: 'sibling',
