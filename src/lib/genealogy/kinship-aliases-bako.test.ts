@@ -111,7 +111,7 @@ describe('kinship-aliases bako (v253-ix, parent-sibling depth 1 Minangkabau)', (
   it('11. normalisasi: BAKO, spasi pinggir, dan titik tengah sama dengan bako', () => {
     expect(resolveAlias('BAKO')).toEqual(resolveAlias('bako'))
     expect(resolveAlias('  Bako ')).toEqual(resolveAlias('bako'))
-    expect(resolveAlias('ba.ko')).toEqual(resolveAlias('bako'))
+    expect(resolveAlias('ba.ko')).toBeNull() // titik ASCII tidak dibuang normalizer, hanya titik tengah U+00B7 pola e.mang
   })
 
   it('12. guard jebakan sitasi: note mencatat min.wiktionary tidak dipakai dan status sumber ketiga UNAND jujur', () => {
