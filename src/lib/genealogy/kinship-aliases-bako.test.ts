@@ -74,3 +74,55 @@ describe('kinship-aliases bako (v253-ix, parent-sibling depth 1 Minangkabau)', (
     expect(note).toContain('Using')
     expect(note).toContain('tembakau')
   })
+
+  it('7. non-regresi tetangga gugus saudara orang tua: emang, mang, pakde, mamak, tulang lulus ulang', () => {
+    expect(resolveAlias('emang')?.kind).toBe('parent-sibling')
+    expect(resolveAlias('emang')?.qualifier).toBe('sunda')
+    expect(resolveAlias('mang')?.kind).toBe('parent-sibling')
+    expect(resolveAlias('mang')?.qualifier).toBe('sunda')
+    expect(resolveAlias('pakde')?.qualifier).toBe('jw')
+    expect(resolveAlias('mamak')?.qualifier).toBe('minangkabau')
+    expect(resolveAlias('mamak')?.region).toBe('Minangkabau')
+    expect(resolveAlias('tulang', 'Toba')?.kind).toBe('parent-sibling')
+  })
+
+  it('8. daftar key parent-sibling global PERSIS tujuh pasca v253-ix, bako menyisip alfabetis', () => {
+    const ps = Object.keys(KINSHIP_ALIASES)
+      .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
+      .sort()
+    expect(ps).toEqual(['bako', 'emang', 'mama', 'mamak', 'mami', 'mang', 'pakde'])
+    expect(ps).toHaveLength(7)
+  })
+
+  it('9. guard bump total key PERSIS +1: 84 menjadi 85 di map global dan aliasKinds', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(85)
+    expect(aliasKinds().length).toBe(85)
+  })
+
+  it('10. anti-dup: key bako muncul tepat satu kali di daftar global dan nihil di semua blok regional', () => {
+    const all = Object.keys(KINSHIP_ALIASES)
+    expect(all.filter((k) => k === 'bako')).toHaveLength(1)
+    expect(aliasKinds().filter((k) => k === 'bako')).toHaveLength(1)
+    for (const region of Object.keys(KINSHIP_ALIASES_REGIONAL)) {
+      expect(KINSHIP_ALIASES_REGIONAL[region]['bako']).toBeUndefined()
+    }
+  })
+
+  it('11. normalisasi: BAKO, spasi pinggir, dan titik tengah sama dengan bako', () => {
+    expect(resolveAlias('BAKO')).toEqual(resolveAlias('bako'))
+    expect(resolveAlias('  Bako ')).toEqual(resolveAlias('bako'))
+    expect(resolveAlias('ba.ko')).toEqual(resolveAlias('bako'))
+  })
+
+  it('12. guard jebakan sitasi: note mencatat min.wiktionary tidak dipakai dan status sumber ketiga UNAND jujur', () => {
+    const note = resolveAlias('bako')?.note ?? ''
+    expect(note).toContain('min.wiktionary')
+    expect(note).toContain('TIDAK dipakai')
+    expect(note).toContain('469753')
+    expect(note).toContain('TIDAK dikutip')
+    const mk = Object.keys(KINSHIP_ALIASES)
+      .filter((k) => KINSHIP_ALIASES[k]?.qualifier === 'minangkabau')
+      .sort()
+    expect(mk).toEqual(['bako', 'mamak'])
+  })
+})
