@@ -263,6 +263,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Cn',
     note: 'KBBI VI: kakak perempuan Cn (Cina), bentuk tidak baku ci, evidence notes/2026-09-28-evidence-stg-v184ii',
   },
+  tante: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'tante = adik atau kakak perempuan ayah atau ibu (bibi), label cak, fusi dua arah usia dalam SATU lema; kind parent-sibling depth 1 pola etek pakde, alias fusi menerima keduanya sesuai makna 1 KBBI; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/tante akses 11 Okt 2026 (tan.te n cak DUA makna: adik atau kakak perempuan ayah atau ibu; bibi; plus kata sapaan kepada wanita yang agak tua) plus Wiktionary ID revid 1327416 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1327416 (bagian bahasa Indonesia nomina makna tunggal bibi, etimologi dari bahasa Belanda; verifikasi first-hand PM via api.php revids); GUARD MAKNA 2 KBBI: kata sapaan kepada wanita yang agak tua TIDAK dipetakan (bukan relasi kekerabatan), kasus negatif eksplisit testfile; GUARD HOMONIM ANTARBAHASA TIDAK dipetakan: blok bts (saudara perempuan dari ibu, Simalungun) dan blok bbc (saudara perempuan ibu, Toba) di halaman Wiktionary sama BUKAN blok bahasa Indonesia; GUARD GENERALISASI: dilarang mapping tante ke bibi tanpa komponen usia, bibi Karo tetap live sbg key regional terpisah di KINSHIP_ALIASES_REGIONAL Karo, wajib tidak tertukar; glosa makna 1 KBBI memuat sinonim bibi sebagai glosa BUKAN key; referensi kontrak v253-xiii dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
   teteh: {
     kind: 'sibling',
     depth: 1,
