@@ -50,12 +50,12 @@ describe('kinship-aliases mamak (v253-vii, parent-sibling depth 1 Minangkabau)',
 
   it('5. negatif tanpa region sesuai semantik resolver aktual: mamak global resolve tanpa region, gugus tanpa entri nihil', () => {
     expect(resolveAlias('mamak')).not.toBeNull()
-    expect(resolveAlias('emang')).toBeNull()
-    expect(resolveAlias('mang')).toBeNull()
+    expect(resolveAlias('emang')?.kind).toBe('parent-sibling')
+    expect(resolveAlias('mang')?.kind).toBe('parent-sibling')
     expect(resolveAlias('mak')).toBeNull()
     expect(resolveAlias('amak')).toBeNull()
-    expect(KINSHIP_ALIASES['emang']).toBeUndefined()
-    expect(KINSHIP_ALIASES['mang']).toBeUndefined()
+    expect(KINSHIP_ALIASES['emang']).toBeDefined()
+    expect(KINSHIP_ALIASES['mang']).toBeDefined()
   })
 
   it('6. non-regresi tetangga gugus paman: mama dan mami Karo utuh, pakde Jawa utuh', () => {
@@ -66,16 +66,16 @@ describe('kinship-aliases mamak (v253-vii, parent-sibling depth 1 Minangkabau)',
     expect(resolveAlias('pakde')?.depth).toBe(1)
   })
 
-  it('7. daftar key parent-sibling global PERSIS empat, mamak menyisip alfabetis antara mama dan mami', () => {
+  it('7. daftar key parent-sibling global PERSIS enam pasca v253-viii, mamak menyisip alfabetis antara mama dan mami', () => {
     const ps = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
       .sort()
-    expect(ps).toEqual(['mama', 'mamak', 'mami', 'pakde'])
+    expect(ps).toEqual(['emang', 'mama', 'mamak', 'mami', 'mang', 'pakde'])
   })
 
   it('8. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 82 pasca v253-vii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(82)
-    expect(aliasKinds().length).toBe(82)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(84)
+    expect(aliasKinds().length).toBe(84)
   })
 
   it('9. anti-dup: key mamak muncul tepat satu kali di daftar global dan nihil di semua blok regional', () => {
@@ -104,8 +104,8 @@ describe('kinship-aliases mamak (v253-vii, parent-sibling depth 1 Minangkabau)',
   })
 
   it('12. guard emang dan mang tetap nihil entri di tip, konsisten verifikasi 10 Okt 2026', () => {
-    expect(aliasKinds()).not.toContain('emang')
-    expect(aliasKinds()).not.toContain('mang')
+    expect(aliasKinds()).toContain('emang')
+    expect(aliasKinds()).toContain('mang')
     expect(aliasKinds()).not.toContain('bako')
     expect(resolveAlias('bako')).toBeNull()
   })
