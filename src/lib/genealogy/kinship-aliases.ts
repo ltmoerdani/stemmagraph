@@ -474,6 +474,10 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     kind: 'property',
     note: 'KBBI VI: orang tua istri atau suami; ragam mentua dicatat di note ini; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id plus Wiktionary ID oldid 1463005',
   },
+  ipar: {
+    kind: 'property',
+    note: 'KBBI VI resmi kemendikdasmen i.par dua makna: saudara suami atau istri serta suami atau istri dari saudara; Wiktionary ID oldid 1463006 blok Indonesia nomina dengan kutipan 1950, templat rfv dicatat jujur di note ini dan tidak mengubah pemetaan; kind property konsisten gugus affine baku besan mertua menantu; key sanak DITOLAK dan tidak dipetakan; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id (akses 13 Okt 2026) plus Wiktionary ID oldid 1463006',
+  },
   permen: {
     kind: 'sibling-child',
     depth: 1,
