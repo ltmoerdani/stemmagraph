@@ -71,9 +71,9 @@ describe('kinship-aliases amak (v253-xi, parent depth 1 Minangkabau)', () => {
     expect(KINSHIP_ALIASES['etek']?.qualifier).toBe('minangkabau')
   })
 
-  it('8. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 95 pasca v253-xvii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(95)
-    expect(aliasKinds().length).toBe(95)
+  it('8. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 96 pasca v253-xviii', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(96)
+    expect(aliasKinds().length).toBe(96)
   })
 
   it('9. daftar parent-sibling global TIDAK berubah, amak kind parent di luar daftar itu', () => {
