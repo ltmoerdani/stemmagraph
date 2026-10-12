@@ -93,11 +93,13 @@ describe('kinship-aliases ucu (v253-xvi, sibling depth 1, penanda bungsu registe
     expect(resolveAlias('  Ucu ')).toEqual(resolveAlias('ucu'))
   })
 
-  it('10. posisi sisip: ucu mengakhiri urutan sort klaster sibling map global', () => {
+  it('10. posisi sisip: ucu tersisip di klaster sibling urutan sort antara turang dan uda', () => {
     const sib = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'sibling')
       .sort()
-    expect(sib[sib.length - 1]).toBe('ucu')
+    expect(sib[sib.length - 3]).toBe('ucu')
+    expect(sib[sib.length - 2]).toBe('uda')
+    expect(sib[sib.length - 1]).toBe('uni')
     expect(sib.filter((k) => k === 'ucu')).toHaveLength(1)
   })
 })
