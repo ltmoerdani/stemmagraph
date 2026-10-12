@@ -93,8 +93,8 @@ describe('kinship-aliases bako (v253-ix, parent-sibling depth 1 Minangkabau)', (
   })
 
   it('9. guard bump total key PERSIS +1: 84 menjadi 85 di map global dan aliasKinds', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(93)
-    expect(aliasKinds().length).toBe(93)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(95)
+    expect(aliasKinds().length).toBe(95)
   })
 
   it('10. anti-dup: key bako muncul tepat satu kali di daftar global dan nihil di semua blok regional', () => {
