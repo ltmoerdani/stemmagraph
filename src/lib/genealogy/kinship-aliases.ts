@@ -147,6 +147,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Jawa/Sunda',
     note: 'Wiktionary ID: sinonim dinda, kutipan Wikisource (notes/427)',
   },
+  kak: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'kp',
+    note: 'kependekan kakak; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/kak akses 13 Okt 2026 (kak1 n sapaan saudara tua; kak kp kakak saudara tua) plus Wiktionary ID (nomina kependekan kakak, rujukan R:KBBI Daring, templat rfv dicatat jujur, status verifikasi komunitas belum final); makna kak1 sapaan serta makna pronomina dan onomatope TIDAK dipetakan; referensi kontrak drafts/kontrak-stg-v253xxiii-kak-2026-10-13.md',
+  },
   kangmas: {
     kind: 'sibling',
     depth: 1,
