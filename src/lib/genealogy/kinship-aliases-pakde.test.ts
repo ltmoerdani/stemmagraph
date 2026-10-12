@@ -34,10 +34,11 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
       (e) =>
         e.kind === 'parent-sibling' && e.region === 'Jawa' && e.qualifier === 'jw',
     )
-    expect(entries).toHaveLength(3)
+    expect(entries).toHaveLength(4)
     expect(entries).toContainEqual(resolveAlias('pakde'))
     expect(entries).toContainEqual(resolveAlias('paklik'))
     expect(entries).toContainEqual(resolveAlias('pakdhe'))
+    expect(entries).toContainEqual(resolveAlias('budhe'))
   })
 
   it('5. uak tetap DITAHAN nihil sbg key; pakcik kini live pasca v253-xix', () => {
