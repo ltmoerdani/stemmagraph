@@ -50,13 +50,13 @@ describe('kinship-aliases-karo-inti (v188-i)', () => {
     expect(resolveAlias('pak')).toBeNull()
   })
 
-  it('negatif: bibi dan bibik nihil, varian menunggu sumber ketiga (keputusan desain PM)', () => {
-    expect(resolveAlias('bibi')).toBeNull()
+  it('bibi kini live di map utama pasca v253-xix; bibik tetap nihil, varian menunggu sumber ketiga (keputusan desain PM)', () => {
+    expect(resolveAlias('bibi')).not.toBeNull()
     expect(resolveAlias('bibik')).toBeNull()
   })
 
   it('rantai: aliasKinds total 73 pasca v188-i', () => {
-    expect(aliasKinds().length).toBe(96)
+    expect(aliasKinds().length).toBe(100)
   })
 
   it('determinisme: resolveAlias bapa dua panggilan hasil identik', () => {

@@ -55,8 +55,8 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
     expect(note).toContain('Toba')
   })
 
-  it('5. guard bibi: nihil bibi di map utama; bibi Karo tetap live di blok regional Karo dan resolve berbeda namespace', () => {
-    expect(KINSHIP_ALIASES['bibi']).toBeUndefined()
+  it('5. guard bibi: bibi kini live di map utama pasca v253-xix; bibi Karo tetap live di blok regional Karo, namespace terpisah tidak tertukar', () => {
+    expect(KINSHIP_ALIASES['bibi']).toBeDefined()
     const karoBibi = KINSHIP_ALIASES_REGIONAL['Karo']?.['bibi']
     expect(karoBibi).toBeDefined()
     expect(karoBibi.kind).toBe('parent-sibling')
@@ -92,12 +92,12 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
     expect(resolveAlias('bako')?.kind).toBe('parent-sibling')
     expect(resolveAlias('emang')?.kind).toBe('parent-sibling')
     expect(resolveAlias('mang')?.kind).toBe('parent-sibling')
-    expect(resolveAlias('om')).toBeNull()
+    expect(resolveAlias('om')?.kind).toBe('parent-sibling')
   })
 
-  it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 96 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(96)
-    expect(aliasKinds().length).toBe(96)
+  it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 100 pasca v253-xviii', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(100)
+    expect(aliasKinds().length).toBe(100)
   })
 
   it('11. daftar key gugus parent-sibling toEqual pasca v253-xiv (10 key, paklik menyisip urutan sort)', () => {
@@ -106,6 +106,7 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
       .sort()
     expect(ps).toEqual([
       'bako',
+      'bibi',
       'emang',
       'etek',
       'makcik',
@@ -113,11 +114,14 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
       'mamak',
       'mami',
       'mang',
+      'om',
+      'pakcik',
       'pakde',
       'paklik',
+      'paman',
       'tante',
     ])
-    expect(ps).toHaveLength(11)
+    expect(ps).toHaveLength(15)
   })
 
   it('12. negatif: typo nihil, normalisasi huruf besar dan spasi pinggir sama dengan tante', () => {

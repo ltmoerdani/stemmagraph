@@ -59,7 +59,7 @@ describe('kinship-aliases paklik (v253-xiv, parent-sibling depth 1, register Jaw
     expect(note).toContain('kbbi.kemendikdasmen.go.id/entri/paklik')
   })
 
-  it('6. non-regresi tetangga gugus parent-sibling live: etek pakde mamak bako emang mang tante tetap, om nihil', () => {
+  it('6. non-regresi tetangga gugus parent-sibling live: etek pakde mamak bako emang mang tante tetap, om kini live pasca v253-xix', () => {
     expect(resolveAlias('etek')?.kind).toBe('parent-sibling')
     expect(resolveAlias('pakde')?.kind).toBe('parent-sibling')
     expect(resolveAlias('mamak')?.kind).toBe('parent-sibling')
@@ -67,12 +67,12 @@ describe('kinship-aliases paklik (v253-xiv, parent-sibling depth 1, register Jaw
     expect(resolveAlias('emang')?.kind).toBe('parent-sibling')
     expect(resolveAlias('mang')?.kind).toBe('parent-sibling')
     expect(resolveAlias('tante')?.kind).toBe('parent-sibling')
-    expect(resolveAlias('om')).toBeNull()
+    expect(resolveAlias('om')?.kind).toBe('parent-sibling')
   })
 
-  it('7. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 96 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(96)
-    expect(aliasKinds().length).toBe(96)
+  it('7. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(100)
+    expect(aliasKinds().length).toBe(100)
   })
 
   it('8. daftar key gugus parent-sibling toEqual pasca v253-xiv (10 key, paklik menyisip urutan sort)', () => {
@@ -81,6 +81,7 @@ describe('kinship-aliases paklik (v253-xiv, parent-sibling depth 1, register Jaw
       .sort()
     expect(ps).toEqual([
       'bako',
+      'bibi',
       'emang',
       'etek',
       'makcik',
@@ -88,11 +89,14 @@ describe('kinship-aliases paklik (v253-xiv, parent-sibling depth 1, register Jaw
       'mamak',
       'mami',
       'mang',
+      'om',
+      'pakcik',
       'pakde',
       'paklik',
+      'paman',
       'tante',
     ])
-    expect(ps).toHaveLength(11)
+    expect(ps).toHaveLength(15)
   })
 
   it('9. anti-dup: paklik tepat satu kali, nihil di blok regional mana pun', () => {

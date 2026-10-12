@@ -23,9 +23,10 @@ describe('kinship-aliases Karo lanjutan (v189-ii kempu bibi)', () => {
     expect(r?.region).toBe('Karo')
   })
 
-  it('resolveAlias bibi tanpa region null: homograf Indonesia tetap nihil di map utama', () => {
+  it('resolveAlias bibi tanpa region kini mengenai entri global pasca v253-xix, entri Karo tetap beda namespace', () => {
     const r = resolveAlias('bibi')
-    expect(r).toBeNull()
+    expect(r).not.toBeNull()
+    expect(r?.region).toBeUndefined()
   })
 
   it('resolveAlias bere tanpa region null: ditahan keputusan PM, belum ditambahkan', () => {
@@ -59,10 +60,10 @@ describe('kinship-aliases Karo lanjutan (v189-ii kempu bibi)', () => {
     expect(keys.length).toBe(36) // v239-i bump 35 jadi 36 (alias perkembaren); v238-i bump 34 jadi 35 (alias kalimbubu singalo perninin); v236-i bump 32 jadi 33 (alias kalimbubu singalo ulu emas);  v235-i bump 31 jadi 32 (alias anak beru menteri); v234-i bump 30 jadi 31 (alias puang ni puang); v232-i bump 28 jadi 29 (alias kalimbubu simada dareh) (alias singerana) (alias kalimbubu siperdemui)
   })
 
-  it('rantai aliasKinds() panjang tetap 73: entri kempu bibi Karo regional tidak menambah map utama', () => {
-    expect(aliasKinds().length).toBe(96)
+  it('rantai aliasKinds() total pasca v253-xix: entri kempu bibi Karo regional tetap tidak menambah map utama, bibi global live sbg key terpisah', () => {
+    expect(aliasKinds().length).toBe(100)
     expect(aliasKinds()).not.toContain('kempu')
-    expect(aliasKinds()).not.toContain('bibi')
+    expect(aliasKinds()).toContain('bibi')
   })
 
   it('normalize konsisten untuk kempu: uppercase dan spasi ganda sama hasilnya dengan key bersih', () => {

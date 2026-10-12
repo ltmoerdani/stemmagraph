@@ -229,6 +229,28 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Minangkabau',
     note: 'paman Minangkabau = saudara ibu laki-laki (maternal uncle), padanan paman maskulin Minangkabau; glosa paman, register Mk; kind parent-sibling depth 1 konsisten gugus paman (emang dan mang nihil entri di tip per verifikasi Raka 10 Okt 2026, preseden pakde dan tulang); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/mamak akses 10 Okt 2026 (verifikasi first-hand PM; percobaan akses server Raka terhalang halaman BatasSehari, dicatat jujur) plus Wiktionary ID revids 1467750 (nomina makna 1 saudara ibu laki-laki; flag rfv impor dari KBBI tercatat jujur; bagian min mengonfirmasi paman atau saudara laki-laki dari ibu); GUARD MAKNA: makna 4 KBBI (n Bt ibu) TIDAK dipetakan karena makna ibu bukan relasi paman, makna 2 (ark, mak tua) dan makna 3 (kl, sapaan raja kepada pegawai kerajaan tua) bukan kekerabatan; homonim bagian bahasa lain Wiktionary (bjn empuk, mqg ibu, pse paman, jax ibu kandung, min paman dan ibu aneuk jamee) TIDAK dipetakan; qualifier minangkabau ditambahkan ke union interface di berkas ini sesuai kontrak, region Minangkabau pola inyik; referensi kontrak v253-vii dan Log Supervisi BOARD-stemmagraph 10 Okt 2026',
   },
+  paman: {
+    kind: 'parent-sibling',
+    depth: 1,
+    note: 'paman = saudara laki-laki ayah atau ibu, cakupan netral urutan lahir ikut KBBI VI; disparitas Wiktionary ketat adik laki-laki dicatat di note dan TIDAK diadopsi; sapaan hormat makna 2 tidak dipetakan; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id/entri/paman akses 12 Okt 2026 plus Wiktionary ID revid 1462935',
+  },
+  bibi: {
+    kind: 'parent-sibling',
+    depth: 1,
+    note: 'bibi = adik atau kakak perempuan ayah atau ibu; homograf resmi KBBI VI bi.bi2 Bg alat pancing, bi.bi3 Bt mangga mentah, bi.bi4 Bt masa padi TIDAK dipetakan; 3 makna sapaan non-kekerabatan tidak dipetakan; DUA SUMBER: KBBI VI akses 12 Okt 2026 plus Wiktionary ID revid 1312636',
+  },
+  om: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'om2 n cak = kakak atau adik laki-laki ayah atau ibu plus sapaan laki-laki agak tua; sapaan tidak dipetakan; homograf om1 p Hindu dan OM n sing orkes melayu plus blok nl dan sv di halaman Wiktionary sama TIDAK dipetakan; DUA SUMBER: KBBI VI akses 12 Okt 2026 plus Wiktionary ID revid 1122680',
+  },
+  pakcik: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'pakcik akr bapak kecil, sapaan adik laki-laki bapak atau ibu, paman; alias konsolidasi ke makna paman; makna ke-3 Prm pembina pramuka siaga putra TIDAK dipetakan; DUA SUMBER: KBBI VI akses 12 Okt 2026 plus Wiktionary ID revid 1122958',
+  },
   bako: {
     kind: 'parent-sibling',
     depth: 1,

@@ -93,9 +93,9 @@ describe('kinship-aliases atuk (v253-xviii, grandparent depth 1 Kupang)', () => 
     expect(resolveAlias('nenek')?.kind).toBe('grandparent')
   })
 
-  it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 96 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(96)
-    expect(aliasKinds().length).toBe(96)
+  it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 100 pasca v253-xviii', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(100)
+    expect(aliasKinds().length).toBe(100)
   })
 
   it('11. daftar key gugus grandparent global toEqual pasca v253-xviii (16 key, atuk menyisip setelah atok sebelum opa)', () => {

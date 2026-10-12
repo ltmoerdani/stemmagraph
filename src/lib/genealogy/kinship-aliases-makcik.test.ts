@@ -52,10 +52,10 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
     expect(ex.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('5. negatif kontrak pakde: resolveAlias pakcik tetap null dan key pakcik nihil', () => {
-    expect(resolveAlias('pakcik')).toBeNull()
-    expect(KINSHIP_ALIASES['pakcik']).toBeUndefined()
-    expect(Object.keys(KINSHIP_ALIASES)).not.toContain('pakcik')
+  it('5. pakcik kini live pasca v253-xix; guard kontrak pakde diperbarui jadi positif', () => {
+    expect(resolveAlias('pakcik')).not.toBeNull()
+    expect(KINSHIP_ALIASES['pakcik']).toBeDefined()
+    expect(Object.keys(KINSHIP_ALIASES)).toContain('pakcik')
   })
 
   it('6. guard blok jax Wiktionary tidak dipetakan sbg key', () => {
@@ -75,17 +75,17 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
     expect(note).toContain('1217714')
   })
 
-  it('8. non-regresi tetangga: tante, paklik, etek, pakde tetap live kind sama; om tetap nihil', () => {
+  it('8. non-regresi tetangga: tante, paklik, etek, pakde tetap live kind sama; om kini live pasca v253-xix', () => {
     expect(resolveAlias('tante')?.kind).toBe('parent-sibling')
     expect(resolveAlias('paklik')?.kind).toBe('parent-sibling')
     expect(resolveAlias('etek')?.kind).toBe('parent-sibling')
     expect(resolveAlias('pakde')?.kind).toBe('parent-sibling')
-    expect(resolveAlias('om')).toBeNull()
+    expect(resolveAlias('om')?.kind).toBe('parent-sibling')
   })
 
-  it('9. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 96 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(96)
-    expect(aliasKinds().length).toBe(96)
+  it('9. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(100)
+    expect(aliasKinds().length).toBe(100)
   })
 
   it('10. anti-dup: makcik tepat satu kali, nihil di blok regional mana pun', () => {
@@ -108,6 +108,7 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
       .sort()
     expect(ps).toEqual([
       'bako',
+      'bibi',
       'emang',
       'etek',
       'makcik',
@@ -115,16 +116,19 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
       'mamak',
       'mami',
       'mang',
+      'om',
+      'pakcik',
       'pakde',
       'paklik',
+      'paman',
       'tante',
     ])
-    expect(ps).toHaveLength(11)
+    expect(ps).toHaveLength(15)
   })
 
-  it('13. glosa makcik pada entri etek dan bibi Karo tetap glos, bibi tetap nihil di map global', () => {
+  it('13. glosa makcik pada entri etek dan bibi Karo tetap glos, bibi kini live di map global pasca v253-xix', () => {
     const note = resolveAlias('makcik')?.note ?? ''
     expect(note).toContain('GLOS saja tidak diubah')
-    expect(KINSHIP_ALIASES['bibi']).toBeUndefined()
+    expect(KINSHIP_ALIASES['bibi']).toBeDefined()
   })
 })
