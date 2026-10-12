@@ -12,7 +12,7 @@ import { expandAliasQuery } from './search-filter'
  * V253-XX: bank lemma pakdhe, budhe, ponakan (kontrak PM, 12 Okt 2026).
  * Tiga lema masuk map GLOBAL pola pakde paklik makcik; blok
  * KINSHIP_ALIASES_REGIONAL tidak dibuat. Total key global naik PERSIS 3
- * (100 jadi 103).
+ * (100 jadi 103 di V253-XX; 103 jadi 106 di V253-XXI: uwa nyokap bokap).
  *
  * pakdhe: jangkar Wiktionary ID blok bahasa Tengger revid 1286612 (nomina
  * kakak laki-laki orang tua); KBBI VI dan mirror III NIHIL entri, dicatat
@@ -134,9 +134,9 @@ describe('kinship-aliases bank lemma pakdhe budhe ponakan (V253-XX)', () => {
     }
   })
 
-  it('12. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 103 pasca V253-XX', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(103)
-    expect(aliasKinds().length).toBe(103)
+  it('12. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 106 pasca V253-XXI (riwayat 100 jadi 103 di V253-XX)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(106)
+    expect(aliasKinds().length).toBe(106)
   })
 
   it('13. gugus parent-sibling Jawa jadi 4 entri: pakde paklik pakdhe budhe', () => {

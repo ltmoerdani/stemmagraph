@@ -117,8 +117,8 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
   })
 
   it('11. guard bump total key: Object.keys dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(103)
-    expect(aliasKinds().length).toBe(103)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(106)
+    expect(aliasKinds().length).toBe(106)
   })
 
   it('12. anti-dup: nyak dan mbok masing-masing tepat satu kali, nihil key duplikat', () => {
@@ -128,14 +128,14 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
     expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('13. daftar kind parent global naik 2 menjadi 4, urutan asli map', () => {
+  it('13. daftar kind parent global naik jadi 6 pasca v253-xxi, urutan asli map', () => {
     const parents = Object.keys(KINSHIP_ALIASES).filter(
       (k) => KINSHIP_ALIASES[k]?.kind === 'parent',
     )
-    expect(parents).toEqual(['amak', 'nyak', 'mbok', 'bapa'])
+    expect(parents).toEqual(['amak', 'nyak', 'mbok', 'nyokap', 'bokap', 'bapa'])
   })
 
-  it('14. nyak dan mbok nihil di semua map regional, parent-sibling global tidak berubah', () => {
+  it('14. nyak dan mbok nihil di semua map regional, parent-sibling global naik jadi 18 pasca v253-xxi (uwa)', () => {
     for (const region of Object.keys(KINSHIP_ALIASES_REGIONAL)) {
       expect(KINSHIP_ALIASES_REGIONAL[region]['nyak']).toBeUndefined()
       expect(KINSHIP_ALIASES_REGIONAL[region]['mbok']).toBeUndefined()
@@ -143,6 +143,6 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
     const ps = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
       .sort()
-    expect(ps).toEqual(['bako', 'bibi', 'budhe', 'emang', 'etek', 'makcik', 'mama', 'mamak', 'mami', 'mang', 'om', 'pakcik', 'pakde', 'pakdhe', 'paklik', 'paman', 'tante'])
+    expect(ps).toEqual(['bako', 'bibi', 'budhe', 'emang', 'etek', 'makcik', 'mama', 'mamak', 'mami', 'mang', 'om', 'pakcik', 'pakde', 'pakdhe', 'paklik', 'paman', 'tante', 'uwa'])
   })
 })
