@@ -139,11 +139,11 @@ describe('kinship-aliases bank lemma pakdhe budhe ponakan (V253-XX)', () => {
     expect(aliasKinds().length).toBe(103)
   })
 
-  it('13. gugus parent-sibling Jawa jadi 3 entri: pakde paklik pakdhe, budhe menyusul gugus bibi feminin', () => {
+  it('13. gugus parent-sibling Jawa jadi 4 entri: pakde paklik pakdhe budhe', () => {
     const entries = Object.values(KINSHIP_ALIASES).filter(
       (e) => e.kind === 'parent-sibling' && e.region === 'Jawa' && e.qualifier === 'jw',
     )
-    expect(entries).toHaveLength(3)
+    expect(entries).toHaveLength(4)
     const ps = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
       .sort()
@@ -167,5 +167,37 @@ describe('kinship-aliases bank lemma pakdhe budhe ponakan (V253-XX)', () => {
     expect(resolveAlias('budhee')).toBeNull()
     expect(resolveAlias('ponakann')).toBeNull()
     expect(resolveAlias('pakdhe')?.kind).not.toBe('child')
+  })
+
+  it('16. relasi terbalik pakdhe dan budhe: parent-sibling berhadapan dengan sibling-child di map', () => {
+    expect(resolveAlias('pakdhe')?.kind).toBe('parent-sibling')
+    expect(resolveAlias('budhe')?.kind).toBe('parent-sibling')
+    expect(resolveAlias('ponakan')?.kind).toBe('sibling-child')
+    expect(resolveAlias('keponakan')?.kind).toBe('sibling-child')
+    expect(resolveAlias('kemenakan')?.kind).toBe('sibling-child')
+    expect(resolveAlias('pakdhe')?.kind).not.toBe(resolveAlias('ponakan')?.kind)
+    expect(resolveAlias('budhe')?.kind).not.toBe(resolveAlias('kemenakan')?.kind)
+  })
+
+  it('17. relasi terbalik ponakan: sibling-child berhadapan dengan parent-sibling (bibi om pakcik)', () => {
+    expect(resolveAlias('ponakan')?.depth).toBeUndefined()
+    for (const k of ['bibi', 'pakcik', 'om', 'emang']) {
+      const e = resolveAlias(k)
+      if (e) expect(e.kind).toBe('parent-sibling')
+    }
+    expect(resolveAlias('ponakan')?.kind).not.toBe(resolveAlias('bibi')?.kind)
+  })
+
+  it('18. edge polysemy: pakdhe vs pakde paklik beda key; budhe vs bu bibi; ponakan vs anak', () => {
+    expect(KINSHIP_ALIASES['pakdhe']).not.toBe(KINSHIP_ALIASES['pakde'])
+    expect(KINSHIP_ALIASES['paklik']).toBeDefined()
+    expect(resolveAlias('pakdhe')).not.toEqual(resolveAlias('paklik'))
+    expect(KINSHIP_ALIASES['bu']).toBeUndefined()
+    expect(resolveAlias('bu')).toBeNull()
+    expect(KINSHIP_ALIASES['bibi']).toBeDefined()
+    expect(resolveAlias('budhe')).not.toEqual(resolveAlias('bibi'))
+    expect(resolveAlias('anak')?.kind).toBe('child')
+    expect(resolveAlias('ponakan')?.kind).toBe('sibling-child')
+    expect(resolveAlias('ponakan')).not.toEqual(resolveAlias('anak'))
   })
 })
