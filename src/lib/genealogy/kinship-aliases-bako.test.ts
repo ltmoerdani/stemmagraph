@@ -88,13 +88,13 @@ describe('kinship-aliases bako (v253-ix, parent-sibling depth 1 Minangkabau)', (
     const ps = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
       .sort()
-    expect(ps).toEqual(['bako', 'emang', 'etek', 'mama', 'mamak', 'mami', 'mang', 'pakde', 'paklik', 'tante'])
-    expect(ps).toHaveLength(10)
+    expect(ps).toEqual(['bako', 'emang', 'etek', 'makcik', 'mama', 'mamak', 'mami', 'mang', 'pakde', 'paklik', 'tante'])
+    expect(ps).toHaveLength(11)
   })
 
   it('9. guard bump total key PERSIS +1: 84 menjadi 85 di map global dan aliasKinds', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(91)
-    expect(aliasKinds().length).toBe(91)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(92)
+    expect(aliasKinds().length).toBe(92)
   })
 
   it('10. anti-dup: key bako muncul tepat satu kali di daftar global dan nihil di semua blok regional', () => {
