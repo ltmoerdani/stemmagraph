@@ -46,6 +46,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Melayu',
     note: 'homonim: makna leluhur saat konteks naik jauh',
   },
+  atuk: {
+    kind: 'grandparent',
+    depth: 1,
+    qualifier: 'cak',
+    region: 'Kupang',
+    note: 'KBBI VI a.tuk1 cak kp datuk; homonim a.tuk2 Btk atap daun nipah atau sagu tidak dipetakan; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id/entri/atuk URL entri diakses 12 Okt 2026 plus Wiktionary ID revid 1141273 via api.php (blok ms Kepri kakek, konsisten cak kp); referensi pola andung dan inyik gugus grandparent regional, kontrak drafts/kontrak-v253xviii-stg-atuk-tunggal-2026-10-11.md',
+  },
   opa: { kind: 'grandparent', qualifier: 'cak', region: 'Betawi' },
   oma: { kind: 'grandparent', qualifier: 'cak', region: 'Betawi' },
   eyang: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa', register: 'hormat' },
