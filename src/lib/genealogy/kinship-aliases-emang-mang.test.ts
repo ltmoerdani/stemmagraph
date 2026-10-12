@@ -89,8 +89,8 @@ describe('kinship-aliases emang dan mang (v253-viii, parent-sibling depth 1 Sund
   })
 
   it('9. guard bump total key: 85 pasca v253-ix bako di map global dan aliasKinds', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(96)
-    expect(aliasKinds().length).toBe(96)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(100)
+    expect(aliasKinds().length).toBe(100)
   })
 
   it('10. anti-dup: emang dan mang muncul tepat satu kali global dan nihil di semua blok regional', () => {

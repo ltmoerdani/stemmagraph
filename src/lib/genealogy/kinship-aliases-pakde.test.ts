@@ -39,12 +39,12 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
     expect(entries).toContainEqual(resolveAlias('paklik'))
   })
 
-  it('5. uak dan pakcik DITAHAN: nihil sbg key, query keduanya nihil alias', () => {
+  it('5. uak tetap DITAHAN nihil sbg key; pakcik kini live pasca v253-xix', () => {
     expect(Object.keys(KINSHIP_ALIASES)).not.toContain('uak')
     expect(Object.keys(KINSHIP_ALIASES)).not.toContain('uwak')
-    expect(Object.keys(KINSHIP_ALIASES)).not.toContain('pakcik')
+    expect(Object.keys(KINSHIP_ALIASES)).toContain('pakcik')
     expect(resolveAlias('uak')).toBeNull()
-    expect(resolveAlias('pakcik')).toBeNull()
+    expect(resolveAlias('pakcik')).not.toBeNull()
   })
 
   it('6. guard homonim Kankanaey: entri tetap kind kekerabatan Jawa, homonim upacara kurban terdokumentasi TIDAK dipetakan', () => {
@@ -57,7 +57,7 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
   })
 
   it('7. jumlah total key 85 pasca v253-ix bako (v253-vi trio in-law dulu naik PERSIS 1 dari baseline kontrak 77 ke 81)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(96)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(100)
   })
 
   it('8. regional nihil untuk pakde: key tidak masuk blok regional mana pun', () => {
@@ -67,10 +67,10 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
     expect(resolveAlias('pakde', 'Toba')?.kind).toBe('parent-sibling')
   })
 
-  it('9. non-regresi kunci tetangga gugus saudara orang tua: tulang regional Toba utuh, om nihil', () => {
+  it('9. non-regresi kunci tetangga gugus saudara orang tua: tulang regional Toba utuh, om kini live pasca v253-xix', () => {
     expect(resolveAlias('tulang', 'Toba')?.kind).toBe('parent-sibling')
     expect(resolveAlias('tulang', 'Toba')?.region).toBe('Toba')
-    expect(resolveAlias('om')).toBeNull()
+    expect(resolveAlias('om')?.kind).toBe('parent-sibling')
     expect(KINSHIP_ALIASES['pakde']?.kind).toBe('parent-sibling')
   })
 

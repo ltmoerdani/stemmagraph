@@ -33,10 +33,10 @@ describe('kinship aliases: etek (posisi 21)', () => {
         expect(resolveAlias('etek')!.qualifier).toBe('minangkabau');
     });
 
-    it('kasus 3: guard sinonim KBBI bibi TIDAK dipetakan sbg key; makcik kini live pasca v253-xv (jangkar edisi III), pakcik tetap nihil', () => {
-        expect(resolveAlias('bibi')).toBeNull();
+    it('kasus 3: bibi dan pakcik kini live pasca v253-xix; makcik live pasca v253-xv (jangkar edisi III)', () => {
+        expect(resolveAlias('bibi')).not.toBeNull();
         expect(resolveAlias('makcik')).not.toBeNull();
-        expect(resolveAlias('pakcik')).toBeNull();
+        expect(resolveAlias('pakcik')).not.toBeNull();
     });
 
     it('kasus 4: etek tetap positif sbg lemma Mk, homonim Simalungun/Tao tidak mengganggu', () => {
