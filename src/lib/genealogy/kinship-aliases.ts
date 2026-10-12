@@ -236,6 +236,18 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
       'DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/mbok akses 12 Okt 2026 HTTP 200 (mbok1 n Jw tiga makna, makna relasi ibu; mbok2 n Bl sapaan) plus Wiktionary ID revid 1220974 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1220974 (blok bahasa Indonesia identik KBBI, konteks Bali pada blok kedua; rujukan R:KBBI Daring; flag rfv impor tercatat jujur); ' +
       'GUARD HOMOGRAF TIDAK dipetakan: mbok2 Bl sapaan perempuan lebih tua di Bali bukan makna relasi ibu, kasus negatif eksplisit; GUARD HOMONIM ANTARBAHASA: blok ban Wiktionary sama (kakak perempuan) TIDAK dipetakan; ragam simbok embok dan sinonim mbok ajeng hanya note; referensi kontrak v253-xvii dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
   },
+  nyokap: {
+    kind: 'parent',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'nyokap = ibu ragam cak prokem Jakarta; TANPA region; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/nyokap akses 12 Okt 2026 HTTP 200 (nyo.kap n cak ibu) plus Wiktionary ID revid 1231051 via URL id.wiktionary.org/w/index.php?title=nyokap&oldid=1231051 (nomina prokem istilah Jakarta untuk ibu, antonim bokap, hipernim bonyok); GUARD turunan kenyokapan TIDAK dipetakan; sinonim ibu bunda TIDAK dibuat key (ibu ayah bapak mama bunda memang sengaja nihil di map, preseden tetap); referensi kontrak V253-XXI gelombang dua dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
+  bokap: {
+    kind: 'parent',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'bokap = ayah ragam cak prokem Jakarta; TANPA region; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/bokap akses 12 Okt 2026 HTTP 200 (bo.kap n cak ayah) plus Wiktionary ID revid 1466248 via URL id.wiktionary.org/w/index.php?title=bokap&oldid=1466248 (prokem istilah Jakarta untuk ayah; label kategori adjektiva di Wiktionary adalah keanehan leksikografis, dicatat jujur, tidak mengubah semantik nomina referent orang); GUARD turunan kebokapan TIDAK dipetakan; referensi kontrak V253-XXI gelombang dua dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
   makcik: {
     kind: 'parent-sibling',
     depth: 1,
@@ -257,6 +269,11 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     kind: 'parent-sibling',
     depth: 1,
     note: 'bibi = adik atau kakak perempuan ayah atau ibu; homograf resmi KBBI VI bi.bi2 Bg alat pancing, bi.bi3 Bt mangga mentah, bi.bi4 Bt masa padi TIDAK dipetakan; 3 makna sapaan non-kekerabatan tidak dipetakan; DUA SUMBER: KBBI VI akses 12 Okt 2026 plus Wiktionary ID revid 1312636',
+  },
+  uwa: {
+    kind: 'parent-sibling',
+    depth: 1,
+    note: 'uwa = kakak dari ayah atau ibu, netral gender; senioritas kakak hanya di note karena union KinshipKind tidak punya kind senioritas (pola pakdhe); etimologi Jawa Kuno tercatat di note pakde, uwa pinjaman Jawa varian wa wak uwak; TANPA qualifier TANPA region key global pola makcik paman; DUA SUMBER: Wiktionary ID revid 1244411 via URL id.wiktionary.org/w/index.php?title=uwa&oldid=1244411 (blok Indonesia nomina dua makna: sapaan kepada kakak dari ayah atau ibu PLUS sapaan kepada orang yang lebih tua yang bukan kerabat; etimologi pinjaman Jawa uwa varian wa wak uwak dari Jawa Kuno) plus Wikisastra jv revid 158484 via jv.wiktionary.org/w/index.php?title=uwa&oldid=158484 (uwa 1 sedulure tuwa bapa utawa biyung = kakak sedulur bapak atau ibu); GUARD KBBI VI kbbi.kemendikdasmen.go.id/entri/uwa akses 12 Okt 2026: DUA lema BUKAN kekerabatan TIDAK dipetakan (u.wa1 n Ri sapaan santun pada teman sebaya; u.wa2 n Mee rumput atau lumut ujung pagar), pola jangkar pakdhe dicatat jujur; GUARD MAKNA 2 Wiktionary (sapaan orang lebih tua bukan kerabat) tidak dipetakan karena bukan relasi kekerabatan; varian uak uwak TETAP ditahan nihil, guard existing kinship-aliases-pakde.test.ts baris 45-48 tidak diubah; referensi kontrak V253-XXI gelombang dua dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
   },
   om: {
     kind: 'parent-sibling',
