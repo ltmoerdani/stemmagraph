@@ -193,6 +193,11 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Minangkabau',
     note: 'amak Minangkabau = ibu, padanan feminin gugus parent Minangkabau (mamak bako etek); qualifier minangkabau konsisten pola live bako mamak etek (koreksi PM atas kontrak v253-xi yang menulis mk); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/amak akses 10 Okt 2026 (a.mak1 n Mk ibu, SATU lema relasi) plus Wiktionary ID revid 1471283 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1471283 (bahasa min panggilan ibu kandung plus wanita sebaya ibu, penguat register sapaan masuk note); GUARD HOMOGRAF KBBI TIDAK dipetakan: a.mak2 n Ach alat perahu bukan relasi kekerabatan; API Wiktionary menolak oldid sitasi sehingga wajib api.php revids; referensi kontrak v253-xi dan Log Supervisi BOARD-stemmagraph 10 Okt 2026',
   },
+  makcik: {
+    kind: 'parent-sibling',
+    depth: 1,
+    note: 'makcik Indonesia umum register akr = mak kecil; bibi, kind parent-sibling depth 1 TANPA qualifier TANPA region pola tante pakde; register akr tidak masuk union interface sehingga tercatat di note saja; DUA SUMBER: KBBI III daring mirror kbbi.web.id/makcik akses 12 Okt 2026 (mak.cik n mak kecil; bibi, tunggal nihil homograf bernomor) plus Wiktionary ID revid 1217714 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1217714 (blok bahasa Indonesia nomina mak kecil; bibi, konvergen, templat rfv impor dari KBBI dicatat sbg catatan bukan penghalang pola pakde); JANGKAR KBBI EDISI III dicatat jujur: entri nihil di KBBI VI, jangkar edisi III tercantum di header testfile; GUARD HOMONIM ANTARBAHASA TIDAK dipetakan: blok jax Melayu Jambi di halaman Wiktionary sama (adik perempuan dari bapak, tag rfv) BUKAN blok bahasa Indonesia; key pakcik TETAP tidak dibuat, assertion negatif kontrak pakde tetap utuh; glosa makcik pada entri etek dan bibi Karo adalah GLOS saja tidak diubah; referensi kontrak v253-xv dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
   mamak: {
     kind: 'parent-sibling',
     depth: 1,
