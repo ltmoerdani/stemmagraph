@@ -88,9 +88,9 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
     expect(resolveAlias('nenek')?.kind).toBe('grandparent')
   })
 
-  it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 92 pasca v253-xv', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(92)
-    expect(aliasKinds().length).toBe(92)
+  it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 93 pasca v253-xvi', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(93)
+    expect(aliasKinds().length).toBe(93)
   })
 
   it('11. daftar key gugus grandparent global toEqual pasca v253-xii (15 key, andung menyisip antara engkong dan inyik)', () => {

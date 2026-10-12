@@ -343,6 +343,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'nande = ibu dalam kekerabatan Karo (sembuyak nande = ibu bersaudara kandung), relasi antar anggota kelompok dipetakan kind sibling, Kamus Karo Online + Wikipedia Rakut Sitelu, evidence notes/442',
   },
+  ucu: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'ucu = bungsu, alias sibling dgn penanda kelahiran bungsu (posisi termuda di antara bersaudara), pola senioritas etek teteh sisi penanda usia; jangkar KBBI VI berpenanda ark, register ark nihil padanan di union interface sehingga tercatat di note saja (pola makcik register akr); ' +
+      'DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/ucu akses 11 Okt 2026 (u.cu n ark bungsu, SATU lema nihil homograf bernomor, verifikasi first-hand Raka HTTP 200) plus Wiktionary ID revid 1297573 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1297573 (blok bahasa Indonesia n arkais bungsu definisi konvergen, rujukan R:KBBI Daring, flag rfv impor dari KBBI tercatat jujur sbg catatan bukan penghalang pola makcik); ' +
+      'GUARD BLOK ms Kepri TIDAK dipetakan: blok ms (kepri) bungsu di halaman Wiktionary sama BUKAN blok bahasa Indonesia, kasus negatif eksplisit di testfile; glosa bungsu TIDAK dipetakan sbg key tunggal (resolveAlias bungsu tetap nihil, frasa bungsu hidup hanya sbg komposit di kinship-age-axis); referensi kontrak v253-xvi dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
   bapa: {
     kind: 'parent',
     depth: 1,
