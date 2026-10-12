@@ -93,7 +93,7 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
     expect(aliasKinds().length).toBe(96)
   })
 
-  it('11. daftar key gugus grandparent global toEqual pasca v253-xii (15 key, andung menyisip antara engkong dan inyik)', () => {
+  it('11. daftar key gugus grandparent global toEqual pasca v253-xviii (16 key, atuk menyisip setelah atok sebelum opa)', () => {
     const gp = Object.keys(KINSHIP_ALIASES).filter(
       (k) => KINSHIP_ALIASES[k]?.kind === 'grandparent'
     )
@@ -103,6 +103,7 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
       'aki',
       'datuk',
       'atok',
+      'atuk',
       'opa',
       'oma',
       'eyang',
@@ -114,7 +115,7 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
       'nini',
       'ninik',
     ])
-    expect(gp).toHaveLength(15)
+    expect(gp).toHaveLength(16)
   })
 
   it('12. anti-dup: andung tepat satu kali, nihil di blok regional mana pun', () => {
