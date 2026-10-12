@@ -193,6 +193,23 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Minangkabau',
     note: 'amak Minangkabau = ibu, padanan feminin gugus parent Minangkabau (mamak bako etek); qualifier minangkabau konsisten pola live bako mamak etek (koreksi PM atas kontrak v253-xi yang menulis mk); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/amak akses 10 Okt 2026 (a.mak1 n Mk ibu, SATU lema relasi) plus Wiktionary ID revid 1471283 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1471283 (bahasa min panggilan ibu kandung plus wanita sebaya ibu, penguat register sapaan masuk note); GUARD HOMOGRAF KBBI TIDAK dipetakan: a.mak2 n Ach alat perahu bukan relasi kekerabatan; API Wiktionary menolak oldid sitasi sehingga wajib api.php revids; referensi kontrak v253-xi dan Log Supervisi BOARD-stemmagraph 10 Okt 2026',
   },
+  nyak: {
+    kind: 'parent',
+    depth: 1,
+    region: 'Jambi',
+    note: 'nyak Jambi = ibu, label Jk tercatat di note karena jk nihil di union qualifier (pola makcik register akr); semantik tunggal ibu; ' +
+      'DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/nyak akses 12 Okt 2026 HTTP 200 (nyak n Jk ibu, nihil homonim) plus Wiktionary ID revid 1347330 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1347330 (blok bahasa Indonesia nomina emak; ibu, konvergen; rujukan R:KBBI Daring); ' +
+      'GUARD HOMOGRAF TIDAK dipetakan: nyak pronomina kge (saya) dan ljp (saya; aku) serta verba osi (terimalah) di halaman Wiktionary sama BUKAN relasi kekerabatan, kasus negatif eksplisit di testfile; referensi kontrak v253-xvii dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
+  mbok: {
+    kind: 'parent',
+    depth: 1,
+    qualifier: 'jw',
+    region: 'Jawa',
+    note: 'mbok Jawa = ibu, semantik utama makna relasi lema mbok1 n Jw; dua makna sapaan lain lema sama (sapaan ragam krama ngoko untuk perempuan; sapaan wanita tua yang kedudukan sosialnya lebih rendah) HANYA note TIDAK dipetakan; ' +
+      'DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/mbok akses 12 Okt 2026 HTTP 200 (mbok1 n Jw tiga makna, makna relasi ibu; mbok2 n Bl sapaan) plus Wiktionary ID revid 1220974 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1220974 (blok bahasa Indonesia identik KBBI, konteks Bali pada blok kedua; rujukan R:KBBI Daring; flag rfv impor tercatat jujur); ' +
+      'GUARD HOMOGRAF TIDAK dipetakan: mbok2 Bl sapaan perempuan lebih tua di Bali bukan makna relasi ibu, kasus negatif eksplisit; GUARD HOMONIM ANTARBAHASA: blok ban Wiktionary sama (kakak perempuan) TIDAK dipetakan; ragam simbok embok dan sinonim mbok ajeng hanya note; referensi kontrak v253-xvii dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
   makcik: {
     kind: 'parent-sibling',
     depth: 1,
