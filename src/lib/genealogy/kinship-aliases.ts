@@ -193,6 +193,25 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Jawa',
     note: 'paklik Jawa = sapaan adik laki-laki ibu atau ayah (paman junioritas adik), akronim bapak cilik; kind parent-sibling depth 1 pola pakde, pasangan senioritas kakak-adik dalam gugus paman (paman, mamak, emang, mang, bako); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/paklik akses 11 Okt 2026 (pak.lik n Jw akr DUA makna: (1) bapak cilik; (2) sapaan adik laki-laki ibu atau ayah; paman) plus Wiktionary ID revid 1040734 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1040734 (bagian bahasa Indonesia: akronim bapak cilik, sapaan kepada adik laki-laki ibu atau ayah; paman); GUARD MAKNA: makna 1 KBBI bapak cilik DIPISAHKAN dari makna 2 dan TIDAK dipetakan sbg relasi, yang dipetakan HANYA makna 2 sapaan adik laki-laki ibu atau ayah; Wiktionary menggabungkan kedua makna dalam satu baris, TIDAK diikuti; GUARD HOMONIM: bagian bahasa Jawa di halaman Wiktionary sama (Adik laki-laki bapak, paman) BUKAN blok bahasa Indonesia, TIDAK dipetakan; referensi kontrak v253-xiv dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
   },
+  pakdhe: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'jw',
+    region: 'Jawa',
+    note: 'pakdhe Jawa Tengger = sapaan kakak laki-laki orang tua (paman senioritas kakak), varian ejaan pakde; kind parent-sibling depth 1 pola pakde paklik; DUA SUMBER: Wiktionary ID revid 1286612 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1286612 akses 12 Okt 2026 (blok bahasa Tengger tes, nomina kakak laki-laki orang tua, contoh Pakdhe mau tekan endi) plus KBBI VI kbbi.kemendikdasmen.go.id/entri/pakdhe akses 12 Okt 2026 (ENTRI NIHIL, dicatat jujur, pola jangkar makcik v253-xv dan nyak mbok v253-xvii); mirror KBBI III kbbi.web.id/pakdhe juga nihil; varian pakde tetap lema KBBI terpisah live, tidak difusi, keduanya key eksplisit; homonim nihil; referensi kontrak V253-XX bank lemma pakdhe budhe ponakan dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
+  budhe: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'jw',
+    region: 'Jawa',
+    note: 'budhe Jawa = sapaan kakak perempuan ibu atau ayah (bibi senioritas kakak), akronim ibu gede, varian ejaan bu.de resmi; kind parent-sibling depth 1 pasangan femenin pakde; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/bude akses 12 Okt 2026 HTTP 200 (bu.de n Jw DUA makna: (1) ibu gede; kakak perempuan ibu atau ayah; (2) kata sapaan kepada kakak perempuan ibu atau ayah) plus Wiktionary ID revid 1165956 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1165956 (blok bahasa Indonesia: akronim ibu gede; kakak perempuan ibu atau ayah plus panggilan untuk kakak perempuan ibu atau ayah, rujukan R:KBBI Daring, flag rfv impor tercatat jujur pola pakde); key dibuat pada ejaan budhe sesuai kontrak PM, halaman budhe nihil di KBBI VI dan mirror III, ejaan bu.de tetap TIDAK dibuat sbg key (varian ortografik, dibahas note), GUARD MAKNA 2 KBBI sapaan tidak dipetakan terpisah karena kind sama depth sama hanya note saja; GUARD HOMONIM ANTARBAHASA: blok nia Nias di halaman Wiktionary bude (canda, kelakar) TIDAK dipetakan; referensi kontrak V253-XX bank lemma pakdhe budhe ponakan dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
+  ponakan: {
+    kind: 'sibling-child',
+    qualifier: 'cak',
+    note: 'ponakan = kemenakan, label cak; kind sibling-child pola keponakan kemenakan kemanakan tanpa depth; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/ponakan akses 12 Okt 2026 HTTP 200 (po.nak.an n cak kemenakan, tunggal nihil homograf bernomor) plus Wiktionary ID revid 1462863 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1462863 (blok bahasa Indonesia cak kemenakan, rujukan R:KBBI Daring, flag rfv impor tercatat jujur pola pakde); GUARD HOMONIM ANTARBAHASA TIDAK dipetakan: blok bew Bekasi (keponakan, JAWA SERENTAK konvergen makna) dan blok mui-plm Palembang (keponakan, kemenakan) di halaman Wiktionary sama BUKAN blok bahasa Indonesia; blok tes Tengger verba di halaman sama juga bukan blok Indonesia; sinonim resmi kemenakan tetap key tersendiri live tanpa difusi; referensi kontrak V253-XX bank lemma pakdhe budhe ponakan dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
+  },
   amak: {
     kind: 'parent',
     depth: 1,

@@ -81,8 +81,8 @@ describe('kinship-aliases generasi naik (v253-xix, 4 key parent-sibling depth 1)
   })
 
   it('8. guard bump total key: PERSIS 100 pasca v253-xix', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(100)
-    expect(aliasKinds().length).toBe(100)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(103)
+    expect(aliasKinds().length).toBe(103)
   })
 
   it('9. anti-dup: keempat key tepat satu kali, nihil di blok regional mana pun', () => {
@@ -145,6 +145,7 @@ describe('kinship-aliases generasi naik (v253-xix, 4 key parent-sibling depth 1)
     expect(ps).toEqual([
       'bako',
       'bibi',
+      'budhe',
       'emang',
       'etek',
       'makcik',
@@ -155,11 +156,12 @@ describe('kinship-aliases generasi naik (v253-xix, 4 key parent-sibling depth 1)
       'om',
       'pakcik',
       'pakde',
+      'pakdhe',
       'paklik',
       'paman',
       'tante',
     ])
-    expect(ps).toHaveLength(15)
+    expect(ps).toHaveLength(17)
   })
 
   it('16. negatif typo dan normalisasi kapital dan spasi pinggir', () => {
