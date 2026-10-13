@@ -153,6 +153,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'kp',
     note: 'kependekan kakak; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/kak akses 13 Okt 2026 (kak1 n sapaan saudara tua; kak kp kakak saudara tua) plus Wiktionary ID (nomina kependekan kakak, rujukan R:KBBI Daring, templat rfv dicatat jujur, status verifikasi komunitas belum final); makna kak1 sapaan serta makna pronomina dan onomatope TIDAK dipetakan; referensi kontrak drafts/kontrak-stg-v253xxiii-kak-2026-10-13.md',
   },
+  akak: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'cak',
+    note: 'kakak, register cak, TANPA penanda gender; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/akak akses 13 Okt 2026 (a.kak n cak kakak, ejaan ber titik a.kak TIDAK dipakai sbg key, pola budhe dari bu.de) plus Wiktionary ID (blok bahasa Indonesia: a cak kakak, nihil flag rfv); GUARD HOMONIM ANTARBAHASA: blok kjc Karo di halaman Wiktionary sama (akak = akar bagian tumbuhan) TIDAK dipetakan, blok knl Keninjal (kakak perempuan) TIDAK diikuti sbg key feminin karena KBBI nihil penanda gender, konsisten kak v253xxiii; referensi kontrak drafts/kontrak-stg-v253xxiv-akak-2026-10-13.md',
+  },
   kangmas: {
     kind: 'sibling',
     depth: 1,
