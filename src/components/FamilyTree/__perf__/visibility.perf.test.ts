@@ -58,7 +58,6 @@ describe('FamilyTree perf harness (v177-i fase prep) [perf]', () => {
     const report = samples.map(
       (duration, i) => `harness ${['15', '255', '241', '5000'][i]}: ${duration.toFixed(4)} ms`
     );
-    // eslint-disable-next-line no-console
     console.log(`v177-i baseline:\n${report.join('\n')}`);
     expect(report.join('\n')).toContain('harness 15');
   });
