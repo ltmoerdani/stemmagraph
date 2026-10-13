@@ -94,11 +94,11 @@ describe('kinship-aliases atuk (v253-xviii, grandparent depth 1 Kupang)', () => 
   })
 
   it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(116)
-    expect(aliasKinds().length).toBe(116)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(117)
+    expect(aliasKinds().length).toBe(117)
   })
 
-  it('11. daftar key gugus grandparent global toEqual pasca v253-xviii (16 key, atuk menyisip setelah atok sebelum opa)', () => {
+  it('11. daftar key gugus grandparent global toEqual pasca v253xxx gelombang sebelas (18 key, atuk menyisip setelah atok sebelum opa, simbah menyisip setelah embah sebelum engkong)', () => {
     const gp = Object.keys(KINSHIP_ALIASES).filter(
       (k) => KINSHIP_ALIASES[k]?.kind === 'grandparent'
     )
@@ -114,6 +114,7 @@ describe('kinship-aliases atuk (v253-xviii, grandparent depth 1 Kupang)', () => 
       'eyang',
       'mbah',
       'embah',
+      'simbah',
       'engkong',
       'akong',
       'andung',
@@ -121,7 +122,7 @@ describe('kinship-aliases atuk (v253-xviii, grandparent depth 1 Kupang)', () => 
       'nini',
       'ninik',
     ])
-    expect(gp).toHaveLength(17)
+    expect(gp).toHaveLength(18)
   })
 
   it('12. anti-dup: atuk tepat satu kali, nihil di blok regional mana pun, nihil region baru Kupang di KINSHIP_ALIASES_REGIONAL', () => {
