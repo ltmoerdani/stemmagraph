@@ -159,6 +159,16 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     qualifier: 'cak',
     note: 'kakak, register cak, TANPA penanda gender; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/akak akses 13 Okt 2026 (a.kak n cak kakak, ejaan ber titik a.kak TIDAK dipakai sbg key, pola budhe dari bu.de) plus Wiktionary ID (blok bahasa Indonesia: a cak kakak, nihil flag rfv); GUARD HOMONIM ANTARBAHASA: blok kjc Karo di halaman Wiktionary sama (akak = akar bagian tumbuhan) TIDAK dipetakan, blok knl Keninjal (kakak perempuan) TIDAK diikuti sbg key feminin karena KBBI nihil penanda gender, konsisten kak v253xxiii; referensi kontrak drafts/kontrak-stg-v253xxiv-akak-2026-10-13.md',
   },
+  bang: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'kata sapaan kepada kakak laki-laki; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/bang akses 13 Okt 2026 (bang2 n kata sapaan kepada kakak laki-laki; bang kp abang) plus Wiktionary ID (blok bahasa Indonesia: Nomina azan; abang; kakak laki-laki, kutipan 2012, nihil flag rfv); makna azan bang1 dan onomatope bang3 TIDAK dipetakan; referensi kontrak drafts/kontrak-stg-v253xxiv-bang-bung-2026-10-13.md',
+  },
+  bung: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'kata sapaan akrab kepada seorang laki-laki; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/bung akses 13 Okt 2026 (bung1 n kata sapaan akrab kepada seorang laki-laki, padanan abang) plus Wiktionary ID (blok bahasa Indonesia: Nomina abang panggilan akrab, templat rfv dicatat jujur, oldid 1112635); makna onomatope bung2, bu.ng tali picu belantik, dan bung4 Kei TIDAK dipetakan; referensi kontrak drafts/kontrak-stg-v253xxiv-bang-bung-2026-10-13.md',
+  },
   kangmas: {
     kind: 'sibling',
     depth: 1,
