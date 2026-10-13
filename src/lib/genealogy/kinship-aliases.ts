@@ -508,6 +508,10 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     qualifier: 'sunda',
     note: 'paman Sunda kependekan emang; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/mang akses 10 Okt 2026 (makna 1 n Sd kp emang, paman KERABATAN) plus Wiktionary ID oldid 1404703 (bagian Bahasa Indonesia nomina akr emang, paman, rujukan resmi KBBI VI, templat rfv dicatat sbg catatan bukan penghalang pola pakde); GUARD HOMONIM: makna 2 KBBI n Sd kata sapaan kepada laki-laki usianya kurang lebih sebaya paman TIDAK dipetakan (homonim sapaan bukan relasi kekerabatan), ditulis eksplisit di note ini dan dikunci testfile; kata depan mang tidak berentri; referensi kontrak v253-viii dan Log Supervisi BOARD-stemmagraph 11 Okt 2026',
   },
+  mantu: {
+    kind: 'property',
+    note: 'KBBI VI resmi man.tu dua kelas kata: n menantu; v cak mengawinkan anak, mengadakan pesta perkawinan anak; Wiktionary ID revid 1462853 id: n menantu plus v cak mengawinkan anak, etimologi Jawa Kuno mantu rujukan Zoetmulder; GUARD POLISEMI: makna verba cak mengawinkan anak TIDAK dipetakan sbg relasi kekerabatan, hanya nomina; GUARD HOMONIM ANTARBAHASA tidak dipetakan: blok mui-plm menantu, blok bew menantu, blok jv menantu, blok tes istri atau suami dari anak kita; ejaan resmi KBBI ber titik man.tu TIDAK dipakai sbg key pola budhe dari bu.de; bentuk tidak baku minantu tetap dicatat di note entri menantu; alias gugus affine Jawa dari menantu, konsisten semenda mertua besan ipar; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id/entri/mantu akses 13 Okt 2026 plus Wiktionary ID oldid 1462853 (riset-069 first-hand 13 Okt); referensi kontrak v253xxix dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
+  },
   menantu: {
     kind: 'property',
     note: 'KBBI VI: istri atau suami dari anak kita; etimologi Jawa Kuno mantu konsisten dengan entri mantu; bentuk tidak baku minantu cukup dicatat di note ini; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id plus Wiktionary ID oldid 1350531',
