@@ -88,14 +88,14 @@ describe('kinship-aliases sedulur (v253xxviii gelombang sembilan)', () => {
   })
 
   it('10. guard jumlah key PERSIS 115 pasca gelombang sembilan', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(122)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(123)
   })
 
   it('11. klaster sibling depth 1 global 33 anggota pasca sedulur', () => {
     const siblingDepth1 = Object.entries(KINSHIP_ALIASES).filter(
       ([, entry]) => entry.kind === 'sibling' && entry.depth === 1,
     )
-    expect(siblingDepth1.length).toBe(36)
+    expect(siblingDepth1.length).toBe(37)
     const keys = new Set(siblingDepth1.map(([key]) => key))
     expect(keys.has('sedulur')).toBe(true)
   })
