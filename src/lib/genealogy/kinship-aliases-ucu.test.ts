@@ -74,8 +74,8 @@ describe('kinship-aliases ucu (v253-xvi, sibling depth 1, penanda bungsu registe
   })
 
   it('7. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(120)
-    expect(aliasKinds().length).toBe(120)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(122)
+    expect(aliasKinds().length).toBe(122)
   })
 
   it('8. anti-dup: ucu tepat satu kali, nihil di blok regional mana pun', () => {
@@ -93,13 +93,14 @@ describe('kinship-aliases ucu (v253-xvi, sibling depth 1, penanda bungsu registe
     expect(resolveAlias('  Ucu ')).toEqual(resolveAlias('ucu'))
   })
 
-  it('10. posisi sisip: ucu tersisip di klaster sibling urutan sort antara turang dan uda', () => {
+  it('10. posisi sisip: ucu tersisip di klaster sibling urutan sort antara turang dan uda (ekor ditambah yayu v253xxxiv)', () => {
     const sib = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'sibling')
       .sort()
-    expect(sib[sib.length - 3]).toBe('ucu')
-    expect(sib[sib.length - 2]).toBe('uda')
-    expect(sib[sib.length - 1]).toBe('uni')
+    expect(sib[sib.length - 4]).toBe('ucu')
+    expect(sib[sib.length - 3]).toBe('uda')
+    expect(sib[sib.length - 2]).toBe('uni')
+    expect(sib[sib.length - 1]).toBe('yayu') // +1 yayu v253xxxiv gelombang lima belas
     expect(sib.filter((k) => k === 'ucu')).toHaveLength(1)
   })
 })

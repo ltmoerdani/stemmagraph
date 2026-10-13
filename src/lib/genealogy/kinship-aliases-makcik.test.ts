@@ -84,8 +84,8 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
   })
 
   it('9. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(120)
-    expect(aliasKinds().length).toBe(120)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(122)
+    expect(aliasKinds().length).toBe(122)
   })
 
   it('10. anti-dup: makcik tepat satu kali, nihil di blok regional mana pun', () => {
