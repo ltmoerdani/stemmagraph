@@ -29,16 +29,17 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
     expect(resolveAlias('pak·de')).toEqual(resolveAlias('pakde'))
   })
 
-  it('4. guard homonim nihil: query pakde hanya mengembalikan entri pakde (pasca v253-xiv: paklik jw Jawa juga live, gugus 2 entri)', () => {
+  it('4. guard homonim nihil: query pakde hanya mengembalikan entri gugus (pasca v253xxv gelombang tujuh: bulik jw Jawa juga live, gugus 5 entri)', () => {
     const entries = Object.values(KINSHIP_ALIASES).filter(
       (e) =>
         e.kind === 'parent-sibling' && e.region === 'Jawa' && e.qualifier === 'jw',
     )
-    expect(entries).toHaveLength(4)
+    expect(entries).toHaveLength(5)
     expect(entries).toContainEqual(resolveAlias('pakde'))
     expect(entries).toContainEqual(resolveAlias('paklik'))
     expect(entries).toContainEqual(resolveAlias('pakdhe'))
     expect(entries).toContainEqual(resolveAlias('budhe'))
+    expect(entries).toContainEqual(resolveAlias('bulik'))
   })
 
   it('5. uak tetap DITAHAN nihil sbg key; pakcik kini live pasca v253-xix', () => {

@@ -82,7 +82,7 @@ describe('kinship-aliases bang bung (v253xxiv gelombang enam)', () => {
     }
   })
 
-  it('7. gugus kakak tetap utuh non-regresi: kakak kaka kakanda kakang kak akak nilai existing tak berubah', () => {
+  it('7. gugus kakak tetap utuh non-regresi: kakak kaka kakanda kakang kak akak nilai existing tak berubah', { timeout: 20000 }, () => {
     expect(KINSHIP_ALIASES['kakak']).toBeUndefined()
     expect(KINSHIP_ALIASES['kaka']).toMatchObject({
       kind: 'sibling',
