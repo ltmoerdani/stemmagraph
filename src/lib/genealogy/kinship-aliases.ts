@@ -207,6 +207,14 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     register: 'hormat',
     note: 'Wiktionary ID: etimologi kakak plus morfem -nda (notes/427)',
   },
+  raka: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Jawa',
+    note: 'raka Jawa = kakak laki-laki; makna 1 KBBI kakak laki-laki (Jw) yang dipetakan; ' +
+      'DUA SUMBER: KBBI III mirror kbbi.web.id/raka akses 14 Okt 2026 HTTP 200 (ra-ka1 n 1 Jw kakak laki-laki; 2 sebutan kepada mahasiswa senior pada masa perploncoan) plus Wiktionary ID via api.php id.wiktionary.org (blok Bahasa Indonesia nomina kakak laki-laki plus sebutan mahasiswa senior masa perploncoan, blok adj retak homograf, rujukan R:KBBI Daring, flag rfv impor dari KBBI tercatat jujur pola preseden); ' +
+      'GUARD: makna 2 sebutan mahasiswa senior perploncoan TIDAK jadi key terpisah karena sebutan pergaulan bukan relasi kekerabatan; homograf adj retak TIDAK dipetakan; raka2 dan ejaan ber titik ra-ka TIDAK dibuat sbg key; blok turunan nihil konten tidak dipetakan; referensi kontrak v253xxxv dan Log Supervisi BOARD-stemmagraph 14 Okt 2026',
+  },
   engkoh: {
     kind: 'sibling',
     depth: 1,
