@@ -522,6 +522,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     qualifier: 'sunda',
     note: 'paman Sunda; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/emang akses 10 Okt 2026 (e.mang n Sd paman, tunggal nihil homograf bernomor) plus Wiktionary ID oldid 1322355 (bagian Bahasa Sunda nomina tatakrama, basa budak paman, sinonim amang; bagian Bahasa Indonesia hanya adverbia memang tidak dipakai); kind parent-sibling depth 1 konsisten gugus pakde mamak tulang; nihil homonim kekerabatan lain, guard testfile; referensi kontrak v253-viii dan Log Supervisi BOARD-stemmagraph 11 Okt 2026',
   },
+  engku: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'mk',
+    region: 'Melayu',
+    note: 'engku Melayu = paman; mamak dari pihak ibu, kind parent-sibling depth 1 pola bako mamak; qualifier mk dan region Melayu konsisten pola alias live inyik; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/engku akses 13 Okt 2026 (eng.ku2 n Mk tiga makna: paman; mamak (dari pihak ibu); kata sapaan kepada kakek (datuk); sebutan untuk laki-laki dewasa sebaya tidak dikenal; angku) plus Wiktionary ID pageid 108851 via api.php id.wiktionary.org/w/api.php (blok Bahasa Indonesia nomina paman; mamak (dari pihak ibu), rujukan R:KBBI Daring, flag rfv impor dari KBBI tercatat jujur pola preseden etek bude akak); GUARD POLISEMI KBBI: makna 2 kata sapaan kakek (datuk) TIDAK dipetakan sbg key terpisah, makna 3 laki-laki dewasa sebaya tidak dikenal plus varian angku TIDAK dipetakan (angku nihil di map, jangan turunkan), eng.ku1 sapaan keluarga raja atau orang dihormati TIDAK dipetakan; GUARD HOMONIM: nihil homograf bernomor kekerabatan lain, pasangan eng.ku1 vs eng.ku2 bukan homonim kekerabatan; anti-dup: engkoh sibling cak dan engkong grandparent cn entri lain di berkas sama tanpa disentuh; referensi kontrak v253xxxiii dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
+  },
   mang: {
     kind: 'parent-sibling',
     depth: 1,

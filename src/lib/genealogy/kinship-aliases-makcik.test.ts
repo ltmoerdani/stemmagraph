@@ -84,8 +84,8 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
   })
 
   it('9. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(119)
-    expect(aliasKinds().length).toBe(119)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(120)
+    expect(aliasKinds().length).toBe(120)
   })
 
   it('10. anti-dup: makcik tepat satu kali, nihil di blok regional mana pun', () => {
@@ -113,6 +113,7 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
       'budhe',
       'bulik',
       'emang',
+      'engku',
       'etek',
       'makcik',
       'mama',
@@ -128,7 +129,7 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
       'tante',
       'uwa',
     ])
-    expect(ps).toHaveLength(20)
+    expect(ps).toHaveLength(21)
   })
 
   it('13. glosa makcik pada entri etek dan bibi Karo tetap glos, bibi kini live di map global pasca v253-xix', () => {

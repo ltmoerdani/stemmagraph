@@ -62,8 +62,8 @@ describe('kinship-aliases semenda (v253xxvi)', () => {
   })
 
   it('8. guard jumlah key PERSIS 113 pasca v253xxvi gelombang delapan (112 jadi 113: semenda)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(119)
-    expect(aliasKinds().length).toBe(119)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(120)
+    expect(aliasKinds().length).toBe(120)
   })
 
   it('9. non-regresi gugus affine: besan menantu mertua ipar tetap live kind property', () => {
