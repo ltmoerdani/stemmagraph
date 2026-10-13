@@ -442,6 +442,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     note: 'Kamus Bahasa Karo-Indonesia 2001 hlm 238 lema saudara dan hlm 245, multi-sense panggilan sayang tercatat hlm 14/35, pencocokan exact-key aman, evidence notes/434 dan 435',
   },
   dik: { kind: 'sibling', depth: 1, note: 'KBBI VI: kependekan adik, kata sapaan saudara teman lebih muda, satu makna nihil homonim, evidence notes/2026-09-28-evidence-stg-klaster-adik-pm' },
+  sedulur: {
+    kind: 'sibling',
+    depth: 1,
+    qualifier: 'jw',
+    region: 'Jawa',
+    note: 'sedulur = saudara atau satu keluarga, biasanya dalam bahasa Jawa; ejaan resmi KBBI ber titik se.du.lur TIDAK dipakai sbg key (pola budhe dari bu.de); homonim sufiks -sedulur-an persaudaraan cukup dicatat di note ini tanpa menjadi key; kind sibling depth 1 pola dansanak, gugus sibling Jawa non-regresi; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/sedulur akses 13 Okt 2026 HTTP 200 (se.du.lur n saudara atau satu keluarga biasanya dalam bahasa Jawa, SATU lema nihil homograf bernomor, jangkar dulur dilema) plus Wiktionary ID oldid 1245233 via URL id.wiktionary.org/w/index.php?title=sedulur&oldid=1245233 akses 13 Okt 2026 (blok Bahasa Jawa Nomina Surabaya saudara, contoh kabeh kui sedulur semuanya bersaudara, kategori WikiTutur Jawa Surabaya, entri jv revid 1245233 SwarabaktiBot pemutakhiran tata letak); GUARD MAKNA: varian sadulur BUKAN entri KBVI nihil arti resmi TIDAK dipetakan (bukti negatif usulan entri), sufiks -sedulur-an TIDAK dipetakan; GUARD HOMONIM ANTARBAHASA Wiktionary EN sama TIDAK dipetakan: blok English (sinonim relative kin), blok jv baku, blok Kurdish, blok Malay BUKAN blok bahasa Indonesia, tidak ada blok bahasa Indonesia di halaman id.wiktionary sama; referensi kontrak gelombang sembilan dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
+  },
   sembuyak: {
     kind: 'sibling',
     depth: 1,
