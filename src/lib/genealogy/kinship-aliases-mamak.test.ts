@@ -74,8 +74,8 @@ describe('kinship-aliases mamak (v253-vii, parent-sibling depth 1 Minangkabau)',
   })
 
   it('8. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 85 pasca v253-ix', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(122)
-    expect(aliasKinds().length).toBe(122)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(123)
+    expect(aliasKinds().length).toBe(123)
   })
 
   it('9. anti-dup: key mamak muncul tepat satu kali di daftar global dan nihil di semua blok regional', () => {
