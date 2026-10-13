@@ -49,11 +49,11 @@ describe('kinship-aliases adinda (v253xxxi gelombang dua belas)', () => {
     expect(resolveAlias('adikanda')).toBeNull()
   })
 
-  it('5. padanan hor non-regresi: kanda dan ayunda gugus hor tetap utuh', () => {
+  it('5. padanan non-regresi: kanda Jawa/Sunda dan ayunda gugus hor tetap utuh', () => {
     expect(KINSHIP_ALIASES['kanda']).toMatchObject({
       kind: 'sibling',
       depth: 1,
-      region: 'hor',
+      region: 'Jawa/Sunda',
     })
     expect(KINSHIP_ALIASES['ayunda']).toMatchObject({
       kind: 'sibling',
