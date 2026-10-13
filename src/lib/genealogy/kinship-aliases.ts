@@ -442,6 +442,14 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     qualifier: 'cak',
     note: 'KBBI VI: sapaan kakak perempuan lebih tua, cak (cakapan), evidence notes/2026-09-28-evidence-stg-v184-ii',
   },
+  empok: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'Jambi',
+    note: 'empok Jambi = kakak perempuan, label Jk tercatat di note karena jk nihil di union qualifier (pola nyak makcik); makna 1 KBBI kakak perempuan yang dipetakan; ' +
+      'DUA SUMBER: KBBI III mirror kbbi.web.id/empok akses 13 Okt 2026 HTTP 200 (em-pok Jk n dua makna: 1 kakak perempuan; 2 kata sapaan untuk orang perempuan yang lebih tua; sub-lema em-pok-em-pok n orang perempuan dewasa) plus Wiktionary ID pageid 108772 via URL api.php id.wiktionary.org (blok Bahasa Indonesia nomina kakak perempuan plus sapaan untuk orang perempuan yang lebih tua, rujukan R:KBBI Daring, flag rfv impor dari KBBI tercatat jujur pola preseden); ' +
+      'GUARD: makna 2 sapaan untuk orang perempuan yang lebih tua TIDAK jadi key terpisah karena sapaan umum bukan relasi kekerabatan; sub-lema majemuk empok-empok TIDAK dipetakan; sinonim Wiktionary (mbak kakak teteh neng uni inang) TIDAK dipetakan sbg key baru; ragam embok (blok ban Wiktionary) dan mpok (blok bew) TIDAK dipetakan sbg key, embok hanya note di testfile klaster-ibu; ejaan ber titik em.pok TIDAK dipakai sbg key pola budhe bu.de; referensi kontrak v253xxxiv dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
+  },
   ayunda: {
     kind: 'sibling',
     depth: 1,
@@ -560,6 +568,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   semenda: {
     kind: 'property',
     note: 'KBBI VI se.men.da dua makna keduanya affine: pertalian keluarga karena perkawinan dengan anggota suatu kaum misalnya orang yang kawin dengan saudara atau kemenakan istri atau suami, dan kerabat karena hubungan perkawinan; bentuk tidak baku semanda sumanda cukup dicatat di note ini tanpa menjadi key; Wiktionary ID oldid 1126638 definisi konsisten dengan frasa jika dipandang dari kaum itu, templat rfv dicatat jujur dan tidak mengubah pemetaan; kind property konsisten gugus affine baku besan mertua menantu ipar; nihil homonim kekerabatan lain; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id/entri/semenda (akses 13 Okt 2026) plus Wiktionary ID oldid 1126638',
+  },
+  yayu: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'yayu = kakak perempuan tanpa label wilayah; makna 1 KBBI kakak perempuan yang dipetakan; etimologi bahasa Jawa dicatat di note tanpa qualifier karena nihil di union qualifier; ' +
+      'DUA SUMBER: KBBI III mirror kbbi.web.id/yayu akses 13 Okt 2026 HTTP 200 (ya-yu n dua makna: kakak perempuan; panggilan kepada wanita) plus Wiktionary ID pageid 41392 via URL api.php id.wiktionary.org (blok Bahasa Indonesia nomina kakak perempuan; panggilan kepada wanita, etimologi bahasa Jawa); ' +
+      'GUARD: makna 2 panggilan kepada wanita umum TIDAK jadi key terpisah karena sapaan umum bukan relasi kekerabatan; sinonim Wiktionary TIDAK dipetakan sbg key baru; homonim nihil terverifikasi kedua sumber; ejaan ber titik ya.yu TIDAK dipakai sbg key pola budhe bu.de; referensi kontrak v253xxxiv dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
   },
 }
 
