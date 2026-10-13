@@ -58,6 +58,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   eyang: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa', register: 'hormat' },
   mbah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
   embah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
+  simbah: {
+    kind: 'grandparent',
+    qualifier: 'jw',
+    region: 'Jawa',
+    note: 'simbah = embah, sapaan kakek nenek; KBBI VI nihil label register sehingga tanpa register (pola jujur); konvergensi makna dengan key embah dan mbah yang sudah live, tetap jadi key sendiri karena lema resmi berbeda (pola makcik paklik); ejaan resmi KBBI ber titik sim.bah TIDAK dipakai sbg key (pola budhe dari bu.de); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/simbah akses 13 Okt 2026 HTTP 200 (sim.bah3 n Jw embah, homograf bernomor tiga lema) plus Wiktionary ID oldid 1238922 via URL id.wiktionary.org/w/index.php?title=simbah&oldid=1238922 akses 13 Okt 2026 (blok Bahasa Indonesia Nomina embah, rujukan R:KBBI Daring, flag rfv impor dari KBBI tercatat jujur, revisi SwarabaktiBot 17 Jan 2026); GUARD HOMOGRAF KBBI: sim.bah1 a basah dan sim.bah2 v Mk menyimbah TIDAK dipetakan karena bukan relasi kekerabatan; GUARD TURUNAN Wiktionary (bersimbah menyimbah menyimbahkan tersimbah simbahkan dsb) TIDAK dipetakan, morfen dasar terikat bukan lema relasi; GUARD HOMONIM ANTARBAHASA Wiktionary TIDAK dipetakan: blok English, Jawa, Malagasy, zh BUKAN blok bahasa Indonesia; referensi kontrak gelombang sebelas dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
+  },
   engkong: { kind: 'grandparent', qualifier: 'cn', region: 'Tionghoa' },
   akong: {
     kind: 'grandparent',
