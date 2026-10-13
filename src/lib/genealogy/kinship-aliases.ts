@@ -513,6 +513,10 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'permen = menantu perempuan dalam kekerabatan Karo, istri anak maupun istri anak saudara, Sembiring 1991 The Bible Translator + Pandiangan 2024 JJETL legenda W, evidence notes/444 dan notes/445',
   },
+  semenda: {
+    kind: 'property',
+    note: 'KBBI VI se.men.da dua makna keduanya affine: pertalian keluarga karena perkawinan dengan anggota suatu kaum misalnya orang yang kawin dengan saudara atau kemenakan istri atau suami, dan kerabat karena hubungan perkawinan; bentuk tidak baku semanda sumanda cukup dicatat di note ini tanpa menjadi key; Wiktionary ID oldid 1126638 definisi konsisten dengan frasa jika dipandang dari kaum itu, templat rfv dicatat jujur dan tidak mengubah pemetaan; kind property konsisten gugus affine baku besan mertua menantu ipar; nihil homonim kekerabatan lain; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id/entri/semenda (akses 13 Okt 2026) plus Wiktionary ID oldid 1126638',
+  },
 }
 
 /**
