@@ -70,8 +70,10 @@ describe('alias kakak feminin KBBI VI (v184-ii)', () => {
     expect(e?.register).toBe('hormat')
   })
 
-  it('negatif: bang nihil', () => {
-    expect(resolveAlias('bang')).toBeNull()
+  it('bang resmi v253xxiv gelombang enam: tidak lagi nihil, kind sibling depth 1', () => {
+    expect(resolveAlias('bang')).not.toBeNull()
+    expect(resolveAlias('bang')?.kind).toBe('sibling')
+    expect(resolveAlias('bang')?.depth).toBe(1)
   })
 
   it('negatif: engkang nihil', () => {
@@ -93,10 +95,10 @@ describe('alias kakak feminin KBBI VI (v184-ii)', () => {
     expect(resolveAlias(' cici')?.region).toBe('Cn')
   })
 
-  it('total entri sibling: 15 basis v184-i, +7 feminin v184-ii = 22, +2 karo agi turang = 24, +1 dik v185-i = 25, +2 sembuyak senina v186-i = 27, +1 nande v187-i = 28, +1 teteh v253-x = 29, +1 ucu v253-xvi = 30, +1 kak v253-xxiii = 31, +1 akak v253xxiv = 32', () => {
+  it('total entri sibling: 15 basis v184-i, +7 feminin v184-ii = 22, +2 karo agi turang = 24, +1 dik v185-i = 25, +2 sembuyak senina v186-i = 27, +1 nande v187-i = 28, +1 teteh v253-x = 29, +1 ucu v253-xvi = 30, +1 kak v253-xxiii = 31, +1 akak v253xxiv = 32, +2 bang bung v253xxiv = 34', () => {
     const before = 15
     const total = Object.values(KINSHIP_ALIASES).filter((e) => e.kind === 'sibling').length
     expect(before).toBe(15)
-    expect(total).toBe(32)
+    expect(total).toBe(34)
   })
 })
