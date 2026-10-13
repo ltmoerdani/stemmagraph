@@ -14,6 +14,13 @@ export interface AliasEntry {
  * Sumber: notes 390 sampai 401. Jangan tambah atau kurangi lema tanpa revisi notes.
  */
 export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
+  adinda: {
+    kind: 'sibling',
+    depth: 1,
+    region: 'hor',
+    register: 'hormat',
+    note: 'adinda Gorontalo hor = sapaan hormat akrab kepada adik (padanan feminin kanda kakanda gugus hor), etimologi adik plus -nda; kind sibling depth 1 pola ayunda kanda, gugus hor non-regresi; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/adinda akses 13 Okt 2026 HTTP 200 (a.din.da n hor sapaan akrab kepada adik, satu lema nihil homograf bernomor, gugus hor) plus Wiktionary ID oldid 1109917 via URL id.wiktionary.org/w/index.php?title=adinda&oldid=1109917 (blok Bahasa Indonesia Nomina: hormat adik mengandung pengertian lebih hormat dan ramah, etimologi adik plus -nda, kategori Turunan kata adik, rujukan R:KBBI Daring, flag rfv impor dari KBBI dicatat jujur pola preseden); GUARD HOMOGRAF ADIKANDA tidak dipetakan: nihil di KBBI VI dan nihil di Wiktionary ID TIDAK jadi key, ejaan ber titik a.din.da TIDAK dipakai sbg key pola budhe se.du.lur man.tu; GUARD HOMONIM ANTARBAHASA Wiktionary TIDAK dipetakan, nihil blok bahasa lain di oldid sama; referensi kontrak gelombang dua belas dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
+  },
   anak: { kind: 'child' },
   cucu: { kind: 'grandchild' },
   cicit: { kind: 'descendant', depth: 3 },
