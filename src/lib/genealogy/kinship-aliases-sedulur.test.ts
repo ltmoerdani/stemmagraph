@@ -88,7 +88,7 @@ describe('kinship-aliases sedulur (v253xxviii gelombang sembilan)', () => {
   })
 
   it('10. guard jumlah key PERSIS 115 pasca gelombang sembilan', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(118)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(119)
   })
 
   it('11. klaster sibling depth 1 global 33 anggota pasca sedulur', () => {

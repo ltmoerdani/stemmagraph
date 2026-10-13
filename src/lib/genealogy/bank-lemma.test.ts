@@ -135,15 +135,15 @@ describe('kinship-aliases bank lemma pakdhe budhe ponakan (V253-XX)', () => {
   })
 
   it('12. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 106 pasca V253-XXI (riwayat 100 jadi 103 di V253-XX)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(118)
-    expect(aliasKinds().length).toBe(118)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(119)
+    expect(aliasKinds().length).toBe(119)
   })
 
-  it('13. gugus parent-sibling Jawa jadi 5 entri: pakde paklik pakdhe budhe bulik', () => {
+  it('13. gugus parent-sibling Jawa jadi 6 entri: pakde paklik pakdhe budhe bude bulik', () => {
     const entries = Object.values(KINSHIP_ALIASES).filter(
       (e) => e.kind === 'parent-sibling' && e.region === 'Jawa' && e.qualifier === 'jw',
     )
-    expect(entries).toHaveLength(5)
+    expect(entries).toHaveLength(6)
     const ps = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
       .sort()
@@ -153,11 +153,14 @@ describe('kinship-aliases bank lemma pakdhe budhe ponakan (V253-XX)', () => {
     expect(ps.indexOf('budhe')).toBeLessThan(ps.indexOf('emang'))
   })
 
-  it('14. varian ejaan tetap terpisah: pakde tidak difusi ke pakdhe, bu.de nihil sbg key, kemenakan tetap live', () => {
+  it('14. varian ejaan tetap terpisah: pakde tidak difusi ke pakdhe, bu.de nihil sbg key, bude live parent-sibling, kemenakan tetap live', () => {
     expect(KINSHIP_ALIASES['pakde']).toBeDefined()
     expect(resolveAlias('pakdhe')).not.toEqual(resolveAlias('pakde'))
     expect(KINSHIP_ALIASES['bu.de']).toBeUndefined()
-    expect(resolveAlias('bude')).toBeNull()
+    expect(resolveAlias('bude')).not.toBeNull()
+    expect(resolveAlias('bude')?.kind).toBe('parent-sibling')
+    expect(resolveAlias('bude')?.depth).toBe(1)
+    expect(resolveAlias('bude')?.region).toBe('Jawa')
     expect(KINSHIP_ALIASES['kemenakan']).toBeDefined()
     expect(resolveAlias('kemenakan')?.kind).toBe('sibling-child')
   })

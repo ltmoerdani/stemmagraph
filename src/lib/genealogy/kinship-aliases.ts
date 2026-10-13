@@ -248,6 +248,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Jawa',
     note: 'budhe Jawa = sapaan kakak perempuan ibu atau ayah (bibi senioritas kakak), akronim ibu gede, varian ejaan bu.de resmi; kind parent-sibling depth 1 pasangan femenin pakde; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/bude akses 12 Okt 2026 HTTP 200 (bu.de n Jw DUA makna: (1) ibu gede; kakak perempuan ibu atau ayah; (2) kata sapaan kepada kakak perempuan ibu atau ayah) plus Wiktionary ID revid 1165956 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1165956 (blok bahasa Indonesia: akronim ibu gede; kakak perempuan ibu atau ayah plus panggilan untuk kakak perempuan ibu atau ayah, rujukan R:KBBI Daring, flag rfv impor tercatat jujur pola pakde); key dibuat pada ejaan budhe sesuai kontrak PM, halaman budhe nihil di KBBI VI dan mirror III, ejaan bu.de tetap TIDAK dibuat sbg key (varian ortografik, dibahas note), GUARD MAKNA 2 KBBI sapaan tidak dipetakan terpisah karena kind sama depth sama hanya note saja; GUARD HOMONIM ANTARBAHASA: blok nia Nias di halaman Wiktionary bude (canda, kelakar) TIDAK dipetakan; referensi kontrak V253-XX bank lemma pakdhe budhe ponakan dan Log Supervisi BOARD-stemmagraph 12 Okt 2026',
   },
+  bude: {
+    kind: 'parent-sibling',
+    depth: 1,
+    qualifier: 'jw',
+    region: 'Jawa',
+    note: 'bude Jawa = sapaan atau panggilan kepada kakak perempuan ibu atau ayah (bibi senioritas kakak, padanan senior budhe pola pakde paklik); kind parent-sibling depth 1 pola budhe; ejaan resmi KBBI ber titik bu.de TIDAK dipakai sbg key pola budhe dari bu.de; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/bude akses 13 Okt 2026 HTTP 200 (bu.de n Jw DUA makna: ibu gede; kakak perempuan ibu atau ayah plus kata sapaan kepada kakak perempuan ibu atau ayah) plus Wiktionary ID revid 1165956 via URL id.wiktionary.org/w/api.php?action=query&prop=revisions&revids=1165956 (blok Bahasa Indonesia: akronim ibu gede; kakak perempuan ibu atau ayah plus panggilan untuk kakak perempuan ibu atau ayah, rujukan R:KBBI Daring, flag rfv impor dari KBBI dicatat jujur pola preseden); GUARD MAKNA 1 KBBI ibu gede TIDAK dipetakan sbg relasi terpisah, yang dipetakan makna kakak perempuan ibu atau ayah; GUARD HOMONIM Nias blok nia canda kelakar TIDAK dipetakan; referensi kontrak gelombang tiga belas dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
+  },
   bulik: {
     kind: 'parent-sibling',
     depth: 1,
