@@ -18,7 +18,7 @@ import {
 } from './kinship-aliases';
 import { expandAliasQuery } from './search-filter';
 
-const GUARD_KEYS = 117;
+const GUARD_KEYS = 118;
 
 describe('kinship aliases: etek (posisi 21)', () => {
     it('kasus 1: resolveAlias etek positif kind parent-sibling depth 1 Minangkabau', () => {
