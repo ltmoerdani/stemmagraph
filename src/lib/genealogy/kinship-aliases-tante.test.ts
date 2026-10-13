@@ -107,6 +107,7 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
     expect(ps).toEqual([
       'bako',
       'bibi',
+      'bude',
       'budhe',
       'bulik',
       'emang',
@@ -125,7 +126,7 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
       'tante',
       'uwa',
     ])
-    expect(ps).toHaveLength(19)
+    expect(ps).toHaveLength(20)
   })
 
   it('12. negatif: typo nihil, normalisasi huruf besar dan spasi pinggir sama dengan tante', () => {
