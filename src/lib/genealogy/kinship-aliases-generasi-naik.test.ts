@@ -149,6 +149,7 @@ describe('kinship-aliases generasi naik (v253-xix, 4 key parent-sibling depth 1)
       'budhe',
       'bulik',
       'emang',
+      'engku',
       'etek',
       'makcik',
       'mama',
@@ -164,7 +165,7 @@ describe('kinship-aliases generasi naik (v253-xix, 4 key parent-sibling depth 1)
       'tante',
       'uwa',
     ])
-    expect(ps).toHaveLength(20)
+    expect(ps).toHaveLength(21)
   })
 
   it('16. negatif typo dan normalisasi kapital dan spasi pinggir', () => {
