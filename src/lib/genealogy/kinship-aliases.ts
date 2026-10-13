@@ -3,7 +3,7 @@ import type { KinshipKind } from './kinship-calc'
 export interface AliasEntry {
   kind: KinshipKind
   depth?: number
-  qualifier?: 'cak' | 'jw' | 'mk' | 'sunda' | 'jawa' | 'antr' | 'cn' | 'minangkabau'
+  qualifier?: 'cak' | 'jw' | 'mk' | 'sunda' | 'jawa' | 'antr' | 'cn' | 'minangkabau' | 'hokkien'
   note?: string
   region?: string
   register?: 'hormat' | 'netral'
@@ -59,6 +59,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   mbah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
   embah: { kind: 'grandparent', qualifier: 'jw', region: 'Jawa' },
   engkong: { kind: 'grandparent', qualifier: 'cn', region: 'Tionghoa' },
+  akong: {
+    kind: 'grandparent',
+    qualifier: 'hokkien',
+    region: 'Tionghoa',
+    note: 'KBBI VI resmi a.kong n Hokkien kakek contoh kondisi akong memang sudah renta (akses 13 Okt 2026); Wiktionary EN oldid 91156570 blok Amis dan Kangean grandfather etimologi Hokkien a-kong konsisten kakek dua jalur, blok Kangean menyatakan paternal dan maternal; sinonim akong di blok Bahasa Indonesia Peranakan Wiktionary ID entri engkong oldid 1459478 saling menguatkan gugus Sinitic; homonim dicatat jujur TIDAK dipetakan: blok Rejang kelenteng dan blok Chungli Ao verba kering, keduanya bahasa lain bukan Indonesia; key engkong Tionghoa cn sudah live sebelumnya dan tetap terpisah; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id/entri/akong plus Wiktionary EN oldid 91156570',
+  },
   andung: {
     kind: 'grandparent',
     depth: 1,

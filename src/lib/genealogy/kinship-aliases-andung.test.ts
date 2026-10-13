@@ -89,8 +89,8 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
   })
 
   it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(112)
-    expect(aliasKinds().length).toBe(112)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(114)
+    expect(aliasKinds().length).toBe(114)
   })
 
   it('11. daftar key gugus grandparent global toEqual pasca v253-xviii (16 key, atuk menyisip setelah atok sebelum opa)', () => {
@@ -110,12 +110,13 @@ describe('kinship-aliases andung (v253-xii, grandparent depth 1 Melayu/Minangkab
       'mbah',
       'embah',
       'engkong',
+      'akong',
       'andung',
       'inyik',
       'nini',
       'ninik',
     ])
-    expect(gp).toHaveLength(16)
+    expect(gp).toHaveLength(17)
   })
 
   it('12. anti-dup: andung tepat satu kali, nihil di blok regional mana pun', () => {
