@@ -61,7 +61,7 @@ describe('kinship-aliases Karo lanjutan (v189-ii kempu bibi)', () => {
   })
 
   it('rantai aliasKinds() total pasca v253-xix: entri kempu bibi Karo regional tetap tidak menambah map utama, bibi global live sbg key terpisah', () => {
-    expect(aliasKinds().length).toBe(111)
+    expect(aliasKinds().length).toBe(112)
     expect(aliasKinds()).not.toContain('kempu')
     expect(aliasKinds()).toContain('bibi')
   })

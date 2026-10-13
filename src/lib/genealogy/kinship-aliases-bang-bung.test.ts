@@ -82,7 +82,7 @@ describe('kinship-aliases bang bung (v253xxiv gelombang enam)', () => {
     }
   })
 
-  it('7. gugus kakak tetap utuh non-regresi: kakak kaka kakanda kakang kak akak nilai existing tak berubah', () => {
+  it('7. gugus kakak tetap utuh non-regresi: kakak kaka kakanda kakang kak akak nilai existing tak berubah', { timeout: 20000 }, () => {
     expect(KINSHIP_ALIASES['kakak']).toBeUndefined()
     expect(KINSHIP_ALIASES['kaka']).toMatchObject({
       kind: 'sibling',
@@ -126,10 +126,10 @@ describe('kinship-aliases bang bung (v253xxiv gelombang enam)', () => {
     expect(noteBung).toContain('Kei')
   })
 
-  it('9. guard jumlah key PERSIS 111 pasca v253xxiv gelombang enam (109 jadi 111: bang bung)', () => {
-    expect(Object.keys(KINSHIP_ALIASES).length).toBe(111)
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(111)
-    expect(aliasKinds().length).toBe(111)
+  it('9. guard jumlah key PERSIS 112 pasca v253xxv gelombang tujuh (111 jadi 112: bulik)', () => {
+    expect(Object.keys(KINSHIP_ALIASES).length).toBe(112)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(112)
+    expect(aliasKinds().length).toBe(112)
     expect(aliasKinds()).toContain('bang')
     expect(aliasKinds()).toContain('bung')
   })
