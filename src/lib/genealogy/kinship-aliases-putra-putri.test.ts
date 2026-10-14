@@ -121,7 +121,7 @@ describe('kinship-aliases putra putri (v253xlii)', () => {
     expect(resolveAlias('anak')?.kind).toBe('child')
     expect(resolveAlias('ananda')?.kind).toBe('child')
     const childKeys = Object.keys(KINSHIP_ALIASES).filter((k) => KINSHIP_ALIASES[k]?.kind === 'child')
-    expect(childKeys.sort()).toEqual(['anak', 'anak angkat', 'ananda', 'putra', 'putri'])
+    expect(childKeys.sort()).toEqual(['anak', 'anak angkat', 'anak susuan', 'ananda', 'putra', 'putri'])
   })
 
   it('12. urutan alfabetis klaster child: putra lalu putri, di antara ananda dan cucu', () => {
@@ -132,9 +132,9 @@ describe('kinship-aliases putra putri (v253xlii)', () => {
     expect(all.indexOf('putri')).toBeLessThan(all.indexOf('cucu'))
   })
 
-  it('13. guard bump total key (129 jadi 131 saat gel26, kini 133 pasca gel29) dan non-difusi regional: nihil putra putri di map regional', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
-    expect(aliasKinds().length).toBe(133)
+  it('13. guard bump total key (129 jadi 131 saat gel26, kini 134 pasca gel30) dan non-difusi regional: nihil putra putri di map regional', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(134)
+    expect(aliasKinds().length).toBe(134)
     for (const region of Object.keys(KINSHIP_ALIASES_REGIONAL)) {
       expect(KINSHIP_ALIASES_REGIONAL[region]['putra']).toBeUndefined()
       expect(KINSHIP_ALIASES_REGIONAL[region]['putri']).toBeUndefined()
