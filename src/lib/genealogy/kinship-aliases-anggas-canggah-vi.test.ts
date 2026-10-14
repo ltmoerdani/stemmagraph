@@ -46,8 +46,12 @@ describe('kinship-aliases anggas dan canggah basis KBBI VI (v240-i)', () => {
     expect(resolveAlias('piut')).toEqual({ kind: 'descendant', depth: 4 })
   })
 
-  it('cicit tetap kind descendant depth 3', () => {
-    expect(resolveAlias('cicit')).toEqual({ kind: 'descendant', depth: 3 })
+  it('cicit tetap kind descendant depth 3, note gel27 pengayaan tidak merusak struktur', () => {
+    const r = resolveAlias('cicit')
+    expect(r).not.toBeNull()
+    expect(r?.kind).toBe('descendant')
+    expect(r?.depth).toBe(3)
+    expect(r?.note).toContain('anak dari cucu')
   })
 
   it('urutan kedalaman keturunan: cicit 3, piut dan canggah 4, anggas 5', () => {

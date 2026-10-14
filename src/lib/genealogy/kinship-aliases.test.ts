@@ -10,8 +10,12 @@ describe('KINSHIP_ALIASES', () => {
     expect(resolveAlias('cucu')).toEqual({ kind: 'grandchild' })
   })
 
-  it('cicit resolve descendant depth 3', () => {
-    expect(resolveAlias('cicit')).toEqual({ kind: 'descendant', depth: 3 })
+  it('cicit resolve descendant depth 3, note gel27 rev 2 dual-source', () => {
+    const r = resolveAlias('cicit')
+    expect(r).not.toBeNull()
+    expect(r?.kind).toBe('descendant')
+    expect(r?.depth).toBe(3)
+    expect(r?.note).toContain('anak dari cucu')
   })
 
   it('piut resolve descendant depth 4', () => {
@@ -72,12 +76,13 @@ describe('KINSHIP_ALIASES', () => {
     })
   })
 
-  it('buyut membawa note dua arah', () => {
-    expect(resolveAlias('buyut')).toEqual({
-      kind: 'descendant',
-      depth: 3,
-      note: 'dua arah: naik 3 berarti ancestor pangkat 3, konteks wajib',
-    })
+  it('buyut membawa note arah dua terjaga plus pengayaan gel27 rev 2', () => {
+    const r = resolveAlias('buyut')
+    expect(r).not.toBeNull()
+    expect(r?.kind).toBe('descendant')
+    expect(r?.depth).toBe(3)
+    expect(r?.note).toContain('dua arah')
+    expect(r?.note).toContain('kbbi.web.id/buyut')
   })
 
   it.each([
