@@ -16,14 +16,26 @@ describe('kinship-aliases abang Simalungun (v218-i, kind sibling, kakak laki-lak
     expect(resolveAlias('  Abang ', 'Simalungun')).toEqual(resolveAlias('abang', 'Simalungun'))
   })
 
-  it('3. region lain (Toba, Karo) bernilai null', () => {
-    expect(resolveAlias('abang', 'Toba')).toBeNull()
-    expect(resolveAlias('abang', 'Karo')).toBeNull()
+  it('3. region lain (Toba, Karo) fallback ke entri GLOBAL (revisi gel28 rev 2, semula null)', () => {
+    // Revisi transparan gel28: sejak lema global abang masuk map utama,
+    // region tanpa entri regional kembalikan entri global (region undefined).
+    const toba = resolveAlias('abang', 'Toba')
+    expect(toba).not.toBeNull()
+    expect(toba?.kind).toBe('sibling')
+    expect(toba?.region).toBeUndefined()
+    const karo = resolveAlias('abang', 'Karo')
+    expect(karo).not.toBeNull()
+    expect(karo?.kind).toBe('sibling')
+    expect(karo?.region).toBeUndefined()
   })
 
-  it('4. tanpa region bernilai null dan tidak ada di map global', () => {
-    expect(resolveAlias('abang')).toBeNull()
-    expect(Object.keys(KINSHIP_ALIASES)).not.toContain('abang')
+  it('4. tanpa region kembalikan entri GLOBAL dan ada di map utama (revisi gel28 rev 2, semula null dan nihil key)', () => {
+    // Revisi transparan gel28: abang kini key global baku di KINSHIP_ALIASES.
+    const r = resolveAlias('abang')
+    expect(r).not.toBeNull()
+    expect(r).toEqual(KINSHIP_ALIASES['abang'])
+    expect(r?.kind).toBe('sibling')
+    expect(Object.keys(KINSHIP_ALIASES)).toContain('abang')
   })
 
   it('5. note memuat jangkar kamus Simalungun-Indonesia 2015 dan penanda single anchor', () => {
@@ -53,12 +65,14 @@ describe('kinship-aliases abang Simalungun (v218-i, kind sibling, kakak laki-lak
     expect(regionalNote('Simalungun', 'anggi')).toContain('little brother or sister')
   })
 
-  it('8. negatif homonim KBBI: abang Jawa, Lay, Ldy tidak diadopsi sebagai alias region lain', () => {
-    expect(resolveAlias('abang', 'Toba')).toBeNull()
-    expect(resolveAlias('abang', 'Karo')).toBeNull()
+  it('8. homonim KBBI abang Jawa Lay Ldy nihil di map regional lain; region lain fallback GLOBAL konsisten (revisi gel28 rev 2, semula null)', () => {
+    // Revisi transparan gel28: assertion null Toba/Karo/Jawa diganti fallback
+    // entri global; nihil abang di map regional Toba dan Karo TETAP dijaga.
+    expect(resolveAlias('abang', 'Toba')?.region).toBeUndefined()
+    expect(resolveAlias('abang', 'Karo')?.region).toBeUndefined()
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Toba)).not.toContain('abang')
     expect(Object.keys(KINSHIP_ALIASES_REGIONAL.Karo)).not.toContain('abang')
-    expect(resolveAlias('abang', 'Jawa')).toBeNull()
+    expect(resolveAlias('abang', 'Jawa')).toEqual(KINSHIP_ALIASES['abang'])
     expect(regionalEntry('Simalungun', 'abang').kind).toBe('sibling')
   })
 
