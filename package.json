@@ -29,6 +29,7 @@
     "test:perf:setup": "playwright install chromium",
     "preview": "vite preview",
     "db:seed": "npx prisma db seed",
+    "db:backup": "node scripts/backup-db.mjs",
     "db:migrate": "npx prisma migrate dev",
     "db:studio": "npx prisma studio",
     "docker:build": "docker compose build",
