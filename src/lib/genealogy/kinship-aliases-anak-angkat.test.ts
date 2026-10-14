@@ -56,8 +56,8 @@ describe('kinship-aliases anak angkat (gel29)', () => {
     expect(KINSHIP_ALIASES['orang tua']).toBeUndefined()
   })
 
-  it('8. guard total key naik 133 jadi 134 (gel30, lema anak susuan)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(134)
+  it('8. guard total key naik 134 jadi 135 (gel31, lema saudara susuan)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(135)
   })
 
   it('9. aliasKinds (daftar key terurut) tetap memuat anak angkat', () => {
