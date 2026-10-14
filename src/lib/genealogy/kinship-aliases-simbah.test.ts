@@ -84,8 +84,8 @@ describe('kinship-aliases simbah (v253xxx gelombang sebelas)', () => {
   })
 
   it('8. guard jumlah key PERSIS 117 pasca v253xxx gelombang sebelas (116 jadi 117: simbah)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(128)
-    expect(aliasKinds().length).toBe(128)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(129)
+    expect(aliasKinds().length).toBe(129)
   })
 
   it('9. non-regresi gugus grandparent inti: kakek nenek engkong embah eyang tetap live', () => {
