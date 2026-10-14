@@ -81,9 +81,9 @@ describe('kinship-aliases acik (v253xxviii, sibling depth 1, register ark Indone
     }
   })
 
-  it('9. guard bump total key: Object.keys dan aliasKinds PERSIS 127 pasca gelombang 20', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(127)
-    expect(aliasKinds().length).toBe(127)
+  it('9. guard bump total key: Object.keys dan aliasKinds PERSIS 128 pasca gelombang 21 wak', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(128)
+    expect(aliasKinds().length).toBe(128)
   })
 
   it('10. anti-dup: acik tepat satu kali di map global, nihil di blok regional', () => {

@@ -99,7 +99,7 @@ describe('kinship-aliases adinda (v253xxxi gelombang dua belas)', () => {
   })
 
   it('10. guard jumlah key PERSIS 118 pasca gelombang dua belas', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(127)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(128)
   })
 
   it('11. klaster sibling depth 1 global 34 anggota pasca adinda', () => {
