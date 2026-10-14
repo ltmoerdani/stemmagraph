@@ -134,9 +134,9 @@ describe('kinship-aliases bank lemma pakdhe budhe ponakan (V253-XX)', () => {
     }
   })
 
-  it('12. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 106 pasca V253-XXI (riwayat 100 jadi 103 di V253-XX)', () => {
+  it('12. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 126 pasca gelombang 19 (riwayat 106 jadi 123 di V253-XXI, 123 jadi 126 di gelombang 19)', () => {
     expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(126)
-    expect(aliasKinds().length).toBe(123)
+    expect(aliasKinds().length).toBe(126)
   })
 
   it('13. gugus parent-sibling Jawa jadi 6 entri: pakde paklik pakdhe budhe bude bulik', () => {

@@ -20,7 +20,7 @@ import { KINSHIP_ALIASES, aliasKinds, resolveAlias } from './kinship-aliases'
  * sibling depth 1 region Jawa, resolusi varian, posisi alfabetis
  * sisip di ujung blok maskulin kakak laki-laki antara kakanda dan
  * engkoh, gugus sibling non-regresi, determinisme, guard jumlah
- * 123, dan klaster sibling depth 1 kini 37.
+ * 126, dan klaster sibling depth 1 kini 37.
  */
 
 describe('kinship-aliases raka (v253xxxv gelombang enam belas)', () => {
@@ -95,9 +95,9 @@ describe('kinship-aliases raka (v253xxxv gelombang enam belas)', () => {
     expect(a).toEqual(b)
   })
 
-  it('9. guard jumlah key PERSIS 123 pasca gelombang enam belas', () => {
+  it('9. guard jumlah key PERSIS 126 pasca gelombang sembilan belas', () => {
     expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(126)
-    expect(aliasKinds().length).toBe(123)
+    expect(aliasKinds().length).toBe(126)
   })
 
   it('10. klaster sibling depth 1 global kini 37 anggota pasca raka', () => {

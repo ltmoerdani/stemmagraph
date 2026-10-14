@@ -118,7 +118,7 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
 
   it('11. guard bump total key: Object.keys dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
     expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(126)
-    expect(aliasKinds().length).toBe(123)
+    expect(aliasKinds().length).toBe(126)
   })
 
   it('12. anti-dup: nyak dan mbok masing-masing tepat satu kali, nihil key duplikat', () => {
@@ -128,11 +128,11 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
     expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('13. daftar kind parent global naik jadi 6 pasca v253-xxi, urutan asli map', () => {
+  it('13. daftar kind parent global naik jadi 7 pasca gelombang 19 (mandeh), urutan asli map', () => {
     const parents = Object.keys(KINSHIP_ALIASES).filter(
       (k) => KINSHIP_ALIASES[k]?.kind === 'parent',
     )
-    expect(parents).toEqual(['amak', 'nyak', 'mbok', 'nyokap', 'bokap', 'bapa'])
+    expect(parents).toEqual(['amak', 'nyak', 'mbok', 'nyokap', 'bokap', 'bapa', 'mandeh'])
   })
 
   it('14. nyak dan mbok nihil di semua map regional, parent-sibling global naik jadi 18 pasca v253-xxi (uwa)', () => {

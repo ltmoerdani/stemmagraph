@@ -33,7 +33,7 @@ describe('kinship-aliases semenda (v253xxvi)', () => {
     const props = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'property')
       .sort()
-    expect(props).toEqual(['besan', 'ipar', 'mantu', 'menantu', 'mertua', 'semenda'])
+    expect(props).toEqual(['besan', 'biras', 'ipar', 'mantu', 'menantu', 'mertua', 'semenda'])
   })
 
   it('5. bentuk tidak baku semanda dan sumanda BUKAN key', () => {
@@ -63,7 +63,7 @@ describe('kinship-aliases semenda (v253xxvi)', () => {
 
   it('8. guard jumlah key PERSIS 113 pasca v253xxvi gelombang delapan (112 jadi 113: semenda)', () => {
     expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(126)
-    expect(aliasKinds().length).toBe(123)
+    expect(aliasKinds().length).toBe(126)
   })
 
   it('9. non-regresi gugus affine: besan menantu mertua ipar tetap live kind property', () => {
