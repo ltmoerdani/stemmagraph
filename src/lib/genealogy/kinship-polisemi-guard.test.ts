@@ -3,12 +3,16 @@ import { polisemiGuard } from './kinship-polisemi-guard'
 import { KINSHIP_ALIASES, aliasKinds, resolveAlias } from './kinship-aliases'
 
 /**
- * Test dedikasi guard polisemi terpusat (v254).
+ * Test dedikasi guard polisemi terpusat (v254, diperbarui gel28 rev 2).
  * Kontrak: drafts/kontrak-stg-v254-polisemi-guard-2026-10-15.md rev 2.
- * Guard total map 131 TIDAK berubah, nihil lema baru.
+ * Catatan jujur gel28: header lama menulis total map 131 TIDAK berubah;
+ * sejak lema GLOBAL abang masuk map (kontrak
+ * drafts/kontrak-stg-gel28-abang-2026-10-15.md rev 2), total map BUMP 132
+ * dan blacklist 8 jadi 9 (tambah berabang). Guard tetap tidak menambah lema;
+ * bump datang dari lema map, bukan dari guard.
  */
 describe('kinship-polisemi-guard v254', () => {
-  it('1. semua 8 frasa blacklist resolve null via polisemiGuard', () => {
+  it('1. semua 9 frasa blacklist resolve null via polisemiGuard', () => {
     for (const p of [
       'putra mahkota',
       'putri malu',
@@ -18,13 +22,14 @@ describe('kinship-polisemi-guard v254', () => {
       'cicit2',
       'canggah1',
       'bebuyutan',
+      'berabang',
     ]) {
       expect(polisemiGuard(p)).toBeNull()
     }
   })
 
-  it('2. semua 8 frasa blacklist resolve null via resolveAlias', () => {
-    for (const p of ['putra mahkota', 'putri malu', 'putri boyongan', 'berputra', 'berputri', 'cicit2', 'canggah1', 'bebuyutan']) {
+  it('2. semua 9 frasa blacklist resolve null via resolveAlias', () => {
+    for (const p of ['putra mahkota', 'putri malu', 'putri boyongan', 'berputra', 'berputri', 'cicit2', 'canggah1', 'bebuyutan', 'berabang']) {
       expect(resolveAlias(p)).toBeNull()
     }
   })
@@ -61,9 +66,9 @@ describe('kinship-polisemi-guard v254', () => {
     expect(polisemiGuard('  Cicit  ')).toBe('cicit')
   })
 
-  it('8. guard total map PERSIS 131 nihil lema baru', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(131)
-    expect(aliasKinds().length).toBe(131)
+  it('8. guard total map PERSIS 132 pasca gel28 (bump dari 131, lema abang global)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(aliasKinds().length).toBe(132)
   })
 
   it('9. guard ad-hoc v253xlii tetap kunci: resolveAlias frasa non-relasi nihil key map', () => {
@@ -107,5 +112,12 @@ describe('kinship-polisemi-guard v254', () => {
     // Penambahan entri nyata cukup satu baris di POLISEMI_BLACKLIST.
     expect(polisemiGuard('kakak')).toBe('kakak')
     expect(polisemiGuard('kakak')).not.toBeNull()
+  })
+
+  it('15. kasus negatif berabang (gel28): nihil key map dan resolve null, lema abang tetap lolos', () => {
+    expect(resolveAlias('berabang')).toBeNull()
+    expect(KINSHIP_ALIASES['berabang']).toBeUndefined()
+    expect(polisemiGuard('berabang')).toBeNull()
+    expect(resolveAlias('abang')?.kind).toBe('sibling')
   })
 })
