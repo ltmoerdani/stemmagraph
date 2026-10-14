@@ -51,7 +51,7 @@ describe('kinship-aliases mantu (v253xxix gelombang sepuluh)', () => {
     const props = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'property')
       .sort()
-    expect(props).toEqual(['besan', 'ipar', 'mantu', 'menantu', 'mertua', 'semenda'])
+    expect(props).toEqual(['besan', 'biras', 'ipar', 'mantu', 'menantu', 'mertua', 'semenda'])
   })
 
   it('5. posisi alfabetis sisip antara mang dan menantu, mantu key mandiri bukan duplikat menantu', () => {

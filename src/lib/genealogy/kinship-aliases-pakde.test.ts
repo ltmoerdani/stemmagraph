@@ -61,7 +61,7 @@ describe('kinship-aliases pakde (v253-ii, kind parent-sibling depth 1 Jawa)', ()
   })
 
   it('7. jumlah total key 85 pasca v253-ix bako (v253-vi trio in-law dulu naik PERSIS 1 dari baseline kontrak 77 ke 81)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(123)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(126)
   })
 
   it('8. regional nihil untuk pakde: key tidak masuk blok regional mana pun', () => {
