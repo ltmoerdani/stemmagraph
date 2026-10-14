@@ -5,8 +5,8 @@ import { KINSHIP_ALIASES, resolveAlias, aliasKinds } from './kinship-aliases'
  * v253xl gelombang 22: konsolidasi key uda jadi entri GLOBAL dual-source kind
  * sibling depth 1 tanpa qualifier tanpa region. Entri lama v184-i bervalen
  * sunda (notes/427) diganti karena riset ulang sumber resmi menunjukkan lema
- * umum tanpa label daerah. Total key global TETAP 126 (konsolidasi ganti
- * entri, nihil penambahan key; disparitas kontrak 127 jadi 128 dicatat di
+ * umum tanpa label daerah. Total key global 126 jadi 127 (acik masuk paralel
+ * entri,; nihil penambahan kind; disparitas kontrak 127 jadi 128 dicatat di
  * laporan dan worklog).
  *
  * Jangkar: KBBI VI kbbi.kemendikdasmen.go.id/entri/uda akses 14 Okt 2026
@@ -93,7 +93,7 @@ describe('kinship-aliases uda (v253xl, sibling depth 1, entri global dual-source
     expect(sib.filter((k) => k === 'uda')).toHaveLength(1)
   })
 
-  it('12. guard global: konsolidasi ganti entri, total key tetap 126 nihil perubahan count', () => {
-    expect(aliasKinds().length).toBe(126)
+  it('12. guard global: acik masuk paralel, total key 126 jadi 127', () => {
+    expect(aliasKinds().length).toBe(127)
   })
 })

@@ -96,15 +96,15 @@ describe('kinship-aliases raka (v253xxxv gelombang enam belas)', () => {
   })
 
   it('9. guard jumlah key PERSIS 126 pasca gelombang sembilan belas', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(126)
-    expect(aliasKinds().length).toBe(126)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(127)
+    expect(aliasKinds().length).toBe(127)
   })
 
   it('10. klaster sibling depth 1 global kini 37 anggota pasca raka', () => {
     const siblingDepth1 = Object.entries(KINSHIP_ALIASES).filter(
       ([, entry]) => entry.kind === 'sibling' && entry.depth === 1,
     )
-    expect(siblingDepth1.length).toBe(37)
+    expect(siblingDepth1.length).toBe(38)
     const keys = new Set(siblingDepth1.map(([key]) => key))
     expect(keys.has('raka')).toBe(true)
   })
