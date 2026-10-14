@@ -342,6 +342,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     depth: 1,
     note: 'acik ark = panggilan untuk perempuan yang lebih tua, seperti kakak perempuan; bibi (ark); kind sibling depth 1 TANPA region pola makcik, KBBI menandai ark umum tanpa label daerah, kata arkais dicatat di note sbg register dan tidak masuk union interface; DUA SUMBER: KBBI III mirror kbbi.web.id/acik akses 14 Okt 2026 HTTP 200 (acik ark n panggilan untuk perempuan yang lebih tua, seperti kakak perempuan; bibi, satu lema nihil homograf ber nomor) plus Wiktionary ID pageid 112664 blok bahasa Indonesia identik (arkais, panggilan untuk perempuan yang lebih tua seperti kakak perempuan; bibi, rujukan R:KBBI Daring, flag rfv impor dari KBBI dicatat jujur pola makcik pakde); GUARD ANTARBAHASA TIDAK dipetakan: blok ljp Lampung (adik perempuan) dan blok ms Rokan Hilir (saudara perempuan dari ayah) di halaman Wiktionary sama BUKAN blok bahasa Indonesia, dua-duanya dijaga testfile dedikasi; GUARD TURUNAN: aci-acikan TIDAK dibuat key; GUARD NON-DIFUSI: makna bibi TIDAK difusi ke key bibi, dua key tetap terpisah pola ponakan-kemenakan; GUARD HOMOGRAF: satu lema nihil homograf ber nomor, tidak ada ejaan bertitik; referensi kontrak drafts/kontrak-stg-v253xxviii-acik-2026-10-14.md dan Log Supervisi BOARD-stemmagraph 14 Okt 2026',
   },
+  uda: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'uda = kakak laki-laki; abang (sapaan), key global netral pola makcik paman; kind sibling depth 1 TANPA qualifier TANPA region; menggantikan entri lama v184-i bervalen sunda notes/427 karena riset ulang sumber resmi menunjukkan lema umum tanpa label daerah; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/uda akses 14 Okt 2026 HTTP 200 (u.da2 n Mk kakak laki-laki; abang, homograf bernomor dua lema) plus Wiktionary ID oldid 1309472 via URL id.wiktionary.org/w/index.php?title=uda&oldid=1309472 (blok Bahasa Indonesia nomina: panggilan untuk laki-laki muda, kakak laki-laki; sinonim kakak abang bang dan jv mas, rujukan R:KBBI Daring, flag rfv impor dari KBBI tercatat jujur pola makcik pakde); GUARD HOMOGRAF KBBI: u.da1 a ark Jk kp muda (pak uda, mak uda) TIDAK dipetakan karena bukan relasi kekerabatan, komposit pak uda tetap key regional Karo terpisah; GUARD HOMONIM ANTARBAHASA Wiktionary TIDAK dipetakan: blok ljp Lampung, btm Batak Toba, kxd Kelabit, min Minangkabau, bts Simalungun di halaman sama BUKAN blok bahasa Indonesia; GUARD SINONIM: abang bang dan mas TIDAK dipetakan sbg key dari uda, hanya glosa; GUARD RAGAM: udo (ragam dari uda, KBBI VI plus Wiktionary blok id) TIDAK dibuat key, dijaga assertion negatif; GUARD LIHAT: pemuda TIDAK dipetakan; referensi kontrak kontrak-stg-v253xl-uda-2026-10-14 dan Log Supervisi BOARD-stemmagraph 14 Okt 2026',
+  },
+
   uwa: {
     kind: 'parent-sibling',
     depth: 1,
@@ -398,12 +404,6 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     qualifier: 'sunda',
     register: 'hormat',
     note: 'KBBI VI + EN + ID tiga sumber: aksara Sunda, contoh kalimat, {{Su}} di bagian id (notes/427)',
-  },
-  uda: {
-    kind: 'sibling',
-    depth: 1,
-    qualifier: 'sunda',
-    note: 'Wiktionary ID: blok sinonim lintas bahasa (notes/427)',
   },
   kang: {
     kind: 'sibling',

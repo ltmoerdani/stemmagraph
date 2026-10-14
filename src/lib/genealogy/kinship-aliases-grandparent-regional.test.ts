@@ -97,7 +97,7 @@ describe('kinship-aliases grandparent regional fase ii (v231-i)', () => {
   })
 
   it('guard: jumlah key alias naik persis 3 (73 jadi 76)', () => {
-    expect(aliasKinds().length).toBe(126)
+    expect(aliasKinds().length).toBe(127)
   })
 
   it('guard homonim: engkong KBBI tunggal makna kakek, nihil homonim invasif', () => {

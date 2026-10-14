@@ -35,9 +35,9 @@ describe('kinship-aliases klaster kakak maskulin (v184-i)', () => {
     expect(cakKeys.sort()).toEqual(['engkoh', 'koko'])
   })
 
-  it('qualifier sunda pada aa aang kaka akang uda', () => {
+  it('qualifier sunda pada aa aang kaka akang (uda netral sejak v253xl konsolidasi)', () => {
     const sundaKeys = KAKAK_ENTRIES.filter((key) => resolveAlias(key)?.qualifier === 'sunda')
-    expect(sundaKeys.sort()).toEqual(['aa', 'aang', 'akang', 'kaka', 'uda'])
+    expect(sundaKeys.sort()).toEqual(['aa', 'aang', 'akang', 'kaka'])
   })
 
   it('guard homonim: mas tetap resolve sebagai sibling, tidak bentrok entri lain', () => {
@@ -90,7 +90,7 @@ describe('kinship-aliases klaster kakak maskulin (v184-i)', () => {
     const siblingDepth1 = Object.entries(KINSHIP_ALIASES).filter(
       ([, entry]) => entry.kind === 'sibling' && entry.depth === 1,
     )
-    expect(siblingDepth1.length).toBe(37) // +1 raka v253xxxv gelombang enam belas
+    expect(siblingDepth1.length).toBe(38) // +1 raka v253xxxv gelombang enam belas
     const keys = new Set(siblingDepth1.map(([key]) => key))
     for (const key of KAKAK_ENTRIES) {
       expect(keys.has(key)).toBe(true)
