@@ -121,7 +121,7 @@ describe('kinship-aliases putra putri (v253xlii)', () => {
     expect(resolveAlias('anak')?.kind).toBe('child')
     expect(resolveAlias('ananda')?.kind).toBe('child')
     const childKeys = Object.keys(KINSHIP_ALIASES).filter((k) => KINSHIP_ALIASES[k]?.kind === 'child')
-    expect(childKeys.sort()).toEqual(['anak', 'ananda', 'putra', 'putri'])
+    expect(childKeys.sort()).toEqual(['anak', 'anak angkat', 'ananda', 'putra', 'putri'])
   })
 
   it('12. urutan alfabetis klaster child: putra lalu putri, di antara ananda dan cucu', () => {
