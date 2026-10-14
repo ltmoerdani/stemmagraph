@@ -35,9 +35,9 @@ describe('kinship-aliases klaster kakak maskulin (v184-i)', () => {
     expect(cakKeys.sort()).toEqual(['engkoh', 'koko'])
   })
 
-  it('qualifier sunda pada aa aang kaka akang uda', () => {
+  it('qualifier sunda pada aa aang kaka akang (uda netral sejak v253xl konsolidasi)', () => {
     const sundaKeys = KAKAK_ENTRIES.filter((key) => resolveAlias(key)?.qualifier === 'sunda')
-    expect(sundaKeys.sort()).toEqual(['aa', 'aang', 'akang', 'kaka', 'uda'])
+    expect(sundaKeys.sort()).toEqual(['aa', 'aang', 'akang', 'kaka'])
   })
 
   it('guard homonim: mas tetap resolve sebagai sibling, tidak bentrok entri lain', () => {
