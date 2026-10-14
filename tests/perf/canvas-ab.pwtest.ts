@@ -6,8 +6,8 @@
  * via halaman host tests/perf/host/canvas-ab.html dilayani vite dev
  * (port 5201). Hasil ditulis docs/perf/canvas-ab-report.md.
  *
- * GATE: test ini TIDAK dijalankan otomatis vitest (include vitest hanya
- * src/**/*.test.ts(x)); testMatch playwright *.pwtest.ts anti tabrakan.
+ * GATE: test ini TIDAK dijalankan otomatis vitest (pola include vitest
+ * hanya test di bawah src); testMatch playwright *.pwtest.ts anti tabrakan.
  * Bila lingkungan tanpa browser chromium, playwright run sekali dan
  * hasil SKIP dicatat jujur di laporan.
  */
@@ -135,7 +135,7 @@ test.afterAll(async () => {
   const lines: string[] = [
     '# Laporan Canvas A/B on-off v177-ii',
     '',
-    `Tanggal: ${new Date().toISOString()}`,``,
+    `Tanggal: ${new Date().toISOString()}`,
     `Sampel: ${SAMPLE_MS / 1000} detik per run, ${RUNS} run per kombinasi, interaksi drag + pan/zoom.`,
     '',
     '| Mode | Node | FPS rata-rata | p95 rAF delta (ms) |',

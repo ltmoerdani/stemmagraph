@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Host halaman perf canvas v177-ii (test-only, dilayani vite dev).
  *
