@@ -25,6 +25,8 @@
     "lint": "eslint .",
     "verify": "node scripts/run-verify-all.mjs",
     "test": "vitest run",
+    "test:perf:browser": "playwright test",
+    "test:perf:setup": "playwright install chromium",
     "preview": "vite preview",
     "db:seed": "npx prisma db seed",
     "db:migrate": "npx prisma migrate dev",
@@ -60,6 +62,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4.3.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
