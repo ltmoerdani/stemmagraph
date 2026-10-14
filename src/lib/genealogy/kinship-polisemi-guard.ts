@@ -12,7 +12,8 @@
  * pageid 116302 revid 1268393 (Mimosa pudica, makna botani bukan relasi).
  *
  * Struktur blacklist: const array, satu entri satu baris, mudah ditambah.
- * Menambah entri TIDAK mengubah total map 131 (guard tidak menambah lema).
+ * Menambah entri TIDAK mengubah total map (guard tidak menambah lema);
+ * total map 132 sejak gel28 (lema abang global), blacklist 9 frasa.
  */
 
 /**
@@ -43,6 +44,10 @@ const POLISEMI_BLACKLIST: readonly string[] = [
   // bebuyutan: idiom berlangsung lama turun-temurun, bukan relasi
   // per-orang; entri buyut di map tidak tersentuh.
   'bebuyutan',
+  // berabang: turunan ber- dari abang (gel28), bukan lemma nomina relasi;
+  // mirror KBBI III abang bagian turunan ber-a-bang v (mempunyai abang;
+  // menyebut dengan sebutan abang), Wiktionary ID bagian Turunan berabang.
+  'berabang',
 ]
 
 /** Normalisasi frasa lokal, semantik sama dengan normalize kinship-aliases: trim, lowercase, buang titik tengah, rapat spasi. */
