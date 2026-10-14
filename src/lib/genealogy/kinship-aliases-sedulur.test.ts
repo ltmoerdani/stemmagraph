@@ -95,7 +95,7 @@ describe('kinship-aliases sedulur (v253xxviii gelombang sembilan)', () => {
     const siblingDepth1 = Object.entries(KINSHIP_ALIASES).filter(
       ([, entry]) => entry.kind === 'sibling' && entry.depth === 1,
     )
-    expect(siblingDepth1.length).toBe(38)
+    expect(siblingDepth1.length).toBe(39)
     const keys = new Set(siblingDepth1.map(([key]) => key))
     expect(keys.has('sedulur')).toBe(true)
   })
