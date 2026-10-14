@@ -1,4 +1,5 @@
 import type { KinshipKind } from './kinship-calc'
+import { polisemiGuard } from './kinship-polisemi-guard'
 
 export interface AliasEntry {
   kind: KinshipKind
@@ -986,6 +987,9 @@ function normalize(phrase: string): string {
 
 export function resolveAlias(phrase: string, region?: string): AliasEntry | null {
   const key = normalize(phrase)
+  if (polisemiGuard(key) === null) {
+    return null
+  }
   if (region !== undefined) {
     const regional = KINSHIP_ALIASES_REGIONAL[region]
     const regionalEntry = regional === undefined ? undefined : regional[key]
