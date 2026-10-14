@@ -95,10 +95,10 @@ describe('alias kakak feminin KBBI VI (v184-ii)', () => {
     expect(resolveAlias(' cici')?.region).toBe('Cn')
   })
 
-  it('total entri sibling: 15 basis v184-i, +7 feminin v184-ii = 22, +2 karo agi turang = 24, +1 dik v185-i = 25, +2 sembuyak senina v186-i = 27, +1 nande v187-i = 28, +1 teteh v253-x = 29, +1 ucu v253-xvi = 30, +1 kak v253-xxiii = 31, +1 akak v253xxiv = 32, +2 bang bung v253xxiv = 34, +1 sedulur v253xxviii = 35, +1 adinda v253xxxi = 36, +1 raka v253xxxv = 37, +1 acik v253xxviii = 38', () => {
+  it('total entri sibling: 15 basis v184-i, +7 feminin v184-ii = 22, +2 karo agi turang = 24, +1 dik v185-i = 25, +2 sembuyak senina v186-i = 27, +1 nande v187-i = 28, +1 teteh v253-x = 29, +1 ucu v253-xvi = 30, +1 kak v253-xxiii = 31, +1 akak v253xxiv = 32, +2 bang bung v253xxiv = 34, +1 sedulur v253xxviii = 35, +1 adinda v253xxxi = 36, +1 raka v253xxxv = 37, +1 acik v253xxviii = 41, +1 abang v255 gel28 = 42', () => {
     const before = 15
     const total = Object.values(KINSHIP_ALIASES).filter((e) => e.kind === 'sibling').length
     expect(before).toBe(15)
-    expect(total).toBe(41)
+    expect(total).toBe(42)
   })
 })

@@ -65,12 +65,14 @@ describe('kinship-aliases uda (v253xl, sibling depth 1, entri global dual-source
     expect(Object.values(KINSHIP_ALIASES).some((e) => e.qualifier === 'bts')).toBe(false)
   })
 
-  it('8. negasi sinonim: abang bang mas hanya glosa di note uda, tanpa difusi; bang mas key global, abang key regional Simalungun', () => {
+  it('8. negasi sinonim: bang mas key global, abang key global DUAL-SOURCE independen sejak v255 gel28 (bukan difusi dari uda, guard sinonim note tetap sah), abang Simalungun tetap regional', () => {
     expect(KINSHIP_ALIASES['bang']).toBeDefined()
     expect(KINSHIP_ALIASES['mas']).toBeDefined()
-    expect(KINSHIP_ALIASES['abang']).toBeUndefined()
+    expect(KINSHIP_ALIASES['abang']).toBeDefined()
+    expect(resolveAlias('abang')?.kind).toBe('sibling')
     expect(resolveAlias('mas')?.region).toBe('Jawa')
     expect(resolveAlias('abang', 'Simalungun')).not.toBeNull()
+    expect(resolveAlias('abang', 'Simalungun')?.region).toBe('Simalungun')
     expect(KINSHIP_ALIASES['uda'].note).toContain('GUARD SINONIM')
   })
 
