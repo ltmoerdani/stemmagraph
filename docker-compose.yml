@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: file:/app/data/stemmagraph.db
+    volumes:
+      - stg_db:/app/data
+    restart: unless-stopped
+
+volumes:
+  stg_db:
