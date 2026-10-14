@@ -189,6 +189,11 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'kp',
     note: 'kependekan kakak; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/kak akses 13 Okt 2026 (kak1 n sapaan saudara tua; kak kp kakak saudara tua) plus Wiktionary ID (nomina kependekan kakak, rujukan R:KBBI Daring, templat rfv dicatat jujur, status verifikasi komunitas belum final); makna kak1 sapaan serta makna pronomina dan onomatope TIDAK dipetakan; referensi kontrak drafts/kontrak-stg-v253xxiii-kak-2026-10-13.md',
   },
+  abang: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'abang = kakak laki-laki; saudara laki-laki yang lebih tua (makna relasi = makna 1 kedua sumber), key GLOBAL netral TANPA region TANPA qualifier; DUA SUMBER: KBBI III mirror kbbi.web.id/abang akses 15 Okt 2026 HTTP 200 (abang1 n 4 makna, makna 1 kakak laki-laki; saudara laki-laki yang lebih tua) plus Wiktionary ID pageid 2134 revid 1470859 akses 15 Okt 2026 via api.php (blok Bahasa Indonesia num=1 nomina: saudara laki-laki yang lebih tua plus non-gloss bentuk panggilan, rujukan R:KBBI Daring); GUARD POLISEMI TIDAK DIPETAKAN: makna 2 panggilan kepada laki-laki lebih tua atau tidak dikenal, makna 3 panggilan istri kepada suami, makna 4 sebutan penjual sayur penjual ikan pengemudi becak dan sebagainya (semua makna panggilan atau sebutan, bukan relasi struktural); GUARD HOMOGRAF: abang2 Jawa warna merah TIDAK dipetakan sbg key; GUARD TURUNAN: berabang masuk POLISEMI_BLACKLIST di kinship-polisemi-guard; GUARD HOMONIM ANTARBAHASA Wiktionary TIDAK dipetakan: blok ban bjn lod bew bcl beu jv abl mad mak min btd btm ms tes dst di halaman sama BUKAN blok bahasa Indonesia; CATATAN REGIONAL: abang Simalungun v218-i tetap live di KINSHIP_ALIASES_REGIONAL.Simalungun, precedence resolveAlias regional menang (region Simalungun tetap entri Simalungun, region lain fallback entri global); referensi kontrak drafts/kontrak-stg-gel28-abang-2026-10-15.md rev 2',
+  },
   ading: {
     kind: 'sibling',
     depth: 1,
