@@ -105,6 +105,6 @@ describe('kinship-aliases rantai atas (v174-iii)', () => {
     expect(kinds).toContain('datuk poyang')
     // baseline develop a84f0bc (v174-ii) 39 lema; add-only v174-iii +2 buyut = 41; v184-i +13 klaster kakak maskulin = 54; v184-ii +7 kakak feminin = 61; karo agi+turang +2 di eeb3677 lupa bump = 63; v185-i +1 dik = 64; v186-i +2 sembuyak senina = 66; v187-i +1 nande = 67; v188-i +4 bapa mama mami permen = 71; v188-ii regional map KINSHIP_ALIASES_REGIONAL (kaka Karo) nihil menambah jumlah karena terpisah dari map utama (tetap 73); v189-i +1 impal Karo regional nihil menambah jumlah karena terpisah dari map utama (tetap 73); v189-ii +2 kempu bibi Karo regional nihil menambah jumlah karena terpisah dari map utama (tetap 73); v240-i +1 anggas KBBI VI = 77; v253-vi +3 trio in-law baku besan menantu mertua = 81; v253-vii +1 mamak = 82; v253-viii +2 emang mang = 84; v253-ix +1 bako = 85; v253-x +2 etek teteh = 87; v253-xi +1 amak = 88; v253-xii +1 andung = 89; v253-xiii +1 tante = 90; v253-xiv +1 paklik = 91; v253-xv +1 makcik = 92
     // v253-xviii +1 atuk = 96; v253-xvii +2 nyak mbok = 95; sebelumnya v253-xvi +1 ucu = 93
-    expect(kinds.length).toBe(128)
+    expect(kinds.length).toBe(129)
   })
 })

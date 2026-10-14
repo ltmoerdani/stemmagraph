@@ -98,8 +98,8 @@ describe('kinship-aliases bude (v253xxxii gelombang tiga belas)', () => {
   })
 
   it('9. guard jumlah key PERSIS 119 pasca gelombang tiga belas', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(128)
-    expect(aliasKinds().length).toBe(128)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(129)
+    expect(aliasKinds().length).toBe(129)
   })
 
   it('10. regresi guard: kasus lama bank-lemma bude kini positif, entri ada di source dan klaster PS Jawa jw 6 entri', () => {
