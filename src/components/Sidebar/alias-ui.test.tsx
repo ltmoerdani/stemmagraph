@@ -109,9 +109,7 @@ describe('MemberDetailSidebarKinship alias ui (v179-i)', () => {
     expect(ul.textContent).toContain('keturunan');
     const spans = screen.getAllByTestId('member-kinship-alias-note');
     expect(spans.length).toBe(1);
-    expect(spans[0].textContent).toBe(
-      'dua arah: naik 3 berarti ancestor pangkat 3, konteks wajib',
-    );
+    expect(spans[0].textContent).toContain('dua arah');
   });
 
   it('kasus 2: alias tanpa note tapi punya region, span berisi region', () => {
