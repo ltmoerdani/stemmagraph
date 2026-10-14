@@ -35,17 +35,21 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     note: 'putri = anak perempuan, anak kandung wanita; kind child pola anak ananda TANPA region (baku nasional) TANPA qualifier; makna relasi dipetakan dari makna 2 dan 4 KBBI; DUA SUMBER: KBBI III mirror kbbi.web.id/putri akses 14 Okt 2026 HTTP 200 (put·ri n 1 anak perempuan raja; 2 anak perempuan wanita; 4 cak anak kandung wanita, satu lema nihil homograf bernomor) plus Wiktionary ID revid 1461278 via URL api.php id.wiktionary.org/w/api.php?action=query&prop=revisions&titles=putri&rvprop=ids|content (blok Bahasa Indonesia nomina: putri kerajaan anak perempuan raja; anak perempuan wanita; khusus wanita lompat tinggi putri; cak anak kandung wanita; konvergen KBBI, rujukan R:KBBI Daring, flag rfv impor dari KBBI dicatat jujur pola preseden); GUARD POLISEMI TIDAK DIPETAKAN: makna 1 anak perempuan raja makna budaya istana TIDAK jadi key terpisah, makna khusus wanita (lompat tinggi putri, kategori putri) BUKAN relasi kekerabatan TIDAK dipetakan, idiom putri malu Mimosa pudica dan putri boyongan TIDAK dipetakan, turunan berputri TIDAK dipetakan; varian ejaan puteri TIDAK dibuat key dicatat jujur di note (preseden man.tu); referensi kontrak drafts/kontrak-stg-v253xlii-putra-putri-2026-10-14.md',
   },
   cucu: { kind: 'grandchild' },
-  cicit: { kind: 'descendant', depth: 3 },
+  cicit: {
+    kind: 'descendant',
+    depth: 3,
+    note: 'cicit = anak dari cucu, rantai resmi turun anak cucu cicit atau buyut, piut atau canggah; DUA SUMBER: KBBI III mirror kbbi.web.id/cicit akses 15 Okt 2026 HTTP 200 (ci·cit1 n 1 anak dari cucu, satu lema dua homograf cicit1 cicit2) plus Wiktionary ID revid 1113041 (blok Bahasa Indonesia nomina makna anak dari cucu konvergen mirror, rujukan R:KBBI Daring); GUARD HOMOGRAF TIDAK DIPETAKAN: ci·cit2 onomatope tiruan bunyi tikus dan anak burung bukan relasi kekerabatan nihil key terpisah; referensi kontrak drafts/kontrak-stg-gel27-cicit-buyut-canggah-2026-10-15.md rev 2',
+  },
   buyut: {
     kind: 'descendant',
     depth: 3,
-    note: 'dua arah: naik 3 berarti ancestor pangkat 3, konteks wajib',
+    note: 'buyut = anak dari cucu sejajar cicit di rantai resmi turun; DUA SUMBER: KBBI III mirror kbbi.web.id/buyut akses 15 Okt 2026 HTTP 200 (bu·yut n 2 anak dari cucu, makna kekerabatan dari makna 2) plus Wiktionary ID revid 1313716 (blok Bahasa Indonesia nomina konvergen mirror, rujukan R:KBBI Daring); dua arah: naik 3 berarti ancestor pangkat 3, konteks wajib (pemakaian turun jadi acuan gel27); GUARD TIDAK DIPETAKAN: makna naik orang tua dari nenek kandidat gel29 anti scope creep, idiom bebuyutan nihil key, entri dialek buyut2 regional di map terpisah nihil tersentuh gel ini; referensi kontrak drafts/kontrak-stg-gel27-cicit-buyut-canggah-2026-10-15.md rev 2',
   },
   piut: { kind: 'descendant', depth: 4 },
   canggah: {
     kind: 'descendant',
     depth: 4,
-    note: 'jangkar resmi KBBI VI: canggah2 = piut, cucu dari cucu',
+    note: 'canggah = piut, cucu dari cucu, keturunan kelima; DUA SUMBER: Wiktionary ID revid 1314027 akses 15 Okt 2026 (blok Bahasa Indonesia nomina keturunan yang kelima, rujukan R:KBBI Daring) plus jangkar resmi KBBI VI live cang.gah2 (notes/research-051 akses 11 Okt); CATATAN JUJUR: mirror KBBI III nihil makna kekerabatan canggah (hanya cang·gah1 galah atau dahan bercabang, dipakai sbg kasus negatif homograf senjata), sumber kekerabatan murni Wiktionary plus KBBI VI; GUARD HOMOGRAF TIDAK DIPETAKAN: cang·gah1 galah nihil key terpisah; referensi kontrak drafts/kontrak-stg-gel27-cicit-buyut-canggah-2026-10-15.md rev 2',
   },
   anggas: {
     kind: 'descendant',
