@@ -22,6 +22,10 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     note: 'adinda Gorontalo hor = sapaan hormat akrab kepada adik (padanan feminin kanda kakanda gugus hor), etimologi adik plus -nda; kind sibling depth 1 pola ayunda kanda, gugus hor non-regresi; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/adinda akses 13 Okt 2026 HTTP 200 (a.din.da n hor sapaan akrab kepada adik, satu lema nihil homograf bernomor, gugus hor) plus Wiktionary ID oldid 1109917 via URL id.wiktionary.org/w/index.php?title=adinda&oldid=1109917 (blok Bahasa Indonesia Nomina: hormat adik mengandung pengertian lebih hormat dan ramah, etimologi adik plus -nda, kategori Turunan kata adik, rujukan R:KBBI Daring, flag rfv impor dari KBBI dicatat jujur pola preseden); GUARD HOMOGRAF ADIKANDA tidak dipetakan: nihil di KBBI VI dan nihil di Wiktionary ID TIDAK jadi key, ejaan ber titik a.din.da TIDAK dipakai sbg key pola budhe se.du.lur man.tu; GUARD HOMONIM ANTARBAHASA Wiktionary TIDAK dipetakan, nihil blok bahasa lain di oldid sama; referensi kontrak gelombang dua belas dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
   },
   anak: { kind: 'child' },
+  ananda: {
+    kind: 'child',
+    note: 'ananda hor = anak, kata sapaan hormat kepada anak orang lain, pola anak (entri anak pembanding langsung, kind child tanpa depth tanpa region); GUARD MAKNA SAPAAN HORMAT: makna sapaan hormat ananda TIDAK dipetakan sbg key lain (bukan sibling, bukan parent, bukan key terpisah), satu makna relasi anak sesuai KBBI an.an.da n hor; anti-dup PM terverifikasi: lemma ananda nihil di map sebelum gelombang ini; referensi kontrak v253xxxvii gelombang 19 dan Log Supervisi BOARD-stemmagraph 14 Okt 2026',
+  },
   cucu: { kind: 'grandchild' },
   cicit: { kind: 'descendant', depth: 3 },
   buyut: {
@@ -520,6 +524,10 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     kind: 'property',
     note: 'KBBI VI dua makna: orang tua dari menantu dan hubungan dua orang tua karena anak kawin; homonim be.san2 masakan khas Betawi sayur bersantan tidak dipetakan; bentuk tidak baku bisan cukup dicatat di note ini; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id (akses 9 Okt 2026) plus Wiktionary ID oldid 1312530',
   },
+  biras: {
+    kind: 'property',
+    note: 'biras = pertalian persaudaraan karena kawin dengan dua orang bersaudara (hubungan antara kedua orang yang menikahi dua orang bersaudara, gugus affine besan mertua ipar mantu), pola besan kind property tanpa depth; GUARD MAKNA UMUM: makna umum mertua dan ipar TIDAK dipetakan sbg key lain (bukan parent, bukan sibling, bukan property lain), satu makna persaudaraan sekawin sesuai KBBI bi.ras n; anti-dup PM terverifikasi: lemma biras nihil di map sebelum gelombang ini; referensi kontrak v253xxxvii gelombang 19 dan Log Supervisi BOARD-stemmagraph 14 Okt 2026',
+  },
   mama: {
     kind: 'parent-sibling',
     depth: 1,
@@ -544,6 +552,13 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     qualifier: 'mk',
     region: 'Melayu',
     note: 'engku Melayu = paman; mamak dari pihak ibu, kind parent-sibling depth 1 pola bako mamak; qualifier mk dan region Melayu konsisten pola alias live inyik; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/engku akses 13 Okt 2026 (eng.ku2 n Mk tiga makna: paman; mamak (dari pihak ibu); kata sapaan kepada kakek (datuk); sebutan untuk laki-laki dewasa sebaya tidak dikenal; angku) plus Wiktionary ID pageid 108851 via api.php id.wiktionary.org/w/api.php (blok Bahasa Indonesia nomina paman; mamak (dari pihak ibu), rujukan R:KBBI Daring, flag rfv impor dari KBBI tercatat jujur pola preseden etek bude akak); GUARD POLISEMI KBBI: makna 2 kata sapaan kakek (datuk) TIDAK dipetakan sbg key terpisah, makna 3 laki-laki dewasa sebaya tidak dikenal plus varian angku TIDAK dipetakan (angku nihil di map, jangan turunkan), eng.ku1 sapaan keluarga raja atau orang dihormati TIDAK dipetakan; GUARD HOMONIM: nihil homograf bernomor kekerabatan lain, pasangan eng.ku1 vs eng.ku2 bukan homonim kekerabatan; anti-dup: engkoh sibling cak dan engkong grandparent cn entri lain di berkas sama tanpa disentuh; referensi kontrak v253xxxiii dan Log Supervisi BOARD-stemmagraph 13 Okt 2026',
+  },
+  mandeh: {
+    kind: 'parent',
+    depth: 1,
+    qualifier: 'minangkabau',
+    region: 'Minangkabau',
+    note: 'mandeh Minangkabau = mak; ibu, pola amak (kind parent depth 1 qualifier minangkabau region Minangkabau konsisten amak mamak etek); GUARD VARIAN: mandeh TIDAK menimpa makde, amak, maq deh varian lain, ketiganya entri atau ketiadaan tetap apa adanya, makde nihil di map tetap nihil; anti-dup PM terverifikasi: lemma mandeh nihil di map sebelum gelombang ini; referensi kontrak v253xxxvii gelombang 19 dan Log Supervisi BOARD-stemmagraph 14 Okt 2026',
   },
   mang: {
     kind: 'parent-sibling',
