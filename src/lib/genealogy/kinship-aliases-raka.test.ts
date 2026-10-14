@@ -96,8 +96,8 @@ describe('kinship-aliases raka (v253xxxv gelombang enam belas)', () => {
   })
 
   it('9. guard jumlah key PERSIS 126 pasca gelombang sembilan belas', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(129)
-    expect(aliasKinds().length).toBe(129)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(131)
+    expect(aliasKinds().length).toBe(131)
   })
 
   it('10. klaster sibling depth 1 global kini 37 anggota pasca raka', () => {

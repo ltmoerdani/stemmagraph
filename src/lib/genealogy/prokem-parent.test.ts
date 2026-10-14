@@ -58,8 +58,8 @@ describe('kinship-aliases prokem parent uwa nyokap bokap (v253-xxi)', () => {
   })
 
   it('6. guard total key global PERSIS 106: Object.keys dan aliasKinds', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(129)
-    expect(aliasKinds().length).toBe(129)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(131)
+    expect(aliasKinds().length).toBe(131)
   })
 
   it('7. guard negatif KBBI VI uwa: u.wa1 sapaan santun dan u.wa2 Mee tidak dipetakan, entri uwa tak bergeser', () => {
