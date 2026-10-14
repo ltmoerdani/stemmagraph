@@ -74,8 +74,8 @@ describe('kinship-aliases ucu (v253-xvi, sibling depth 1, penanda bungsu registe
   })
 
   it('7. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
-    expect(aliasKinds().length).toBe(133)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(134)
+    expect(aliasKinds().length).toBe(134)
   })
 
   it('8. anti-dup: ucu tepat satu kali, nihil di blok regional mana pun', () => {
