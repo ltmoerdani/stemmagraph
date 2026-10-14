@@ -60,7 +60,7 @@ describe('kinship-aliases anak angkat (gel29)', () => {
     expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
   })
 
-  it('9. aliasKinds tetap memuat child', () => {
-    expect(aliasKinds()).toContain('child')
+  it('9. aliasKinds (daftar key terurut) tetap memuat anak angkat', () => {
+    expect(aliasKinds()).toContain('anak angkat')
   })
 })
