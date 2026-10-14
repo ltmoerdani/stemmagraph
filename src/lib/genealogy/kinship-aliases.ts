@@ -176,6 +176,11 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'kp',
     note: 'kependekan kakak; DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/kak akses 13 Okt 2026 (kak1 n sapaan saudara tua; kak kp kakak saudara tua) plus Wiktionary ID (nomina kependekan kakak, rujukan R:KBBI Daring, templat rfv dicatat jujur, status verifikasi komunitas belum final); makna kak1 sapaan serta makna pronomina dan onomatope TIDAK dipetakan; referensi kontrak drafts/kontrak-stg-v253xxiii-kak-2026-10-13.md',
   },
+  ading: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'ading = adik, makna basis relasi saudara seumur (sibling depth 1), BUKAN parent-child; register cak HANYA tercatat di note, TANPA field qualifier dan TANPA region pola akak; DUA SUMBER: KBBI III mirror kbbi.web.id/ading akses 14 Okt 2026 HTTP 200 (ading n cak adik, satu lema nihil homograf bernomor, nihil label daerah) plus Wiktionary ID revid 1292120 via api.php (blok Bahasa Indonesia n cak adik, rujukan R:KBBI Daring, flag rfv dicatat jujur); GUARD HOMONIM ANTARBAHASA Wiktionary TIDAK dipetakan: blok bjn Banjar (adik, adinda), ilo Ilocano, bve Bima, bkr Bakumpai, pse Ogan (adik plus ragam adeng adieng) nihil diikuti; adeng dan adieng ragam blok pse TIDAK jadi key; referensi kontrak drafts/kontrak-stg-v253xli-ading-2026-10-14.md',
+  },
   akak: {
     kind: 'sibling',
     depth: 1,
