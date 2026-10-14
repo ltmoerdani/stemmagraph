@@ -133,8 +133,8 @@ describe('kinship-aliases empok-yayu (v253xxxiv gelombang lima belas)', () => {
   })
 
   it('11. guard jumlah key PERSIS 122 pasca gelombang lima belas', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
-    expect(aliasKinds().length).toBe(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
+    expect(aliasKinds().length).toBe(133)
   })
 
   it('12. regresi guard: kasus lama bank-lemma kini positif, entri ada di source, klaster sibling kakak perempuan wilayah', () => {

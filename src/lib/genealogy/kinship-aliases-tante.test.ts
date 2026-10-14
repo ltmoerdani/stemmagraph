@@ -96,8 +96,8 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
   })
 
   it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
-    expect(aliasKinds().length).toBe(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
+    expect(aliasKinds().length).toBe(133)
   })
 
   it('11. daftar key gugus parent-sibling toEqual pasca v253-xiv (10 key, paklik menyisip urutan sort)', () => {
