@@ -147,7 +147,7 @@ test.afterAll(async () => {
   lines.push('');
   lines.push('Catatan: mode on memaksa onlyRenderVisibleElements aktif, off mematikan;');
   lines.push('default app tanpa query param tidak berubah (override hanya di host perf).');
-  const out = path.resolve(__dirname, '../../docs/perf/canvas-ab-report.md');
+  const out = path.resolve(process.cwd(), 'docs/perf/canvas-ab-report.md');
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, `${lines.join('\n')}\n`);
 });
