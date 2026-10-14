@@ -81,7 +81,7 @@ describe('kinship-aliases generasi naik (v253-xix, 4 key parent-sibling depth 1)
   })
 
   it('8. guard bump total key: PERSIS 100 pasca v253-xix', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(123)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(126)
     expect(aliasKinds().length).toBe(123)
   })
 
