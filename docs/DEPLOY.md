@@ -20,6 +20,26 @@ Perintah itu membangun image multi-stage, lalu menjalankan migrasi (`npx prisma 
 
 `docker-compose.yml` mengatur `DATABASE_URL=file:/app/data/stemmagraph.db`. Berkas basis data hidup di dalam volume bernama `stg_db` yang di-mount ke `/app/data`, jadi data tetap utuh saat kontainer dihentikan, diperbarui, atau dibangun ulang. Ubah baris `environment` di compose bila Anda perlu mengarah ke lokasi lain.
 
+## Perubahan v178-ii: Non-root, Healthcheck, dan tini
+
+Sejak v178-ii, kontainer berjalan sebagai user `node`, bukan root. Proses utama diawali `tini` sebagai PID 1 sehingga sinyal stop dari Docker diteruskan ke Node dan kontainer berhenti rapi. Image juga membawa HEALTHCHECK yang mengakses `http://127.0.0.1:3000/` tiap 30 detik (timeout 5 detik, start-period 30 detik, dinyatakan unhealthy setelah 3 kegagalan). Status HTTP apa pun dihitung hidup karena healthcheck ini menguji proses server merespons.
+
+Cara verifikasi:
+
+```sh
+docker inspect --format '{{json .State.Health}}' $(docker compose ps -q app)
+```
+
+Kontainer baru berstatus `starting`, lalu menjadi `healthy` setelah permintaan pertama sukses. Bila tetap `unhealthy`, periksa log lewat `docker compose logs app`.
+
+Kepemilikan volume: direktori `/app/data` di image dimiliki `node:node`, jadi volume `stg_db` yang baru mewarisi kepemilikan itu pada pemakaian pertama dan migrasi Prisma bisa menulis berkas SQLite. Volume bawaan pemasangan lama terlanjur dimiliki root; perbaiki sekali setelah upgrade:
+
+```sh
+docker compose down
+docker run --rm -v stg_db:/data alpine chown -R node:node /data
+docker compose up -d
+```
+
 ## Peringatan Keamanan: HTTPS Wajib untuk Akses Publik
 
 Menjalankan Stemmagraph di jaringan publik tanpa HTTPS TIDAK aman. Tanpa enkripsi, kredensial login dan data silsilah keluarga lewat dalam bentuk teks terbuka dan bisa disadap. Pola yang sama ditegaskan pada dokumentasi penerapan Gramps Web. Untuk akses publik, letakkan reverse proxy di depan aplikasi (misalnya Caddy atau nginx) dan terbitkan sertifikat Let's Encrypt untuk domain Anda, kemudian batasi compose agar hanya melayani di localhost atau jaringan internal sampai TLS terpasang.
