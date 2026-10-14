@@ -337,6 +337,11 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     depth: 1,
     note: 'bibi = adik atau kakak perempuan ayah atau ibu; homograf resmi KBBI VI bi.bi2 Bg alat pancing, bi.bi3 Bt mangga mentah, bi.bi4 Bt masa padi TIDAK dipetakan; 3 makna sapaan non-kekerabatan tidak dipetakan; DUA SUMBER: KBBI VI akses 12 Okt 2026 plus Wiktionary ID revid 1312636',
   },
+  acik: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'acik ark = panggilan untuk perempuan yang lebih tua, seperti kakak perempuan; bibi (ark); kind sibling depth 1 TANPA region pola makcik, KBBI menandai ark umum tanpa label daerah, kata arkais dicatat di note sbg register dan tidak masuk union interface; DUA SUMBER: KBBI III mirror kbbi.web.id/acik akses 14 Okt 2026 HTTP 200 (acik ark n panggilan untuk perempuan yang lebih tua, seperti kakak perempuan; bibi, satu lema nihil homograf ber nomor) plus Wiktionary ID pageid 112664 blok bahasa Indonesia identik (arkais, panggilan untuk perempuan yang lebih tua seperti kakak perempuan; bibi, rujukan R:KBBI Daring, flag rfv impor dari KBBI dicatat jujur pola makcik pakde); GUARD ANTARBAHASA TIDAK dipetakan: blok ljp Lampung (adik perempuan) dan blok ms Rokan Hilir (saudara perempuan dari ayah) di halaman Wiktionary sama BUKAN blok bahasa Indonesia, dua-duanya dijaga testfile dedikasi; GUARD TURUNAN: aci-acikan TIDAK dibuat key; GUARD NON-DIFUSI: makna bibi TIDAK difusi ke key bibi, dua key tetap terpisah pola ponakan-kemenakan; GUARD HOMOGRAF: satu lema nihil homograf ber nomor, tidak ada ejaan bertitik; referensi kontrak drafts/kontrak-stg-v253xxviii-acik-2026-10-14.md dan Log Supervisi BOARD-stemmagraph 14 Okt 2026',
+  },
   uwa: {
     kind: 'parent-sibling',
     depth: 1,
