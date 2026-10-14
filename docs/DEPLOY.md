@@ -54,6 +54,20 @@ docker run --rm -v stg_db:/data -v "$PWD":/backup alpine tar czf /backup/stg_db-
 
 Simpan arsip hasil perintah itu di lokasi terpisah dari server. Pulihkan dengan membongkar arsip ke volume yang sama.
 
+### Backup otomatis via scripts/backup-db.mjs
+
+Selain salin volume manual, repo menyediakan script backup menggunakan perintah `db.backup` bawaan better-sqlite3 sehingga aman terhadap transaksi yang sedang berjalan. Script membaca `DATABASE_URL` (fallback `file:./prisma/dev.db`) dan menulis hasil ke folder `.backup` selevel berkas database dengan nama `stemmagraph-<YYYYMMDD-HHmmss>.db`.
+
+Jalankan sekali secara manual atau pasang cron harian pukul 02.00:
+
+```sh
+0 2 * * * node scripts/backup-db.mjs
+```
+
+Retensi ditangani manual: hapus berkas `.backup` lama sesuai kebutuhan, misalnya sisakan 7 terbaru dengan `ls -1 .backup/*.db | head -n -7 | xargs rm -f`. Fungsi `selectBackupsToKeep` di `src/lib/server/backup-plan.ts` bisa dipakai sebagai acuan urutan retensi N terbaru.
+
+Catatan kenapa bukan litestream: replikasi litestream bergantung pada WAL yang tidak jalan andal di network FS (NFS dan sejenisnya). Backup berkala via `db.backup` menghasilkan berkas SQLite utuh yang aman disalin ke storage jaringan mana pun.
+
 ## Catatan Arsitektur
 
 Perbandingan berikut dari catatan riset 14 Oktober 2026 (sesi riset Sena atas Gramps Web dan webtrees). Gramps Web menyebarkan tiga layanan sekaligus: aplikasi, celery untuk pekerjaan latar, dan valkey sebagai perantara pesan, karena basis datanya butuh antrean tugas. Webtrees berjalan di PHP dengan MySQL dan panduannya menyebut sekitar lima langkah penyiapan basis data. Stemmagraph memakai SQLite sehingga cukup satu layanan: aplikasi dan basis data hidup di satu kontainer dengan satu volume, migrasi jalan otomatis saat mulai, dan tidak ada redis maupun celery yang perlu dioperasikan. Pilihan ini menyederhanakan self-host untuk keluarga atau instansi kecil yang mengelola sendiri servernya.
