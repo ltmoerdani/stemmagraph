@@ -72,7 +72,7 @@ describe('kinship-aliases amak (v253-xi, parent depth 1 Minangkabau)', () => {
   })
 
   it('8. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 

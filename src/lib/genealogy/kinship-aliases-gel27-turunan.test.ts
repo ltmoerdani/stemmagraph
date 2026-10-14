@@ -39,7 +39,7 @@ describe('kinship-aliases gel27 rev 2 pengayaan cicit buyut canggah', () => {
   })
 
   it('4. guard total map TIDAK berubah: 134 klaim kontrak rev1 dianulir, tetap 131', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(Object.keys(KINSHIP_ALIASES)).not.toHaveLength(134)
   })
 

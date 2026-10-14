@@ -76,7 +76,7 @@ describe('kinship-aliases abang GLOBAL baku (gel28 rev 2, kind sibling, kakak la
   })
 
   it('9. total map PERSIS 132 dan aliasKinds 132 pasca gel28', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 

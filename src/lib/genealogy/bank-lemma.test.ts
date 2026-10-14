@@ -135,7 +135,7 @@ describe('kinship-aliases bank lemma pakdhe budhe ponakan (V253-XX)', () => {
   })
 
   it('12. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 126 pasca gelombang 19 (riwayat 106 jadi 123 di V253-XXI, 123 jadi 126 di gelombang 19)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 

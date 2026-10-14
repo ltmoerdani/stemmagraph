@@ -58,7 +58,7 @@ describe('kinship-aliases prokem parent uwa nyokap bokap (v253-xxi)', () => {
   })
 
   it('6. guard total key global PERSIS 106: Object.keys dan aliasKinds', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 

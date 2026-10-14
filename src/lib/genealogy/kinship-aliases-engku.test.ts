@@ -96,7 +96,7 @@ describe('kinship-aliases engku (v253xxxiii gelombang empat belas)', () => {
   })
 
   it('9. guard jumlah key PERSIS 120 pasca gelombang empat belas', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 

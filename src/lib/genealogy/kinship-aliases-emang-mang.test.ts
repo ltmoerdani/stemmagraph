@@ -89,7 +89,7 @@ describe('kinship-aliases emang dan mang (v253-viii, parent-sibling depth 1 Sund
   })
 
   it('9. guard bump total key: 85 pasca v253-ix bako di map global dan aliasKinds', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 

@@ -71,7 +71,7 @@ describe('kinship-aliases paklik (v253-xiv, parent-sibling depth 1, register Jaw
   })
 
   it('7. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 

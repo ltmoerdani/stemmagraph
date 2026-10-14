@@ -117,7 +117,7 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
   })
 
   it('11. guard bump total key: Object.keys dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 

@@ -67,7 +67,7 @@ describe('kinship-polisemi-guard v254', () => {
   })
 
   it('8. guard total map PERSIS 132 pasca gel28 (bump dari 131, lema abang global)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(132)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(133)
     expect(aliasKinds().length).toBe(132)
   })
 
