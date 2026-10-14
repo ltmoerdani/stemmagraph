@@ -19,7 +19,7 @@ import {
 } from './kinship-aliases';
 import { expandAliasQuery } from './search-filter';
 
-const GUARD_KEYS = 127;
+const GUARD_KEYS = 128;
 
 describe('kinship aliases: ananda (gelombang 19)', () => {
     it('kasus 1: resolveAlias ananda positif kind child tanpa depth tanpa region, pola anak', () => {

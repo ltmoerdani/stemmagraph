@@ -93,7 +93,7 @@ describe('kinship-aliases uda (v253xl, sibling depth 1, entri global dual-source
     expect(sib.filter((k) => k === 'uda')).toHaveLength(1)
   })
 
-  it('12. guard global: acik masuk paralel, total key 126 jadi 127', () => {
-    expect(aliasKinds().length).toBe(127)
+  it('12. guard global: acik masuk paralel, total key kini 128 pasca gelombang 21 wak', () => {
+    expect(aliasKinds().length).toBe(128)
   })
 })
