@@ -66,9 +66,9 @@ describe('kinship-polisemi-guard v254', () => {
     expect(polisemiGuard('  Cicit  ')).toBe('cicit')
   })
 
-  it('8. guard total map PERSIS 135 pasca gel31 (bump dari 134, lema saudara susuan)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(135)
-    expect(aliasKinds().length).toBe(135)
+  it('8. guard total map PERSIS 136 pasca gel32 (bump dari 135, lema sulung)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(136)
+    expect(aliasKinds().length).toBe(136)
   })
 
   it('9. guard ad-hoc v253xlii tetap kunci: resolveAlias frasa non-relasi nihil key map', () => {
