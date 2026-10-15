@@ -127,9 +127,9 @@ describe('kinship-aliases bang bung (v253xxiv gelombang enam)', () => {
   })
 
   it('9. guard jumlah key PERSIS 112 pasca v253xxv gelombang tujuh (111 jadi 112: bulik)', () => {
-    expect(Object.keys(KINSHIP_ALIASES).length).toBe(135)
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(135)
-    expect(aliasKinds().length).toBe(135)
+    expect(Object.keys(KINSHIP_ALIASES).length).toBe(136)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(136)
+    expect(aliasKinds().length).toBe(136)
     expect(aliasKinds()).toContain('bang')
     expect(aliasKinds()).toContain('bung')
   })

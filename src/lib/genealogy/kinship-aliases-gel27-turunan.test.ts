@@ -4,7 +4,7 @@ import { KINSHIP_ALIASES, resolveAlias } from './kinship-aliases'
 // Gel27 rev 2 (15 Okt 2026): cicit buyut canggah SUDAH key live sebelum gel27;
 // tugas gel27 direvscopen PM dari tambah key menjadi pengayaan note dual-source
 // plus guard negatif homograf, key map dan guard total TIDAK berubah saat gel27;
-// total kini 135 sejak gel31 (lema saudara susuan), bump literal tercatat di commit gel31.
+// total kini 136 sejak gel32 (lema sulung), 135 sejak gel31, bump literal tercatat di commit gel31 dan gel32.
 // Evidence first-hand PM akses 15 Okt 2026: mirror kbbi.web.id cicit (ci·cit1
 // anak dari cucu, homograf cicit2 onomatope), buyut (bu·yut n 2 anak dari cucu),
 // canggah (cang·gah1 galah dahan bercabang, kekerabatan hanya di KBBI VI cang.gah2),
@@ -38,8 +38,8 @@ describe('kinship-aliases gel27 rev 2 pengayaan cicit buyut canggah', () => {
     expect(r?.note).toContain('cucu dari cucu')
   })
 
-  it('4. guard total map kini 135 sah pasca gel31 (total naik sah lewat abang gel28, anak angkat gel29, anak susuan gel30, saudara susuan gel31)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(135)
+  it('4. guard total map kini 136 sah pasca gel32 (naik sah lewat gel28 gel29 gel30 gel31 dan gel32 lema sulung)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(136)
   })
 
   it('5. guard negatif homograf cicit2 onomatope nihil key terpisah', () => {
