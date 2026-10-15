@@ -99,6 +99,6 @@ describe('alias kakak feminin KBBI VI (v184-ii)', () => {
     const before = 15
     const total = Object.values(KINSHIP_ALIASES).filter((e) => e.kind === 'sibling').length
     expect(before).toBe(15)
-    expect(total).toBe(44)
+    expect(total).toBe(45)
   })
 })

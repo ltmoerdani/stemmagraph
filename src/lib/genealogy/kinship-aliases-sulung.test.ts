@@ -49,11 +49,14 @@ describe('kinship-aliases sulung (gel32)', () => {
     }
   })
 
-  it('6. negasi dan non-difusi: anak sulung nihil key terpisah, bungsu tetap nihil key', () => {
+  it('6. negasi anak sulung nihil key terpisah; REVISI gel41: bungsu kini simetri sulung, dua key terpisah', () => {
     expect(KINSHIP_ALIASES['anak sulung']).toBeUndefined()
     expect(resolveAlias('anak sulung')).toBeNull()
-    expect(KINSHIP_ALIASES['bungsu']).toBeUndefined()
-    expect(resolveAlias('bungsu')).toBeNull()
+    const b = KINSHIP_ALIASES['bungsu']
+    expect(b).toBeDefined()
+    expect(b.kind).toBe('sibling')
+    expect(KINSHIP_ALIASES['sulung']).toBeDefined()
+    expect(KINSHIP_ALIASES['sulung']).not.toBe(b)
   })
 
   it('7. guard polisemi tetap memblock frasa blacklist', () => {
@@ -63,11 +66,11 @@ describe('kinship-aliases sulung (gel32)', () => {
   })
 
   it('8. guard total key naik 136 jadi 138 (gel35, lema orang tua asuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(143)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
   })
 
   it('9. aliasKinds (daftar key terurut) tetap memuat sulung', () => {
     expect(aliasKinds()).toContain('sulung')
-    expect(aliasKinds().length).toBe(143)
+    expect(aliasKinds().length).toBe(144)
   })
 })

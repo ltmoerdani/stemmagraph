@@ -70,12 +70,12 @@ describe('kinship-aliases ading (v253xli)', () => {
     expect(resolveAlias('adieng')).toBeNull()
   })
 
-  it('6. non-difusi: adik tetap BUKAN key sementara ading key, pola bungsu', () => {
+  it('6. non-difusi: adik tetap BUKAN key sementara ading key (REVISI gel41: bungsu kini key sibling sendiri)', () => {
     expect(KINSHIP_ALIASES['adik']).toBeUndefined()
     expect(resolveAlias('adik')).toBeNull()
     expect(KINSHIP_ALIASES['ading']).toBeDefined()
     expect(resolveAlias('ading')?.kind).toBe('sibling')
-    expect(resolveAlias('bungsu')).toBeNull()
+    expect(resolveAlias('bungsu')?.kind).toBe('sibling')
   })
 
   it('7. substring misleading di note kalimbubu BUKAN dup key ading', () => {
@@ -114,8 +114,8 @@ describe('kinship-aliases ading (v253xli)', () => {
   })
 
   it('11. guard bump total key: Object.keys dan aliasKinds PERSIS 131 pasca v253xlii putra putri, naik dari 129 v253xli ading', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(143)
-    expect(aliasKinds().length).toBe(143)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
+    expect(aliasKinds().length).toBe(144)
   })
 
   it('12. note merujuk kontrak dan normalisasi huruf besar tetap kena', () => {

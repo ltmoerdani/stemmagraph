@@ -89,8 +89,8 @@ describe('kinship-aliases wak (v253xxxix, parent-sibling depth 1, Jambi Banyuwan
   })
 
   it('9. guard bump total key: Object.keys dan aliasKinds PERSIS 131 pasca v253xlii putra putri, naik dari 129 v253xli ading, sebelumnya 128 gelombang 21', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(143)
-    expect(aliasKinds().length).toBe(143)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
+    expect(aliasKinds().length).toBe(144)
   })
 
   it('10. anti-dup: wak tepat satu kali di map global, nihil di blok regional', () => {

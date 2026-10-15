@@ -19,7 +19,7 @@ import { polisemiGuard } from './kinship-polisemi-guard'
  * Wiktionary revid 1190402 tanpa mirror KBBI. Total map 139 menjadi 140.
  */
 describe('kinship-aliases ayah angkat (gel38)', () => {
-  const GUARD_KEYS = 143
+  const GUARD_KEYS = 144
 
   it('1. positif: entri live kind parent frasa utuh', () => {
     const e = KINSHIP_ALIASES['ayah angkat']

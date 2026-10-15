@@ -90,7 +90,7 @@ describe('kinship-aliases klaster kakak maskulin (v184-i)', () => {
     const siblingDepth1 = Object.entries(KINSHIP_ALIASES).filter(
       ([, entry]) => entry.kind === 'sibling' && entry.depth === 1,
     )
-    expect(siblingDepth1.length).toBe(41) // +1 sulung v255 gel32
+    expect(siblingDepth1.length).toBe(42) // +1 sulung v255 gel32
     const keys = new Set(siblingDepth1.map(([key]) => key))
     for (const key of KAKAK_ENTRIES) {
       expect(keys.has(key)).toBe(true)
