@@ -93,7 +93,7 @@ describe('kinship-aliases bulik (v253xxv gelombang tujuh)', () => {
   })
 
   it('7. guard jumlah key PERSIS 112 pasca v253xxv gelombang tujuh (111 jadi 112: bulik)', { timeout: 20000 }, () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(143)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
   })
 
   it('8. posisi alfabetis sisip: tetangga urut sort bud bude bul (bulik tetap setelah budhe dan bude pasca bude live)', () => {
@@ -102,7 +102,7 @@ describe('kinship-aliases bulik (v253xxv gelombang tujuh)', () => {
     const iBude = keys.indexOf('bude')
     const iBulik = keys.indexOf('bulik')
     expect(iBudhe).toBeGreaterThanOrEqual(0)
-    expect(iBude).toBe(iBudhe + 1)
+    expect(iBude).toBe(iBudhe + 2) // bungsu sisip antara budhe dan bude pasca gel41
     expect(iBulik).toBe(iBude + 1)
   })
 

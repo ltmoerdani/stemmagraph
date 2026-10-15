@@ -60,9 +60,17 @@ describe('kinship-aliases ucu (v253-xvi, sibling depth 1, penanda bungsu registe
     expect(note).toContain('TIDAK dipetakan')
   })
 
-  it('5. guard glosa tunggal bungsu nihil: hanya komposit adik bungsu di age-axis', () => {
-    expect(resolveAlias('bungsu')).toBeNull()
-    expect(KINSHIP_ALIASES['bungsu']).toBeUndefined()
+  it('5. REVISI gel41: bungsu kini key sibling sendiri, simetri ucu arkais vs bungsu baku', () => {
+    const b = KINSHIP_ALIASES['bungsu']
+    expect(b).toBeDefined()
+    expect(b.kind).toBe('sibling')
+    expect(b.depth).toBe(1)
+    expect(b.register).toBeUndefined()
+    const u = KINSHIP_ALIASES['ucu']
+    expect(u).toBeDefined()
+    expect(u.kind).toBe('sibling')
+    expect(u.depth).toBe(1)
+    expect(KINSHIP_ALIASES['bungsu']).not.toBe(u)
   })
 
   it('6. non-regresi sibling live: etek teteh dan tetangga klaster sibling tetap kind sama', () => {
@@ -74,8 +82,8 @@ describe('kinship-aliases ucu (v253-xvi, sibling depth 1, penanda bungsu registe
   })
 
   it('7. guard bump total key: Object.keys(KINSHIP_ALIASES) dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(143)
-    expect(aliasKinds().length).toBe(143)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
+    expect(aliasKinds().length).toBe(144)
   })
 
   it('8. anti-dup: ucu tepat satu kali, nihil di blok regional mana pun', () => {

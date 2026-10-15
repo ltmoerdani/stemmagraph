@@ -18,7 +18,7 @@ import { KINSHIP_ALIASES, KINSHIP_ALIASES_REGIONAL, aliasKinds, resolveAlias } f
  * diberu turangku tetap partner Karo. Total map 142 menjadi 143 (kontrak gel40 prediksi 144 dikoreksi aritmetika transparan: gel39 ternyata 140 jadi 142, pasangan menambah SATU key).
  */
 describe('kinship-aliases pasangan (gel40)', () => {
-  const GUARD_KEYS = 143
+  const GUARD_KEYS = 144
 
   it('1. positif: pasangan live kind partner depth 1', () => {
     const e = KINSHIP_ALIASES['pasangan']

@@ -17,7 +17,7 @@ import { KINSHIP_ALIASES, KINSHIP_ALIASES_REGIONAL, aliasKinds, resolveAlias } f
  * turangku tetap partner Karo key sendiri. Total map 140 menjadi 141.
  */
 describe('kinship-aliases suami istri (gel39)', () => {
-  const GUARD_KEYS = 143
+  const GUARD_KEYS = 144
 
   it('1. positif: suami live kind partner depth 1', () => {
     const e = KINSHIP_ALIASES['suami']
