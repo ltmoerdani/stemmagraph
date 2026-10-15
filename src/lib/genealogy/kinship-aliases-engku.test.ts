@@ -96,8 +96,8 @@ describe('kinship-aliases engku (v253xxxiii gelombang empat belas)', () => {
   })
 
   it('9. guard jumlah key PERSIS 120 pasca gelombang empat belas', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(138)
-    expect(aliasKinds().length).toBe(138)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(139)
+    expect(aliasKinds().length).toBe(139)
   })
 
   it('10. regresi guard: kasus lama bank-lemma engku kini positif, entri ada di source dan klaster PS Melayu mk 1 entri', () => {

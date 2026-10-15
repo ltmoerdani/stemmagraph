@@ -63,8 +63,8 @@ describe('kinship-aliases ipar (v253-xxii)', () => {
   })
 
   it('8. guard jumlah key PERSIS 107 pasca V253-XXII (106 jadi 107: ipar)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(138)
-    expect(aliasKinds().length).toBe(138)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(139)
+    expect(aliasKinds().length).toBe(139)
   })
 
   it('9. non-regresi gugus affine: besan menantu mertua tetap live kind property', () => {
