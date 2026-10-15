@@ -50,14 +50,14 @@ describe('kinship-aliases anak angkat (gel29)', () => {
     expect(KINSHIP_ALIASES['anak pungut']).toBeUndefined()
   })
 
-  it('7. negasi: anak didik, anak asuh, orang tua nihil sebagai key', () => {
+  it('7. negasi: anak didik dan orang tua nihil sebagai key, anak asuh kini live pasca gel36', () => {
     expect(KINSHIP_ALIASES['anak didik']).toBeUndefined()
-    expect(KINSHIP_ALIASES['anak asuh']).toBeUndefined()
+    expect(KINSHIP_ALIASES['anak asuh']).toBeDefined()
     expect(KINSHIP_ALIASES['orang tua']).toBeUndefined()
   })
 
-  it('8. guard total key kini 137 pasca gel35 (136 sejak gel32, lema orang tua asuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(137)
+  it('8. guard total key kini 138 pasca gel35 (136 sejak gel32, lema orang tua asuh)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(138)
   })
 
   it('9. aliasKinds (daftar key terurut) tetap memuat anak angkat', () => {
