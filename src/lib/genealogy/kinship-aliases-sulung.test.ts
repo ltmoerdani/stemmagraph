@@ -63,11 +63,11 @@ describe('kinship-aliases sulung (gel32)', () => {
   })
 
   it('8. guard total key naik 136 jadi 138 (gel35, lema orang tua asuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(142)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(143)
   })
 
   it('9. aliasKinds (daftar key terurut) tetap memuat sulung', () => {
     expect(aliasKinds()).toContain('sulung')
-    expect(aliasKinds().length).toBe(142)
+    expect(aliasKinds().length).toBe(143)
   })
 })

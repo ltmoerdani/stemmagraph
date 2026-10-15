@@ -17,7 +17,7 @@ import { KINSHIP_ALIASES, KINSHIP_ALIASES_REGIONAL, aliasKinds, resolveAlias } f
  * turangku tetap partner Karo key sendiri. Total map 140 menjadi 141.
  */
 describe('kinship-aliases suami istri (gel39)', () => {
-  const GUARD_KEYS = 142
+  const GUARD_KEYS = 143
 
   it('1. positif: suami live kind partner depth 1', () => {
     const e = KINSHIP_ALIASES['suami']
@@ -89,11 +89,11 @@ describe('kinship-aliases suami istri (gel39)', () => {
   it('11. urutan sisip alfabetis: istri antara ipar dan permen, suami sebelum sulung', () => {
     const keys = Object.keys(KINSHIP_ALIASES)
     expect(keys[keys.indexOf('istri') - 1]).toBe('ipar')
-    expect(keys[keys.indexOf('istri') + 1]).toBe('permen')
+    expect(keys[keys.indexOf('istri') + 1]).toBe('pasangan')
     expect(keys[keys.indexOf('suami') + 1]).toBe('sulung')
   })
 
-  it('12. total map PERSIS 142 dan aliasKinds 142 pasca gel39 (GUARD_KEYS bump 140 jadi 142)', () => {
+  it('12. total map PERSIS 144 dan aliasKinds 144 pasca gel40 (GUARD_KEYS bump 142 jadi 144)', () => {
     expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(GUARD_KEYS)
     expect(aliasKinds().length).toBe(GUARD_KEYS)
   })
