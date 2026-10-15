@@ -13,8 +13,8 @@
  *
  * Struktur blacklist: const array, satu entri satu baris, mudah ditambah.
  * Menambah entri TIDAK mengubah total map (guard tidak menambah lema);
- * total map 139 sejak gel37 (lema orang tua angkat; gel36 lema anak asuh,
- * gel35 lema orang tua asuh), blacklist 11 frasa.
+ * total map 140 sejak gel38 (lema ayah angkat; gel37 lema orang tua angkat,
+ * gel36 lema anak asuh, gel35 lema orang tua asuh), blacklist 11 frasa.
  */
 
 /**
