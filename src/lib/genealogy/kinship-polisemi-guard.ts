@@ -13,7 +13,7 @@
  *
  * Struktur blacklist: const array, satu entri satu baris, mudah ditambah.
  * Menambah entri TIDAK mengubah total map (guard tidak menambah lema);
- * total map 132 sejak gel28 (lema abang global), blacklist 9 frasa.
+ * total map 137 sejak gel35 (lema orang tua asuh), blacklist 10 frasa.
  */
 
 /**
@@ -48,6 +48,8 @@ const POLISEMI_BLACKLIST: readonly string[] = [
   // mirror KBBI III abang bagian turunan ber-a-bang v (mempunyai abang;
   // menyebut dengan sebutan abang), Wiktionary ID bagian Turunan berabang.
   'berabang',
+  // mengasuh: turunan verba meN- dari asuh pola berputra berputri berabang, bukan lemma nomina relasi (gel35).
+  'mengasuh',
 ]
 
 /** Normalisasi frasa lokal, semantik sama dengan normalize kinship-aliases: trim, lowercase, buang titik tengah, rapat spasi. */
