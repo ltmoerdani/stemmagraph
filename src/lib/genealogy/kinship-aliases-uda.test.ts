@@ -96,6 +96,6 @@ describe('kinship-aliases uda (v253xl, sibling depth 1, entri global dual-source
   })
 
   it('12. guard global: acik masuk paralel, total key kini 131 pasca v253xlii putra putri, naik dari 129 v253xli ading, sebelumnya 128 gelombang 21 wak', () => {
-    expect(aliasKinds().length).toBe(139)
+    expect(aliasKinds().length).toBe(140)
   })
 })
