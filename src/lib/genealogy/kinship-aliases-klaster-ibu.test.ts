@@ -128,11 +128,11 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
     expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('13. daftar kind parent global naik jadi 8 pasca gel35 (orang tua asuh), urutan asli map', () => {
+  it('13. daftar kind parent global naik jadi 9 pasca gel37 (orang tua angkat), urutan asli map', () => {
     const parents = Object.keys(KINSHIP_ALIASES).filter(
       (k) => KINSHIP_ALIASES[k]?.kind === 'parent',
     )
-    expect(parents).toEqual(['amak', 'nyak', 'mbok', 'nyokap', 'bokap', 'bapa', 'mandeh', 'orang tua asuh'])
+    expect(parents).toEqual(['amak', 'nyak', 'mbok', 'nyokap', 'bokap', 'bapa', 'mandeh', 'orang tua angkat', 'orang tua asuh'])
   })
 
   it('14. nyak dan mbok nihil di semua map regional, parent-sibling global naik jadi 18 pasca v253-xxi (uwa)', () => {
