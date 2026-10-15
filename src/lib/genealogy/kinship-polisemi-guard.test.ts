@@ -8,11 +8,12 @@ import { KINSHIP_ALIASES, aliasKinds, resolveAlias } from './kinship-aliases'
  * Catatan jujur gel28: header lama menulis total map 131 TIDAK berubah;
  * sejak lema GLOBAL abang masuk map (kontrak
  * drafts/kontrak-stg-gel28-abang-2026-10-15.md rev 2), total map BUMP 132
- * dan blacklist 8 jadi 9 (tambah berabang). Guard tetap tidak menambah lema;
+ * dan blacklist 8 jadi 9 (tambah berabang). Lanjutan gel35: total map 137 dan
+ * blacklist 9 jadi 10 (tambah mengasuh, turunan verba meN- pola berputra). Guard tetap tidak menambah lema;
  * bump datang dari lema map, bukan dari guard.
  */
 describe('kinship-polisemi-guard v254', () => {
-  it('1. semua 9 frasa blacklist resolve null via polisemiGuard', () => {
+  it('1. semua 10 frasa blacklist resolve null via polisemiGuard', () => {
     for (const p of [
       'putra mahkota',
       'putri malu',
@@ -23,13 +24,14 @@ describe('kinship-polisemi-guard v254', () => {
       'canggah1',
       'bebuyutan',
       'berabang',
+      'mengasuh',
     ]) {
       expect(polisemiGuard(p)).toBeNull()
     }
   })
 
-  it('2. semua 9 frasa blacklist resolve null via resolveAlias', () => {
-    for (const p of ['putra mahkota', 'putri malu', 'putri boyongan', 'berputra', 'berputri', 'cicit2', 'canggah1', 'bebuyutan', 'berabang']) {
+  it('2. semua 10 frasa blacklist resolve null via resolveAlias', () => {
+    for (const p of ['putra mahkota', 'putri malu', 'putri boyongan', 'berputra', 'berputri', 'cicit2', 'canggah1', 'bebuyutan', 'berabang', 'mengasuh']) {
       expect(resolveAlias(p)).toBeNull()
     }
   })
@@ -66,9 +68,9 @@ describe('kinship-polisemi-guard v254', () => {
     expect(polisemiGuard('  Cicit  ')).toBe('cicit')
   })
 
-  it('8. guard total map PERSIS 136 pasca gel32 (bump dari 135, lema sulung)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(136)
-    expect(aliasKinds().length).toBe(136)
+  it('8. guard total map PERSIS 137 pasca gel35 (bump dari 136, lema orang tua asuh)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(137)
+    expect(aliasKinds().length).toBe(137)
   })
 
   it('9. guard ad-hoc v253xlii tetap kunci: resolveAlias frasa non-relasi nihil key map', () => {
