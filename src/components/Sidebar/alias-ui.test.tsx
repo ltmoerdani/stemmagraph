@@ -220,7 +220,7 @@ describe('MemberDetailSidebarKinship alias ui (v179-i)', () => {
     expect(ul.textContent).not.toContain('jauh');
   });
 
-  it('kasus 9: frasa label baku in-law merender label plus span catatan in-law', () => {
+  it('kasus 9: mertua kini key map, alias path menang dengan span catatan dual-source', () => {
     mocks.graph = buildKinshipGraph(
       ['anak', 'pasangan'],
       [makePartnerRelation('anak', 'pasangan')],
@@ -229,16 +229,20 @@ describe('MemberDetailSidebarKinship alias ui (v179-i)', () => {
     mocks.phraseStub = () => 'mertua';
     renderSidebar('anak');
     const ul = screen.getByLabelText('member-kinship');
-    expect(ul.textContent).toContain('mertua');
-    const spans = screen.getAllByTestId('member-kinship-inlaw-note');
+    expect(ul.textContent).toContain('harta mas kawin');
+    const spans = screen.getAllByTestId('member-kinship-alias-note');
     expect(spans.length).toBe(1);
-    expect(spans[0].textContent).toBe('istilah fase pernikahan');
+    expect(spans[0].textContent).toContain(
+      'KBBI VI: orang tua istri atau suami',
+    );
+    expect(spans[0].textContent).toContain('DUA SUMBER');
+    expect(spans[0].textContent).toContain('oldid 1463005');
     expect(
-      screen.queryAllByTestId('member-kinship-alias-note'),
+      screen.queryAllByTestId('member-kinship-inlaw-note'),
     ).toHaveLength(0);
   });
 
-  it('kasus 10: besan merender span catatan dua set orang tua, alias nihil untuk frasa itu', () => {
+  it('kasus 10: besan kini key map, span alias note dual-source, jalur inlaw nihil', () => {
     mocks.graph = buildKinshipGraph(
       ['anak', 'pasangan'],
       [makePartnerRelation('anak', 'pasangan')],
@@ -246,9 +250,12 @@ describe('MemberDetailSidebarKinship alias ui (v179-i)', () => {
     );
     mocks.phraseStub = () => 'Besan';
     renderSidebar('anak');
-    const spans = screen.getAllByTestId('member-kinship-inlaw-note');
-    expect(spans[0].textContent).toContain('dua set orang tua');
-    expect(spans[0].textContent).toContain('anak mereka kawin');
+    const spans = screen.getAllByTestId('member-kinship-alias-note');
+    expect(spans[0].textContent).toContain('dua orang tua karena anak kawin');
+    expect(spans[0].textContent).toContain('oldid 1312530');
+    expect(
+      screen.queryAllByTestId('member-kinship-inlaw-note'),
+    ).toHaveLength(0);
   });
 
   it('kasus 11: locale en label in-law dari inlawLabel en, prioritas alias tetap utama', () => {
@@ -261,7 +268,9 @@ describe('MemberDetailSidebarKinship alias ui (v179-i)', () => {
     mocks.phraseStub = () => 'menantu';
     renderSidebar('anak');
     let ul = screen.getByLabelText('member-kinship');
-    expect(ul.textContent).toContain("child's spouse");
+    expect(ul.textContent).toContain('bridewealth property');
+    expect(ul.textContent).toContain('istri atau suami dari anak kita');
+    expect(ul.textContent).toContain('oldid 1350531');
     cleanup();
     // Prioritas alias: frasa yang dikenali alias tak pernah masuk jalur inlaw.
     mocks.phraseStub = null;
