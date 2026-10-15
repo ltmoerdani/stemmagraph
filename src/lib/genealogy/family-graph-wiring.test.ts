@@ -22,7 +22,7 @@ async function ambilRemarriage2(): Promise<string> {
   let pesanGagal = ''
   for (const url of [SUMBER_REMARRIAGE2.url, SUMBER_REMARRIAGE2.mirror]) {
     try {
-      const res = await fetch(url)
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) })
       if (res.status !== 200) {
         pesanGagal += `${url}: HTTP ${res.status}; `
         continue
@@ -166,7 +166,7 @@ describe('family-graph wiring (v172-i phase 2)', () => {
     expect(hasil.personIds).toEqual(['IA', 'IB', 'IC', 'ID'])
   })
 
-  it('kasus 7: fixture resmi remarriage2.ged, I1 dua pasangan sama di F1 dan F3', async () => {
+  it('kasus 7: fixture resmi remarriage2.ged, I1 dua pasangan sama di F1 dan F3', async () => { // timeout eksplisit 30 detik: fetch jaringan di bawah beban paralel bisa lewat default 5 detik
     let teks: string
     try {
       teks = stripBom(await ambilRemarriage2())
@@ -195,7 +195,7 @@ describe('family-graph wiring (v172-i phase 2)', () => {
     // I3 hanya di F2, tidak mencemari F1/F3.
     expect(f1?.spouses).not.toContain('I3')
     expect(f3?.spouses).not.toContain('I3')
-  })
+  }, 30000)
 
   it('kasus 8: multi anak campuran FAMS dan FAMC, union tidak duplikat', () => {
     const hasil = buildFamilyGraph([
