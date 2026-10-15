@@ -17,7 +17,7 @@ import { polisemiGuard } from './kinship-polisemi-guard'
  * non-difusi kind. Total map 138 menjadi 139, blacklist 10 menjadi 11.
  */
 describe('kinship-aliases orang tua angkat (gel37)', () => {
-  const GUARD_KEYS = 142
+  const GUARD_KEYS = 143
 
   it('1. positif: entri live kind parent frasa utuh', () => {
     const e = KINSHIP_ALIASES['orang tua angkat']
