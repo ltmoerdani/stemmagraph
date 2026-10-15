@@ -76,8 +76,8 @@ describe('kinship-aliases abang GLOBAL baku (gel28 rev 2, kind sibling, kakak la
   })
 
   it('9. total map PERSIS 138 dan aliasKinds 138 pasca gel35 (bump dari 136, lema orang tua asuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(140)
-    expect(aliasKinds().length).toBe(140)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(142)
+    expect(aliasKinds().length).toBe(142)
   })
 
   it('10. blacklist PERSIS 9 via perilaku: 8 frasa lama plus berabang null, abang lolos', () => {

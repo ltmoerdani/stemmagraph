@@ -64,8 +64,8 @@ describe('kinship-aliases kak (v253-xxiii)', () => {
   })
 
   it('8. guard jumlah key PERSIS 108 pasca V253-XXIII (107 jadi 108: kak)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(140)
-    expect(aliasKinds().length).toBe(140)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(142)
+    expect(aliasKinds().length).toBe(142)
   })
 
   it('9. non-regresi sibling depth 1: kak konsisten gugus kakang kaka kakanda', () => {
