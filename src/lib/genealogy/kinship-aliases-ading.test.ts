@@ -114,8 +114,8 @@ describe('kinship-aliases ading (v253xli)', () => {
   })
 
   it('11. guard bump total key: Object.keys dan aliasKinds PERSIS 131 pasca v253xlii putra putri, naik dari 129 v253xli ading', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(134)
-    expect(aliasKinds().length).toBe(134)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(135)
+    expect(aliasKinds().length).toBe(135)
   })
 
   it('12. note merujuk kontrak dan normalisasi huruf besar tetap kena', () => {

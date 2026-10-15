@@ -47,10 +47,11 @@ describe('kinship-aliases anak susuan (gel30)', () => {
     expect(resolveAlias('putri')?.kind).toBe('child')
   })
 
-  it('6. negasi: susuan, anak sambung, saudara susuan nihil sebagai key', () => {
+  it('6. negasi: susuan, anak sambung nihil sebagai key; saudara susuan kini key sibling sah gel31 (revisi transparan QA gel31, non-difusi kind child dipertahankan)', () => {
     expect(KINSHIP_ALIASES['susuan']).toBeUndefined()
     expect(KINSHIP_ALIASES['anak sambung']).toBeUndefined()
-    expect(KINSHIP_ALIASES['saudara susuan']).toBeUndefined()
+    expect(KINSHIP_ALIASES['saudara susuan'].kind).toBe('sibling')
+    expect(KINSHIP_ALIASES['anak susuan'].kind).toBe('child')
   })
 
   it('7. guard polisemi tetap memblock frasa blacklist', () => {
@@ -62,7 +63,7 @@ describe('kinship-aliases anak susuan (gel30)', () => {
   })
 
   it('8. guard total key naik 133 jadi 134', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(134)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(135)
   })
 
   it('9. aliasKinds (daftar key terurut) tetap memuat anak susuan', () => {
