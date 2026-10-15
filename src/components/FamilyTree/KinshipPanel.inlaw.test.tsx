@@ -8,6 +8,11 @@
  * KinshipPanel.phrase.test.tsx. Stub frasa dan stub alias memakai mock
  * parsial importOriginal pola alias-ui.test.tsx karena graph murni tidak
  * pernah menghasilkan frasa in-law maupun alias regional.
+ *
+ * v257 test-only sinkronisasi: key besan mertua ipar menantu kini ada di
+ * KINSHIP_ALIASES (v253-vi dst) sehingga jalur alias menang atas jalur
+ * in-law pada frasa-frasa itu; kasus terkait memakai ekspektasi
+ * alias-note dual-source.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
@@ -88,36 +93,42 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('KinshipPanel in-law dan alias note (v180-ii)', () => {
-  it('frasa besan merender label besan plus span catatan dua set orang tua', () => {
+  it('frasa besan kini key map, alias path menang dengan span catatan dual-source', () => {
     mocks.phraseStub = () => 'besan';
     render(<KinshipPanel graph={partnerGraph()} fromId="anak" />);
     const ul = screen.getByLabelText('kinship');
-    expect(ul.textContent).toContain('besan');
-    const spans = screen.getAllByTestId('kinship-inlaw-note');
+    expect(ul.textContent).toContain('harta mas kawin');
+    const spans = screen.getAllByTestId('kinship-alias-note');
     expect(spans).toHaveLength(1);
-    expect(spans[0].textContent).toContain('dua set orang tua');
-    expect(spans[0].textContent).toContain('anak mereka kawin');
-    expect(screen.queryAllByTestId('kinship-alias-note')).toHaveLength(0);
+    expect(spans[0].textContent).toContain('dua orang tua karena anak kawin');
+    expect(spans[0].textContent).toContain('oldid 1312530');
+    expect(screen.queryAllByTestId('kinship-inlaw-note')).toHaveLength(0);
   });
 
-  it('frasa mertua merender label mertua plus span catatan in-law', () => {
+  it('frasa mertua kini key map, alias path menang dengan span catatan dual-source', () => {
     mocks.phraseStub = () => 'mertua';
     render(<KinshipPanel graph={partnerGraph()} fromId="anak" />);
     const ul = screen.getByLabelText('kinship');
-    expect(ul.textContent).toContain('mertua');
-    const spans = screen.getAllByTestId('kinship-inlaw-note');
+    expect(ul.textContent).toContain('harta mas kawin');
+    const spans = screen.getAllByTestId('kinship-alias-note');
     expect(spans).toHaveLength(1);
-    expect(spans[0].textContent).toBe('istilah fase pernikahan');
+    expect(spans[0].textContent).toContain(
+      'KBBI VI: orang tua istri atau suami',
+    );
+    expect(spans[0].textContent).toContain('oldid 1463005');
+    expect(screen.queryAllByTestId('kinship-inlaw-note')).toHaveLength(0);
   });
 
-  it('frasa ipar merender label ipar plus span catatan in-law', () => {
+  it('frasa ipar kini key map, alias path menang dengan span catatan dual-source', () => {
     mocks.phraseStub = () => 'ipar';
     render(<KinshipPanel graph={partnerGraph()} fromId="anak" />);
     const ul = screen.getByLabelText('kinship');
-    expect(ul.textContent).toContain('ipar');
-    const spans = screen.getAllByTestId('kinship-inlaw-note');
+    expect(ul.textContent).toContain('harta mas kawin');
+    const spans = screen.getAllByTestId('kinship-alias-note');
     expect(spans).toHaveLength(1);
-    expect(spans[0].textContent).toBe('istilah fase pernikahan');
+    expect(spans[0].textContent).toContain('i.par dua makna');
+    expect(spans[0].textContent).toContain('oldid 1463006');
+    expect(screen.queryAllByTestId('kinship-inlaw-note')).toHaveLength(0);
   });
 
   it('frasa alias regional aki merender span alias note tanpa span in-law', () => {
@@ -138,15 +149,19 @@ describe('KinshipPanel in-law dan alias note (v180-ii)', () => {
     expect(screen.queryAllByTestId('kinship-inlaw-note')).toHaveLength(0);
   });
 
-  it('locale en: mertua merender label en spouse parent plus note marriage term', () => {
+  it('locale en: mertua kini key map, label bridewealth property plus note dual-source', () => {
     mocks.language = 'en';
     mocks.phraseStub = () => 'mertua';
     render(<KinshipPanel graph={partnerGraph()} fromId="anak" />);
     const ul = screen.getByLabelText('kinship');
-    expect(ul.textContent).toContain("spouse's parent");
-    const spans = screen.getAllByTestId('kinship-inlaw-note');
+    expect(ul.textContent).toContain('bridewealth property');
+    const spans = screen.getAllByTestId('kinship-alias-note');
     expect(spans).toHaveLength(1);
-    expect(spans[0].textContent).toBe('marriage term');
+    expect(spans[0].textContent).toContain(
+      'KBBI VI: orang tua istri atau suami',
+    );
+    expect(spans[0].textContent).toContain('oldid 1463005');
+    expect(screen.queryAllByTestId('kinship-inlaw-note')).toHaveLength(0);
   });
 
   it('frasa tak dikenali tetap dirender polos via span kinship-phrase', () => {
