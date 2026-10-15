@@ -9,8 +9,8 @@ import { polisemiGuard } from './kinship-polisemi-guard'
  * membiayai sekolah dan sebagainya anak yang bukan anaknya sendiri atas dasar
  * kemanusiaan) plus Wiktionary ID pageid 118164 revid 1266105 blok bahasa
  * Indonesia nomina identik KBBI. Entri live di kinship-aliases.ts; test ini
- * mengunci kontrak gel35. Guard: asuh verba, mengasuh, dan anak asuh TIDAK
- * dipetakan; orang tua tanpa modifier tetap nihil di map.
+ * mengunci kontrak gel35. Guard: asuh verba dan mengasuh TIDAK dipetakan;
+ * anak asuh kini live pasca gel36 (koreksi transparan polaritas), kind child.
  */
 describe('kinship-aliases orang tua asuh (gel35)', () => {
   it('1. positif: entri live kind parent', () => {
@@ -36,9 +36,11 @@ describe('kinship-aliases orang tua asuh (gel35)', () => {
     expect(resolveAlias('mengasuh')).toBeNull()
   })
 
-  it('5. negasi: anak asuh kandidat terpisah, nihil di map, resolve null', () => {
-    expect(KINSHIP_ALIASES['anak asuh']).toBeUndefined()
-    expect(resolveAlias('anak asuh')).toBeNull()
+  it('5. afirmasi: anak asuh kini live pasca gel36 (koreksi transparan polaritas gel35), kind child', () => {
+    const e = KINSHIP_ALIASES['anak asuh']
+    expect(e).toBeDefined()
+    expect(e.kind).toBe('child')
+    expect(resolveAlias('anak asuh')?.kind).toBe('child')
   })
 
   it('6. negasi: orang tua tanpa modifier tetap nihil di map, resolve null', () => {
@@ -52,9 +54,9 @@ describe('kinship-aliases orang tua asuh (gel35)', () => {
     expect(r?.kind).toBe('parent')
   })
 
-  it('8. total map PERSIS 137 dan aliasKinds 137 pasca gel35 (bump dari 136)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(137)
-    expect(aliasKinds().length).toBe(137)
+  it('8. total map PERSIS 138 dan aliasKinds 138 pasca gel35 (bump dari 136)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(138)
+    expect(aliasKinds().length).toBe(138)
   })
 
   it('9. note dual-source lengkap: KBBI VI resmi, pageid, revid, tanggal akses, guard', () => {
