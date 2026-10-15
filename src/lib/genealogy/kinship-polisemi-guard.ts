@@ -13,7 +13,8 @@
  *
  * Struktur blacklist: const array, satu entri satu baris, mudah ditambah.
  * Menambah entri TIDAK mengubah total map (guard tidak menambah lema);
- * total map 138 sejak gel36 (lema anak asuh; gel35 lema orang tua asuh), blacklist 10 frasa.
+ * total map 139 sejak gel37 (lema orang tua angkat; gel36 lema anak asuh,
+ * gel35 lema orang tua asuh), blacklist 11 frasa.
  */
 
 /**
@@ -50,6 +51,9 @@ const POLISEMI_BLACKLIST: readonly string[] = [
   'berabang',
   // mengasuh: turunan verba meN- dari asuh pola berputra berputri berabang, bukan lemma nomina relasi (gel35).
   'mengasuh',
+  // mengangkat: turunan verba meN- dari angkat pola berputra mengasuh, bukan lemma nomina relasi (gel37);
+  // frasa sah di map hanyalah orang tua angkat (nomina, KBBI VI), verba mengangkat bukan relasi.
+  'mengangkat',
 ]
 
 /** Normalisasi frasa lokal, semantik sama dengan normalize kinship-aliases: trim, lowercase, buang titik tengah, rapat spasi. */

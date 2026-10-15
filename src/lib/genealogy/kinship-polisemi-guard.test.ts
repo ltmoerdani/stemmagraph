@@ -9,11 +9,13 @@ import { KINSHIP_ALIASES, aliasKinds, resolveAlias } from './kinship-aliases'
  * sejak lema GLOBAL abang masuk map (kontrak
  * drafts/kontrak-stg-gel28-abang-2026-10-15.md rev 2), total map BUMP 132
  * dan blacklist 8 jadi 9 (tambah berabang). Lanjutan gel35: total map 138 dan
- * blacklist 9 jadi 10 (tambah mengasuh, turunan verba meN- pola berputra). Guard tetap tidak menambah lema;
+ * blacklist 9 jadi 10 (tambah mengasuh, turunan verba meN- pola berputra). Gel37: total map 139 dan
+ * blacklist 10 jadi 11 (tambah mengangkat, turunan verba meN- dari angkat).
+ * Guard tetap tidak menambah lema;
  * bump datang dari lema map, bukan dari guard.
  */
 describe('kinship-polisemi-guard v254', () => {
-  it('1. semua 10 frasa blacklist resolve null via polisemiGuard', () => {
+  it('1. semua 11 frasa blacklist resolve null via polisemiGuard', () => {
     for (const p of [
       'putra mahkota',
       'putri malu',
@@ -25,13 +27,14 @@ describe('kinship-polisemi-guard v254', () => {
       'bebuyutan',
       'berabang',
       'mengasuh',
+      'mengangkat',
     ]) {
       expect(polisemiGuard(p)).toBeNull()
     }
   })
 
-  it('2. semua 10 frasa blacklist resolve null via resolveAlias', () => {
-    for (const p of ['putra mahkota', 'putri malu', 'putri boyongan', 'berputra', 'berputri', 'cicit2', 'canggah1', 'bebuyutan', 'berabang', 'mengasuh']) {
+  it('2. semua 11 frasa blacklist resolve null via resolveAlias', () => {
+    for (const p of ['putra mahkota', 'putri malu', 'putri boyongan', 'berputra', 'berputri', 'cicit2', 'canggah1', 'bebuyutan', 'berabang', 'mengasuh', 'mengangkat']) {
       expect(resolveAlias(p)).toBeNull()
     }
   })
@@ -69,8 +72,8 @@ describe('kinship-polisemi-guard v254', () => {
   })
 
   it('8. guard total map PERSIS 138 pasca gel35 (bump dari 136, lema orang tua asuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(138)
-    expect(aliasKinds().length).toBe(138)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(139)
+    expect(aliasKinds().length).toBe(139)
   })
 
   it('9. guard ad-hoc v253xlii tetap kunci: resolveAlias frasa non-relasi nihil key map', () => {

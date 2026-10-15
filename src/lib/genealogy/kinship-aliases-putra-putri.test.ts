@@ -133,8 +133,8 @@ describe('kinship-aliases putra putri (v253xlii)', () => {
   })
 
   it('13. guard bump total key (129 jadi 131 saat gel26, kini 136 pasca gel32) dan non-difusi regional: nihil putra putri di map regional', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(138)
-    expect(aliasKinds().length).toBe(138)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(139)
+    expect(aliasKinds().length).toBe(139)
     for (const region of Object.keys(KINSHIP_ALIASES_REGIONAL)) {
       expect(KINSHIP_ALIASES_REGIONAL[region]['putra']).toBeUndefined()
       expect(KINSHIP_ALIASES_REGIONAL[region]['putri']).toBeUndefined()
