@@ -556,6 +556,11 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'nande = ibu dalam kekerabatan Karo (sembuyak nande = ibu bersaudara kandung), relasi antar anggota kelompok dipetakan kind sibling, Kamus Karo Online + Wikipedia Rakut Sitelu, evidence notes/442',
   },
+  suami: {
+    kind: 'partner',
+    depth: 1,
+    note: 'suami = pria yang menikah dengan wanita secara sah (makna 1 relasi pasangan); makna 2 kiasan sesuatu yang dianggap paling dekat dan paling berguna TIDAK dipetakan sbg key (guard polisemi kiasan); baku nasional TANPA region TANPA register TANPA qualifier; BAKU NASIONAL PERTAMA kind partner (pola diberu turangku kind partner TAPI keduanya regional Karo); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/suami akses 15 Okt 2026 HTTP 200 (pria yang menikah dengan wanita secara sah makna 1 plus makna 2 kiasan) plus Wiktionary ID api.php pageid 38739 revid 1365835 akses 15 Okt 2026 (blok Bahasa Indonesia nomina pasangan dari istri plus kutipan sastra Perahu Tulis, konvergen); GUARD POLISEMI: makna 2 kiasan nihil match, turunan bersuami dan menikahi TIDAK dipetakan; GUARD ANTI-DIFUSI: diberu tetap partner Karo key sendiri, turangku tetap partner Karo key sendiri, istri tetap partner baku nasional key sendiri; sisip urutan asli map sebelum sulung (su-a sebelum su-l); referensi kontrak drafts/kontrak-stg-gel39-suami-istri-2026-10-15.md',
+  },
   sulung: {
     kind: 'sibling',
     depth: 1,
@@ -636,6 +641,11 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
   ipar: {
     kind: 'property',
     note: 'KBBI VI resmi kemendikdasmen i.par dua makna: saudara suami atau istri serta suami atau istri dari saudara; Wiktionary ID oldid 1463006 blok Indonesia nomina dengan kutipan 1950, templat rfv dicatat jujur di note ini dan tidak mengubah pemetaan; kind property konsisten gugus affine baku besan mertua menantu; key sanak DITOLAK dan tidak dipetakan; DUA SUMBER: KBBI VI kbbi.kemendikdasmen.go.id (akses 13 Okt 2026) plus Wiktionary ID oldid 1463006',
+  },
+  istri: {
+    kind: 'partner',
+    depth: 1,
+    note: 'istri = wanita yang menikah dengan pria secara sah (makna 1 relasi pasangan) plus makna 2 wanita yang dinikahi (makna 2 tetap relasi pasangan, satu key yang sama); baku nasional TANPA region TANPA register TANPA qualifier; BAKU NASIONAL PERTAMA kind partner (pola diberu turangku kind partner TAPI keduanya regional Karo); DUA SUMBER: KBBI VI resmi kbbi.kemendikdasmen.go.id/entri/istri akses 15 Okt 2026 HTTP 200 (wanita yang menikah dengan pria secara sah plus wanita yang dinikahi) plus Wiktionary ID api.php pageid 38924 revid 1365849 akses 15 Okt 2026 (blok Bahasa Indonesia nomina pasangan dari suami, konvergen, plus kutipan sastra); GUARD POLISEMI: turunan menikahi dan beristri TIDAK dipetakan sbg key terpisah; GUARD ANTI-DIFUSI: diberu tetap partner Karo key sendiri, turangku tetap partner Karo key sendiri, suami tetap partner baku nasional key sendiri; sisip urutan asli map setelah ipar (i-p sebelum i-s); referensi kontrak drafts/kontrak-stg-gel39-suami-istri-2026-10-15.md',
   },
   permen: {
     kind: 'sibling-child',
