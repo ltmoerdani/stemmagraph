@@ -552,6 +552,12 @@ export const KINSHIP_ALIASES: Record<string, AliasEntry> = {
     region: 'Karo',
     note: 'nande = ibu dalam kekerabatan Karo (sembuyak nande = ibu bersaudara kandung), relasi antar anggota kelompok dipetakan kind sibling, Kamus Karo Online + Wikipedia Rakut Sitelu, evidence notes/442',
   },
+  sulung: {
+    kind: 'sibling',
+    depth: 1,
+    note: 'sulung = (anak) yang tertua, alias sibling dgn penanda senioritas tertua (posisi terawal di antara bersaudara), kebalikan semantik ucu/ading penanda termuda, pola senioritas etek teteh; makna umum yang terdahulu atau yang mula-mula sekali tetap satu makna relasi-bertumpu nihil homograf nihil idiom, tidak diblacklist; GUARD KONTEKS: glosa bungsu tetap nihil key sbg key tunggal sesuai kontrak ucu, sulung kebalikannya, dan frasa komposit anak sulung tidak dibuat key terpisah (tercover resolusi lema tunggal, pola anak angkat vs angkat); ' +
+      'DUA SUMBER: KBBI III mirror kbbi.web.id entri sulung akses 15 Okt 2026 ((anak) yang tertua, contoh anak sulung, satu lema nihil homograf bernomor) plus Wiktionary ID pageid 50045 revid 1369557 via api.php (blok bahasa Indonesia nomina: yang terdahulu atau yang mula-mula sekali, (anak) yang tertua, kutipan Perahu Tulis hlm 141 Balai Bahasa Sumatera Barat, konvergen dua sumber); referensi kontrak gel32 dan Log Supervisi BOARD-stemmagraph 15 Okt 2026',
+  },
   ucu: {
     kind: 'sibling',
     depth: 1,
