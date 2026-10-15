@@ -56,8 +56,8 @@ describe('kinship-aliases saudara susuan (gel31)', () => {
     expect(resolveAlias('bebuyutan')).toBeNull()
   })
 
-  it('8. guard total key naik 134 jadi 135', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(135)
+  it('8. guard total key kini 136 (gel32 lema sulung, naik dari 135 pasca gel31)', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(136)
   })
 
   it('9. aliasKinds (daftar key terurut) tetap memuat saudara susuan', () => {

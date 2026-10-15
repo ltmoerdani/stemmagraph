@@ -132,9 +132,9 @@ describe('kinship-aliases putra putri (v253xlii)', () => {
     expect(all.indexOf('putri')).toBeLessThan(all.indexOf('cucu'))
   })
 
-  it('13. guard bump total key (129 jadi 131 saat gel26, kini 135 pasca gel31) dan non-difusi regional: nihil putra putri di map regional', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(135)
-    expect(aliasKinds().length).toBe(135)
+  it('13. guard bump total key (129 jadi 131 saat gel26, kini 136 pasca gel32) dan non-difusi regional: nihil putra putri di map regional', () => {
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(136)
+    expect(aliasKinds().length).toBe(136)
     for (const region of Object.keys(KINSHIP_ALIASES_REGIONAL)) {
       expect(KINSHIP_ALIASES_REGIONAL[region]['putra']).toBeUndefined()
       expect(KINSHIP_ALIASES_REGIONAL[region]['putri']).toBeUndefined()
