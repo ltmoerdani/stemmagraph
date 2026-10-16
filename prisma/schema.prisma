@@ -121,6 +121,8 @@ model FamilyMember {
   profession      String?
   education       String?
   gender          String               @default("U")
+  // GEDCOM 7 SEX verbatim M/F/X/U atau nilai non-enum, v262
+  sexGed          String?
   photoUrl        String?
   email           String?
   phone           String?

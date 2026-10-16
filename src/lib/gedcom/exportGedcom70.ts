@@ -26,7 +26,8 @@ import { privacyStatusToResn } from '../privacy/resn'
 import { parseEventDate } from './parseEventDate'
 import { formatGedcomDateValue } from './formatGedcomDate'
 import { placePayload } from './placePayload'
-import { datePayloadFromGed, sexFromGender } from '../genealogy/gedcom-bridge'
+import { datePayloadFromGed } from '../genealogy/gedcom-bridge'
+import { resolveSexGed } from '../genealogy/gender'
 import { toGedcomDateValue } from '../genealogy/genealogical-date'
 import type {
   FamilyMemberRecord,
@@ -182,13 +183,15 @@ function singleKey(memberId: string): string {
 }
 
 /**
- * Maps model gender to the GEDCOM 7 SEX enumeration via the pure
- * genealogy bridge (v116 iv-b). normalizeGender accepts both the new
- * M/F/X/U values and the legacy male/female/other strings; anything
- * unrecognized lands on U (the 7.0 enum's unknown value).
+ * Maps a member to the GEDCOM 7 SEX payload (v262): prefer the verbatim
+ * sexGed column when it carries an enum value (M/F/X/U), otherwise fall
+ * back to the legacy gender mapping (sexFromGender) so data stored
+ * before v262 keeps exporting exactly as before. Mirrors the
+ * eventDateValueGed pattern: verbatim source value wins, explicit
+ * fallback for legacy rows.
  */
-function sexPayload(gender: FamilyMemberRecord['gender']): string {
-  return sexFromGender(gender)
+function sexPayload(member: Pick<FamilyMemberRecord, 'sexGed' | 'gender'>): string {
+  return resolveSexGed(member.sexGed, member.gender)
 }
 
 /** Formats a Date as a GEDCOM 7 DateExact payload, e.g. "18 AUG 2026". */
@@ -617,7 +620,7 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
       addText(name, 'SURN', m.marga)
     }
 
-    new GEDCStruct('SEX', indi, undefined, sexPayload(m.gender))
+    new GEDCStruct('SEX', indi, undefined, sexPayload(m))
 
     // RESN PRIVACY menandai living member dengan consent eksplisit
     // 'private' pada arsip full mode (v128-ii-c, notes/297): penerima

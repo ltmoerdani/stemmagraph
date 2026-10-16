@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Gender, DEFAULT_GENDER, normalizeGender, toGedcomSex } from './gender'
+import { Gender, DEFAULT_GENDER, normalizeGender, toGedcomSex, resolveSexGed } from './gender'
 
 describe('Gender default', () => {
   it('DEFAULT_GENDER adalah U (unknown)', () => {
@@ -41,5 +41,41 @@ describe('toGedcomSex: enumset SEX GEDCOM 7', () => {
     for (const value of values) {
       expect(toGedcomSex(value)).toBe(value)
     }
+  })
+})
+
+describe('resolveSexGed: prefer verbatim, fallback gender (v262)', () => {
+  it('sexGed U valid dipakai verbatim walau gender berkata lain', () => {
+    expect(resolveSexGed('U', 'male')).toBe('U')
+  })
+
+  it('sexGed X valid dipakai verbatim', () => {
+    expect(resolveSexGed('X', 'male')).toBe('X')
+  })
+
+  it('sexGed M dan F valid dipakai verbatim', () => {
+    expect(resolveSexGed('M', 'female')).toBe('M')
+    expect(resolveSexGed('F', 'male')).toBe('F')
+  })
+
+  it("sexGed 'zzz' asing gugur ke fallback gender", () => {
+    expect(resolveSexGed('zzz', 'male')).toBe('M')
+    expect(resolveSexGed('zzz', 'other')).toBe('X')
+  })
+
+  it('null dan undefined gugur ke fallback gender', () => {
+    expect(resolveSexGed(null, 'other')).toBe('X')
+    expect(resolveSexGed(undefined, 'female')).toBe('F')
+  })
+
+  it('fallback male menghasilkan M dan fallback nihil menghasilkan U', () => {
+    expect(resolveSexGed(null, 'male')).toBe('M')
+    expect(resolveSexGed(undefined, null)).toBe('U')
+    expect(resolveSexGed('', undefined)).toBe('U')
+  })
+
+  it('case-sensitive: lowercase u bukan enumset, gugur ke fallback', () => {
+    expect(resolveSexGed('u', 'male')).toBe('M')
+    expect(resolveSexGed('m', 'other')).toBe('X')
   })
 })

@@ -50,6 +50,8 @@ export interface PlannedMember {
   name: string | undefined
   /** 'M' -> male, 'F' -> female, anything else -> 'other' (no guessing). */
   gender: PlannedGender
+  /** SEX payload verbatim dari sumber (M/F/X/U atau non-enum), tanpa normalisasi; undefined saat record nihil SEX. */
+  sexGed: string | undefined
   birthDate: ParsedEventDate | undefined
   birthPlace: string | undefined
   deathDate: ParsedEventDate | undefined
@@ -98,6 +100,9 @@ function plannedMember(individual: ImportedIndividual): PlannedMember {
     xref: individual.xref,
     name: individual.name,
     gender: plannedGender(individual.sex),
+    // SEX verbatim (v262): payload apa adanya, tanpa normalisasi tanpa
+    // trim; normalisasi tetap tugas resolveSexGed di sisi ekspor.
+    sexGed: individual.sex,
     birthDate: individual.birthDate,
     birthPlace: individual.birthPlace,
     deathDate: individual.deathDate,

@@ -77,6 +77,8 @@ export interface FamilyMemberRecord {
   profession?: string;
   education?: string;
   gender: 'male' | 'female' | 'other';
+  /** GEDCOM 7 SEX payload verbatim (v262): M/F/X/U atau nilai non-enum dari sumber. */
+  sexGed?: string;
   photoUrl?: string;
   email?: string;
   phone?: string;
@@ -98,6 +100,8 @@ export interface CreateMemberInput {
   nickname?: string;
   marga?: string;
   gender: 'male' | 'female' | 'other';
+  /** GEDCOM 7 SEX payload verbatim (v262), opsional; fallback tetap dari gender. */
+  sexGed?: string;
   birthDate: string;
   birthPlace?: string;
   isAlive?: boolean;

@@ -1781,7 +1781,7 @@ app.post('/api/v1/trees/:treeId/members', requireAuth, async (req: Authenticated
     const guard = await guardTreeAction(req.userId!, req.params.treeId, 'create_member');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
     const m = await prisma.familyMember.create({
-      data: { ...req.body, treeId: req.params.treeId },
+      data: { ...req.body, treeId: req.params.treeId, sexGed: req.body?.sexGed ?? null },
     });
     res.status(201).json(formatMember(m));
   } catch (e) {
@@ -2031,6 +2031,7 @@ const SHARE_MEMBER_SELECT = {
   profession: true,
   education: true,
   gender: true,
+  sexGed: true,
   isAlive: true,
   privacyStatus: true,
   generation: true,
@@ -2280,6 +2281,7 @@ function formatMember(m: FamilyMember) {
     profession: m.profession,
     education: m.education,
     gender: m.gender,
+    sexGed: m.sexGed,
     photoUrl: m.photoUrl,
     email: m.email,
     phone: m.phone,
