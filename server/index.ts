@@ -1933,6 +1933,7 @@ import { FixedWindowRateLimiter } from '../src/lib/share/rate-limit';
 import { buildPublicTreePayload } from '../src/lib/share/public-tree';
 import { verifySharePassword } from '../src/lib/share/password';
 import { buildShareOgImageSvg, escapeXmlText } from '../src/lib/share/og-image';
+import { buildOgImageResponse, resolveOgFormat } from '../src/lib/share/og-raster';
 import {
   SHARE_ACCESS_HTTP,
   buildShareLinkList,
@@ -2070,6 +2071,11 @@ app.get('/api/v1/share/:token/og-image', async (req: express.Request<{ token: st
   const og = shareOgLimiter.check(shareRateKey(req, 'og'));
   if (!og.allowed) return sendShareRateLimited(res, og.retryAfterSeconds);
 
+  // ADR 0010 raster upgrade: SHARE_OG_FORMAT=png swaps the v1 SVG
+  // response for a rasterized PNG of the same builder output. Default
+  // (unset or any other value) is byte-identical to v1.
+  const ogFormat = resolveOgFormat(process.env.SHARE_OG_FORMAT);
+
   try {
     const context = await loadShareContext(req.params.token);
     if ('error' in context) return shareFailureResponse(res, context);
@@ -2082,9 +2088,10 @@ app.get('/api/v1/share/:token/og-image', async (req: express.Request<{ token: st
       title: isPublic ? context.tree.name : 'A shared family tree',
       subtitle: 'Stemmagraph',
     });
-    res.set('Content-Type', 'image/svg+xml; charset=utf-8');
+    const image = await buildOgImageResponse(svg, ogFormat);
+    res.set('Content-Type', image.contentType);
     res.set('Cache-Control', 'public, max-age=300');
-    res.send(svg);
+    return res.send(image.body);
   } catch (e) {
     res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
   }
