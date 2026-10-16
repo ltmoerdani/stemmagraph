@@ -56,16 +56,16 @@ describe('pwa registration audit (v266)', () => {
 
   it('registerSW.js mendaftarkan /sw.js dengan scope root', () => {
     expect(register).toMatch(/navigator\s*\.\s*serviceWorker\s*\.\s*register\s*\(\s*['"]\/sw\.js['"]/);
-    expect(register).toMatch(/scope\s*:\s*['"]\/'"]/);
+    expect(register).toMatch(/scope\s*:\s*['"]\/['"]/);
   });
 
   it('index.html memuat injeksi skrip registerSW (vite-plugin-pwa)', () => {
     expect(index).toMatch(/id="vite-plugin-pwa:register-sw"/);
-    expect(index).toMatch(/<script[^>]*src="\.\/registerSW\.js"[^>]*>/);
+    expect(index).toMatch(/<script[^>]*src="\/registerSW\.js"[^>]*>/);
   });
 
   it('index.html menautkan manifest.webmanifest via link rel manifest', () => {
-    expect(index).toMatch(/<link[^>]*rel="manifest"[^>]*href="\.\/manifest\.webmanifest"[^>]*>/);
+    expect(index).toMatch(/<link[^>]*rel="manifest"[^>]*href="\/manifest\.webmanifest"[^>]*>/);
   });
 
   it('manifest.webmanifest membawa identitas dan mode standalone', () => {
