@@ -56,6 +56,8 @@ import {
   targetPrivacyStatus,
 } from '../src/lib/consent/dispatch';
 import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
+import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
+import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -1694,11 +1696,39 @@ app.get('/api/v1/trees/:treeId/members', requireAuth, async (req: AuthenticatedR
   try {
     const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
-    const members = await prisma.familyMember.findMany({
-      where: { treeId: req.params.treeId },
-      orderBy: { generation: 'asc' },
-    });
-    res.json(members.map((m) => formatMember(m)));
+    // Privacy read wiring v261-i: redaksi berbasis relasi viewer (gap 3).
+    // Viewer diidentifikasi lewat email User vs FamilyMember.email;
+    // relasi viewer-target dari tabel FamilyRelationship.
+    const [members, relationships, viewer] = await Promise.all([
+      prisma.familyMember.findMany({ where: { treeId: req.params.treeId }, orderBy: { generation: 'asc' } }),
+      prisma.familyRelationship.findMany({ where: { treeId: req.params.treeId } }),
+      prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } }),
+    ]);
+    const viewerRelationInput = {
+      viewerEmail: viewer?.email ?? null,
+      members: members.map((m) => ({ id: m.id, email: m.email })),
+      relationships: relationships.map((r) => ({ memberId: r.memberId, relatedId: r.relatedId, type: r.type })),
+    };
+    const visible = members
+      .map((m) => {
+        const relation = resolveViewerRelation({ ...viewerRelationInput, targetMemberId: m.id });
+        const minimal = {
+          id: m.id,
+          treeId: m.treeId,
+          name: m.name,
+          isAlive: m.isAlive,
+          privacyStatus: m.privacyStatus,
+          generation: m.generation,
+          gender: m.gender,
+        };
+        const decision = applyMemberVisibility(minimal, relation);
+        if (decision === null) return null;
+        // 'full' mengembalikan objek input apa adanya (referensi sama):
+        // respons utuh memakai formatMember penuh sesuai kontrak.
+        return decision === minimal ? formatMember(m) : decision;
+      })
+      .filter((m) => m !== null);
+    res.json(visible);
   } catch (e) {
     res.status(500).json({ code: 'MEMBER_ERROR', message: (e as Error).message });
   }
@@ -1710,7 +1740,37 @@ app.get('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
     if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
     const guard = await guardTreeAction(req.userId!, m.treeId, 'view_tree');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
-    res.json(formatMember(m));
+    // Privacy read wiring v261-i: hidden direspons 404 bentuk identik
+    // dengan member nihil (anti-enumerasi); self dan deceased lolos penuh
+    // lewat urutan aturan v260-i.
+    const [viewer, relationships] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } }),
+      prisma.familyRelationship.findMany({ where: { treeId: m.treeId } }),
+    ]);
+    const treeMembers = await prisma.familyMember.findMany({
+      where: { treeId: m.treeId },
+      select: { id: true, email: true },
+    });
+    const relation = resolveViewerRelation({
+      viewerEmail: viewer?.email ?? null,
+      members: treeMembers.map((tm) => ({ id: tm.id, email: tm.email })),
+      relationships: relationships.map((r) => ({ memberId: r.memberId, relatedId: r.relatedId, type: r.type })),
+      targetMemberId: m.id,
+    });
+    const minimal = {
+      id: m.id,
+      treeId: m.treeId,
+      name: m.name,
+      isAlive: m.isAlive,
+      privacyStatus: m.privacyStatus,
+      generation: m.generation,
+      gender: m.gender,
+    };
+    const decision = applyMemberVisibility(minimal, relation);
+    if (decision === null) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    // 'full' mengembalikan objek input apa adanya (referensi sama):
+    // respons utuh memakai formatMember penuh sesuai kontrak.
+    res.json(decision === minimal ? formatMember(m) : decision);
   } catch (e) {
     res.status(500).json({ code: 'MEMBER_ERROR', message: (e as Error).message });
   }
