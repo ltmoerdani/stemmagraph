@@ -39,7 +39,7 @@ describe('kinship-aliases gel27 rev 2 pengayaan cicit buyut canggah', () => {
   })
 
   it('4. guard total map kini 138 sah pasca gel35 (naik sah lewat gel28 sampai gel32 lema sulung dan gel35 lema orang tua asuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(145)
   })
 
   it('5. guard negatif homograf cicit2 onomatope nihil key terpisah', () => {

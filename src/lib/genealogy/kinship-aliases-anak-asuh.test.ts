@@ -60,8 +60,8 @@ describe('kinship-aliases anak asuh (gel36)', () => {
   })
 
   it('8. total map PERSIS 138 dan aliasKinds 138 pasca gel36 (bump dari 137)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
-    expect(aliasKinds().length).toBe(144)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(145)
+    expect(aliasKinds().length).toBe(145)
   })
 
   it('9. note dual-source lengkap: KBBI VI resmi, revid, tanggal akses, keputusan makna 1, guard', () => {
