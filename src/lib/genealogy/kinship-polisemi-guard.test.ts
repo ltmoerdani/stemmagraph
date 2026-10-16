@@ -72,8 +72,8 @@ describe('kinship-polisemi-guard v254', () => {
   })
 
   it('8. guard total map PERSIS 138 pasca gel35 (bump dari 136, lema orang tua asuh)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
-    expect(aliasKinds().length).toBe(144)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(145)
+    expect(aliasKinds().length).toBe(145)
   })
 
   it('9. guard ad-hoc v253xlii tetap kunci: resolveAlias frasa non-relasi nihil key map', () => {

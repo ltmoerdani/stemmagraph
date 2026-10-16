@@ -117,8 +117,8 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
   })
 
   it('11. guard bump total key: Object.keys dan aliasKinds PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
-    expect(aliasKinds().length).toBe(144)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(145)
+    expect(aliasKinds().length).toBe(145)
   })
 
   it('12. anti-dup: nyak dan mbok masing-masing tepat satu kali, nihil key duplikat', () => {
@@ -143,6 +143,6 @@ describe('kinship-aliases klaster ibu nyak mbok (v253-xvii, parent depth 1)', ()
     const ps = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
       .sort()
-    expect(ps).toEqual(['bako', 'bibi', 'bude', 'budhe', 'bulik', 'emang', 'engku', 'etek', 'makcik', 'mama', 'mamak', 'mami', 'mang', 'om', 'pakcik', 'pakde', 'pakdhe', 'paklik', 'paman', 'tante', 'uwa', 'wak'])
+    expect(ps).toEqual(['bako', 'bibi', 'bude', 'budhe', 'bulik', 'emang', 'engku', 'etek', 'makcik', 'mama', 'mamak', 'mamanda', 'mami', 'mang', 'om', 'pakcik', 'pakde', 'pakdhe', 'paklik', 'paman', 'tante', 'uwa', 'wak'])
   })
 })

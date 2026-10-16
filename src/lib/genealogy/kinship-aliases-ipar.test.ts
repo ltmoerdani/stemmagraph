@@ -34,7 +34,7 @@ describe('kinship-aliases ipar (v253-xxii)', () => {
     const ps = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
       .sort()
-    expect(ps).toEqual(['bako', 'bibi', 'bude', 'budhe', 'bulik', 'emang', 'engku', 'etek', 'makcik', 'mama', 'mamak', 'mami', 'mang', 'om', 'pakcik', 'pakde', 'pakdhe', 'paklik', 'paman', 'tante', 'uwa', 'wak'])
+    expect(ps).toEqual(['bako', 'bibi', 'bude', 'budhe', 'bulik', 'emang', 'engku', 'etek', 'makcik', 'mama', 'mamak', 'mamanda', 'mami', 'mang', 'om', 'pakcik', 'pakde', 'pakdhe', 'paklik', 'paman', 'tante', 'uwa', 'wak'])
     expect(ps).not.toContain('ipar')
   })
 
@@ -63,8 +63,8 @@ describe('kinship-aliases ipar (v253-xxii)', () => {
   })
 
   it('8. guard jumlah key PERSIS 107 pasca V253-XXII (106 jadi 107: ipar)', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
-    expect(aliasKinds().length).toBe(144)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(145)
+    expect(aliasKinds().length).toBe(145)
   })
 
   it('9. non-regresi gugus affine: besan menantu mertua tetap live kind property', () => {

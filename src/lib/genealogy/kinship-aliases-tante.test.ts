@@ -96,8 +96,8 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
   })
 
   it('10. guard bump total key: Object.keys(KINSHIP_ALIASES) PERSIS 100 pasca v253-xviii', () => {
-    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(144)
-    expect(aliasKinds().length).toBe(144)
+    expect(Object.keys(KINSHIP_ALIASES)).toHaveLength(145)
+    expect(aliasKinds().length).toBe(145)
   })
 
   it('11. daftar key gugus parent-sibling toEqual pasca v253-xiv (10 key, paklik menyisip urutan sort)', () => {
@@ -116,6 +116,7 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
       'makcik',
       'mama',
       'mamak',
+      'mamanda',
       'mami',
       'mang',
       'om',
@@ -127,7 +128,7 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
       'tante',
       'uwa',
     'wak',    ])
-    expect(ps).toHaveLength(22)
+    expect(ps).toHaveLength(23)
   })
 
   it('12. negatif: typo nihil, normalisasi huruf besar dan spasi pinggir sama dengan tante', () => {

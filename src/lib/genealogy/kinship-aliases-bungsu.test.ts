@@ -19,7 +19,7 @@ import { resolveAgeCompositePhrase } from './kinship-age-axis'
  * perubahan. Total map 143 menjadi 144.
  */
 describe('kinship-aliases bungsu (gel41)', () => {
-  const GUARD_KEYS = 144
+  const GUARD_KEYS = 145
 
   it('1. positif: bungsu live kind sibling depth 1', () => {
     const e = KINSHIP_ALIASES['bungsu']
