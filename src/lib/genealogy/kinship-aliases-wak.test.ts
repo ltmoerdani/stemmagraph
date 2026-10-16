@@ -103,12 +103,12 @@ describe('kinship-aliases wak (v253xxxix, parent-sibling depth 1, Jambi Banyuwan
     expect(resolveAlias('wak1')).toBeNull()
   })
 
-  it('12. klaster parent-sibling kini 22 anggota termasuk wak', () => {
+  it('12. klaster parent-sibling kini 23 anggota termasuk wak pasca gel42 mamanda', () => {
     const ps = Object.keys(KINSHIP_ALIASES)
       .filter((k) => KINSHIP_ALIASES[k]?.kind === 'parent-sibling')
       .sort()
     expect(ps).toContain('wak')
-    expect(ps).toHaveLength(22)
+    expect(ps).toHaveLength(23)
   })
 
   it('13. jangkar dual-source di note: KBBI III mirror kbbi.web.id/wak plus Wiktionary pageid 47385 tercantum, blok id nihil dicatat jujur', () => {

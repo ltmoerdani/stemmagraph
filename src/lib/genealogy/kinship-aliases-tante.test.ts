@@ -116,6 +116,7 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
       'makcik',
       'mama',
       'mamak',
+      'mamanda',
       'mami',
       'mang',
       'om',
@@ -127,7 +128,7 @@ describe('kinship-aliases tante (v253-xiii, parent-sibling depth 1, fusi dua ara
       'tante',
       'uwa',
     'wak',    ])
-    expect(ps).toHaveLength(22)
+    expect(ps).toHaveLength(23)
   })
 
   it('12. negatif: typo nihil, normalisasi huruf besar dan spasi pinggir sama dengan tante', () => {

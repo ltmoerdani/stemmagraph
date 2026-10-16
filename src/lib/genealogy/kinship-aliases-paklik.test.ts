@@ -91,6 +91,7 @@ describe('kinship-aliases paklik (v253-xiv, parent-sibling depth 1, register Jaw
       'makcik',
       'mama',
       'mamak',
+      'mamanda',
       'mami',
       'mang',
       'om',
@@ -102,7 +103,7 @@ describe('kinship-aliases paklik (v253-xiv, parent-sibling depth 1, register Jaw
       'tante',
       'uwa',
     'wak',    ])
-    expect(ps).toHaveLength(22)
+    expect(ps).toHaveLength(23)
   })
 
   it('9. anti-dup: paklik tepat satu kali, nihil di blok regional mana pun', () => {

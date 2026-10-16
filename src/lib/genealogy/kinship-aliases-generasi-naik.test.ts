@@ -154,6 +154,7 @@ describe('kinship-aliases generasi naik (v253-xix, 4 key parent-sibling depth 1)
       'makcik',
       'mama',
       'mamak',
+      'mamanda',
       'mami',
       'mang',
       'om',
@@ -165,7 +166,7 @@ describe('kinship-aliases generasi naik (v253-xix, 4 key parent-sibling depth 1)
       'tante',
       'uwa',
     'wak',    ])
-    expect(ps).toHaveLength(22)
+    expect(ps).toHaveLength(23)
   })
 
   it('16. negatif typo dan normalisasi kapital dan spasi pinggir', () => {

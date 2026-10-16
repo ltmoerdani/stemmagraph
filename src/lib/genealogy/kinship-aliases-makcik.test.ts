@@ -118,6 +118,7 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
       'makcik',
       'mama',
       'mamak',
+      'mamanda',
       'mami',
       'mang',
       'om',
@@ -129,7 +130,7 @@ describe('kinship-aliases makcik (v253-xv, parent-sibling depth 1, register akr 
       'tante',
       'uwa',
     'wak',    ])
-    expect(ps).toHaveLength(22)
+    expect(ps).toHaveLength(23)
   })
 
   it('13. glosa makcik pada entri etek dan bibi Karo tetap glos, bibi kini live di map global pasca v253-xix', () => {
