@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { GridMemberCard } from './GridMemberCard';
+import { RedactedMemberCard } from './RedactedMemberCard';
+import { isNameOnlyMember } from '../../types/redacted';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { useTranslation } from 'react-i18next';
@@ -214,11 +216,27 @@ export const MemberCardGrid: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-6">
           {filteredMembers.map((member) => (
             <div key={member.id} className="relative">
+              {/* v261-ii fase ii: payload name-only dari redaksi server (v261-i)
+                  render kartu read-only khusus, perilaku kartu penuh nihil perubahan. */}
+              {isNameOnlyMember(member as never) ? (
+                <RedactedMemberCard
+                  id={member.id}
+                  name={member.name}
+                  isAlive={member.isAlive}
+                  generation={(member as { generation?: number | null }).generation ?? null}
+                  gender={(member as { gender?: string | null }).gender ?? null}
+                  onSelect={(id) => {
+                    const rec = members.find((m) => m.id === id);
+                    if (rec) setSelectedMemberFromStore(rec);
+                  }}
+                />
+              ) : (
               <GridMemberCard
                 member={member}
                 isSelected={selectedMember?.id === member.id}
                 highlightText={(text) => highlightText(text, searchQuery)}
               />
+              )}
               {searchQuery && matchesMargaTolerant(member.marga, searchQuery) && (
                 <div className="px-3 pb-2">
                   <span

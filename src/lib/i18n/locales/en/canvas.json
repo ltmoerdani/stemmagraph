@@ -159,5 +159,8 @@
     },
     "minimap": "Mini map",
     "handle": "Connection handle"
+  },
+  "memberRedacted": {
+    "restricted": "Data restricted"
   }
 }

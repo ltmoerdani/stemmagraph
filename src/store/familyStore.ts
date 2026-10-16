@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { FamilyMember, FamilyStats, ViewMode, TreePosition } from '../types/family';
 import { getAdapter } from '@/lib/adapters';
 import type { FamilyMemberRecord, MemberRelationship } from '@/lib/adapters';
+import { isNameOnlyMember } from '@/types/redacted';
 
 // ─── Adapter ⟷ Legacy Type Bridge ──────────────────────────
 
@@ -9,7 +10,7 @@ import type { FamilyMemberRecord, MemberRelationship } from '@/lib/adapters';
  * Merge adapter member records + relationships into the legacy FamilyMember type
  * that the UI components still consume.
  */
-function hydrateMembers(
+export function hydrateMembers(
   records: FamilyMemberRecord[],
   relationships: MemberRelationship[],
 ): FamilyMember[] {
@@ -40,30 +41,33 @@ function hydrateMembers(
       .filter((rel) => rel.type === 'sibling' && rel.memberId === r.id)
       .map((rel) => rel.relatedId);
 
+    // v261-ii fase ii: payload name-only (redaksi server v261-i) di-hydrate
+    // jadi bentuk aman render, tanpa mengubah perilaku payload penuh.
+    const redacted = isNameOnlyMember(r);
     return {
       id: r.id,
       name: r.name,
-      nickname: r.nickname,
-      birthDate: r.birthDate,
-      deathDate: r.deathDate,
-      birthPlace: r.birthPlace,
-      currentLocation: r.currentLocation,
-      profession: r.profession,
-      education: r.education,
-      gender: r.gender as 'male' | 'female',
-      photoUrl: r.photoUrl,
+      nickname: redacted ? undefined : r.nickname,
+      birthDate: redacted ? '' : r.birthDate,
+      deathDate: redacted ? undefined : r.deathDate,
+      birthPlace: redacted ? undefined : r.birthPlace,
+      currentLocation: redacted ? undefined : r.currentLocation,
+      profession: redacted ? undefined : r.profession,
+      education: redacted ? undefined : r.education,
+      gender: (redacted ? 'other' : r.gender) as 'male' | 'female',
+      photoUrl: redacted ? undefined : r.photoUrl,
       spouseId: spouseIds[0],
       spouseIds: spouseIds.length ? spouseIds : undefined,
       parentIds: parentIds.length ? parentIds : undefined,
       childrenIds: childrenIds.length ? childrenIds : undefined,
       siblingIds: siblingIds.length ? siblingIds : undefined,
-      email: r.email,
-      phone: r.phone,
+      email: redacted ? undefined : r.email,
+      phone: redacted ? undefined : r.phone,
       isAlive: r.isAlive,
-      generation: r.generation,
-      maritalStatus: r.maritalStatus,
-      created_at: r.createdAt,
-      updated_at: r.updatedAt,
+      generation: redacted ? (r.generation ?? 0) : r.generation,
+      maritalStatus: redacted ? 'single' : r.maritalStatus,
+      created_at: redacted ? undefined : r.createdAt,
+      updated_at: redacted ? undefined : r.updatedAt,
     };
   });
 }
