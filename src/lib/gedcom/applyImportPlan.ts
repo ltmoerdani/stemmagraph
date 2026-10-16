@@ -79,6 +79,8 @@ function memberInput(member: PlannedMember): CreateMemberInput {
   return {
     name: member.name,
     gender: member.gender,
+    // SEX verbatim diteruskan ke createMember (v262).
+    sexGed: member.sexGed,
     birthDate: dateString(member.birthDate),
     deathDate: dateString(member.deathDate),
     birthPlace: member.birthPlace,

@@ -46,3 +46,21 @@ export function toGedcomSex(g: Gender): string {
       return DEFAULT_GENDER
   }
 }
+
+/**
+ * resolveSexGed (v262): preferensi SEX verbatim dari sumber, fallback
+ * eksplisit ke gender model. sexGed dipakai apa adanya bila nilainya
+ * ada di enumset SEX GEDCOM 7 (M/F/X/U, case-sensitive); nilai lain
+ * (phrase asing, kosong, null, undefined) gugur ke jalur lama
+ * toGedcomSex(normalizeGender(gender)) sehingga data legacy tetap
+ * berekspor seperti sebelum v262. Pure: tanpa efek samping.
+ */
+export function resolveSexGed(
+  sexGed: string | null | undefined,
+  gender: string | null | undefined,
+): string {
+  if (sexGed === 'M' || sexGed === 'F' || sexGed === 'X' || sexGed === 'U') {
+    return sexGed
+  }
+  return toGedcomSex(normalizeGender(gender))
+}
