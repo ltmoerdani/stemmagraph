@@ -159,5 +159,8 @@
     },
     "minimap": "Peta mini",
     "handle": "Pegangan koneksi"
+  },
+  "memberRedacted": {
+    "restricted": "Data dibatasi"
   }
 }
