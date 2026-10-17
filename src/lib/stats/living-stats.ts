@@ -58,7 +58,7 @@ export interface LivingStatsResult {
   ageBuckets: Record<AgeBucketKey, number>
 }
 
-interfaceYmd {
+interface Ymd {
   y: number
   m: number
   d: number
