@@ -3,6 +3,7 @@
 // Run: npx tsx server/index.ts
 
 import express from 'express';
+import { createHash } from 'node:crypto';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -1771,11 +1772,24 @@ app.get('/api/v1/trees/:treeId/stats/living', requireAuthStatsLiving, async (req
     const rawLang = req.query['lang'];
     const lang = (typeof rawLang === 'string' && rawLang.length > 0 ? rawLang : (req.headers['accept-language'] ?? '')).toLowerCase();
     const avgLifespanLabel = lang.startsWith('en') ? 'Average age at death' : 'Rata-rata umur saat meninggal';
-    // v272 fase i: agregat non-PII, cache private dengan revalidasi 304
-    // (ETag default express). no-cache memaksa revalidasi tiap request;
-    // tanpa public, tanpa s-maxage, tanpa max-age positif.
+    // v272 fase i: agregat non-PII, cache private dengan revalidasi 304.
+    // no-cache memaksa revalidasi tiap request; tanpa public, tanpa
+    // s-maxage, tanpa max-age positif.
     res.set('Cache-Control', 'private, no-cache');
-    res.json({ ...stats, avgLifespanLabel });
+    // v272 fase i: ETag strong dari hash payload (node:crypto, bawaan Node).
+    // Express 5.2.1 pada repo ini terbukti tidak mengonversi If-None-Match
+    // menjadi 304 (verifikasi empiris tmp_debug_304), jadi perbandingan
+    // dilakukan eksplisit di sini: payload sama dijawab 304 tanpa body,
+    // sesuai RFC 9110 dan AC kontrak v272.
+    const body = JSON.stringify({ ...stats, avgLifespanLabel });
+    const etag = `"${createHash('sha256').update(body).digest('hex')}"`;
+    res.set('ETag', etag);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => t.trim() === etag)) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'LIVING_STATS_ERROR', message: (e as Error).message });
   }
