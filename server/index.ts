@@ -62,6 +62,7 @@ import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import { computeLivingStats } from '../src/lib/stats/living-stats';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
+import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -1912,6 +1913,53 @@ app.get('/api/v1/trees/:treeId/stats/anniversaries/upcoming', requireAuthStatsLi
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'ANNIVERSARIES_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Citation coverage (v281 fase ii, read-only aggregate) ───────────
+//
+// GET /api/v1/trees/:treeId/stats/citation-coverage returns the percentage
+// of individuals covered by a citation, computed by the pure module
+// src/lib/stats/citation-coverage.ts (v279). Pola persis route anniversaries:
+// guardTreeAction untuk 403 non-anggota (tanpa WWW-Authenticate),
+// requireAuthStatsLiving supaya 401 jalur ini membawa challenge Bearer.
+// Sumber data dua query select minimal: familyMember (id saja) dan lifeEvent
+// (memberId, citationId saja), tanpa relasi prisma baru, tanpa kolom baru.
+// Cache private dengan revalidasi 304, ETag weak dari hash payload.
+// Addendum v281: respons 304 menyertakan ulang header ETag dan Cache-Control
+// (header setara 200 per RFC 9111); pencocokan If-None-Match pada nilai hex,
+// prefix W/ dari klien diabaikan.
+app.get('/api/v1/trees/:treeId/stats/citation-coverage', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const members = await prisma.familyMember.findMany({
+      where: { treeId: req.params.treeId },
+      select: { id: true },
+    });
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: req.params.treeId },
+      select: { memberId: true, citationId: true },
+    });
+    const coverage = computeCitationCoverage(members, events);
+    const body = JSON.stringify({ coverage });
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `W/"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      // Header ETag dan Cache-Control sudah diset sebelum cabang ini sehingga
+      // 304 membawa ulang keduanya, setara 200 per RFC 9111.
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'CITATION_COVERAGE_ERROR', message: (e as Error).message });
   }
 });
 
