@@ -61,6 +61,7 @@ import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import { computeLivingStats } from '../src/lib/stats/living-stats';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
+import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -1841,6 +1842,76 @@ app.get('/api/v1/trees/:treeId/stats/birthdays/upcoming', requireAuthStatsLiving
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'BIRTHDAYS_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Upcoming wedding anniversaries (v275 fase i, read-only) ─────────
+//
+// GET /api/v1/trees/:treeId/stats/anniversaries/upcoming returns the next
+// wedding anniversaries among living couples, computed by the pure module
+// src/lib/stats/upcoming-anniversaries.ts. Pola persis route birthdays:
+// guardTreeAction untuk 403 non-anggota (tanpa WWW-Authenticate),
+// requireAuthStatsLiving supaya 401 jalur ini membawa challenge Bearer.
+// Query days opsional default 30, rentang sah 1 sampai 365 inklusif;
+// di luar rentang atau non-integer dijawab 422 body { code, message }.
+// Sumber data LifeEvent MARRIAGE (LifeEvent belum punya relasi member di
+// schema): dua query terpisah, events dengan include date lalu
+// familyMember by ids; tanpa relasi prisma baru.
+app.get('/api/v1/trees/:treeId/stats/anniversaries/upcoming', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rawDays = req.query['days'];
+    const days = rawDays === undefined ? 30 : Number(rawDays);
+    if (!Number.isInteger(days) || days < 1 || days > 365) {
+      return res.status(422).json({ code: 'INVALID_DAYS', message: 'days must be an integer between 1 and 365' });
+    }
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: req.params.treeId, eventType: 'MARRIAGE', partnerMemberId: { not: null } },
+      include: { date: true },
+    });
+    const idSet = new Set<string>();
+    for (const ev of events) {
+      if (ev.memberId) idSet.add(ev.memberId);
+      if (ev.partnerMemberId) idSet.add(ev.partnerMemberId);
+    }
+    const members = idSet.size === 0
+      ? []
+      : await prisma.familyMember.findMany({ where: { id: { in: Array.from(idSet) } }, select: { id: true, name: true, isAlive: true } });
+    const byId = new Map(members.map((m) => [m.id, m]));
+    const pairs = new Map<string, { pairId: string; partnerNames: [string, string]; marriageDate: string }>();
+    for (const ev of events) {
+      if (!ev.partnerMemberId) continue;
+      const date = ev.date;
+      if (!date || date.dateKind !== 'EXACT') continue;
+      if (date.yearStart === null || date.monthStart === null || date.dayStart === null) continue;
+      const a = byId.get(ev.memberId);
+      const b = byId.get(ev.partnerMemberId);
+      if (!a || !a.isAlive || !b || !b.isAlive) continue;
+      const marriageDate = `${String(date.yearStart).padStart(4, '0')}-${String(date.monthStart).padStart(2, '0')}-${String(date.dayStart).padStart(2, '0')}`;
+      const pairId = [ev.memberId, ev.partnerMemberId].sort().join(':');
+      const partnerNames: [string, string] = pairId.split(':')[0] === ev.memberId ? [a.name, b.name] : [b.name, a.name];
+      if (!pairs.has(pairId)) pairs.set(pairId, { pairId, partnerNames, marriageDate });
+    }
+    const entries = computeUpcomingAnniversaries(Array.from(pairs.values()), new Date(), days);
+    // v275 fase i: cache private dengan revalidasi 304, ETag weak dari
+    // hash payload, If-None-Match cocok (dengan atau tanpa prefix W/,
+    // perbandingan weak) dijawab 304 tanpa body sesuai RFC 9110.
+    const body = JSON.stringify(entries);
+    const etag = `W/"${createHash('sha256').update(body).digest('hex')}"`;
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', etag);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      return candidate === etag || candidate === etag.slice(2);
+    })) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'ANNIVERSARIES_ERROR', message: (e as Error).message });
   }
 });
 
