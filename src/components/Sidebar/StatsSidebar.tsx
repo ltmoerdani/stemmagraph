@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Users, TreePine, MapPin } from 'lucide-react';
 import { useFamilyStore } from '../../store/familyStore';
+import { computeLivingStats, AGE_BUCKETS } from '../../lib/stats/living-stats';
 
 export const StatsSidebar: React.FC = () => {
-  const { stats } = useFamilyStore();
+  const { stats, members } = useFamilyStore();
+
+  const livingStats = useMemo(
+    () =>
+      computeLivingStats(
+        members.map((member) => ({
+          birthDate: member.birthDate,
+          deathDate: member.deathDate ?? null,
+          isAlive: member.isAlive,
+          generation: member.generation,
+        })),
+      ),
+    [members],
+  );
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 p-6 overflow-y-auto">
@@ -48,6 +62,43 @@ export const StatsSidebar: React.FC = () => {
             <div className="text-2xl font-bold text-pink-600">{stats.femaleCount}</div>
             <div className="text-sm text-gray-600">Female</div>
           </div>
+        </div>
+      </div>
+
+      {/* Living Stats */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Living Stats</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-green-50 p-4 rounded-lg text-center">
+            <div className="text-2xl font-bold text-green-600">{livingStats.living}</div>
+            <div className="text-sm text-gray-600">Living</div>
+          </div>
+          <div className="bg-gray-100 p-4 rounded-lg text-center">
+            <div className="text-2xl font-bold text-gray-600">{livingStats.deceased}</div>
+            <div className="text-sm text-gray-600">Deceased</div>
+          </div>
+        </div>
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">Avg Lifespan</span>
+            <span className="font-semibold">
+              {livingStats.avgLifespanYears === null
+                ? 'N/A'
+                : `${livingStats.avgLifespanYears} years`}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">Unknown Birth Date</span>
+            <span className="font-semibold">{livingStats.unknownBirthDate}</span>
+          </div>
+        </div>
+        <div className="mt-3 space-y-2">
+          {AGE_BUCKETS.map((bucket) => (
+            <div key={bucket} className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{bucket} years</span>
+              <span className="font-semibold">{livingStats.ageBuckets[bucket]}</span>
+            </div>
+          ))}
         </div>
       </div>
 
