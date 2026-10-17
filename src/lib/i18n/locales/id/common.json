@@ -19,6 +19,17 @@
       "turningAge_ordinal_two": "Ulang tahun ke-{{count}}",
       "turningAge_ordinal_few": "Ulang tahun ke-{{count}}",
       "turningAge_ordinal_other": "Ulang tahun ke-{{count}}"
+    },
+    "upcomingAnniversaries": {
+      "title": "Peringatan Pernikahan Terdekat",
+      "today": "Hari ini",
+      "tomorrow": "Besok",
+      "inDays_one": "{{count}} hari lagi",
+      "inDays_other": "{{count}} hari lagi",
+      "anniversaryYear_ordinal_one": "Peringatan {{count}} tahun",
+      "anniversaryYear_ordinal_two": "Peringatan {{count}} tahun",
+      "anniversaryYear_ordinal_few": "Peringatan {{count}} tahun",
+      "anniversaryYear_ordinal_other": "Peringatan {{count}} tahun"
     }
   },
   "header": {

@@ -19,6 +19,17 @@
       "turningAge_ordinal_two": "Turning {{count}}",
       "turningAge_ordinal_few": "Turning {{count}}",
       "turningAge_ordinal_other": "Turning {{count}}"
+    },
+    "upcomingAnniversaries": {
+      "title": "Upcoming Anniversaries",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays_one": "{{count}} day away",
+      "inDays_other": "{{count}} days away",
+      "anniversaryYear_ordinal_one": "{{count}}st anniversary",
+      "anniversaryYear_ordinal_two": "{{count}}nd anniversary",
+      "anniversaryYear_ordinal_few": "{{count}}rd anniversary",
+      "anniversaryYear_ordinal_other": "{{count}}th anniversary"
     }
   },
   "header": {
