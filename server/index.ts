@@ -60,6 +60,7 @@ import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } fro
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import { computeLivingStats } from '../src/lib/stats/living-stats';
+import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -1792,6 +1793,54 @@ app.get('/api/v1/trees/:treeId/stats/living', requireAuthStatsLiving, async (req
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'LIVING_STATS_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Upcoming birthdays (v273 fase i, read-only) ─────────
+//
+// GET /api/v1/trees/:treeId/stats/birthdays/upcoming returns the next
+// birthdays among living members, computed by the pure module
+// src/lib/stats/upcoming-birthdays.ts. Pola persis route stats/living:
+// guardTreeAction untuk 403 non-anggota (tanpa WWW-Authenticate),
+// requireAuthStatsLiving supaya 401 jalur ini membawa challenge Bearer.
+// Query days opsional default 30, rentang sah 1 sampai 365 inklusif;
+// di luar rentang atau non-integer dijawab 422 body { code, message }.
+app.get('/api/v1/trees/:treeId/stats/birthdays/upcoming', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rawDays = req.query['days'];
+    const days = rawDays === undefined ? 30 : Number(rawDays);
+    if (!Number.isInteger(days) || days < 1 || days > 365) {
+      return res.status(422).json({ code: 'INVALID_DAYS', message: 'days must be an integer between 1 and 365' });
+    }
+    const members = await prisma.familyMember.findMany({
+      where: { treeId: req.params.treeId, isAlive: true },
+      select: { id: true, name: true, birthDate: true },
+    });
+    const entries = computeUpcomingBirthdays(
+      members.map((m) => ({ personId: m.id, displayName: m.name, birthDate: m.birthDate })),
+      new Date(),
+      days,
+    );
+    // v273 fase i: cache private dengan revalidasi 304, ETag weak dari
+    // hash payload, If-None-Match cocok (dengan atau tanpa prefix W/,
+    // perbandingan weak) dijawab 304 tanpa body sesuai RFC 9110.
+    const body = JSON.stringify(entries);
+    const etag = `W/"${createHash('sha256').update(body).digest('hex')}"`;
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', etag);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      return candidate === etag || candidate === etag.slice(2);
+    })) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'BIRTHDAYS_ERROR', message: (e as Error).message });
   }
 });
 
