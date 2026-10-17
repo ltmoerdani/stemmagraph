@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -192,6 +192,20 @@ export function getCitationApi(): CitationApi | null {
   return adapter instanceof RestAdapter ? adapter : null;
 }
 
+// ─── Server stats (v277 fase ii) ──────────────────────────
+
+/**
+ * Returns the server stats surface of the active adapter, or null when
+ * the adapter has no server backend (mock, supabase): upcoming
+ * anniversaries live behind GET /api/v1/trees/:treeId/stats/... computed
+ * by the server. The UI skips the section for null instead of computing
+ * from the client store.
+ */
+export function getStatsApi(): StatsApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 // ─── Re-export Types ──────────────────────────────────────
 
 export type {
@@ -243,6 +257,8 @@ export type {
   CitationApi,
   CitationSpec,
   CitationEventType,
+  StatsApi,
+  UpcomingAnniversaryDto,
 } from './types';
 
 export {
