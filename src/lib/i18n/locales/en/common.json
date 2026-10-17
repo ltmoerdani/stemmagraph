@@ -2,6 +2,14 @@
   "app": {
     "brand": "FamilyTree"
   },
+  "stats": {
+    "ageGroups": {
+      "title": "Age Groups PBB",
+      "children": "Children (0-14)",
+      "adults": "Adults (15-64)",
+      "seniors": "Seniors (65+)"
+    }
+  },
   "header": {
     "language": "Language",
     "nav": {

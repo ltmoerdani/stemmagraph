@@ -2,6 +2,14 @@
   "app": {
     "brand": "FamilyTree"
   },
+  "stats": {
+    "ageGroups": {
+      "title": "Kelompok Umur PBB",
+      "children": "Anak-anak (0-14)",
+      "adults": "Dewasa (15-64)",
+      "seniors": "Lansia (65+)"
+    }
+  },
   "header": {
     "language": "Bahasa",
     "nav": {

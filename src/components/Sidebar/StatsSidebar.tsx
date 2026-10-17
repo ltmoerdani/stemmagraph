@@ -1,10 +1,13 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Users, TreePine, MapPin } from 'lucide-react';
 import { useFamilyStore } from '../../store/familyStore';
 import { computeLivingStats, AGE_BUCKETS } from '../../lib/stats/living-stats';
+import { computeAgeGroupsPBB, AGE_GROUPS_PBB } from '../../lib/stats/age-groups';
 
 export const StatsSidebar: React.FC = () => {
   const { stats, members } = useFamilyStore();
+  const { t } = useTranslation();
 
   const livingStats = useMemo(
     () =>
@@ -14,6 +17,17 @@ export const StatsSidebar: React.FC = () => {
           deathDate: member.deathDate ?? null,
           isAlive: member.isAlive,
           generation: member.generation,
+        })),
+      ),
+    [members],
+  );
+
+  const ageGroups = useMemo(
+    () =>
+      computeAgeGroupsPBB(
+        members.map((member) => ({
+          birthDate: member.birthDate,
+          isAlive: member.isAlive,
         })),
       ),
     [members],
@@ -97,6 +111,19 @@ export const StatsSidebar: React.FC = () => {
             <div key={bucket} className="flex items-center justify-between">
               <span className="text-sm text-gray-600">{bucket} years</span>
               <span className="font-semibold">{livingStats.ageBuckets[bucket]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Age Groups PBB (v270 fase ii) */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.ageGroups.title')}</h3>
+        <div className="space-y-2">
+          {AGE_GROUPS_PBB.map((group) => (
+            <div key={group} className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t(`stats.ageGroups.${group.split('-')[0]}`)}</span>
+              <span className="font-semibold">{ageGroups[group]}</span>
             </div>
           ))}
         </div>
