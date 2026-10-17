@@ -73,8 +73,11 @@ describe('importPlan livingSuggested (v138-c wiring assessImportPrivacy)', () =>
     expect(m?.gender).toBe('male')
     expect(m?.deathDate).toEqual({ kind: 'exact' })
     expect(Object.keys(m ?? {}).sort()).toEqual(
-      ['birthDate', 'birthPlace', 'deathDate', 'deathPlace', 'gender', 'livingSuggested', 'name', 'privacyStatus', 'xref'].sort(),
+      ['birthDate', 'birthPlace', 'deathDate', 'deathPlace', 'gender', 'livingSuggested', 'name', 'privacyStatus', 'sexGed', 'xref'].sort(),
     )
+    // SEX verbatim v262: payload apa adanya tanpa normalisasi (mencegah
+    // key-list stale muncul lagi tanpa asersi nilai).
+    expect(m?.sexGed).toBe('M')
     expect(m && 'resn' in m).toBe(false)
   })
 
