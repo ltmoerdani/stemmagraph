@@ -1742,7 +1742,22 @@ app.get('/api/v1/trees/:treeId/members', requireAuth, async (req: AuthenticatedR
 // No per-member fields (id, name, birthDate) are exposed in the body:
 // this implements gap 3 privacy for the stats surface. Read-only: no
 // writes, no schema change, no new dependency.
-app.get('/api/v1/trees/:treeId/stats/living', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+
+// v272 fase i (stats hardening): challenge header khusus route ini.
+// RFC 9110 mewajibkan 401 membawa WWW-Authenticate. requireAuth global
+// sengaja tidak diubah supaya semua route lain tetap baseline; wrapper
+// lokal ini hanya memantau res.status(401) pada jalur stats/living dan
+// menambah header, body { code, message } pola repo tetap utuh.
+function requireAuthStatsLiving(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  const originalStatus = res.status.bind(res);
+  res.status = function statusWithChallenge(code: number) {
+    if (code === 401) res.set('WWW-Authenticate', 'Bearer');
+    return originalStatus(code);
+  } as typeof res.status;
+  requireAuth(req as AuthenticatedRequest, res, next);
+}
+
+app.get('/api/v1/trees/:treeId/stats/living', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
   try {
     const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
@@ -1756,6 +1771,10 @@ app.get('/api/v1/trees/:treeId/stats/living', requireAuth, async (req: Authentic
     const rawLang = req.query['lang'];
     const lang = (typeof rawLang === 'string' && rawLang.length > 0 ? rawLang : (req.headers['accept-language'] ?? '')).toLowerCase();
     const avgLifespanLabel = lang.startsWith('en') ? 'Average age at death' : 'Rata-rata umur saat meninggal';
+    // v272 fase i: agregat non-PII, cache private dengan revalidasi 304
+    // (ETag default express). no-cache memaksa revalidasi tiap request;
+    // tanpa public, tanpa s-maxage, tanpa max-age positif.
+    res.set('Cache-Control', 'private, no-cache');
     res.json({ ...stats, avgLifespanLabel });
   } catch (e) {
     res.status(500).json({ code: 'LIVING_STATS_ERROR', message: (e as Error).message });
