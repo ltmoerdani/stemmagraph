@@ -1,13 +1,27 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Users, TreePine, MapPin } from 'lucide-react';
 import { useFamilyStore } from '../../store/familyStore';
 import { computeLivingStats, AGE_BUCKETS } from '../../lib/stats/living-stats';
 import { computeAgeGroupsPBB, AGE_GROUPS_PBB } from '../../lib/stats/age-groups';
+import { computeUpcomingBirthdays } from '../../lib/stats/upcoming-birthdays';
+import { getStatsApi } from '../../lib/adapters';
+import type { UpcomingAnniversaryDto } from '../../lib/adapters';
+
+/** Format YYYY-MM-DD ke tanggal pendek locale via Intl UTC (bebas geser hari zona). */
+function formatYmdLocale(ymd: string, locale: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd)
+  if (!match) return ymd
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])))
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(date)
+}
 
 export const StatsSidebar: React.FC = () => {
   const { stats, members } = useFamilyStore();
-  const { t } = useTranslation();
+  const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
+  const { t, i18n } = useTranslation();
+  const [anniversaryEntries, setAnniversaryEntries] = useState<UpcomingAnniversaryDto[]>([]);
+  const [anniversariesLoaded, setAnniversariesLoaded] = useState(false);
 
   const livingStats = useMemo(
     () =>
@@ -32,6 +46,48 @@ export const StatsSidebar: React.FC = () => {
       ),
     [members],
   );
+
+  const upcomingBirthdays = useMemo(
+    () =>
+      computeUpcomingBirthdays(
+        members
+          .filter((member) => member.isAlive === true)
+          .map((member) => ({
+            personId: member.id,
+            displayName: member.name,
+            birthDate: member.birthDate,
+          })),
+        new Date(),
+        30,
+      ),
+    [members],
+  );
+
+  // Upcoming Anniversaries (v277 fase ii): data hidup di server v275,
+  // bukan komputasi store klien. Adapter null (mock, supabase), treeId
+  // kosong, fetch berjalan, atau fetch gagal berarti section tidak
+  // dirender; tanpa mock data apa pun.
+  useEffect(() => {
+    const api = currentFamilyTreeId ? getStatsApi() : null;
+    if (!currentFamilyTreeId || !api) return;
+    let cancelled = false;
+    setAnniversariesLoaded(false);
+    api
+      .listUpcomingAnniversaries(currentFamilyTreeId)
+      .then((items) => {
+        if (cancelled) return;
+        setAnniversaryEntries(items);
+        setAnniversariesLoaded(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAnniversaryEntries([]);
+        setAnniversariesLoaded(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFamilyTreeId]);
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 p-6 overflow-y-auto">
@@ -128,6 +184,60 @@ export const StatsSidebar: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Upcoming Birthdays (v276 fase ii) */}
+      {upcomingBirthdays.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.upcomingBirthdays.title')}</h3>
+          <div className="space-y-2">
+            {upcomingBirthdays.map((entry) => (
+              <div key={entry.personId} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  <span className="font-medium text-gray-900">{entry.displayName}</span>
+                  {' · '}
+                  {t('stats.upcomingBirthdays.turningAge', { count: entry.turningAge, ordinal: true })}
+                  {' · '}
+                  <time dateTime={entry.nextBirthday}>{formatYmdLocale(entry.nextBirthday, i18n.language)}</time>
+                </span>
+                <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                  {entry.daysUntil === 0
+                    ? t('stats.upcomingBirthdays.today')
+                    : entry.daysUntil === 1
+                      ? t('stats.upcomingBirthdays.tomorrow')
+                      : t('stats.upcomingBirthdays.inDays', { count: entry.daysUntil })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming Anniversaries (v277 fase ii, sumber endpoint server v275) */}
+      {anniversariesLoaded && anniversaryEntries.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.upcomingAnniversaries.title')}</h3>
+          <div className="space-y-2">
+            {anniversaryEntries.map((entry) => (
+              <div key={entry.pairId} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  <span className="font-medium text-gray-900">{entry.partnerNames.join(' · ')}</span>
+                  {' · '}
+                  {t('stats.upcomingAnniversaries.anniversaryYear', { count: entry.yearsMarried, ordinal: true })}
+                  {' · '}
+                  <time dateTime={entry.nextAnniversary}>{formatYmdLocale(entry.nextAnniversary, i18n.language)}</time>
+                </span>
+                <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                  {entry.daysUntil === 0
+                    ? t('stats.upcomingAnniversaries.today')
+                    : entry.daysUntil === 1
+                      ? t('stats.upcomingAnniversaries.tomorrow')
+                      : t('stats.upcomingAnniversaries.inDays', { count: entry.daysUntil })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Age Distribution */}
       <div className="mb-8">

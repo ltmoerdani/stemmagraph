@@ -62,6 +62,8 @@ import {
   CitationApi,
   CitationSpec,
   CitationEventType,
+  StatsApi,
+  UpcomingAnniversaryDto,
   AdapterError,
   AuthError,
 } from './types';
@@ -80,7 +82,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -431,6 +433,21 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return this.request<GrowthMetricsSnapshot>(
       'GET',
       `/admin/metrics/growth${query === '' ? '' : `?${query}`}`,
+    );
+  }
+
+  // ── Upcoming anniversaries (v277 fase ii) ──────────────
+  // Read-only routing to the server v275 endpoint. The server computes
+  // everything (jendela days default 30, rentang 1..365) and returns
+  // ready entries, so the adapter only forwards the optional query.
+  // Network errors and non-OK responses propagate via this.request
+  // without a local catch.
+
+  async listUpcomingAnniversaries(treeId: string, days?: number): Promise<UpcomingAnniversaryDto[]> {
+    const query = days === undefined ? '' : `?days=${encodeURIComponent(String(days))}`;
+    return this.request<UpcomingAnniversaryDto[]>(
+      'GET',
+      `/trees/${encodeURIComponent(treeId)}/stats/anniversaries/upcoming${query}`,
     );
   }
 

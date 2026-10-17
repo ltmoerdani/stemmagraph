@@ -546,3 +546,37 @@ export interface CitationApi {
     citationId?: string,
   ): Promise<string>;
 }
+
+// ─── Upcoming anniversaries (v277 fase ii) ────────────────
+// Server-backed read-only surface for upcoming wedding anniversaries.
+// Data lives behind GET /api/v1/trees/:treeId/stats/anniversaries/upcoming
+// (server v275). Only the REST adapter implements it; mock and supabase
+// adapters get null from getStatsApi so the sidebar skips the section
+// instead of computing from client store. DTO didefinisikan lokal;
+// berkas ini dilarang meng-import tipe dari src/lib/stats.
+
+/** Satu baris peringatan pernikahan dari server, sudah jadi dan terurut. */
+export interface UpcomingAnniversaryDto {
+  /** Id pasangan stabil, dua memberId terurut leksikal dipisah titik dua. */
+  pairId: string;
+  /** Nama kedua pasangan, urutan mengikuti pasangan pada server. */
+  partnerNames: [string, string];
+  /** Tanggal pernikahan asli, format YYYY-MM-DD. */
+  marriageDate: string;
+  /** Peringatan berikutnya terdekat, format YYYY-MM-DD. */
+  nextAnniversary: string;
+  /** Hari menuju peringatan berikutnya, 0 berarti hari ini. */
+  daysUntil: number;
+  /** Jumlah tahun pernikahan yang dirayakan. */
+  yearsMarried: number;
+}
+
+/**
+ * Permukaan statistik server ala ActivityFeedApi: API berdiri sendiri,
+ * tidak menambah apa pun ke DataAdapter. Implementasi membiarkan error
+ * jaringan atau respons non-OK naik ke pemanggil tanpa penangkap.
+ */
+export interface StatsApi {
+  /** Ambil daftar peringatan pernikakan mendatang; days opsional, default server 30. */
+  listUpcomingAnniversaries(treeId: string, days?: number): Promise<UpcomingAnniversaryDto[]>;
+}
