@@ -4,10 +4,19 @@ import { Users, TreePine, MapPin } from 'lucide-react';
 import { useFamilyStore } from '../../store/familyStore';
 import { computeLivingStats, AGE_BUCKETS } from '../../lib/stats/living-stats';
 import { computeAgeGroupsPBB, AGE_GROUPS_PBB } from '../../lib/stats/age-groups';
+import { computeUpcomingBirthdays } from '../../lib/stats/upcoming-birthdays';
+
+/** Format YYYY-MM-DD ke tanggal pendek locale via Intl UTC (bebas geser hari zona). */
+function formatYmdLocale(ymd: string, locale: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd)
+  if (!match) return ymd
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])))
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(date)
+}
 
 export const StatsSidebar: React.FC = () => {
   const { stats, members } = useFamilyStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const livingStats = useMemo(
     () =>
@@ -29,6 +38,22 @@ export const StatsSidebar: React.FC = () => {
           birthDate: member.birthDate,
           isAlive: member.isAlive,
         })),
+      ),
+    [members],
+  );
+
+  const upcomingBirthdays = useMemo(
+    () =>
+      computeUpcomingBirthdays(
+        members
+          .filter((member) => member.isAlive === true)
+          .map((member) => ({
+            personId: member.id,
+            displayName: member.name,
+            birthDate: member.birthDate,
+          })),
+        new Date(),
+        30,
       ),
     [members],
   );
@@ -128,6 +153,33 @@ export const StatsSidebar: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Upcoming Birthdays (v276 fase ii) */}
+      {upcomingBirthdays.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.upcomingBirthdays.title')}</h3>
+          <div className="space-y-2">
+            {upcomingBirthdays.map((entry) => (
+              <div key={entry.personId} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  <span className="font-medium text-gray-900">{entry.displayName}</span>
+                  {' · '}
+                  {t('stats.upcomingBirthdays.turningAge', { count: entry.turningAge, ordinal: true })}
+                  {' · '}
+                  <time dateTime={entry.nextBirthday}>{formatYmdLocale(entry.nextBirthday, i18n.language)}</time>
+                </span>
+                <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                  {entry.daysUntil === 0
+                    ? t('stats.upcomingBirthdays.today')
+                    : entry.daysUntil === 1
+                      ? t('stats.upcomingBirthdays.tomorrow')
+                      : t('stats.upcomingBirthdays.inDays', { count: entry.daysUntil })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Age Distribution */}
       <div className="mb-8">

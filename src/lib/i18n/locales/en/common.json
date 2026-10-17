@@ -8,6 +8,17 @@
       "children": "Children (0-14)",
       "adults": "Adults (15-64)",
       "seniors": "Seniors (65+)"
+    },
+    "upcomingBirthdays": {
+      "title": "Upcoming Birthdays",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays_one": "{{count}} day away",
+      "inDays_other": "{{count}} days away",
+      "turningAge_ordinal_one": "Turning {{count}}",
+      "turningAge_ordinal_two": "Turning {{count}}",
+      "turningAge_ordinal_few": "Turning {{count}}",
+      "turningAge_ordinal_other": "Turning {{count}}"
     }
   },
   "header": {

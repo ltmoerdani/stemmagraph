@@ -8,6 +8,17 @@
       "children": "Anak-anak (0-14)",
       "adults": "Dewasa (15-64)",
       "seniors": "Lansia (65+)"
+    },
+    "upcomingBirthdays": {
+      "title": "Ulang Tahun Terdekat",
+      "today": "Hari ini",
+      "tomorrow": "Besok",
+      "inDays_one": "{{count}} hari lagi",
+      "inDays_other": "{{count}} hari lagi",
+      "turningAge_ordinal_one": "Ulang tahun ke-{{count}}",
+      "turningAge_ordinal_two": "Ulang tahun ke-{{count}}",
+      "turningAge_ordinal_few": "Ulang tahun ke-{{count}}",
+      "turningAge_ordinal_other": "Ulang tahun ke-{{count}}"
     }
   },
   "header": {
