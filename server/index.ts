@@ -58,6 +58,7 @@ import {
 import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
+import { computeLivingStats } from '../src/lib/stats/living-stats';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -1731,6 +1732,33 @@ app.get('/api/v1/trees/:treeId/members', requireAuth, async (req: AuthenticatedR
     res.json(visible);
   } catch (e) {
     res.status(500).json({ code: 'MEMBER_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Living stats (v268 fase ii, read-only aggregate) ─────
+//
+// GET /api/v1/trees/:treeId/stats/living returns ONLY aggregate numbers
+// computed by the pure module src/lib/stats/living-stats.ts (v267 fase i).
+// No per-member fields (id, name, birthDate) are exposed in the body:
+// this implements gap 3 privacy for the stats surface. Read-only: no
+// writes, no schema change, no new dependency.
+app.get('/api/v1/trees/:treeId/stats/living', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const members = await prisma.familyMember.findMany({
+      where: { treeId: req.params.treeId },
+      select: { birthDate: true, deathDate: true, isAlive: true, generation: true },
+    });
+    const stats = computeLivingStats(
+      members.map((m) => ({ birthDate: m.birthDate, deathDate: m.deathDate, isAlive: m.isAlive, generation: m.generation })),
+    );
+    const rawLang = req.query['lang'];
+    const lang = (typeof rawLang === 'string' && rawLang.length > 0 ? rawLang : (req.headers['accept-language'] ?? '')).toLowerCase();
+    const avgLifespanLabel = lang.startsWith('en') ? 'Average age at death' : 'Rata-rata umur saat meninggal';
+    res.json({ ...stats, avgLifespanLabel });
+  } catch (e) {
+    res.status(500).json({ code: 'LIVING_STATS_ERROR', message: (e as Error).message });
   }
 });
 
