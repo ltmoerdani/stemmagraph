@@ -35,6 +35,19 @@
       "title": "Generasi",
       "count_one": "{{count}} generasi",
       "count_other": "{{count}} generasi"
+    },
+    "familySize": {
+      "title": "Ukuran Keluarga",
+      "average": "Rata-rata anak per keluarga",
+      "median": "Median anak per keluarga",
+      "terbesar": "Keluarga terbesar",
+      "jumlah": "Jumlah keluarga",
+      "bucket": {
+        "zero": "Tanpa anak",
+        "oneToTwo": "1 sampai 2 anak",
+        "threeToFour": "3 sampai 4 anak",
+        "fivePlus": "5 anak atau lebih"
+      }
     }
   },
   "header": {

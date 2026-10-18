@@ -35,6 +35,19 @@
       "title": "Generations",
       "count_one": "{{count}} generation",
       "count_other": "{{count}} generations"
+    },
+    "familySize": {
+      "title": "Family Size",
+      "average": "Average children per family",
+      "median": "Median children per family",
+      "terbesar": "Largest family",
+      "jumlah": "Families",
+      "bucket": {
+        "zero": "No children",
+        "oneToTwo": "1 to 2 children",
+        "threeToFour": "3 to 4 children",
+        "fivePlus": "5 or more children"
+      }
     }
   },
   "header": {

@@ -7,6 +7,7 @@ import { computeAgeGroupsPBB, AGE_GROUPS_PBB } from '../../lib/stats/age-groups'
 import { computeUpcomingBirthdays } from '../../lib/stats/upcoming-birthdays';
 import { getStatsApi } from '../../lib/adapters';
 import type { UpcomingAnniversaryDto } from '../../lib/adapters';
+import type { FamilySizeStatsDto } from '../../lib/adapters';
 
 /** Format YYYY-MM-DD ke tanggal pendek locale via Intl UTC (bebas geser hari zona). */
 function formatYmdLocale(ymd: string, locale: string): string {
@@ -24,6 +25,8 @@ export const StatsSidebar: React.FC = () => {
   const [anniversariesLoaded, setAnniversariesLoaded] = useState(false);
   const [generationsCount, setGenerationsCount] = useState<number | null>(null);
   const [generationsLoaded, setGenerationsLoaded] = useState(false);
+  const [familySizeStats, setFamilySizeStats] = useState<FamilySizeStatsDto | null>(null);
+  const [familySizeLoaded, setFamilySizeLoaded] = useState(false);
 
   const livingStats = useMemo(
     () =>
@@ -110,6 +113,32 @@ export const StatsSidebar: React.FC = () => {
         if (cancelled) return;
         setGenerationsCount(null);
         setGenerationsLoaded(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFamilyTreeId]);
+
+  // Family size stats (v290 fase iii b): agregat ukuran keluarga di
+  // server v288, pola persis generations. Adapter null (mock, supabase),
+  // treeId kosong, fetch berjalan, atau fetch gagal berarti section
+  // tidak dirender.
+  useEffect(() => {
+    const api = currentFamilyTreeId ? getStatsApi() : null;
+    if (!currentFamilyTreeId || !api) return;
+    let cancelled = false;
+    setFamilySizeLoaded(false);
+    api
+      .getFamilySizeStats(currentFamilyTreeId)
+      .then((dto) => {
+        if (cancelled) return;
+        setFamilySizeStats(dto);
+        setFamilySizeLoaded(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setFamilySizeStats(null);
+        setFamilySizeLoaded(false);
       });
     return () => {
       cancelled = true;
@@ -271,6 +300,47 @@ export const StatsSidebar: React.FC = () => {
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.generations.title')}</h3>
           <div className="text-sm text-gray-600">{t('stats.generations.count', { count: generationsCount })}</div>
+        </div>
+      )}
+
+      {/* Family Size (v290 fase iii b, sumber endpoint server via adapter) */}
+      {familySizeLoaded && familySizeStats && familySizeStats.average !== null && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.familySize.title')}</h3>
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t('stats.familySize.average')}</span>
+              <span className="font-semibold">{familySizeStats.average.toFixed(1)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t('stats.familySize.median')}</span>
+              <span className="font-semibold">{familySizeStats.median !== null ? familySizeStats.median.toFixed(1) : 'N/A'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t('stats.familySize.terbesar')}</span>
+              <span className="font-semibold">{familySizeStats.max}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t('stats.familySize.jumlah')}</span>
+              <span className="font-semibold">{familySizeStats.familyCount}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t('stats.familySize.bucket.zero')}</span>
+              <span className="font-semibold">{familySizeStats.distribution.zero}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t('stats.familySize.bucket.oneToTwo')}</span>
+              <span className="font-semibold">{familySizeStats.distribution.oneToTwo}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t('stats.familySize.bucket.threeToFour')}</span>
+              <span className="font-semibold">{familySizeStats.distribution.threeToFour}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{t('stats.familySize.bucket.fivePlus')}</span>
+              <span className="font-semibold">{familySizeStats.distribution.fivePlus}</span>
+            </div>
+          </div>
         </div>
       )}
 
