@@ -65,6 +65,7 @@ import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-annivers
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
+import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
