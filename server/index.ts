@@ -64,6 +64,7 @@ import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeGenerations } from '../src/lib/stats/generations';
+import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -2013,6 +2014,105 @@ app.get('/api/v1/trees/:treeId/stats/generations', requireAuthStatsLiving, async
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'GENERATIONS_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Family Size (v288 fase ii, read-only aggregate) ──────────────────────
+//
+// GET /api/v1/trees/:treeId/stats/family-size mengembalikan agregat
+// ukuran keluarga dari modul pure src/lib/stats/family-size-stats.ts
+// (v287). Pola persis route generations (v284): guardTreeAction untuk
+// 403 non-anggota (tanpa WWW-Authenticate), requireAuthStatsLiving
+// supaya 401 jalur ini membawa challenge Bearer. Sumber data satu query
+// select minimal: familyRelationship (memberId, relatedId, type saja).
+// Semantik pembentukan keluarga (kontrak kukuh v288): type 'parent'
+// berarti memberId orang tua dari relatedId, type 'child' kebalikannya,
+// keduanya mengisi childToParents (anak ke set ortu ternormalisasi
+// sorted), type lain diabaikan. Family key A: tiap set ortu unik satu
+// keluarga, childIds diisi anak yang berbagi set itu. Family key B:
+// tiap pasangan spouse sorted pair yang tidak muncul sebagai key A
+// manapun jadi keluarga tanpa anak (childIds kosong). Unit keluarga
+// dikirim ke computeFamilySizeStats; null modul (nihil keluarga)
+// direpresentasikan familyCount 0, average dan median null, max 0,
+// distribution nol semua (keputusan PM v288). Respons agregat non-PII
+// tanpa field individu. Cache private dengan revalidasi 304, ETag
+// STRONG dari hash body, 304 mengulang ETag dan Cache-Control per
+// addendum RFC 9111 (pola v281 v284).
+function buildFamilyUnits(rels: { memberId: string; relatedId: string; type: string }[]): { childIds: string[] }[] {
+  // childToParents: anak ke set ortu ternormalisasi (dedupe, lalu sorted
+  // saat membentuk key).
+  const childToParents = new Map<string, Set<string>>();
+  for (const r of rels) {
+    if (r.type === 'parent') {
+      const set = childToParents.get(r.relatedId) ?? new Set<string>();
+      set.add(r.memberId);
+      childToParents.set(r.relatedId, set);
+    } else if (r.type === 'child') {
+      const set = childToParents.get(r.memberId) ?? new Set<string>();
+      set.add(r.relatedId);
+      childToParents.set(r.memberId, set);
+    }
+  }
+  // Family key A: tiap set ortu unik satu keluarga, childIds = anak
+  // yang berbagi set ortu itu.
+  const familyA = new Map<string, string[]>();
+  for (const [childId, parents] of childToParents) {
+    const key = [...parents].sort().join('|');
+    const bucket = familyA.get(key);
+    if (bucket) bucket.push(childId);
+    else familyA.set(key, [childId]);
+  }
+  const units: { childIds: string[] }[] = [...familyA.values()].map((childIds) => ({ childIds }));
+  // Family key B: pasangan spouse sorted pair yang tidak sama dengan
+  // key A manapun, childIds kosong. Key yang sudah dipakai (A maupun B)
+  // dicatat supaya baris spouse ganda tidak menciptakan unit kembar.
+  const seenKeys = new Set(familyA.keys());
+  for (const r of rels) {
+    if (r.type !== 'spouse') continue;
+    const pair = [r.memberId, r.relatedId].sort().join('|');
+    if (!seenKeys.has(pair)) {
+      seenKeys.add(pair);
+      units.push({ childIds: [] });
+    }
+  }
+  return units;
+}
+
+app.get('/api/v1/trees/:treeId/stats/family-size', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rels = await prisma.familyRelationship.findMany({
+      where: { treeId: req.params.treeId },
+      select: { memberId: true, relatedId: true, type: true },
+    });
+    const stats = computeFamilySizeStats(buildFamilyUnits(rels));
+    const payload = stats ?? {
+      average: null,
+      median: null,
+      max: 0,
+      distribution: { zero: 0, oneToTwo: 0, threeToFour: 0, fivePlus: 0 },
+      familyCount: 0,
+      excludedCount: 0,
+    };
+    const body = JSON.stringify(payload);
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      // Header ETag dan Cache-Control sudah diset sebelum cabang ini sehingga
+      // 304 membawa ulang keduanya, setara 200 per RFC 9111.
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'FAMILY_SIZE_ERROR', message: (e as Error).message });
   }
 });
 
