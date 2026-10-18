@@ -65,6 +65,7 @@ import {
   StatsApi,
   UpcomingAnniversaryDto,
   GenerationsCountDto,
+  FamilySizeStatsDto,
   AdapterError,
   AuthError,
 } from './types';
@@ -462,6 +463,19 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return this.request<GenerationsCountDto>(
       'GET',
       `/trees/${encodeURIComponent(treeId)}/stats/generations`,
+    );
+  }
+
+  // ── Family size stats (v289 fase iii) ──────────────────
+  // Read-only routing to the server v288 aggregate endpoint. The server
+  // computes the family size distribution, so the adapter only carries
+  // the tree id. Network errors and non-OK responses propagate via
+  // this.request without a local catch.
+
+  async getFamilySizeStats(treeId: string): Promise<FamilySizeStatsDto> {
+    return this.request<FamilySizeStatsDto>(
+      'GET',
+      `/trees/${encodeURIComponent(treeId)}/stats/family-size`,
     );
   }
 

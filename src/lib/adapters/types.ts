@@ -581,6 +581,24 @@ export interface GenerationsCountDto {
 }
 
 /**
+ * Agregat ukuran keluarga satu pohon dari endpoint stats/family-size
+ * server v288. Non-PII: hanya angka agregat dan bucket distribusi.
+ */
+export interface FamilySizeStatsDto {
+  average: number | null;
+  median: number | null;
+  max: number;
+  distribution: {
+    zero: number;
+    oneToTwo: number;
+    threeToFour: number;
+    fivePlus: number;
+  };
+  familyCount: number;
+  excludedCount: number;
+}
+
+/**
  * Permukaan statistik server ala ActivityFeedApi: API berdiri sendiri,
  * tidak menambah apa pun ke DataAdapter. Implementasi membiarkan error
  * jaringan atau respons non-OK naik ke pemanggil tanpa penangkap.
@@ -590,4 +608,6 @@ export interface StatsApi {
   listUpcomingAnniversaries(treeId: string, days?: number): Promise<UpcomingAnniversaryDto[]>;
   /** Ambil agregat jumlah generasi pohon; read-only, respons non-PII satu angka. */
   getGenerationsCount(treeId: string): Promise<GenerationsCountDto>;
+  /** Ambil agregat ukuran keluarga pohon; read-only, non-PII, average dan median null bila nihil keluarga. */
+  getFamilySizeStats(treeId: string): Promise<FamilySizeStatsDto>;
 }
