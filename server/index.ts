@@ -65,6 +65,7 @@ import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-annivers
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
+import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -2113,6 +2114,64 @@ app.get('/api/v1/trees/:treeId/stats/family-size', requireAuthStatsLiving, async
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'FAMILY_SIZE_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Marriage Months (v291 fase ii, read-only aggregate) ───────────────────
+//
+// GET /api/v1/trees/:treeId/stats/marriage-months mengembalikan distribusi
+// bulan pernikahan pertama per orang dari modul pure
+// src/lib/stats/marriage-months.ts (v283, TIDAK diubah). Pola persis route
+// family-size (v288): guardTreeAction untuk 403 non-anggota (tanpa
+// WWW-Authenticate), requireAuthStatsLiving supaya 401 jalur ini membawa
+// challenge Bearer. Sumber data satu query lifeEvent MARRIAGE berpasangan
+// (pola route anniversaries v275): partnerMemberId not null, include date.
+// Pemetaan per event ke MarriagePairInput TANPA filter dateKind di server
+// (modul yang memfilter monthStart): pairId spouse sorted pair, dateKind dan
+// yearStart monthStart dayStart dari PartialDate, boleh null. Respons JSON:
+// countsByMonth (12 key GEDCOM JAN..DEC), marriageCount, excludedCount.
+// Agregat non-PII tanpa field individu. Cache private dengan revalidasi
+// 304, ETag STRONG dari hash body, 304 mengulang ETag dan Cache-Control
+// per addendum RFC 9111 (pola v288 v281 v284).
+app.get('/api/v1/trees/:treeId/stats/marriage-months', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: req.params.treeId, eventType: 'MARRIAGE', partnerMemberId: { not: null } },
+      include: { date: true },
+    });
+    const pairs: MarriagePairInput[] = events.map((ev) => {
+      const sortedPair = [ev.memberId, ev.partnerMemberId as string].sort();
+      return {
+        pairId: sortedPair.join(':'),
+        spouseAId: sortedPair[0],
+        spouseBId: sortedPair[1],
+        dateKind: ev.date?.dateKind ?? '',
+        yearStart: ev.date?.yearStart ?? null,
+        monthStart: ev.date?.monthStart ?? null,
+        dayStart: ev.date?.dayStart ?? null,
+      };
+    });
+    const payload = computeMarriageMonths(pairs);
+    const body = JSON.stringify(payload);
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      // Header ETag dan Cache-Control sudah diset sebelum cabang ini sehingga
+      // 304 membawa ulang keduanya, setara 200 per RFC 9111.
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'MARRIAGE_MONTHS_ERROR', message: (e as Error).message });
   }
 });
 
