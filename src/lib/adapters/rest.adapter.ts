@@ -64,6 +64,7 @@ import {
   CitationEventType,
   StatsApi,
   UpcomingAnniversaryDto,
+  GenerationsCountDto,
   AdapterError,
   AuthError,
 } from './types';
@@ -448,6 +449,19 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return this.request<UpcomingAnniversaryDto[]>(
       'GET',
       `/trees/${encodeURIComponent(treeId)}/stats/anniversaries/upcoming${query}`,
+    );
+  }
+
+  // ── Generations count (v285 fase iii) ──────────────────
+  // Read-only routing to the server v284 aggregate endpoint. The server
+  // computes the generation depth, so the adapter only carries the tree
+  // id. Network errors and non-OK responses propagate via this.request
+  // without a local catch.
+
+  async getGenerationsCount(treeId: string): Promise<GenerationsCountDto> {
+    return this.request<GenerationsCountDto>(
+      'GET',
+      `/trees/${encodeURIComponent(treeId)}/stats/generations`,
     );
   }
 

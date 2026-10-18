@@ -572,6 +572,15 @@ export interface UpcomingAnniversaryDto {
 }
 
 /**
+ * Agregat jumlah generasi satu pohon dari endpoint stats/generations
+ * server v284. Non-PII: respons hanya memuat satu angka.
+ */
+export interface GenerationsCountDto {
+  /** Jumlah generasi pada pohon, 0 bila belum ada relasi keluarga. */
+  generationCount: number;
+}
+
+/**
  * Permukaan statistik server ala ActivityFeedApi: API berdiri sendiri,
  * tidak menambah apa pun ke DataAdapter. Implementasi membiarkan error
  * jaringan atau respons non-OK naik ke pemanggil tanpa penangkap.
@@ -579,4 +588,6 @@ export interface UpcomingAnniversaryDto {
 export interface StatsApi {
   /** Ambil daftar peringatan pernikakan mendatang; days opsional, default server 30. */
   listUpcomingAnniversaries(treeId: string, days?: number): Promise<UpcomingAnniversaryDto[]>;
+  /** Ambil agregat jumlah generasi pohon; read-only, respons non-PII satu angka. */
+  getGenerationsCount(treeId: string): Promise<GenerationsCountDto>;
 }
