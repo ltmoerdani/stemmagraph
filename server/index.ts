@@ -65,6 +65,7 @@ import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-annivers
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
+import { computeOldestLiving } from '../src/lib/stats/oldest-living';
 import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
 import { computeGenerationDepth, computePedigreeCompleteness } from '../src/lib/genealogy/tree-health';
 import type { FamilyGraph, ParentEdge } from '../src/lib/genealogy/family-graph';
@@ -2116,6 +2117,62 @@ app.get('/api/v1/trees/:treeId/stats/family-size', requireAuthStatsLiving, async
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'FAMILY_SIZE_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Oldest living (v302 fase ii, read-only ranked list) ─────────────
+//
+// GET /api/v1/trees/:treeId/stats/oldest-living mengembalikan peringkat
+// anggota hidup tertua dari modul pure src/lib/stats/oldest-living.ts
+// (v301 fase i, TIDAK diubah). Pola persis route stats/living dan
+// family-size: guardTreeAction 'view_tree' untuk 403 non-anggota (tanpa
+// WWW-Authenticate), requireAuthStatsLiving supaya 401 jalur ini
+// membawa challenge Bearer. Select minimal: id, birthDate, isAlive,
+// privacyStatus, tanpa relasi. Filter server sebelum modul: isAlive
+// true DAN privacyStatus tidak sama dengan 'private' (gap 3, konsisten
+// src/lib/privacy/exportPrivacyGate.ts: private = redact), sehingga
+// anggota privat tidak bocor meski paling tua. Query topN integer 1
+// sampai 50, default 10; non-integer atau di luar rentang dijawab 400
+// { code: 'INVALID_TOP_N' }. Output { results: [{ id, ageYears }] }
+// tanpa name, birthDate, atau field PII lain; id eksplisit diizinkan
+// untuk join sisi klien yang berotorisasi (keputusan kontrak v302).
+// Cache private no-cache, ETag strong sha256 body, If-None-Match cocok
+// dijawab 304 eksplisit (pola v288).
+app.get('/api/v1/trees/:treeId/stats/oldest-living', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rawTopN = req.query['topN'];
+    const topN = rawTopN === undefined ? 10 : Number(rawTopN);
+    if (!Number.isInteger(topN) || topN < 1 || topN > 50) {
+      return res.status(400).json({ code: 'INVALID_TOP_N', message: 'topN must be an integer between 1 and 50' });
+    }
+    const members = await prisma.familyMember.findMany({
+      where: { treeId: req.params.treeId },
+      select: { id: true, birthDate: true, isAlive: true, privacyStatus: true },
+    });
+    const kandidat = members
+      .filter((m) => m.isAlive && m.privacyStatus !== 'private')
+      .map((m) => ({ id: m.id, birthDate: m.birthDate, isAlive: m.isAlive }));
+    const results = computeOldestLiving(kandidat, topN);
+    const body = JSON.stringify({ results });
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      // ETag dan Cache-Control sudah diset sebelum cabang ini sehingga
+      // 304 membawa ulang keduanya, setara 200 per RFC 9111.
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'OLDEST_LIVING_API_ERROR', message: (e as Error).message });
   }
 });
 
