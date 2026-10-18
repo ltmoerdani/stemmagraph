@@ -63,6 +63,7 @@ import { computeLivingStats } from '../src/lib/stats/living-stats';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
+import { computeGenerations } from '../src/lib/stats/generations';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -1960,6 +1961,58 @@ app.get('/api/v1/trees/:treeId/stats/citation-coverage', requireAuthStatsLiving,
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'CITATION_COVERAGE_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Generations (v284 fase ii, read-only aggregate) ──────────────────────
+//
+// GET /api/v1/trees/:treeId/stats/generations returns the number of
+// generations, computed by the pure module src/lib/stats/generations.ts
+// (v282). Pola persis route citation-coverage (v281): guardTreeAction
+// untuk 403 non-anggota (tanpa WWW-Authenticate), requireAuthStatsLiving
+// supaya 401 jalur ini membawa challenge Bearer. Sumber data satu query
+// select minimal: familyRelationship (memberId, relatedId, type saja).
+// Semantik relasi (kontrak v284): type 'parent' berarti memberId orang
+// tua dari relatedId (edge childId relatedId, parentId memberId), type
+// 'child' kebalikannya, type lain diabaikan. Respons agregat non-PII
+// hanya { generationCount }, tanpa depthByMember atau field per anggota.
+// Cache private dengan revalidasi 304, ETag STRONG dari hash body.
+// Addendum RFC 9111: 304 mengulang header ETag dan Cache-Control.
+app.get('/api/v1/trees/:treeId/stats/generations', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rels = await prisma.familyRelationship.findMany({
+      where: { treeId: req.params.treeId },
+      select: { memberId: true, relatedId: true, type: true },
+    });
+    const edges: { childId: string; parentId: string }[] = [];
+    for (const r of rels) {
+      if (r.type === 'parent') {
+        edges.push({ childId: r.relatedId, parentId: r.memberId });
+      } else if (r.type === 'child') {
+        edges.push({ childId: r.memberId, parentId: r.relatedId });
+      }
+    }
+    const { generationCount } = computeGenerations(edges);
+    const body = JSON.stringify({ generationCount });
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      // Header ETag dan Cache-Control sudah diset sebelum cabang ini sehingga
+      // 304 membawa ulang keduanya, setara 200 per RFC 9111.
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'GENERATIONS_ERROR', message: (e as Error).message });
   }
 });
 
