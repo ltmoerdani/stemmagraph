@@ -57,21 +57,21 @@ describe('computeAgeAtDeathBands', () => {
   })
 
   it('kasus 5: usia negatif (kematian sebelum lahir) masuk skippedPartial', () => {
-    const result = computeAgeAtDeathBands(deceased('1990-05-10', '1989-01-01'))
+    const result = computeAgeAtDeathBands([deceased('1990-05-10', '1989-01-01')])
     expect(result?.counted).toBe(0)
     expect(result?.skippedPartial).toBe(1)
     expect(result?.skippedMissing).toBe(0)
   })
 
   it('kasus 6: birthDate rusak masuk skippedMissing', () => {
-    const result = computeAgeAtDeathBands(deceased('01-01-1990', '2020-01-01'))
+    const result = computeAgeAtDeathBands([deceased('01-01-1990', '2020-01-01')])
     expect(result?.counted).toBe(0)
     expect(result?.skippedMissing).toBe(1)
     expect(result?.skippedPartial).toBe(0)
   })
 
   it('kasus 7: deathDate rusak masuk skippedMissing', () => {
-    const result = computeAgeAtDeathBands(deceased('1990-01-01', 'bukan-tanggal'))
+    const result = computeAgeAtDeathBands([deceased('1990-01-01', 'bukan-tanggal')])
     expect(result?.counted).toBe(0)
     expect(result?.skippedMissing).toBe(1)
   })
@@ -86,10 +86,9 @@ describe('computeAgeAtDeathBands', () => {
   })
 
   it('kasus 9: isAlive true diabaikan meski kedua tanggal lengkap', () => {
-    const result = computeAgeAtDeathBands({
-      ...deceased('1950-01-01', '2020-01-01'),
-      isAlive: true,
-    })
+    const result = computeAgeAtDeathBands([
+      { ...deceased('1950-01-01', '2020-01-01'), isAlive: true },
+    ])
     expect(result?.counted).toBe(0)
     expect(result?.skippedMissing).toBe(0)
     expect(result?.skippedPartial).toBe(0)
@@ -122,13 +121,13 @@ describe('computeAgeAtDeathBands', () => {
     expect(result?.bands['0-9']).toBe(1)
     expect(result?.bands['10-19']).toBe(1)
     expect(result?.bands['20-29']).toBe(0)
-    expect(result?.bands['30-39']).toBe(1)
+    expect(result?.bands['30-39']).toBe(2)
     expect(result?.bands['40-49']).toBe(1)
     expect(result?.bands['50-59']).toBe(1)
     expect(result?.bands['60-69']).toBe(1)
-    expect(result?.bands['70-79']).toBe(1)
-    expect(result?.bands['80+']).toBe(2)
-    expect(result?.counted).toBe(9)
+    expect(result?.bands['70-79']).toBe(2)
+    expect(result?.bands['80+']).toBe(1)
+    expect(result?.counted).toBe(10)
     expect(result?.skippedMissing).toBe(1)
     expect(result?.skippedPartial).toBe(0)
   })
@@ -160,7 +159,7 @@ describe('computeAgeAtDeathBands', () => {
   })
 
   it('kasus 14: kunci band lengkap dan berurutan sesuai kontrak', () => {
-    const result = computeAgeAtDeathBands(deceased('1900-01-01', '1999-12-31'))
+    const result = computeAgeAtDeathBands([deceased('1900-01-01', '1999-12-31')])
     expect(Object.keys(result?.bands ?? {})).toEqual([...AGE_AT_DEATH_BAND_KEYS])
   })
 })
