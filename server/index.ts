@@ -66,6 +66,8 @@ import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
+import { computeGenerationDepth, computePedigreeCompleteness } from '../src/lib/genealogy/tree-health';
+import type { FamilyGraph, ParentEdge } from '../src/lib/genealogy/family-graph';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
@@ -2172,6 +2174,90 @@ app.get('/api/v1/trees/:treeId/stats/marriage-months', requireAuthStatsLiving, a
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'MARRIAGE_MONTHS_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Tree Health (v293 fase ii, read-only aggregate) ───────────────────────
+//
+// GET /api/v1/trees/:treeId/stats/tree-health mengembalikan kedalaman
+// generasi dan kelengkapan pedigree dari modul pure
+// src/lib/genealogy/tree-health.ts (v292, TIDAK diubah). Pola persis
+// route marriage-months (v291): requireAuthStatsLiving supaya 401
+// jalur ini membawa challenge Bearer, guardTreeAction view_tree untuk
+// 403 non-anggota (tanpa WWW-Authenticate). Data dua query: familyMember
+// select id dan familyRelationship select memberId relatedId type, keduanya
+// difilter treeId. Pemetaan graph server-side inline: baris type 'parent'
+// dikelompokkan per anak (relatedId = child, memberId daftar parents),
+// baris spouse diabaikan karena kedua fungsi health hanya membaca
+// parentEdges; unions kosong dan personIds dari daftar member id.
+// Respons agregat { rootId, maxGenerations, generationDepth,
+// pedigreeCompleteness } tanpa field individu. Cache private dengan
+// revalidasi 304, ETag STRONG dari hash body, 304 mengulang ETag dan
+// Cache-Control per RFC 9111 (pola v288 v291).
+app.get('/api/v1/trees/:treeId/stats/tree-health', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rootId = req.query['rootId'];
+    if (typeof rootId !== 'string' || rootId.length === 0) {
+      return res.status(400).json({ code: 'TREE_HEALTH_ROOT_REQUIRED', message: 'Query param rootId wajib diisi' });
+    }
+    let maxGenerations = 8;
+    const rawMaxGen = req.query['maxGenerations'];
+    if (rawMaxGen !== undefined) {
+      const parsed = Number(rawMaxGen);
+      if (!Number.isInteger(parsed) || parsed < 1 || parsed > 20) {
+        return res.status(400).json({ code: 'TREE_HEALTH_MAXGEN_INVALID', message: 'maxGenerations harus integer 1 sampai 20' });
+      }
+      maxGenerations = parsed;
+    }
+    const [members, relationships] = await Promise.all([
+      prisma.familyMember.findMany({ where: { treeId: req.params.treeId }, select: { id: true } }),
+      prisma.familyRelationship.findMany({
+        where: { treeId: req.params.treeId },
+        select: { memberId: true, relatedId: true, type: true },
+      }),
+    ]);
+    const personIds = members.map((m) => m.id);
+    if (!personIds.includes(rootId)) {
+      return res.status(404).json({ code: 'ROOT_NOT_FOUND', message: 'Root tidak ditemukan di tree ini' });
+    }
+    const parentEdges: ParentEdge[] = [];
+    const parentsByChild = new Map<string, string[]>();
+    for (const rel of relationships) {
+      if (rel.type !== 'parent') continue;
+      const list = parentsByChild.get(rel.relatedId) ?? [];
+      list.push(rel.memberId);
+      parentsByChild.set(rel.relatedId, list);
+    }
+    for (const [child, parents] of parentsByChild) {
+      parentEdges.push({ child, fam: child, parents, pedi: 'birth' });
+    }
+    const graph: FamilyGraph = { personIds, unions: [], parentEdges };
+    const payload = {
+      rootId,
+      maxGenerations,
+      generationDepth: computeGenerationDepth(graph, rootId),
+      pedigreeCompleteness: computePedigreeCompleteness(graph, rootId, maxGenerations),
+    };
+    const body = JSON.stringify(payload);
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      // Header ETag dan Cache-Control sudah diset sebelum cabang ini sehingga
+      // 304 membawa ulang keduanya, setara 200 per RFC 9111.
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'TREE_HEALTH_ERROR', message: (e as Error).message });
   }
 });
 
