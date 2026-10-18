@@ -30,6 +30,11 @@
       "anniversaryYear_ordinal_two": "Peringatan {{count}} tahun",
       "anniversaryYear_ordinal_few": "Peringatan {{count}} tahun",
       "anniversaryYear_ordinal_other": "Peringatan {{count}} tahun"
+    },
+    "generations": {
+      "title": "Generasi",
+      "count_one": "{{count}} generasi",
+      "count_other": "{{count}} generasi"
     }
   },
   "header": {

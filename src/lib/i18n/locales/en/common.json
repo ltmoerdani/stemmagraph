@@ -30,6 +30,11 @@
       "anniversaryYear_ordinal_two": "{{count}}nd anniversary",
       "anniversaryYear_ordinal_few": "{{count}}rd anniversary",
       "anniversaryYear_ordinal_other": "{{count}}th anniversary"
+    },
+    "generations": {
+      "title": "Generations",
+      "count_one": "{{count}} generation",
+      "count_other": "{{count}} generations"
     }
   },
   "header": {

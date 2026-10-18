@@ -22,6 +22,8 @@ export const StatsSidebar: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [anniversaryEntries, setAnniversaryEntries] = useState<UpcomingAnniversaryDto[]>([]);
   const [anniversariesLoaded, setAnniversariesLoaded] = useState(false);
+  const [generationsCount, setGenerationsCount] = useState<number | null>(null);
+  const [generationsLoaded, setGenerationsLoaded] = useState(false);
 
   const livingStats = useMemo(
     () =>
@@ -83,6 +85,31 @@ export const StatsSidebar: React.FC = () => {
         if (cancelled) return;
         setAnniversaryEntries([]);
         setAnniversariesLoaded(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFamilyTreeId]);
+
+  // Generations count (v286): jumlah generasi hidup di server, sama pola
+  // anniversaries. Adapter null (mock, supabase), treeId kosong, fetch
+  // berjalan, atau fetch gagal berarti section tidak dirender.
+  useEffect(() => {
+    const api = currentFamilyTreeId ? getStatsApi() : null;
+    if (!currentFamilyTreeId || !api) return;
+    let cancelled = false;
+    setGenerationsLoaded(false);
+    api
+      .getGenerationsCount(currentFamilyTreeId)
+      .then((dto) => {
+        if (cancelled) return;
+        setGenerationsCount(dto.generationCount);
+        setGenerationsLoaded(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setGenerationsCount(null);
+        setGenerationsLoaded(false);
       });
     return () => {
       cancelled = true;
@@ -236,6 +263,14 @@ export const StatsSidebar: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Generations (v286, sumber endpoint server via adapter) */}
+      {generationsLoaded && generationsCount !== null && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.generations.title')}</h3>
+          <div className="text-sm text-gray-600">{t('stats.generations.count', { count: generationsCount })}</div>
         </div>
       )}
 

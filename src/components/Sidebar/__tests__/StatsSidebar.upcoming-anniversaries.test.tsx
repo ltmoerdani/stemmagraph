@@ -29,6 +29,7 @@ const { mockMembers, mockStats, mockTreeId, mockEntries, mockApi } = vi.hoisted(
         treeId: string,
         days?: number,
       ) => Promise<AnniversaryRow[]>;
+      getGenerationsCount: (treeId: string) => Promise<{ generationCount: number }>;
     } | null,
   },
 }));
@@ -144,6 +145,7 @@ beforeEach(async () => {
   mockMembers.list = [member({ id: 'bd1', name: 'Ultah Hari Ini', birthDate: '2000-06-15' })];
   mockApi.value = {
     listUpcomingAnniversaries: vi.fn(() => Promise.resolve(mockEntries.value)),
+    getGenerationsCount: vi.fn(() => Promise.resolve({ generationCount: 2 })),
   };
 });
 
@@ -291,6 +293,7 @@ describe('StatsSidebar Upcoming Anniversaries wiring v277-ii', () => {
   it('fetch gagal: section tidak dirender tanpa crash', async () => {
     mockApi.value = {
       listUpcomingAnniversaries: vi.fn(() => Promise.reject(new Error('network down'))),
+      getGenerationsCount: vi.fn(() => Promise.resolve({ generationCount: 2 })),
     };
     renderSidebar();
     await flush();
@@ -299,7 +302,7 @@ describe('StatsSidebar Upcoming Anniversaries wiring v277-ii', () => {
 
   it('treeId kosong: api tak dipanggil dan section tidak dirender', async () => {
     const spy = vi.fn(() => Promise.resolve(mockEntries.value));
-    mockApi.value = { listUpcomingAnniversaries: spy };
+    mockApi.value = { listUpcomingAnniversaries: spy, getGenerationsCount: vi.fn(() => Promise.resolve({ generationCount: 2 })) };
     mockTreeId.value = null;
     mockEntries.value = FIXTURE;
     renderSidebar();
