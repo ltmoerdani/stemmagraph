@@ -48,6 +48,10 @@
         "threeToFour": "3 to 4 children",
         "fivePlus": "5 or more children"
       }
+    },
+    "oldestLiving": {
+      "title": "Oldest living members",
+      "rank": "Rank {{rank}}"
     }
   },
   "header": {

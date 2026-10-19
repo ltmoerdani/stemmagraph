@@ -27,6 +27,8 @@ export const StatsSidebar: React.FC = () => {
   const [generationsLoaded, setGenerationsLoaded] = useState(false);
   const [familySizeStats, setFamilySizeStats] = useState<FamilySizeStatsDto | null>(null);
   const [familySizeLoaded, setFamilySizeLoaded] = useState(false);
+  const [oldestLiving, setOldestLiving] = useState<OldestLivingEntryDto[] | null>(null);
+  const [oldestLivingLoaded, setOldestLivingLoaded] = useState(false);
 
   const livingStats = useMemo(
     () =>
@@ -139,6 +141,32 @@ export const StatsSidebar: React.FC = () => {
         if (cancelled) return;
         setFamilySizeStats(null);
         setFamilySizeLoaded(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFamilyTreeId]);
+
+  // Oldest living (v303 fase iii): peringkat anggota hidup tertua dari
+  // server v302, pola persis family-size v290. Adapter null (mock,
+  // supabase), treeId kosong, fetch berjalan, atau fetch gagal berarti
+  // section tidak dirender.
+  useEffect(() => {
+    const api = currentFamilyTreeId ? getStatsApi() : null;
+    if (!currentFamilyTreeId || !api) return;
+    let cancelled = false;
+    setOldestLivingLoaded(false);
+    api
+      .getOldestLiving(currentFamilyTreeId)
+      .then((dto) => {
+        if (cancelled) return;
+        setOldestLiving(dto);
+        setOldestLivingLoaded(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setOldestLiving(null);
+        setOldestLivingLoaded(false);
       });
     return () => {
       cancelled = true;
@@ -340,6 +368,21 @@ export const StatsSidebar: React.FC = () => {
               <span className="text-sm text-gray-600">{t('stats.familySize.bucket.fivePlus')}</span>
               <span className="font-semibold">{familySizeStats.distribution.fivePlus}</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Oldest Living (v303 fase iii, sumber endpoint server via adapter) */}
+      {oldestLivingLoaded && oldestLiving && oldestLiving.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.oldestLiving.title')}</h3>
+          <div className="mt-3 space-y-2">
+            {oldestLiving.slice(0, 10).map((entry, index) => (
+              <div key={entry.id} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('stats.oldestLiving.rank', { rank: index + 1 })}</span>
+                <span className="font-semibold">{entry.ageYears}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
