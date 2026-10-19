@@ -610,4 +610,6 @@ export interface StatsApi {
   getGenerationsCount(treeId: string): Promise<GenerationsCountDto>;
   /** Ambil agregat ukuran keluarga pohon; read-only, non-PII, average dan median null bila nihil keluarga. */
   getFamilySizeStats(treeId: string): Promise<FamilySizeStatsDto>;
+  /** Ambil peringkat anggota hidup tertua pohon; read-only, non-PII: id dan ageYears tanpa nama. */
+  getOldestLiving(treeId: string): Promise<OldestLivingEntryDto[]>;
 }

@@ -479,6 +479,18 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     );
   }
 
+  // Read-only routing ke endpoint agregat server v302. Server menghitung
+  // peringkat oldest living, adapter hanya membawa tree id. Error jaringan
+  // dan respons non-OK naik via this.request tanpa penangkap lokal,
+  // pola persis getFamilySizeStats.
+
+  async getOldestLiving(treeId: string): Promise<OldestLivingEntryDto[]> {
+    return this.request<OldestLivingEntryDto[]>(
+      'GET',
+      `/trees/${encodeURIComponent(treeId)}/stats/oldest-living`,
+    );
+  }
+
   // ── Weekly digest (P2-7, ADR 0008) ─────────────────────
   // Pure routing: the server renders the preview from stored events and
   // guards the preferences column per caller. The adapter sends one

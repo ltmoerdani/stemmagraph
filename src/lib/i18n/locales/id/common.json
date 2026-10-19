@@ -48,6 +48,10 @@
         "threeToFour": "3 sampai 4 anak",
         "fivePlus": "5 anak atau lebih"
       }
+    },
+    "oldestLiving": {
+      "title": "Anggota hidup tertua",
+      "rank": "Peringkat {{rank}}"
     }
   },
   "header": {
