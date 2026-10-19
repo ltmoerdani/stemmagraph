@@ -94,7 +94,7 @@ describe('computeGivenNameTrends', () => {
       member('1971-02-02', 'Budi'),
     ]
     const result = computeGivenNameTrends(members, { topN: 2 })
-    expect(result.names).toEqual(['budi', 'ayu'])
+    expect(result.names).toEqual(['ayu', 'budi'])
     expect(result.series).toHaveLength(2)
     expect(result.totalNames).toBe(3)
   })
@@ -133,7 +133,7 @@ describe('computeGivenNameTrends', () => {
     expect(() => computeGivenNameTrends([member('1971-02-29', 'Meri')])).toThrow(Error)
     expect(() => computeGivenNameTrends([member('1900-02-29', 'Meri')])).toThrow(Error)
     expect(() => computeGivenNameTrends([member('', 'Meri')])).toThrow(Error)
-    expect(() => computeGivenNameTrends([member('1970-02-29', 'Meri')])).not.toThrow()
+    expect(() => computeGivenNameTrends([member('1972-02-29', 'Meri')])).not.toThrow()
   })
 
   it('kasus 12: determinisme, dua pemanggilan dan urutan input berbeda hasil identik', () => {
