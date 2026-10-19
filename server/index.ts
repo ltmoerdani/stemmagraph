@@ -67,6 +67,7 @@ import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { computeOldestLiving } from '../src/lib/stats/oldest-living';
 import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
+import { computeChildrenPerFamilyDistribution } from '../src/lib/stats/children-per-family';
 import { computeGenerationDepth, computePedigreeCompleteness } from '../src/lib/genealogy/tree-health';
 import type { FamilyGraph, ParentEdge } from '../src/lib/genealogy/family-graph';
 import { createErasureExpressAdapter } from '../src/server/consent/erasure-express-adapter';
@@ -2315,6 +2316,49 @@ app.get('/api/v1/trees/:treeId/stats/tree-health', requireAuthStatsLiving, async
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'TREE_HEALTH_ERROR', message: (e as Error).message });
+  }
+});
+
+// Children per family (v306 fase ii, distribusi agregat).
+//
+// GET /api/v1/trees/:treeId/stats/children-per-family mengembalikan
+// distribusi jumlah anak per keluarga dari modul pure
+// src/lib/stats/children-per-family.ts (v297 fase i, TIDAK diubah).
+// Keluarga dibentuk lewat helper existing buildFamilyUnits (TIDAK
+// diubah), select minimal pola family-size. Output
+// { distribution: [{ children, familyCount }], familyCount, average }
+// tanpa field PII apa pun (tidak ada id anggota, nama, tanggal).
+// Tree kosong menghasilkan payload nol langsung dari modul. Endpoint
+// tree-wide tanpa query param sehingga tidak ada kasus 400.
+// Cache private no-cache, ETag strong sha256 body, If-None-Match cocok
+// dijawab 304 eksplisit (pola family-size dan v288).
+app.get('/api/v1/trees/:treeId/stats/children-per-family', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rels = await prisma.familyRelationship.findMany({
+      where: { treeId: req.params.treeId },
+      select: { memberId: true, relatedId: true, type: true },
+    });
+    const payload = computeChildrenPerFamilyDistribution(buildFamilyUnits(rels));
+    const body = JSON.stringify(payload);
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      // Header ETag dan Cache-Control sudah diset sebelum cabang ini sehingga
+      // 304 membawa ulang keduanya, setara 200 per RFC 9111.
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'CHILDREN_PER_FAMILY_ERROR', message: (e as Error).message });
   }
 });
 
