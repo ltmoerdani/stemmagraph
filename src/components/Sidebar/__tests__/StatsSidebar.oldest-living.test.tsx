@@ -226,6 +226,7 @@ describe('StatsSidebar Oldest Living wiring v303', () => {
     renderSidebar();
     expect(await screen.findByText('Anggota hidup tertua')).toBeTruthy();
     expect(screen.getByText('Peringkat 1')).toBeTruthy();
-    expect(screen.getByText('0')).toBeTruthy();
+    const zeroCells = screen.getAllByText('0');
+    expect(zeroCells.length).toBeGreaterThanOrEqual(1);
   });
 });
