@@ -12,44 +12,73 @@ export interface FertilitySpanResult {
   latestBirthDate: string | null;
 }
 
+interface ParsedDate {
+  iso: string;
+  year: number;
+  month: number;
+  day: number;
+  serial: number;
+}
+
+const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+function daysInMonth(year: number, month: number): number {
+  const lengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (month === 2 && isLeapYear(year)) return 29;
+  return lengths[month - 1];
+}
+
+export function parseStrictIsoDate(raw: string): ParsedDate {
+  if (typeof raw !== 'string' || !DATE_PATTERN.test(raw)) {
+    throw new Error(`Invalid birth date format: ${JSON.stringify(raw)}, expected strict YYYY-MM-DD`);
+  }
+  const year = Number(raw.slice(0, 4));
+  const month = Number(raw.slice(5, 7));
+  const day = Number(raw.slice(8, 10));
+  const monthValid = month >= 1 && month <= 12;
+  const dayValid = day >= 1 && day <= daysInMonth(year, month);
+  if (!monthValid || !dayValid) {
+    throw new Error(`Invalid calendar date: ${raw}`);
+  }
+  const serial = Date.UTC(year, month - 1, day);
+  return { iso: raw, year, month, day, serial };
+}
+
 export function computeFertilitySpan(families: FamilyChildrenInput[]): FertilitySpanResult[] {
   const sortedFamilies = [...families].sort((a, b) => a.familyId.localeCompare(b.familyId));
-  
-  return sortedFamilies.map(fam => {
-    const validDates = fam.childBirthDates
-      .filter(d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d))
-      .map(d => new Date(d).getTime())
-      .filter(t => !isNaN(t))
-      .sort((a, b) => a - b);
 
-    const childCount = validDates.length;
+  return sortedFamilies.map(fam => {
+    const dates = fam.childBirthDates.map(parseStrictIsoDate).sort((a, b) => a.serial - b.serial);
+
+    const childCount = dates.length;
     if (childCount < 2) {
+      const only = childCount === 1 ? dates[0].iso : null;
       return {
         familyId: fam.familyId,
         childCount,
         spanDays: 0,
         spanMonths: 0,
-        earliestBirthDate: childCount === 1 ? new Date(validDates[0]).toISOString().slice(0, 10) : null,
-        latestBirthDate: childCount === 1 ? new Date(validDates[0]).toISOString().slice(0, 10) : null,
+        earliestBirthDate: only,
+        latestBirthDate: only,
       };
     }
 
-    const minTime = validDates[0];
-    const maxTime = validDates[validDates.length - 1];
-    const diffMs = maxTime - minTime;
-    const spanDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-    
-    const d1 = new Date(minTime);
-    const d2 = new Date(maxTime);
-    const spanMonths = (d2.getUTCFullYear() - d1.getUTCFullYear()) * 12 + (d2.getUTCMonth() - d1.getUTCMonth());
+    const earliest = dates[0];
+    const latest = dates[dates.length - 1];
+    const spanDays = Math.round((latest.serial - earliest.serial) / 86400000);
+    const spanMonths = (latest.year - earliest.year) * 12 + (latest.month - earliest.month);
 
     return {
       familyId: fam.familyId,
       childCount,
       spanDays,
-      spanMonths: Math.max(0, spanMonths),
-      earliestBirthDate: d1.toISOString().slice(0, 10),
-      latestBirthDate: d2.toISOString().slice(0, 10),
+      spanMonths,
+      earliestBirthDate: earliest.iso,
+      latestBirthDate: latest.iso,
     };
   });
 }
