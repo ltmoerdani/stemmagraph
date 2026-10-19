@@ -48,6 +48,12 @@ export function parseStrictIsoDate(raw: string): ParsedDate {
   return { iso: raw, year, month, day, serial };
 }
 
+function spanWholeMonths(min: ParsedDate, max: ParsedDate): number {
+  const months = (max.year - min.year) * 12 + (max.month - min.month);
+  const anniversaryReached = max.day >= min.day;
+  return anniversaryReached ? months : months - 1;
+}
+
 export function computeFertilitySpan(families: FamilyChildrenInput[]): FertilitySpanResult[] {
   const sortedFamilies = [...families].sort((a, b) => a.familyId.localeCompare(b.familyId));
 
@@ -70,7 +76,7 @@ export function computeFertilitySpan(families: FamilyChildrenInput[]): Fertility
     const earliest = dates[0];
     const latest = dates[dates.length - 1];
     const spanDays = Math.round((latest.serial - earliest.serial) / 86400000);
-    const spanMonths = (latest.year - earliest.year) * 12 + (latest.month - earliest.month);
+    const spanMonths = Math.max(0, spanWholeMonths(earliest, latest));
 
     return {
       familyId: fam.familyId,
