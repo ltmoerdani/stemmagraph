@@ -132,21 +132,25 @@ export function computeSurvivalCurve(
     entries.push({ decadeStart, ageAtDeath: wholeYearsAt(birth, death) })
   }
 
-  const cohorts = new Map<number, Array<number | null>>()
+  const grouped = new Map<number | typeof SINGLE_COHORT_KEY, Array<number | null>>()
   for (const entry of entries) {
-    let cohort = cohorts.get(entry.decadeStart)
+    const key = groupByDecade ? entry.decadeStart : SINGLE_COHORT_KEY
+    let cohort = grouped.get(key)
     if (!cohort) {
       cohort = []
-      cohorts.set(entry.decadeStart, cohort)
+      grouped.set(key, cohort)
     }
     cohort.push(entry.ageAtDeath)
   }
 
-  const sortedDecades = [...cohorts.keys()].sort((a, b) => a - b)
+  const cohortKeys = [...grouped.keys()].sort((a, b) => {
+    if (typeof a === 'string' || typeof b === 'string') return 0
+    return a - b
+  })
 
   const results: SurvivalCohortResult[] = []
-  for (const decadeStart of sortedDecades) {
-    const cohort = cohorts.get(decadeStart) ?? []
+  for (const key of cohortKeys) {
+    const cohort = grouped.get(key) ?? []
     const cohortSize = cohort.length
     if (cohortSize === 0) {
       continue
@@ -160,7 +164,7 @@ export function computeSurvivalCurve(
       return { age, aliveCount, survivalFraction: round2(aliveCount / cohortSize) }
     })
     results.push({
-      decade: groupByDecade ? `${decadeStart}s` : SINGLE_COHORT_KEY,
+      decade: typeof key === 'string' ? key : `${key}s`,
       cohortSize,
       survivorsAtAges,
     })
