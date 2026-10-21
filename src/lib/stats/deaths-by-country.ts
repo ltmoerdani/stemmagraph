@@ -1,43 +1,89 @@
-import { describe, it, expect } from 'vitest';
-
-export function getDeathsByCountry(persons: any[]) {
-  const counts: Record<string, number> = {};
-  let dated = 0;
-  let excludedNoPlace = 0;
-
-  for (const p of persons) {
-    const death = p.deathDate || p.death;
-    const place = p.deathPlace || p.place;
-    if (death && death.date && place) {
-      dated++;
-      const country = String(place).trim().toLowerCase();
-      counts[country] = (counts[country] || 0) + 1;
-    } else {
-      excludedNoPlace++;
-    }
-  }
-
-  const items = Object.entries(counts)
-    .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-
-  return { items, totalDated: dated, excludedNoPlace };
+export interface DeathsByCountryInput {
+  deathDate?: { date?: string };
+  deathPlace?: string;
 }
 
-describe('Deaths by Country', () => {
-  it('counts deaths by country correctly', () => {
-    const persons = [
-      { deathDate: { date: '2020' }, deathPlace: 'Indonesia' },
-      { deathDate: { date: '2021' }, deathPlace: 'Indonesia' },
-      { deathDate: { date: '2022' }, deathPlace: 'Malaysia' },
-      { deathDate: { date: '2023' } }, // excluded
-    ];
-    const res = getDeathsByCountry(persons);
-    expect(res.items).toEqual([
-      { label: 'indonesia', count: 2 },
-      { label: 'malaysia', count: 1 },
-    ]);
-    expect(res.totalDated).toBe(3);
-    expect(res.excludedNoPlace).toBe(1);
-  });
-});
+export interface DeathsByCountryRow {
+  label: string;
+  count: number;
+}
+
+export interface DeathsByCountryResult {
+  items: DeathsByCountryRow[];
+  totalDated: number;
+  excludedNoPlace: number;
+}
+
+const ERROR_PREFIX = 'deaths-by-country';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function extractCountry(place: string): string {
+  const trimmed = place.trim();
+  const lastToken = trimmed.includes(',')
+    ? trimmed.slice(trimmed.lastIndexOf(',') + 1)
+    : trimmed;
+  return lastToken.trim().toLowerCase();
+}
+
+export function computeDeathsByCountry(entries: unknown): DeathsByCountryResult {
+  if (!Array.isArray(entries)) {
+    throw new Error(`${ERROR_PREFIX}: input harus array`);
+  }
+
+  const counts = new Map<string, number>();
+  let totalDated = 0;
+  let excludedNoPlace = 0;
+
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry: unknown = entries[index];
+    if (!isRecord(entry)) {
+      throw new Error(`${ERROR_PREFIX}: entri index ${index} harus objek`);
+    }
+
+    const rawDeathDate: unknown = entry.deathDate;
+    if (rawDeathDate !== undefined && !isRecord(rawDeathDate)) {
+      throw new Error(`${ERROR_PREFIX}: entri index ${index} deathDate harus objek`);
+    }
+
+    const rawDate: unknown =
+      rawDeathDate === undefined ? undefined : rawDeathDate.date;
+    if (rawDate !== undefined && typeof rawDate !== 'string') {
+      throw new Error(`${ERROR_PREFIX}: entri index ${index} deathDate.date harus string`);
+    }
+
+    const rawPlace: unknown = entry.deathPlace;
+    if (rawPlace !== undefined && typeof rawPlace !== 'string') {
+      throw new Error(`${ERROR_PREFIX}: entri index ${index} deathPlace harus string`);
+    }
+
+    const hasDatedPlace =
+      typeof rawDate === 'string' &&
+      rawDate.trim() !== '' &&
+      typeof rawPlace === 'string' &&
+      rawPlace.trim() !== '';
+
+    if (!hasDatedPlace) {
+      excludedNoPlace += 1;
+      continue;
+    }
+
+    totalDated += 1;
+    const label = extractCountry(rawPlace);
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+
+  const items: DeathsByCountryRow[] = [];
+  for (const [label, count] of counts) {
+    if (count > 0) {
+      items.push({ label, count });
+    }
+  }
+  items.sort(
+    (a, b) => b.count - a.count || a.label.localeCompare(b.label),
+  );
+
+  return { items, totalDated, excludedNoPlace };
+}
