@@ -27,10 +27,10 @@ describe('ancestor-count-distribution fase i', () => {
 
   it('kasus 2: distribusi dasar lintas bucket', () => {
     const result = computeAncestorCountDistribution([
-      { personId: 'p1', ancestors: ids(2) },
-      { personId: 'p2', ancestors: ids(5) },
-      { personId: 'p3', ancestors: ids(9) },
-      { personId: 'p4', ancestors: ids(13) },
+      { personId: 'p1', ancestors: ids(2, 'a') },
+      { personId: 'p2', ancestors: ids(5, 'b') },
+      { personId: 'p3', ancestors: ids(9, 'c') },
+      { personId: 'p4', ancestors: ids(13, 'd') },
     ])
     expect(result.buckets.map((b) => b.count)).toEqual([1, 1, 1, 1])
     expect(result.totalPersons).toBe(4)
