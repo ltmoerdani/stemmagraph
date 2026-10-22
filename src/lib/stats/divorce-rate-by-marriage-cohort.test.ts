@@ -121,11 +121,11 @@ describe('computeDivorceRateByMarriageCohort', () => {
     const result = computeDivorceRateByMarriageCohort([
       rec('f1', '1940-01-01', null),
       rec('f2', '1941-01-01', null),
-      rec('f3', '1945-01-01', '1946-01-01'),
+      rec('f3', '1950-01-01', '1951-01-01'),
     ])
-    expect(result.cohorts[0]).toMatchObject({ cohort: '1940', rate: 0 })
-    expect(result.cohorts[1]).toMatchObject({ cohort: '1940', married: 1, divorced: 1, rate: 1 })
-    expect(result.cohorts).toHaveLength(1)
+    expect(result.cohorts).toHaveLength(2)
+    expect(result.cohorts[0]).toMatchObject({ cohort: '1940', married: 2, divorced: 0, rate: 0 })
+    expect(result.cohorts[1]).toMatchObject({ cohort: '1950', married: 1, divorced: 1, rate: 1 })
   })
 
   it('divorceDate tanpa marriageDate throw', () => {
