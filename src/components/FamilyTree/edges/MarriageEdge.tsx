@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { EdgeProps } from '@xyflow/react';
 
 /**
  * MarriageEdge component renders a horizontal connection line between spouses
  * with a heart indicator in the middle to represent marriage relationship
- * 
+ *
+ * S-04 pilar canvas kinerja: dibungkus React.memo agar perubahan satu node
+ * (drag/zoom/selection) tidak memicu re-render seluruh edge pasangan.
+ *
  * @param props - EdgeProps containing connection coordinates and styling
  * @returns JSX element representing the marriage connection
  */
-export const MarriageEdge: React.FC<EdgeProps> = ({
+export const MarriageEdge = memo(({
   id,
   sourceX,
   sourceY,
@@ -16,7 +19,7 @@ export const MarriageEdge: React.FC<EdgeProps> = ({
   targetY,
   style = {},
   markerEnd,
-}) => {
+}: EdgeProps) => {
   /**
    * Creates a direct horizontal path for spouse connections
    * Uses average Y coordinate to ensure perfectly horizontal line
@@ -80,4 +83,6 @@ export const MarriageEdge: React.FC<EdgeProps> = ({
       </text>
     </>
   );
-};
+});
+
+MarriageEdge.displayName = 'MarriageEdge';
