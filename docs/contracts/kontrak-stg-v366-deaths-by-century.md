@@ -1,0 +1,21 @@
+# Kontrak GOAL v366-STG-DEATHS-BY-CENTURY fase i
+
+- Project: Stemmagraph (T0d statistik). Prioritas #2. Base: origin/develop 182da2d.
+- Jangkar resmi: wt_statistic.php getDeathsByCentury() baris 430 sampai 433, delegasi EventRepository::eventsByCentury('DEAT'), distribusi kematian per abad (tab Life span). Rujukan pola: divorces-by-century v347 dan weddings-by-century v346 (centuryStart string, undated counter), semantik tanggal input mengikuti deaths-by-decade v365. Rujukan pola, bukan salinan kode.
+- Anti-dup: grep deaths-by-century NIHIL di src server docs GOAL_HISTORY (verifikasi PM wake-128). death-pyramid menyentuh deathsByCenturyAgeBandSex (piramida umur per kohort ABAD KELAHIRAN, beda substantif), survival-cohort-century kohort abad kelahiran, births-by-decade dan deaths-by-decade resolusi dekade. BERSIH.
+- Scope: TEPAT 2 berkas BARU di src/lib/stats/: deaths-by-century.ts + deaths-by-century.test.ts. Dilarang sentuh berkas lain, lockfile, server.
+- API modul (pure, deterministik, tanpa any):
+  - computeDeathsByCentury(records: unknown): DeathsByCenturyResult
+  - input: array entri SATU per orang { personId: string, deathDate: string | null }.
+  - deathDate null berarti orang tanpa tanggal kematian terverifikasi: SAH, masuk penghitung undated, bukan error.
+  - Abad = floor(tahun / 100) * 100, label string '1500', '1600', dst.
+  - DeathsByCenturyResult: { centuries: Array<{ century: string, count: number }>, total: number, undated: number }.
+  - centuries urut ASC numerik centuryStart, hanya abad dengan count >= 1 yang muncul (kohort nihil tidak masuk output pola v328).
+  - total = jumlah count semua abad; undated = jumlah deathDate null.
+  - Parsing strict ber-index pola v339/v346/v365 (prefiks pesan deaths-by-century:): records bukan array, entri bukan objek ber-index, personId bukan string, personId string kosong, deathDate tipe selain string dan null, format bukan YYYY-MM-DD, bulan di luar 1 sampai 12 (termasuk 00 dan 13), tanggal tidak valid kalender, atau 29 Feb non-kabisat DILEMPAR Error ber-prefiks. 29 Feb kabisat (2000-02-29) VALID. Validasi kalender deterministik UTC atau tabel hari-per-bulan.
+  - personId duplikat lintas entri TIDAK didedupe: semua entri tetap dihitung, konsisten v344 v346.
+  - Input kosong menghasilkan centuries kosong, total 0, undated 0, tanpa throw.
+  - Deterministik: akumulasi count per kunci abad di Map lalu urut ASC numerik; urutan input tidak memengaruhi output. Tanpa import server/, tanpa prisma, tanpa fetch, tanpa Date.now, tanpa random.
+- Test: vitest minimal 16 kasus: kosong, satu abad, multi abad ASC dari input acak, semua null, mixed dated undated, boundary 1699/1700 dan 1999/2000, duplikat personId dihitung, total = jumlah count, kohor nihil tak muncul, determinisme dua urutan input, parser throw per jenis (bukan array, entri bukan objek, personId bukan string, personId kosong, deathDate tipe salah, format abc dan 1700-1-1, bulan 00 dan 13 dan 31 Apr, 29 Feb non-kabisat throw, 2000-02-29 kabisat valid), undated null tidak kena parser.
+- Gates: npm ci, npx vitest run kedua berkas baru (lulus penuh), npm run build rc 0, npx tsc --noEmit rc 0, npx eslint kedua berkas rc 0, em dash 0 di diff, baseline genealogy 2106 test 158 file tidak boleh turun.
+- Proses: branch improve/stg-v366-deaths-by-century SUDAH DIBUAT PM dari develop, kontrak komit pertama. PUSH SETIAP KOMIT ke origin segera setelah commit (push per komit, WAJIB, pola v364). DILARANG merge sendiri ke develop. Dilarang sentuh main dan staging. Lapor: repo, berkas diubah, hasil gates, nama cabang, hash origin.
