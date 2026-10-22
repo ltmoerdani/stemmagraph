@@ -84,28 +84,6 @@ const VALID_KINDS = new Set<RecordKind>([
   'location',
 ])
 
-const KIND_FIELD: Record<
-  RecordKind,
-  keyof Pick<
-    RecordInventoryResult,
-    | 'persons'
-    | 'families'
-    | 'sources'
-    | 'media'
-    | 'notes'
-    | 'repositories'
-    | 'locations'
-  >
-> = {
-  person: 'persons',
-  family: 'families',
-  source: 'sources',
-  media: 'media',
-  note: 'notes',
-  repository: 'repositories',
-  location: 'locations',
-}
-
 export function computeRecordInventory(
   entries: unknown,
 ): RecordInventoryResult {
