@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   // .worktrees/** excluded so parallel git worktrees never produce false lint errors
-  { ignores: ['dist', 'src/lib/gedcom/vendor/**', '.worktrees/**', '.qa-worktree/**'] },
+  // S-04: arsip/scratch non-produksi di-ignore agar lint hanya menyapu kode sumber
+  { ignores: ['dist', 'src/lib/gedcom/vendor/**', '.worktrees/**', '.qa-worktree/**', '.qa-archive/**', '.probe-wake/**', '.tmp-*/**', 'tmp*/**', '*.log'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

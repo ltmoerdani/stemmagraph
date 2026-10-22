@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { EdgeProps } from '@xyflow/react';
 
 /**
  * ParentChildEdge component renders a bracket-style connection between parent and child nodes
  * Uses tier-based layout with clean bracket paths for better visual hierarchy
  *
+ * S-04 pilar canvas kinerja: dibungkus React.memo agar drag satu node tidak
+ * memicu re-render seluruh bracket parent-child di canvas.
+ *
  * @param props - EdgeProps containing connection coordinates and styling
  * @returns JSX element representing the parent-child connection
  */
-export const ParentChildEdge: React.FC<EdgeProps> = ({
+export const ParentChildEdge = memo(({
   id,
   sourceX,
   sourceY,
@@ -16,7 +19,7 @@ export const ParentChildEdge: React.FC<EdgeProps> = ({
   targetY,
   style = {},
   markerEnd,
-}) => {
+}: EdgeProps) => {
   /**
    * Creates a clean tier-based bracket path with better proportions for wider spacing
    * Connects parent node to child node with a professional bracket-style layout
@@ -76,4 +79,6 @@ export const ParentChildEdge: React.FC<EdgeProps> = ({
       />
     </>
   );
-};
+});
+
+ParentChildEdge.displayName = 'ParentChildEdge';

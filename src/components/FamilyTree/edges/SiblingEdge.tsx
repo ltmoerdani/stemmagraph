@@ -1,21 +1,24 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { EdgeProps } from '@xyflow/react';
 
 /**
  * SiblingEdge component renders a bracket-style connection between siblings
  * Uses dashed lines to distinguish from parent-child relationships
  *
+ * S-04 pilar canvas kinerja: dibungkus React.memo agar drag satu node tidak
+ * memicu re-render seluruh bracket sibling di canvas.
+ *
  * @param props - EdgeProps containing connection coordinates and styling
  * @returns JSX element representing the sibling connection
  */
-export const SiblingEdge: React.FC<EdgeProps> = ({
+export const SiblingEdge = memo(({
   id,
   sourceX,
   sourceY,
   targetX,
   targetY,
   style = {},
-}) => {
+}: EdgeProps) => {
   /**
    * Creates a bracket-style path for sibling connections
    * Connects siblings with a horizontal line above both nodes
@@ -48,4 +51,6 @@ export const SiblingEdge: React.FC<EdgeProps> = ({
       strokeLinecap="round"
     />
   );
-};
+});
+
+SiblingEdge.displayName = 'SiblingEdge';
