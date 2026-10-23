@@ -64,6 +64,18 @@
       "withoutNote": "Without note",
       "avgNotesPerCitation": "Average notes per citation",
       "totalNotes": "Total notes"
+    },
+    "sourceRecordStats": {
+      "bucketZero": "No citations",
+      "bucketOne": "One citation",
+      "bucketTwoToFour": "Two to four citations",
+      "bucketFiveToNine": "Five to nine citations",
+      "bucketTenPlus": "Ten or more citations",
+      "orphanSources": "Unused sources",
+      "danglingCitations": "Citations to unknown sources",
+      "withNote": "With note",
+      "withoutNote": "Without note",
+      "totalNotes": "Total notes"
     }
   },
   "header": {
