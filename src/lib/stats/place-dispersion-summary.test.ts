@@ -68,8 +68,8 @@ describe('computePlaceDispersionSummary', () => {
 
   it('kasus 8: trim whitespace dan skip string kosong', () => {
     const result = computePlaceDispersionSummary([entry('p1', ['  Roma  ', '', '   ', 'Roma', 'N apoli'])])
-    expect(result.totalPlaces).toBe(3)
-    expect(result.distribution['3']).toBe(1)
+    expect(result.totalPlaces).toBe(2)
+    expect(result.distribution['2']).toBe(1)
   })
 
   it('kasus 9: orang tanpa tempat valid keluar dari sampled', () => {
