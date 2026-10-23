@@ -97,6 +97,7 @@ function makeFakeCiteIO(opts: {
   const log: string[] = []
   const sourceCalls: SourceCall[] = []
   const citationCalls: CitationCall[] = []
+  const linkCalls: FakeCiteIO['linkCalls'] = []
   let seq = 0
   const io: CitationApplyIO = {
     treeId: opts.treeId ?? 'tree-1',
@@ -120,8 +121,12 @@ function makeFakeCiteIO(opts: {
       )
       return id
     },
+    async upsertEventCitationLink(treeId, spec) {
+      linkCalls.push({ treeId, spec })
+      log.push(`link:${spec.eventType}:${spec.memberId}:${spec.citationId}:ord${spec.order}`)
+    },
   }
-  return { io, log, sourceCalls, citationCalls }
+  return { io, log, sourceCalls, citationCalls, linkCalls }
 }
 
 describe('applyCitationPlan', () => {
@@ -337,6 +342,8 @@ describe('applyCitationPlan', () => {
       skippedCitations: [],
       failedSources: [],
       failedCitations: [],
+      linkedEventCitations: 0,
+      failedEventCitationLinks: [],
     })
   })
 
@@ -391,5 +398,125 @@ describe('applyCitationPlan', () => {
     expect(relationIdx).toBeGreaterThan(-1)
     expect(sourceIdx).toBeGreaterThan(relationIdx)
     expect(citationIdx).toBeGreaterThan(sourceIdx)
+  })
+
+  it('v381 AC2: satu sitasi per event TANPA link join (perilaku existing)', async () => {
+    const fake = makeFakeCiteIO()
+    const report = await applyCitationPlan(
+      [entry({ memberId: '@I1@', eventKind: 'BIRT', sourcePointer: '@S1@' })],
+      resolvers.resolveMember,
+      resolvers.resolveRelation,
+      fake.io,
+    )
+    expect(report.createdCitations).toHaveLength(1)
+    expect(fake.linkCalls).toEqual([])
+    expect(report.linkedEventCitations).toBe(0)
+  })
+
+  it('v381 AC2: BIRT dua SOUR, join LifeEventCitation order 0 dan 1', async () => {
+    const fake = makeFakeCiteIO()
+    const report = await applyCitationPlan(
+      [
+        entry({ memberId: '@I1@', eventKind: 'BIRT', sourcePointer: '@S1@' }),
+        entry({ memberId: '@I1@', eventKind: 'BIRT', sourcePointer: '@S2@', page: 'p. 7' }),
+      ],
+      resolvers.resolveMember,
+      resolvers.resolveRelation,
+      fake.io,
+    )
+    expect(report.createdCitations).toHaveLength(2)
+    expect(report.linkedEventCitations).toBe(2)
+    expect(report.failedEventCitationLinks).toEqual([])
+    expect(fake.linkCalls).toHaveLength(2)
+    expect(fake.linkCalls[0].spec).toEqual({
+      eventType: 'BIRTH',
+      memberId: 'db-m1',
+      partnerMemberId: undefined,
+      citationId: 'cit-2',
+      order: 0,
+    })
+    expect(fake.linkCalls[1].spec).toEqual({
+      eventType: 'BIRTH',
+      memberId: 'db-m1',
+      partnerMemberId: undefined,
+      citationId: 'cit-4',
+      order: 1,
+    })
+  })
+
+  it('v381 AC2: MARR dua SOUR dengan partner, idempoten kunci event', async () => {
+    const fake = makeFakeCiteIO()
+    const report = await applyCitationPlan(
+      [
+        entry({ relationId: '@F1@', eventKind: 'MARR', sourcePointer: '@S1@' }),
+        entry({ relationId: '@F1@', eventKind: 'MARR', sourcePointer: '@S2@' }),
+        // Sitasi event berbeda (DIV) tidak boleh tercampur agregasi MARR.
+        entry({ relationId: '@F1@', eventKind: 'DIV', sourcePointer: '@S3@' }),
+      ],
+      resolvers.resolveMember,
+      resolvers.resolveRelation,
+      fake.io,
+    )
+    expect(report.createdCitations).toHaveLength(3)
+    // Hanya MARR yang multi-citation; DIV single tidak dilink.
+    expect(report.linkedEventCitations).toBe(2)
+    expect(fake.linkCalls.every((c) => c.spec.eventType === 'MARRIAGE')).toBe(true)
+    expect(fake.linkCalls.every((c) => c.spec.partnerMemberId === 'db-m2')).toBe(true)
+  })
+
+  it('v381 AC2: kegagalan link join tercatat, never throws', async () => {
+    const log: string[] = []
+    let seq = 0
+    const io: CitationApplyIO = {
+      treeId: 'tree-1',
+      async upsertSource(_treeId, _pointer) {
+        return `src-${++seq}`
+      },
+      async upsertCitation(_treeId, _spec) {
+        return `cit-${++seq}`
+      },
+      async upsertEventCitationLink(_treeId, spec) {
+        if (spec.order === 1) throw new Error('boom-link')
+        log.push(`ok:${spec.order}`)
+      },
+    }
+    const report = await applyCitationPlan(
+      [
+        entry({ memberId: '@I1@', eventKind: 'DEAT', sourcePointer: '@S1@' }),
+        entry({ memberId: '@I1@', eventKind: 'DEAT', sourcePointer: '@S2@' }),
+      ],
+      resolvers.resolveMember,
+      resolvers.resolveRelation,
+      io,
+    )
+    expect(report.linkedEventCitations).toBe(1)
+    expect(report.failedEventCitationLinks).toHaveLength(1)
+    expect(report.failedEventCitationLinks[0]).toMatchObject({
+      eventType: 'DEATH',
+      memberId: 'db-m1',
+      error: 'boom-link',
+    })
+    expect(log).toEqual(['ok:0'])
+  })
+
+  it('v381 AC2: io tanpa upsertEventCitationLink tetap jalan tanpa join', async () => {
+    const fake = makeFakeCiteIO()
+    const legacyIo: CitationApplyIO = {
+      treeId: fake.io!.treeId,
+      upsertSource: fake.io!.upsertSource,
+      upsertCitation: fake.io!.upsertCitation,
+    }
+    const report = await applyCitationPlan(
+      [
+        entry({ memberId: '@I1@', eventKind: 'BIRT', sourcePointer: '@S1@' }),
+        entry({ memberId: '@I1@', eventKind: 'BIRT', sourcePointer: '@S2@' }),
+      ],
+      resolvers.resolveMember,
+      resolvers.resolveRelation,
+      legacyIo,
+    )
+    expect(report.createdCitations).toHaveLength(2)
+    expect(report.linkedEventCitations).toBe(0)
+    expect(report.failedEventCitationLinks).toEqual([])
   })
 })
