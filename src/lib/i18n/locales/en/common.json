@@ -100,6 +100,13 @@
       "skipped": "{{count}} relationships skipped (unknown references)",
       "failed": "{{count}} members failed to save"
     },
+    "undo": {
+      "button": "Undo last import",
+      "busy": "Undoing import...",
+      "done": "Import undone: {{members}} members and {{relations}} relationships removed",
+      "unsafe": "Import cannot be undone automatically: {{count}} ids collide with existing tree data",
+      "failed": "Some or all undo steps failed. Data may not be fully restored"
+    },
     "errors": {
       "noTree": "No active family tree. Open or create a tree first.",
       "unreadable": "The file could not be read as GEDCOM or GEDZIP.",

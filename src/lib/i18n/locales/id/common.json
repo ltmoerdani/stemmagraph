@@ -100,6 +100,13 @@
       "skipped": "{{count}} relasi dilewati (rujukan tak dikenal)",
       "failed": "{{count}} anggota gagal disimpan"
     },
+    "undo": {
+      "button": "Batalkan impor terakhir",
+      "busy": "Membatalkan impor...",
+      "done": "Impor dibatalkan: {{members}} anggota dan {{relations}} relasi dihapus",
+      "unsafe": "Impor tidak dapat dibatalkan otomatis: {{count}} id bertabrakan dengan data pohon yang sudah ada",
+      "failed": "Sebagian atau seluruh pembatalan gagal. Data mungkin belum kembali seperti semula"
+    },
     "errors": {
       "noTree": "Tidak ada pohon keluarga aktif. Buka atau buat pohon dulu.",
       "unreadable": "File tidak dapat dibaca sebagai GEDCOM atau GEDZIP.",

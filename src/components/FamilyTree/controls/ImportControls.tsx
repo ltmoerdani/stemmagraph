@@ -10,6 +10,14 @@ import {
   applyImportPlan,
   type ImportApplyReport,
 } from '../../../lib/gedcom/applyImportPlan';
+import {
+  buildUndoPlan,
+  type UndoPlan,
+} from '../../../lib/gedcom/importUndoPlan';
+import {
+  executeUndoPlan,
+  type UndoExecuteReport,
+} from '../../../lib/gedcom/executeUndoPlan';
 import { extractGedcom } from '../../../lib/gedcom/importPipeline';
 import { GEDCStruct, g7ConfGEDC } from '../../../lib/gedcom/vendor/gedcstruct.js';
 import { buildCitationPlanFromRecords } from '../../../lib/gedcom/citationPlan';
@@ -34,6 +42,9 @@ export const ImportControls: React.FC = () => {
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [report, setReport] = useState<ImportApplyReport | null>(null);
   const [citationSummary, setCitationSummary] = useState<string | null>(null);
+  const [undoPlan, setUndoPlan] = useState<UndoPlan | null>(null);
+  const [undoSummary, setUndoSummary] = useState<UndoExecuteReport | null>(null);
+  const [isUndoing, setIsUndoing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation('common');
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
@@ -58,6 +69,8 @@ export const ImportControls: React.FC = () => {
     setErrorKey(null);
     setReport(null);
     setCitationSummary(null);
+    setUndoPlan(null);
+    setUndoSummary(null);
     try {
       if (!currentFamilyTreeId) {
         setErrorKey('import.errors.noTree');
@@ -107,6 +120,19 @@ export const ImportControls: React.FC = () => {
 
       const adapter = getAdapter();
       const treeId = currentFamilyTreeId;
+      // Snapshot pra-import (v377): id anggota yang sudah ada di pohon
+      // sebelum applyImportPlan; dasar buildUndoPlan memisahkan karya
+      // import dari data lama. Gagal snapshot tidak memblokir import,
+      // hanya undo yang tidak ditawarkan (tanpa bukti pra-import,
+      // membalik import berisiko menyentuh data lama).
+      let existingIds: string[] | null = null;
+      try {
+        existingIds = (await adapter.listMembers(treeId)).map(
+          (member) => member.id,
+        );
+      } catch (error) {
+        console.error('Undo snapshot failed:', error);
+      }
       const applyReport = await applyImportPlan(plan, {
         treeId,
         createMember: (input) =>
@@ -126,6 +152,12 @@ export const ImportControls: React.FC = () => {
             .then(() => undefined),
       });
       setReport(applyReport);
+      // Rencana undo (v377): hanya karya import terakhir yang boleh
+      // dibalik; plan dipakai tombol undo di panel ringkasan. Tanpa
+      // snapshot pra-import, undo tidak ditawarkan sama sekali.
+      if (existingIds !== null) {
+        setUndoPlan(buildUndoPlan({ report: applyReport, existingIds }));
+      }
 
       // Citation phase: only meaningful on server-backed adapters
       // (getCitationApi returns null on mock/supabase). Runs after
@@ -195,6 +227,34 @@ export const ImportControls: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
     void importFile(file);
+  };
+
+  // Undo import terakhir (v377): eksekusi plan lewat io adapter, lalu
+  // refresh tampilan. Tombol disabled saat berjalan (anti klik ganda).
+  // executeUndoPlan tidak pernah melempar; kegagalan per entri atau
+  // invalidInput dilaporkan jujur lewat undoSummary.
+  const handleUndo = async () => {
+    if (!currentFamilyTreeId || !undoPlan || !undoPlan.safe || isUndoing) {
+      return;
+    }
+    setIsUndoing(true);
+    try {
+      const adapter = getAdapter();
+      const treeId = currentFamilyTreeId;
+      const undoReport = await executeUndoPlan(undoPlan, treeId, {
+        listRelationships: (tid) => adapter.listRelationships(tid),
+        deleteRelationship: (id) => adapter.deleteRelationship(id),
+        deleteMember: (id) => adapter.deleteMember(id),
+      });
+      setUndoSummary(undoReport);
+      setUndoPlan(null);
+      await fetchMembers(treeId);
+    } catch (error) {
+      console.error('Import undo failed:', error);
+      setErrorKey('import.errors.generic');
+    } finally {
+      setIsUndoing(false);
+    }
   };
 
   return (
@@ -301,6 +361,62 @@ export const ImportControls: React.FC = () => {
                 {citationSummary !== null && (
                   <p data-testid="import-citation-summary">
                     {`Citations created: ${citationSummary}`}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Undo import terakhir (v377): tombol hanya bila plan aman
+                dan ada karya untuk dibalik; tanpa karya tidak ada tombol. */}
+            {undoPlan &&
+              undoPlan.safe &&
+              (undoPlan.memberIdsToDelete.length > 0 ||
+                undoPlan.relationCountToReverse > 0) &&
+              !undoSummary && (
+                <button
+                  onClick={() => {
+                    void handleUndo();
+                  }}
+                  disabled={isUndoing}
+                  className="mt-2 w-full text-left px-3 py-2 text-sm rounded border border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label={t('import.undo.button')}
+                  data-testid="import-undo-button"
+                >
+                  {isUndoing ? t('import.undo.busy') : t('import.undo.button')}
+                </button>
+              )}
+
+            {/* Plan konflik existing-tree: tanpa tombol, pesan jujur. */}
+            {undoPlan && !undoPlan.safe && (
+              <p
+                className="mt-2 text-xs text-amber-700"
+                role="alert"
+                data-testid="import-undo-unsafe"
+              >
+                {t('import.undo.unsafe', {
+                  count: undoPlan.conflicts.length,
+                })}
+              </p>
+            )}
+
+            {/* Ringkasan undo: jumlah yang terhapus, plus pesan gagal
+                jujur bila ada kegagalan per entri atau invalidInput. */}
+            {undoSummary && (
+              <div
+                className="mt-2 text-xs text-gray-700 space-y-1"
+                data-testid="import-undo-summary"
+              >
+                <p>
+                  {t('import.undo.done', {
+                    members: undoSummary.deletedMemberIds.length,
+                    relations: undoSummary.removedRelationIds.length,
+                  })}
+                </p>
+                {(undoSummary.invalidInput ||
+                  undoSummary.failedMembers.length > 0 ||
+                  undoSummary.failedRelations.length > 0) && (
+                  <p className="text-red-600" role="alert">
+                    {t('import.undo.failed')}
                   </p>
                 )}
               </div>
