@@ -38,10 +38,27 @@ import {
   type DeathRecord,
   type DeathsByCenturyResult,
 } from './deaths-by-century'
+import {
+  computeWeddingsByCentury,
+  type WeddingRecord,
+  type WeddingsByCenturyResult,
+} from './weddings-by-century'
+import {
+  computeDivorcesByCentury,
+  type DivorceRecord,
+  type DivorcesByCenturyResult,
+} from './divorces-by-century'
 import { isoDateFromPartial, type EntityEventInput } from './event-entity-parity'
 
 function entityIso(event: EntityEventInput): string | null {
   return isoDateFromPartial(event.dateKind, event.yearStart, event.monthStart, event.dayStart)
+}
+
+/** familyId pola parity v380: subjectId saja bila tanpa pasangan. */
+function familyKeyOf(event: EntityEventInput): string {
+  return event.partnerSubjectId
+    ? `${event.subjectId}<${event.partnerSubjectId}>`
+    : event.subjectId
 }
 
 /** EntityEventInput[] menjadi BirthRecord[] (sumber LifeEvent BIRTH). */
@@ -58,11 +75,39 @@ export function entityDeathRecords(events: readonly EntityEventInput[]): DeathRe
     .map((e) => ({ personId: e.subjectId, deathDate: entityIso(e) }))
 }
 
+/** EntityEventInput[] menjadi WeddingRecord[] (sumber LifeEvent MARRIAGE). */
+export function entityWeddingRecords(events: readonly EntityEventInput[]): WeddingRecord[] {
+  return events
+    .filter((e) => e.subjectId !== '')
+    .map((e) => ({ familyId: familyKeyOf(e), marriageDate: entityIso(e) }))
+}
+
+/** EntityEventInput[] menjadi DivorceRecord[] (sumber LifeEvent DIVORCE). */
+export function entityDivorceRecords(events: readonly EntityEventInput[]): DivorceRecord[] {
+  return events
+    .filter((e) => e.subjectId !== '')
+    .map((e) => ({ familyId: familyKeyOf(e), divorceDate: entityIso(e) }))
+}
+
 /** Agregasi kelahiran per abad langsung dari baris LifeEvent ringkas. */
 export function computeBirthsByCenturyFromEvents(
   events: readonly EntityEventInput[],
 ): BirthsByCenturyResult {
   return computeBirthsByCentury(entityBirthRecords(events))
+}
+
+/** Agregasi pernikahan per abad langsung dari baris LifeEvent ringkas. */
+export function computeWeddingsByCenturyFromEvents(
+  events: readonly EntityEventInput[],
+): WeddingsByCenturyResult {
+  return computeWeddingsByCentury(entityWeddingRecords(events))
+}
+
+/** Agregasi perceraian per abad langsung dari baris LifeEvent ringkas. */
+export function computeDivorcesByCenturyFromEvents(
+  events: readonly EntityEventInput[],
+): DivorcesByCenturyResult {
+  return computeDivorcesByCentury(entityDivorceRecords(events))
 }
 
 /** Agregasi kematian per abad langsung dari baris LifeEvent ringkas. */
