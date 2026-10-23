@@ -71,16 +71,6 @@ export interface DatasetOverviewResult {
 
 const ERROR_PREFIX = 'dataset-overview'
 
-/** Urutan kanonik coverage, independen dari urutan properti input. */
-const MODULE_KEYS = [
-  'recordInventory',
-  'familySize',
-  'living',
-  'sourceRecords',
-  'citationQuality',
-  'citationNotes',
-] as const
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
