@@ -52,6 +52,18 @@
     "oldestLiving": {
       "title": "Anggota hidup tertua",
       "rank": "Peringkat {{rank}}"
+    },
+    "citationQuality": {
+      "quay3": "Bukti primer langsung",
+      "quay2": "Bukti sekunder",
+      "quay1": "Bukti diragukan",
+      "quay0": "Tidak andal",
+      "missing": "Tanpa penilaian",
+      "invalid": "Nilai tidak sah",
+      "withNote": "Dengan catatan",
+      "withoutNote": "Tanpa catatan",
+      "avgNotesPerCitation": "Rata-rata catatan per sitasi",
+      "totalNotes": "Total catatan"
     }
   },
   "header": {
