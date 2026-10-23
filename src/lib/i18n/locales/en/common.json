@@ -52,6 +52,18 @@
     "oldestLiving": {
       "title": "Oldest living members",
       "rank": "Rank {{rank}}"
+    },
+    "citationQuality": {
+      "quay3": "Direct primary evidence",
+      "quay2": "Secondary evidence",
+      "quay1": "Questionable evidence",
+      "quay0": "Unreliable",
+      "missing": "Not assessed",
+      "invalid": "Invalid value",
+      "withNote": "With note",
+      "withoutNote": "Without note",
+      "avgNotesPerCitation": "Average notes per citation",
+      "totalNotes": "Total notes"
     }
   },
   "header": {
