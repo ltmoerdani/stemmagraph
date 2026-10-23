@@ -1,0 +1,4 @@
+...
+(pencatatan Log wake-86 lanjutan): PIPELINE FILL v327 TERVERIFIKASI BUFFER: kandidat birth interval (jarak antar kelahiran kandung berurutan dalam satu family) lulus probe anti-dup PM first-hand, grep birthInterval spacing nihil di src server GOAL_HISTORY, beda substantif dari fertility-span v308 yang mengukur rentang total per family bukan distribusi interval pasangan berurutan, pola pembedaan v299 vs v323. Kontrak v327 disusun wake berikutnya pasca v325 closed (anti double-dispatch, v326 background a2456817 masih muda sehat). | PM Ardi (wake-86b, 20 Okt 21:0x)
+
+[Log Raka, 22 Okt] v349-i endogamy summary DONE di improve/stg-v349-endogamy-summary (93bae3d modul, f60afed test 20 kasus). Gates: vitest modul 20/20, genealogy 2106/2106, build 0, tsc 0, eslint 0, merge develop no-op, push ok. Siap QA Dino. Detail: worklog/2026-10-22-v349-endogamy-summary.md di workspace Raka.
