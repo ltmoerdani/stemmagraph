@@ -158,4 +158,86 @@ describe('computeSourceRecordStats', () => {
     const r = computeSourceRecordStats({ sources: [{ xref: '@S1@' }], citations })
     expect(r!.buckets.twoToFour).toBe(1)
   })
+
+  it('kasus u: persentase per bucket terhadap totalSources', () => {
+    const sources = [
+      { xref: '@S1@' },
+      { xref: '@S2@' },
+      { xref: '@S3@' },
+      { xref: '@S4@' },
+    ]
+    const citations = [
+      { sourcePointer: '@S2@' },
+      { sourcePointer: '@S3@' }, { sourcePointer: '@S3@' }, { sourcePointer: '@S3@' },
+      ...Array.from({ length: 10 }, () => ({ sourcePointer: '@S4@' })),
+    ]
+    const r = computeSourceRecordStats({ sources, citations })
+    expect(r!.totalSources).toBe(4)
+    expect(r!.bucketPercentages).toEqual({
+      zero: 25,
+      one: 25,
+      twoToFour: 25,
+      fiveToNine: 0,
+      tenPlus: 25,
+    })
+  })
+
+  it('kasus v: pembulatan persentase 2 desimal', () => {
+    const sources = Array.from({ length: 3 }, (_, i) => ({ xref: `@S${i + 1}@` }))
+    const r = computeSourceRecordStats({
+      sources,
+      citations: [{ sourcePointer: '@S1@' }],
+    })
+    expect(r!.bucketPercentages.zero).toBeCloseTo(66.67, 2)
+    expect(r!.bucketPercentages.one).toBeCloseTo(33.33, 2)
+    expect(r!.bucketPercentages.twoToFour).toBe(0)
+  })
+
+  it('kasus w: percentWithNote sesuai semantik v377c', () => {
+    const r = computeSourceRecordStats({
+      sources: [
+        { xref: '@S1@', note: 'a' },
+        { xref: '@S2@', snote: 'b' },
+        { xref: '@S3@' },
+        { xref: '@S4@', note: '' },
+      ],
+      citations: [],
+    })
+    expect(r!.notes.withNote).toBe(2)
+    expect(r!.percentWithNote).toBe(50)
+  })
+
+  it('kasus x: avgNotesPerSource = totalNotes / totalSources dibulatkan 2 desimal', () => {
+    const r = computeSourceRecordStats({
+      sources: [
+        { xref: '@S1@', note: 'a', snote: 'b' },
+        { xref: '@S2@', note: 'c' },
+        { xref: '@S3@' },
+      ],
+      citations: [],
+    })
+    expect(r!.notes.totalNotes).toBe(3)
+    expect(r!.avgNotesPerSource).toBe(1)
+  })
+
+  it('kasus y: avgNotesPerSource pecahan membulat 2 desimal', () => {
+    const r = computeSourceRecordStats({
+      sources: [{ xref: '@S1@', note: 'a', snote: 'b' }],
+      citations: [],
+    })
+    expect(r!.notes.totalNotes).toBe(2)
+    expect(r!.avgNotesPerSource).toBeCloseTo(2, 2)
+  })
+
+  it('kasus z: totalSources nol, metric turunan aman tanpa NaN', () => {
+    const r = computeSourceRecordStats({
+      sources: [],
+      citations: [{ sourcePointer: '@SX@' }],
+    })
+    expect(r).not.toBeNull()
+    expect(r!.totalSources).toBe(0)
+    expect(r!.bucketPercentages).toEqual({ zero: 0, one: 0, twoToFour: 0, fiveToNine: 0, tenPlus: 0 })
+    expect(r!.percentWithNote).toBe(0)
+    expect(r!.avgNotesPerSource).toBe(0)
+  })
 })
