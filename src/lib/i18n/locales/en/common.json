@@ -83,6 +83,10 @@
       "bucketTenPlusPercent": "Percentage with ten or more citations",
       "percentWithNote": "Percentage with note",
       "avgNotesPerSource": "Average notes per source"
+    },
+    "datasetOverview": {
+      "title": "Dataset Overview",
+      "description": "Aggregate summary across statistics modules: record inventory, family size, living population, sources, citation quality, and notes"
     }
   },
   "header": {

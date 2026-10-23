@@ -83,6 +83,10 @@
       "bucketTenPlusPercent": "Persentase sepuluh sitasi atau lebih",
       "percentWithNote": "Persentase dengan catatan",
       "avgNotesPerSource": "Rata-rata catatan per sumber"
+    },
+    "datasetOverview": {
+      "title": "Ringkasan Dataset",
+      "description": "Ringkasan agregat lintas modul statistik: inventaris rekaman, ukuran keluarga, populasi hidup, sumber, kualitas sitasi, dan catatan"
     }
   },
   "header": {
