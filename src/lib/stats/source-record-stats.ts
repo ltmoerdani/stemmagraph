@@ -1,4 +1,4 @@
-// Source record stats module (v378 fase i): buckets sources by citation
+// Source record stats module (v378 fase i-iii): buckets sources by citation
 // count and audits note coverage on the source level.
 //
 // DEFINITION: each source is bucketed by how many citations point at its
@@ -17,6 +17,12 @@
 // string. Empty strings count as no note on that field. noteCount and
 // snoteCount are tallied independently; totalNotes is their sum.
 // withoutNote is totalSources minus withNote.
+//
+// Phase iii (v378): bucketPercentages reports each bucket as a share of
+// totalSources. percentWithNote is the share of sources carrying a note.
+// avgNotesPerSource = totalNotes / totalSources. All three use round2
+// (Math.round(x * 100) / 100, same pattern as citation-note-stats).
+// totalSources of zero yields 0 for every derived value, no NaN.
 //
 // SEMANTIC BASIS: GEDCOM SOUR records at the source level (xref, NOTE,
 // SNOTE) and SOUR citations pointing at them via sourcePointer, matching
@@ -65,11 +71,22 @@ export interface SourceRecordStatsNotes {
   totalNotes: number;
 }
 
+export interface SourceRecordStatsBucketPercentages {
+  zero: number;
+  one: number;
+  twoToFour: number;
+  fiveToNine: number;
+  tenPlus: number;
+}
+
 export interface SourceRecordStats {
   totalSources: number;
   buckets: SourceRecordStatsBuckets;
+  bucketPercentages: SourceRecordStatsBucketPercentages;
   orphanXrefs: string[];
   notes: SourceRecordStatsNotes;
+  percentWithNote: number;
+  avgNotesPerSource: number;
   danglingCitations: number;
 }
 
@@ -136,6 +153,10 @@ function validateCitation(
   }
 
   return entry.sourcePointer;
+}
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 export function computeSourceRecordStats(
@@ -226,18 +247,31 @@ export function computeSourceRecordStats(
   orphanXrefs.sort((a, b) => a.localeCompare(b));
 
   const totalSources = byXref.size;
+  const totalNotes = noteCount + snoteCount;
+  const percentage = (part: number): number =>
+    totalSources === 0 ? 0 : round2((100 * part) / totalSources);
 
   return {
     totalSources,
     buckets,
+    bucketPercentages: {
+      zero: percentage(buckets.zero),
+      one: percentage(buckets.one),
+      twoToFour: percentage(buckets.twoToFour),
+      fiveToNine: percentage(buckets.fiveToNine),
+      tenPlus: percentage(buckets.tenPlus),
+    },
     orphanXrefs,
     notes: {
       withNote,
       withoutNote: totalSources - withNote,
       noteCount,
       snoteCount,
-      totalNotes: noteCount + snoteCount,
+      totalNotes,
     },
+    percentWithNote: percentage(withNote),
+    avgNotesPerSource:
+      totalSources === 0 ? 0 : round2(totalNotes / totalSources),
     danglingCitations,
   };
 }
