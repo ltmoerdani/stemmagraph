@@ -23,6 +23,9 @@ memberIdsToDelete: id internal urut input tanpa duplikat, hanya id yang BENAR-BE
 3. duplicateXrefs, failedMembers, skippedRelations, failedRelations, memberWarnings TIDAK mengubah plan undo (bukan karya import yang berhasil), hanya createdMembers dan createdRelations yang dibalik.
 4. Modul pure: tanpa DB, tanpa Date sistem, tanpa IO, tidak pernah melempar pada bentuk input buruk: bentuk buruk menghasilkan plan kosong { memberIdsToDelete: [], relationCountToReverse: 0, safe: false, conflicts: [{ id: '', detail: 'invalid-input' }] }.
 
+## Klarifikasi amend wake-136 (koreksi PM atas kasus 12 semula)
+Report kosong (createdMembers array kosong dengan seluruh field bertipe benar) adalah IMPORT KOSONG YANG SAH, bukan bentuk buruk: plan keluar kosong dengan safe true dan conflicts array kosong, karena tidak ada yang dibuat berarti tidak ada yang dibalik dan tidak ada konflik. Tanda invalid-input HANYA untuk bentuk buruk sejati: payload bukan objek, report bukan objek, existingIds bukan array, atau createdMembers bukan array (field hilang atau tipe salah).
+
 ## Kasus test wajib (minimal 15)
 (1) import bersih semua id baru masuk delete list urut input; (2) id duplikat di createdMembers dihilangkan; (3) id sudah ada di existingIds masuk conflicts dan KELUAR dari delete list; (4) safe true tanpa konflik; (5) safe false dengan konflik; (6) relationCountToReverse mirror createdRelations; (7) failedMembers tidak memengaruhi plan; (8) skippedRelations tidak memengaruhi plan; (9) duplicateXrefs tidak memengaruhi plan; (10) createdMembers tanpa xref tetap diproses lewat id; (11) existingIds kosong berarti semua created masuk delete; (12) report kosong menghasilkan plan kosong safe false invalid-input; (13) bentuk buruk beragam (null, array, field hilang, tipe salah) semua plan kosong tanpa lempar; (14) urutan delete list deterministik lintas urutan input existingIds; (15) kombinasi konflik parsial: sebagian id konflik sebagian bersih.
 
