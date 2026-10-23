@@ -64,6 +64,18 @@
       "withoutNote": "Tanpa catatan",
       "avgNotesPerCitation": "Rata-rata catatan per sitasi",
       "totalNotes": "Total catatan"
+    },
+    "sourceRecordStats": {
+      "bucketZero": "Tanpa sitasi",
+      "bucketOne": "Satu sitasi",
+      "bucketTwoToFour": "Dua sampai empat sitasi",
+      "bucketFiveToNine": "Lima sampai sembilan sitasi",
+      "bucketTenPlus": "Sepuluh sitasi atau lebih",
+      "orphanSources": "Sumber tanpa pemanfaat",
+      "danglingCitations": "Sitasi menuju sumber tak dikenal",
+      "withNote": "Dengan catatan",
+      "withoutNote": "Tanpa catatan",
+      "totalNotes": "Total catatan"
     }
   },
   "header": {
