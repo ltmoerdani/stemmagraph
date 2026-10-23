@@ -75,7 +75,14 @@
       "danglingCitations": "Citations to unknown sources",
       "withNote": "With note",
       "withoutNote": "Without note",
-      "totalNotes": "Total notes"
+      "totalNotes": "Total notes",
+      "bucketZeroPercent": "Percentage without citations",
+      "bucketOnePercent": "Percentage with one citation",
+      "bucketTwoToFourPercent": "Percentage with two to four citations",
+      "bucketFiveToNinePercent": "Percentage with five to nine citations",
+      "bucketTenPlusPercent": "Percentage with ten or more citations",
+      "percentWithNote": "Percentage with note",
+      "avgNotesPerSource": "Average notes per source"
     }
   },
   "header": {

@@ -75,7 +75,14 @@
       "danglingCitations": "Sitasi menuju sumber tak dikenal",
       "withNote": "Dengan catatan",
       "withoutNote": "Tanpa catatan",
-      "totalNotes": "Total catatan"
+      "totalNotes": "Total catatan",
+      "bucketZeroPercent": "Persentase tanpa sitasi",
+      "bucketOnePercent": "Persentase satu sitasi",
+      "bucketTwoToFourPercent": "Persentase dua sampai empat sitasi",
+      "bucketFiveToNinePercent": "Persentase lima sampai sembilan sitasi",
+      "bucketTenPlusPercent": "Persentase sepuluh sitasi atau lebih",
+      "percentWithNote": "Persentase dengan catatan",
+      "avgNotesPerSource": "Rata-rata catatan per sumber"
     }
   },
   "header": {
