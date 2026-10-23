@@ -1,0 +1,6 @@
+- Repository: Stemmagraph (/home/zeroclaw/projects/stemmagraph)
+- Task: v378 Source Record Statistics (GOAL Stemmagraph v378)
+- Branch: improve/stg-v378-source-record-stats
+- Files: src/lib/stats/source-record-stats.ts, src/lib/stats/source-record-stats.test.ts, src/lib/i18n/locales/en/common.json, src/lib/i18n/locales/id/common.json
+- Verification: npm test, npm run build, npm run lint passed successfully.
+- Status: Success, pushed to origin, merged develop.

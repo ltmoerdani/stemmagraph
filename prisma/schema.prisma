@@ -14,17 +14,17 @@ datasource db {
 // ─── User (Auth) ──────────────────────────────────────────
 
 model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  password   String
-  name       String
-  familyName String?
-  avatar     String?
+  id               String    @id @default(uuid())
+  email            String    @unique
+  password         String
+  name             String
+  familyName       String?
+  avatar           String?
   // P2-1 account states. Application domain values:
   // status: "pending" | "active" | "disabled" (see src/lib/account-states)
   // role:   "owner" | "member"
-  status     String   @default("pending")
-  role       String   @default("member")
+  status           String    @default("pending")
+  role             String    @default("member")
   // P2-7 weekly digest (ADR 0008). digestOptIn is the explicit consent
   // switch: default false, never assumed, flipped only by the owner of the
   // row through PUT /digest/preferences. digestLastSentAt is the once per
@@ -32,13 +32,13 @@ model User {
   // succeeds. No email content is persisted anywhere.
   digestOptIn      Boolean   @default(false)
   digestLastSentAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  notifications Notification[]
-  treeMemberships TreeMember[]
-  createdInvitations Invitation[] @relation("InvitationCreator")
-  proposedChanges ChangeProposal[] @relation("ChangeProposer")
+  notifications      Notification[]
+  treeMemberships    TreeMember[]
+  createdInvitations Invitation[]     @relation("InvitationCreator")
+  proposedChanges    ChangeProposal[] @relation("ChangeProposer")
 }
 
 // ─── Notification (in-app, P2-1) ─────────────────────────
@@ -105,7 +105,7 @@ model FamilyTree {
 // ─── Family Member ────────────────────────────────────────
 
 model FamilyMember {
-  id              String               @id @default(uuid())
+  id              String   @id @default(uuid())
   treeId          String
   name            String
   nickname        String?
@@ -120,22 +120,22 @@ model FamilyMember {
   currentLocation String?
   profession      String?
   education       String?
-  gender          String               @default("U")
+  gender          String   @default("U")
   // GEDCOM 7 SEX verbatim M/F/X/U atau nilai non-enum, v262
   sexGed          String?
   photoUrl        String?
   email           String?
   phone           String?
-  isAlive         Boolean              @default(true)
+  isAlive         Boolean  @default(true)
   // Per-individual sharing consent (S-06 Wave 1). Application domain
   // values: "shared" | "private". NULL means not yet recorded; the
   // export privacy gate treats NULL living members as redact.
   privacyStatus   String?
-  generation      Int                  @default(1)
-  maritalStatus   String               @default("single")
+  generation      Int      @default(1)
+  maritalStatus   String   @default("single")
   notes           String?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   tree              FamilyTree           @relation(fields: [treeId], references: [id], onDelete: Cascade)
   relationshipsFrom FamilyRelationship[] @relation("MemberFrom")
@@ -143,9 +143,9 @@ model FamilyMember {
   consentRecords    ConsentRecord[]
   // v116-iii-b, additive only: event genealogis dan tautan anak-parent
   // yang menempel pada member ini.
-  events      GenealogyEvent[]
-  childLinks  FamilyLink[]     @relation("FamilyLinkChild")
-  parentLinks FamilyLink[]     @relation("FamilyLinkParent")
+  events            GenealogyEvent[]
+  childLinks        FamilyLink[]         @relation("FamilyLinkChild")
+  parentLinks       FamilyLink[]         @relation("FamilyLinkParent")
 
   @@index([treeId])
   @@index([generation])
@@ -330,8 +330,8 @@ model Place {
 
   lifeEvents LifeEvent[]
 
-  @@index([treeId])
   @@unique([treeId, normalizedName])
+  @@index([treeId])
 }
 
 // Source = the document itself (book, archive, certificate,
@@ -366,8 +366,10 @@ model Citation {
   notes         String?
   createdAt     DateTime @default(now())
 
-  source     Source      @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  lifeEvents LifeEvent[]
+  source             Source              @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  lifeEvents         LifeEvent[]
+  // v380 (ADR 0011 lanjutan): rujukan join multi-nilai dari life event.
+  lifeEventCitations LifeEventCitation[]
 
   @@index([sourceId])
 }
@@ -402,8 +404,31 @@ model LifeEvent {
   place    Place?       @relation(fields: [placeId], references: [id])
   citation Citation?    @relation(fields: [citationId], references: [id])
 
+  // v380 (ADR 0011 lanjutan): tabel join citation multi-nilai. Kolom
+  // citationId tunggal di atas DIPERTAHANKAN apa adanya sampai
+  // cutover (AC1 v380); keduanya boleh terisi selama fase dual-read.
+  citations LifeEventCitation[]
+
   @@index([treeId, memberId])
   @@index([eventType])
+}
+
+// Tabel join LifeEvent <-> Citation (v380, ADR 0011 decision 4,
+// fase dual-read). Additive only: satu baris adalah satu rujukan
+// citation pada satu life event; order menjaga urutan pembacaan
+// rujukan (0, 1, 2, ...). Drop kolom citationId tunggal di LifeEvent
+// menunggu cutover (AC6 v380), di luar goal ini.
+model LifeEventCitation {
+  id          String @id @default(uuid())
+  lifeEventId String
+  citationId  String
+  order       Int
+
+  lifeEvent LifeEvent @relation(fields: [lifeEventId], references: [id], onDelete: Cascade)
+  citation  Citation  @relation(fields: [citationId], references: [id], onDelete: Cascade)
+
+  @@index([lifeEventId])
+  @@index([citationId])
 }
 
 // ─── Consent Record ──────────────────────────────────────
