@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { getChangeReviewApi, getDuplicateCheckApi } from '../../lib/adapters';
+import { getChangeReviewApi, getDuplicateCheckApi, getMergeApi } from '../../lib/adapters';
 import { suggestMargaValues } from '../../lib/genealogy/leksikon-bank';
+import { MergeMemberDialog } from './MergeMemberDialog';
 
 interface DuplicateCandidateView {
   memberId: string;
@@ -94,6 +95,10 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   // v388: peringatan duplikat non-blocking khusus mode create.
   const [dupCandidates, setDupCandidates] = useState<DuplicateCandidateView[]>([]);
+  // v390: aksi lanjutan Merge dari panel peringatan. Draft entri baru
+  // (sisi duplikat) dan kandidat existing (primary tujuan merge); dialog
+  // tampil hanya bila kedua nilai terisi. null = dialog tertutup.
+  const [mergeTarget, setMergeTarget] = useState<{ draft: { name: string; birthDate: string; marga: string }; duplicateId: string } | null>(null);
   // v388: ack duplikat disimpan di ref (bukan state) supaya requestSubmit
   // sinkron di handleDupProceed membaca nilai terbaru tanpa re-render.
   const dupAckRef = useRef(false);
@@ -683,6 +688,26 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                       >
                         {t('dedup.entry.proceed')}
                       </button>
+                      {/* v390: aksi lanjutan Merge per kandidat, hanya saat
+                          adapter server tersedia (getMergeApi tidak null). */}
+                      {getMergeApi() && dupCandidates.map((c) => (
+                        <button
+                          key={`merge-${c.memberId}`}
+                          type="button"
+                          data-testid={`duplicate-merge-${c.memberId}`}
+                          onClick={() => setMergeTarget({
+                            draft: {
+                              name: formData.name.trim(),
+                              birthDate: formData.birthDate || '',
+                              marga: formData.marga.trim(),
+                            },
+                            duplicateId: c.memberId,
+                          })}
+                          className="px-4 py-1.5 text-sm text-amber-700 border border-amber-400 rounded-md hover:bg-amber-100 transition-colors"
+                        >
+                          {t('dedup.merge.title')}
+                        </button>
+                      ))}
                       <button
                         type="button"
                         data-testid="duplicate-cancel"
@@ -736,6 +761,21 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           </div>
         </form>
       </div>
+      {/* v390: dialog merge terpandu, dibuka dari panel peringatan. */}
+      {mergeTarget && (
+        <MergeMemberDialog
+          isOpen
+          entryDraft={mergeTarget.draft}
+          primaryId={mergeTarget.duplicateId}
+          onClose={() => setMergeTarget(null)}
+          onMerged={() => {
+            setMergeTarget(null);
+            setDupCandidates([]);
+            dupAckRef.current = false;
+            handleClose();
+          }}
+        />
+      )}
     </div>
   );
 };

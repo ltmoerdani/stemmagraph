@@ -633,3 +633,17 @@ export interface DuplicateCheckApi {
     params: { name: string; birthDate?: string; marga?: string },
   ): Promise<{ candidates: DuplicateCandidateDto[] }>;
 }
+
+/**
+ * Permukaan merge anggota terpandu (v390 fase 1): satu POST per eksekusi
+ * dengan konfirmasi nama primary. Adapter tanpa server (mock, supabase)
+ * lewat getMergeApi mendapat null dan UI menyembunyikan aksi merge.
+ */
+export interface MergeApi {
+  /** Gabungkan anggota duplikat (duplicateId) ke primary; confirmName wajib cocok nama primary. */
+  mergeMember(
+    treeId: string,
+    duplicateId: string,
+    params: { targetId: string; confirmName: string },
+  ): Promise<{ merged: boolean; primaryId: string }>;
+}
