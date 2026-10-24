@@ -579,6 +579,21 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     );
   }
 
+  // ── Un-merge from journal (v391 fase 1) ────────────────
+  // One POST per execution; server reverses exactly from the merge
+  // journal inside one transaction. 422 { code, message } when the
+  // member is not merged, the merge predates the journal, or current
+  // data no longer matches the journal.
+  async unmergeMember(
+    treeId: string,
+    duplicateId: string,
+  ): Promise<{ unmerged: boolean; duplicateId: string }> {
+    return this.request<{ unmerged: boolean; duplicateId: string }>(
+      'POST',
+      `/trees/${encodeURIComponent(treeId)}/members/${encodeURIComponent(duplicateId)}/unmerge`,
+    );
+  }
+
   // ── Member consent ledger (S-06c) ───────────────────────
   // Pure routing: the server replays the append-only ledger through the
   // pure reducer and guards tree access; invalid transitions come back as

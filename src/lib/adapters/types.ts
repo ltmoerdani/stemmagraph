@@ -646,4 +646,6 @@ export interface MergeApi {
     duplicateId: string,
     params: { targetId: string; confirmName: string },
   ): Promise<{ merged: boolean; primaryId: string }>;
+  /** Balikkan merge dari jurnal (v391); 422 bila belum merged, tanpa jurnal, atau state tak cocok. */
+  unmergeMember(treeId: string, duplicateId: string): Promise<{ unmerged: boolean; duplicateId: string }>;
 }

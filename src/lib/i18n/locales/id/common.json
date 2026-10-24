@@ -566,6 +566,23 @@
       "cancel": "Batal",
       "success": "Anggota berhasil digabung. Data tree sudah diperbarui.",
       "failed": "Gagal menggabungkan anggota. Coba lagi."
+    },
+    "unmerge": {
+      "title": "Un-merge anggota",
+      "subtitle": "Balikkan merge untuk {{name}}",
+      "consequence": "Relasi dan facts yang pindah saat merge akan dikembalikan ke record lama persis dari jurnal merge. Data berubah sejak merge membuat undo ditolak demi keamanan.",
+      "confirmLabel": "Ketik nama {{name}} untuk mengaktifkan tombol",
+      "execute": "Un-merge",
+      "success": "Merge berhasil dibalikkan. Relasi dan facts kembali ke record lama.",
+      "failed": "Un-merge gagal",
+      "cancel": "Batal",
+      "close": "Tutup",
+      "mergedBadge": "Merged",
+      "openUnmerge": "Un-merge",
+      "errNotMerged": "Anggota ini tidak sedang merged",
+      "errNoJournal": "Merge lama tanpa jurnal tidak bisa di-undo",
+      "errPrimaryMerged": "Anggota primary sendiri sedang merged; selesaikan merge itu dulu",
+      "errJournalMismatch": "Data sekarang tidak cocok dengan jurnal merge; undo ditolak demi keamanan"
     }
   },
   "memberEdit": {
