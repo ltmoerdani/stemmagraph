@@ -100,6 +100,9 @@ model FamilyTree {
   // Public read links (ADR 0010). Relation side only: no FamilyTree
   // column changes, the FK lives on the TreeShareLink row.
   shareLinks      TreeShareLink[]
+  // v392 approval workflow merge berisiko (relation side only, FK di
+  // baris MergeApproval). Additive only.
+  mergeApprovals  MergeApproval[]
 }
 
 // ─── Family Member ────────────────────────────────────────
@@ -197,6 +200,35 @@ model TreeMember {
 
   @@unique([treeId, userId])
   @@index([userId])
+}
+
+// ─── Merge Approval (v392, additive only) ────────────────
+// Satu baris = satu permintaan persetujuan merge berisiko tinggi.
+// Dibuat route merge saat assessMergeRisk menyatakan NEEDS_APPROVAL;
+// merge baru dieksekusi setelah role owner/editor lain (decider
+// berbeda dari requester) menyetujui. status: PENDING | APPROVED |
+// REJECTED | EXPIRED | EXECUTED. planStats menyimpan hitungan plan
+// saat request; mismatch saat execute berarti data berubah sejak
+// approve dan eksekusi ditolak. reasons berisi daftar alasan threshold
+// dari assessMergeRisk.
+
+model MergeApproval {
+  id          String    @id @default(uuid())
+  treeId      String
+  primaryId   String
+  duplicateId String
+  reasons     Json
+  planStats   Json
+  status      String    @default("PENDING")
+  requesterId String
+  deciderId   String?
+  createdAt   DateTime  @default(now())
+  decidedAt   DateTime?
+  expiresAt   DateTime
+
+  tree FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@index([treeId, status])
 }
 
 // ─── Invitation (P2-3) ────────────────────────────────────
