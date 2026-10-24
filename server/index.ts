@@ -63,6 +63,7 @@ import { computeLivingStats } from '../src/lib/stats/living-stats';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
+import { computeNextAnniversaries } from '../src/lib/anniversaries/nextAnniversaries';
 import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { computeOldestLiving } from '../src/lib/stats/oldest-living';
@@ -103,7 +104,7 @@ import {
   parseGrowthMetricsQuery,
   roundGrowthMetric,
 } from '../src/lib/metrics/kfactor';
-import { buildDigestForUser, runWeeklyDigestPass, startDigestScheduler } from './digest';
+import { buildDigestForUser, loadUpcomingReminders, runWeeklyDigestPass, startDigestScheduler } from './digest';
 import { mailerDisabled } from '../src/lib/digest/mailer';
 import { weeklyWindow } from '../src/lib/digest/window';
 
@@ -806,6 +807,7 @@ app.get('/api/v1/digest/weekly', requireAuth, async (req: AuthenticatedRequest, 
       actorIds.length === 0
         ? []
         : await prisma.user.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true } });
+    const reminders = await loadUpcomingReminders(memberships.map((membership) => membership.treeId));
     const digest = await buildDigestForUser(
       { id: user.id, name: user.name },
       window,
@@ -813,6 +815,7 @@ app.get('/api/v1/digest/weekly', requireAuth, async (req: AuthenticatedRequest, 
       trees,
       actors,
       memberships.map((membership) => membership.treeId),
+      reminders,
     );
     res.json({
       window: { startAt: window.startAt.toISOString(), endAt: window.endAt.toISOString() },
@@ -1933,6 +1936,82 @@ app.get('/api/v1/trees/:treeId/stats/anniversaries/upcoming', requireAuthStatsLi
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'ANNIVERSARIES_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Upcoming reminders (v387, reminder haul, read-only) ─────────────
+//
+// GET /api/v1/trees/:treeId/reminders/upcoming returns the merged,
+// date-sorted reminder list of one tree: birthdays of living members and
+// wedding anniversaries of living couples, computed by the pure module
+// src/lib/anniversaries/nextAnniversaries.ts. Pola persis route
+// anniversaries v275: guardTreeAction untuk 403 non-anggota (tanpa
+// WWW-Authenticate), requireAuthStatsLiving supaya 401 jalur ini
+// membawa challenge Bearer. Query days opsional default 30, rentang sah
+// 1 sampai 365 inklusif; di luar rentang atau non-integer dijawab 422
+// body { code, message }.
+app.get('/api/v1/trees/:treeId/reminders/upcoming', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rawDays = req.query['days'];
+    const days = rawDays === undefined ? 30 : Number(rawDays);
+    if (!Number.isInteger(days) || days < 1 || days > 365) {
+      return res.status(422).json({ code: 'INVALID_DAYS', message: 'days must be an integer between 1 and 365' });
+    }
+    const members = await prisma.familyMember.findMany({
+      where: { treeId: req.params.treeId, isAlive: true, birthDate: { not: '' } },
+      select: { id: true, name: true, birthDate: true },
+    });
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: req.params.treeId, eventType: 'MARRIAGE', partnerMemberId: { not: null } },
+      include: { date: true },
+    });
+    const pairIds = new Set<string>();
+    for (const ev of events) {
+      if (ev.memberId) pairIds.add(ev.memberId);
+      if (ev.partnerMemberId) pairIds.add(ev.partnerMemberId);
+    }
+    const involved = pairIds.size === 0
+      ? []
+      : await prisma.familyMember.findMany({ where: { id: { in: Array.from(pairIds) } }, select: { id: true, name: true, isAlive: true } });
+    const byId = new Map(involved.map((m) => [m.id, m]));
+    const items: Parameters<typeof computeNextAnniversaries>[0] = [];
+    for (const m of members) {
+      items.push({ kind: 'birthday' as const, refId: m.id, displayName: m.name, date: m.birthDate });
+    }
+    const seenPairs = new Set<string>();
+    for (const ev of events) {
+      if (!ev.partnerMemberId) continue;
+      const date = ev.date;
+      if (!date || date.dateKind !== 'EXACT') continue;
+      if (date.yearStart === null || date.monthStart === null || date.dayStart === null) continue;
+      const a = byId.get(ev.memberId);
+      const b = byId.get(ev.partnerMemberId);
+      if (!a || !a.isAlive || !b || !b.isAlive) continue;
+      const marriageDate = `${String(date.yearStart).padStart(4, '0')}-${String(date.monthStart).padStart(2, '0')}-${String(date.dayStart).padStart(2, '0')}`;
+      const pairId = [ev.memberId, ev.partnerMemberId].sort().join(':');
+      if (seenPairs.has(pairId)) continue;
+      seenPairs.add(pairId);
+      const partnerNames: [string, string] = pairId.split(':')[0] === ev.memberId ? [a.name, b.name] : [b.name, a.name];
+      items.push({ kind: 'wedding' as const, refId: pairId, displayName: partnerNames.join(' & '), date: marriageDate });
+    }
+    const entries = computeNextAnniversaries(items, new Date(), days);
+    const body = JSON.stringify(entries);
+    const etag = `W/"${createHash('sha256').update(body).digest('hex')}"`;
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', etag);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      return candidate === etag || candidate === etag.slice(2);
+    })) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'REMINDERS_ERROR', message: (e as Error).message });
   }
 });
 
