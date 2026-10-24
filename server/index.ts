@@ -67,6 +67,13 @@ import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { computeOldestLiving } from '../src/lib/stats/oldest-living';
 import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
+import {
+  computeBirthsByCenturyFromEvents,
+  computeDeathsByCenturyFromEvents,
+  computeDivorcesByCenturyFromEvents,
+  computeWeddingsByCenturyFromEvents,
+  type EntityEventInput,
+} from '../src/lib/stats/event-entity-reads';
 import { computeChildrenPerFamilyDistribution } from '../src/lib/stats/children-per-family';
 import { computeGenerationDepth, computePedigreeCompleteness } from '../src/lib/genealogy/tree-health';
 import type { FamilyGraph, ParentEdge } from '../src/lib/genealogy/family-graph';
@@ -2174,6 +2181,171 @@ app.get('/api/v1/trees/:treeId/stats/oldest-living', requireAuthStatsLiving, asy
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'OLDEST_LIVING_API_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Stats By-Century dari LifeEvent (v383, read-only aggregate) ──────────
+//
+// GET /api/v1/trees/:treeId/stats/births-by-century, deaths-by-century,
+// weddings-by-century, divorces-by-century: empat agregasi abad kini
+// dilayani dari baris LifeEvent via modul pure event-entity-reads
+// (v381 v382, TIDAK diubah), memotong sumber kebenaran API ke entity
+// sesuai fase wiring GAP 0.6 ADR 0011. Pola persis route marriage-months
+// (v291): requireAuthStatsLiving supaya 401 membawa challenge Bearer,
+// guardTreeAction view_tree untuk 403 non-anggota (tanpa
+// WWW-Authenticate). Sumber data satu query lifeEvent per eventType
+// (BIRTH DEATH MARRIAGE DIVORCE) include date, pemetaan EntityEventInput
+// tanpa N+1 dan tanpa relasi prisma baru. Respons agregat non-PII dari
+// compute*ByCenturyFromEvents. Cache private dengan revalidasi 304, ETag
+// STRONG dari hash body, 304 mengulang ETag dan Cache-Control per RFC 9111.
+
+// GET /api/v1/trees/:treeId/stats/births-by-century dari LifeEvent BIRTH.
+app.get('/api/v1/trees/:treeId/stats/births-by-century', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: req.params.treeId, eventType: 'BIRTH' },
+      include: { date: true },
+    });
+    const rows: EntityEventInput[] = events.map((ev) => ({
+      subjectId: ev.memberId,
+      partnerSubjectId: ev.partnerMemberId,
+      dateKind: ev.date?.dateKind ?? null,
+      yearStart: ev.date?.yearStart ?? null,
+      monthStart: ev.date?.monthStart ?? null,
+      dayStart: ev.date?.dayStart ?? null,
+    }));
+    const payload = computeBirthsByCenturyFromEvents(rows);
+    const body = JSON.stringify(payload);
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'BIRTHS_BY_CENTURY_ERROR', message: (e as Error).message });
+  }
+});
+
+// GET /api/v1/trees/:treeId/stats/deaths-by-century dari LifeEvent DEATH.
+app.get('/api/v1/trees/:treeId/stats/deaths-by-century', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: req.params.treeId, eventType: 'DEATH' },
+      include: { date: true },
+    });
+    const rows: EntityEventInput[] = events.map((ev) => ({
+      subjectId: ev.memberId,
+      partnerSubjectId: ev.partnerMemberId,
+      dateKind: ev.date?.dateKind ?? null,
+      yearStart: ev.date?.yearStart ?? null,
+      monthStart: ev.date?.monthStart ?? null,
+      dayStart: ev.date?.dayStart ?? null,
+    }));
+    const payload = computeDeathsByCenturyFromEvents(rows);
+    const body = JSON.stringify(payload);
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'DEATHS_BY_CENTURY_ERROR', message: (e as Error).message });
+  }
+});
+
+// GET /api/v1/trees/:treeId/stats/weddings-by-century dari LifeEvent MARRIAGE
+// berpasangan (partnerMemberId not null, pola anniversaries v275).
+app.get('/api/v1/trees/:treeId/stats/weddings-by-century', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: req.params.treeId, eventType: 'MARRIAGE', partnerMemberId: { not: null } },
+      include: { date: true },
+    });
+    const rows: EntityEventInput[] = events.map((ev) => ({
+      subjectId: ev.memberId,
+      partnerSubjectId: ev.partnerMemberId,
+      dateKind: ev.date?.dateKind ?? null,
+      yearStart: ev.date?.yearStart ?? null,
+      monthStart: ev.date?.monthStart ?? null,
+      dayStart: ev.date?.dayStart ?? null,
+    }));
+    const payload = computeWeddingsByCenturyFromEvents(rows);
+    const body = JSON.stringify(payload);
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'WEDDINGS_BY_CENTURY_ERROR', message: (e as Error).message });
+  }
+});
+
+// GET /api/v1/trees/:treeId/stats/divorces-by-century dari LifeEvent DIVORCE
+// berpasangan (partnerMemberId not null).
+app.get('/api/v1/trees/:treeId/stats/divorces-by-century', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: req.params.treeId, eventType: 'DIVORCE', partnerMemberId: { not: null } },
+      include: { date: true },
+    });
+    const rows: EntityEventInput[] = events.map((ev) => ({
+      subjectId: ev.memberId,
+      partnerSubjectId: ev.partnerMemberId,
+      dateKind: ev.date?.dateKind ?? null,
+      yearStart: ev.date?.yearStart ?? null,
+      monthStart: ev.date?.monthStart ?? null,
+      dayStart: ev.date?.dayStart ?? null,
+    }));
+    const payload = computeDivorcesByCenturyFromEvents(rows);
+    const body = JSON.stringify(payload);
+    const etagHex = createHash('sha256').update(body).digest('hex');
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', `"${etagHex}"`);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      const candidateHex = (candidate.startsWith('W/') ? candidate.slice(2) : candidate).replaceAll('"', '');
+      return candidateHex === etagHex;
+    })) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'DIVORCES_BY_CENTURY_ERROR', message: (e as Error).message });
   }
 });
 
