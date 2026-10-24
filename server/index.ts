@@ -60,6 +60,7 @@ import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } fro
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import { computeLivingStats } from '../src/lib/stats/living-stats';
+import { findDuplicateCandidates } from '../src/lib/dedup/duplicateDetector';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
@@ -1759,6 +1760,44 @@ app.get('/api/v1/trees/:treeId/members', requireAuth, async (req: AuthenticatedR
     res.json(visible);
   } catch (e) {
     res.status(500).json({ code: 'MEMBER_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Duplicate candidates on member entry (v388, read-only) ─
+//
+// GET /api/v1/trees/:treeId/members/duplicates membandingkan satu calon
+// anggota (query name wajib; birthDate dan marga opsional) dengan anggota
+// existing tree lewat modul pure src/lib/dedup/duplicateDetector.ts.
+// Pola persis route reminders/upcoming v387: guardTreeAction untuk 403
+// non-anggota (tanpa WWW-Authenticate), requireAuthStatsLiving supaya 401
+// jalur ini membawa challenge Bearer. Respons { candidates }.
+app.get('/api/v1/trees/:treeId/members/duplicates', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rawName = req.query['name'];
+    if (typeof rawName !== 'string' || rawName.trim().length === 0) {
+      return res.status(422).json({ code: 'INVALID_NAME', message: 'name query is required' });
+    }
+    const rawBirthDate = req.query['birthDate'];
+    const rawMarga = req.query['marga'];
+    if (rawBirthDate !== undefined && typeof rawBirthDate !== 'string') {
+      return res.status(422).json({ code: 'INVALID_BIRTH_DATE', message: 'birthDate must be a string' });
+    }
+    if (rawMarga !== undefined && typeof rawMarga !== 'string') {
+      return res.status(422).json({ code: 'INVALID_MARGA', message: 'marga must be a string' });
+    }
+    const members = await prisma.familyMember.findMany({
+      where: { treeId: req.params.treeId },
+      select: { id: true, name: true, nickname: true, marga: true, birthDate: true, gender: true },
+    });
+    const candidates = findDuplicateCandidates(
+      { name: rawName, birthDate: rawBirthDate ?? null, marga: rawMarga ?? null },
+      members,
+    );
+    res.json({ candidates });
+  } catch (e) {
+    res.status(500).json({ code: 'DUPLICATES_ERROR', message: (e as Error).message });
   }
 });
 
