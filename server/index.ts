@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import type { ChangeProposal, FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event, Invitation, TreeMember } from '../generated/prisma/client';
+import type { ChangeProposal, FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event, Invitation, TreeMember, Prisma } from '../generated/prisma/client';
 import { prisma } from './db';
 import {
   bootstrapAccountState,
@@ -66,6 +66,7 @@ import {
   planRelationshipRewire,
   planEventReassign,
 } from '../src/lib/dedup/mergeMembers';
+import { buildMergeJournal, planUnmerge, type RewireSide, type MergeJournal } from '../src/lib/dedup/mergeJournal';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
@@ -1873,6 +1874,39 @@ app.post('/api/v1/trees/:treeId/members/:memberId/merge', requireAuthStatsLiving
     const now = new Date();
     // peta id relasi ke baris aslinya untuk menentukan sisi update.
     const relById = new Map(rels.map((r) => [r.id, r]));
+    // v391: snapshot reverse disusun dari keputusan merge SEBELUM eksekusi,
+    // ditulis ATOMIK di transaksi yang sama (AC2). Entri rewire memakai isi
+    // baris PASCA update (sisi duplikat diarahkan ke primary) sehingga
+    // un-merge bisa memverifikasi state sebelum membalik.
+    const journalRewire = plan.rewire.map((id) => {
+      const r = relById.get(id);
+      if (!r) throw new Error(`relation ${id} missing during merge rewire`);
+      const side: RewireSide = r.memberId === duplicate.id ? 'memberId' : 'relatedId';
+      return {
+        rel: {
+          id: r.id,
+          treeId: r.treeId,
+          // snapshot PASCA update: sisi duplikat menunjuk primary.
+          memberId: side === 'memberId' ? primary.id : r.memberId,
+          relatedId: side === 'relatedId' ? primary.id : r.relatedId,
+          type: r.type,
+        },
+        side,
+      };
+    });
+    const journal = buildMergeJournal({
+      duplicateId: duplicate.id,
+      primary: { id: primary.id, name: primary.name },
+      mergedAt: now,
+      rewire: journalRewire,
+      deleted: plan.delete.map((id) => {
+        const r = relById.get(id);
+        if (!r) throw new Error(`relation ${id} missing during merge delete`);
+        return { id: r.id, treeId: r.treeId, memberId: r.memberId, relatedId: r.relatedId, type: r.type };
+      }),
+      movedGenealogyEventIds: [...eventIds],
+      movedLifeEventIds: dupLifeEvents.map((e) => e.id),
+    });
     await prisma.$transaction([
       // rewire: sisi yang menunjuk duplikat diarahkan ke primary.
       ...plan.rewire.map((id) => {
@@ -1892,15 +1926,104 @@ app.post('/api/v1/trees/:treeId/members/:memberId/merge', requireAuthStatsLiving
       ...dupLifeEvents.map((e) =>
         prisma.lifeEvent.update({ where: { id: e.id }, data: { memberId: primary.id } }),
       ),
-      // jejak audit: duplikat ditandai, baris tetap hidup.
+      // jejak audit: duplikat ditandai, baris tetap hidup. v391: jurnal
+      // merge ikut di sini sehingga merge dan jurnal atomik (AC2).
       prisma.familyMember.update({
         where: { id: duplicate.id },
-        data: { mergedIntoId: primary.id, mergedAt: now },
+        data: { mergedIntoId: primary.id, mergedAt: now, mergeJournal: journal as unknown as Prisma.InputJsonValue },
       }),
     ]);
     return res.json({ merged: true, primaryId: primary.id });
   } catch (e) {
     res.status(500).json({ code: 'MERGE_ERROR', message: (e as Error).message });
+  }
+});
+
+// POST /api/v1/trees/:treeId/members/:memberId/unmerge membalikan merge
+// dari jurnal (v391 Un-Merge via Jurnal Merge fase 1). Un-merge membalik
+// PERSIS isi jurnal: rewire kembali ke sisi asal, relasi terhapus
+// di-recreate dengan data asli, facts pindah balik ke duplikat, kolom
+// audit dibersihkan. Semua dalam satu transaksi, rollback penuh bila
+// ada langkah gagal. Merge pra-v391 tanpa jurnal ditolak dengan pesan
+// jelas (AC4): undo akurat mustahil tanpa snapshot reverse.
+app.post('/api/v1/trees/:treeId/members/:memberId/unmerge', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string; memberId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'edit_member');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const duplicateId = req.params.memberId;
+    const duplicate = await prisma.familyMember.findUnique({ where: { id: duplicateId } });
+    if (!duplicate || duplicate.treeId !== req.params.treeId) {
+      return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found in this tree' });
+    }
+    if (duplicate.mergedIntoId === null || duplicate.mergedAt === null) {
+      return res.status(422).json({ code: 'NOT_MERGED', message: 'This member is not merged' });
+    }
+    const journalRaw = duplicate.mergeJournal as unknown;
+    if (journalRaw === null || journalRaw === undefined) {
+      return res.status(422).json({ code: 'NO_MERGE_JOURNAL', message: 'Merge made before the merge journal exists cannot be undone' });
+    }
+    const primary = await prisma.familyMember.findUnique({ where: { id: duplicate.mergedIntoId } });
+    if (!primary || primary.treeId !== req.params.treeId) {
+      return res.status(422).json({ code: 'PRIMARY_MISSING', message: 'Primary member of the merge no longer exists in this tree' });
+    }
+    if (primary.mergedIntoId !== null) {
+      return res.status(422).json({ code: 'PRIMARY_MERGED', message: 'Primary member is itself merged; resolve that merge first' });
+    }
+    const journal = journalRaw as MergeJournal;
+    const rels = await prisma.familyRelationship.findMany({
+      where: { treeId: req.params.treeId },
+      select: { id: true, memberId: true, relatedId: true, type: true },
+    });
+    const primaryGenealogyEvents = await prisma.genealogyEvent.findMany({
+      where: { memberId: primary.id },
+      select: { id: true },
+    });
+    const primaryLifeEvents = await prisma.lifeEvent.findMany({
+      where: { memberId: primary.id },
+      select: { id: true },
+    });
+    const plan = planUnmerge({
+      journal,
+      duplicateId,
+      currentPrimaryId: primary.id,
+      rels,
+      currentGenealogyEventIds: primaryGenealogyEvents.map((e) => e.id),
+      currentLifeEventIds: primaryLifeEvents.map((e) => e.id),
+    });
+    if (!plan.ok) {
+      return res.status(422).json({ code: 'JOURNAL_MISMATCH', message: 'Current data no longer matches the merge journal; undo rejected for safety' });
+    }
+    const deletedById = new Map(journal.deleted.map((d) => [d.id, d]));
+    await prisma.$transaction([
+      ...plan.ops.map((op) => {
+        if (op.kind === 'rewireBack') {
+          const data = op.side === 'memberId'
+            ? { memberId: op.duplicateId }
+            : { relatedId: op.duplicateId };
+          return prisma.familyRelationship.update({ where: { id: op.relationId }, data });
+        }
+        if (op.kind === 'deleteRecreated') {
+          const d = deletedById.get(op.relationId);
+          if (!d) throw new Error(`deleted relation ${op.relationId} missing from journal`);
+          return prisma.familyRelationship.create({
+            data: { id: d.id, treeId: d.treeId, memberId: d.memberId, relatedId: d.relatedId, type: d.type },
+          });
+        }
+        if (op.kind === 'moveBackGenealogyEvent') {
+          return prisma.genealogyEvent.update({ where: { id: op.eventId }, data: { memberId: op.duplicateId } });
+        }
+        if (op.kind === 'moveBackLifeEvent') {
+          return prisma.lifeEvent.update({ where: { id: op.eventId }, data: { memberId: op.duplicateId } });
+        }
+        return prisma.familyMember.update({
+          where: { id: op.duplicateId },
+          data: { mergedIntoId: null, mergedAt: null, mergeJournal: null },
+        });
+      }),
+    ]);
+    return res.json({ unmerged: true, duplicateId });
+  } catch (e) {
+    res.status(500).json({ code: 'UNMERGE_ERROR', message: (e as Error).message });
   }
 });
 

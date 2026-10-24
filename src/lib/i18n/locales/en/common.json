@@ -566,6 +566,23 @@
       "cancel": "Cancel",
       "success": "Members merged successfully. Tree data has been refreshed.",
       "failed": "Failed to merge members. Try again."
+    },
+    "unmerge": {
+      "title": "Un-merge member",
+      "subtitle": "Reverse the merge for {{name}}",
+      "consequence": "Relations and facts moved during the merge are returned to the old record exactly from the merge journal. Data changed since the merge causes the undo to be rejected for safety.",
+      "confirmLabel": "Type the name {{name}} to enable the button",
+      "execute": "Un-merge",
+      "success": "Merge reversed successfully. Relations and facts are back on the old record.",
+      "failed": "Un-merge failed",
+      "cancel": "Cancel",
+      "close": "Close",
+      "mergedBadge": "Merged",
+      "openUnmerge": "Un-merge",
+      "errNotMerged": "This member is not merged",
+      "errNoJournal": "Old merges without a journal cannot be undone",
+      "errPrimaryMerged": "The primary member is itself merged; resolve that merge first",
+      "errJournalMismatch": "Current data no longer matches the merge journal; undo rejected for safety"
     }
   },
   "memberEdit": {

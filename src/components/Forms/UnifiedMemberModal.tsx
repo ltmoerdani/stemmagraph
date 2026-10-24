@@ -99,6 +99,8 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   // (sisi duplikat) dan kandidat existing (primary tujuan merge); dialog
   // tampil hanya bila kedua nilai terisi. null = dialog tertutup.
   const [mergeTarget, setMergeTarget] = useState<{ draft: { name: string; birthDate: string; marga: string }; duplicateId: string } | null>(null);
+  // v391: dialog un-merge untuk anggota berstatus merged. null = tertutup.
+  const [unmergeOpen, setUnmergeOpen] = useState(false);
   // v388: ack duplikat disimpan di ref (bukan state) supaya requestSubmit
   // sinkron di handleDupProceed membaca nilai terbaru tanpa re-render.
   const dupAckRef = useRef(false);
@@ -359,6 +361,20 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
             <div>
               <h2 className="text-xl font-bold text-gray-900">{getModalTitle()}</h2>
               <p className="text-sm text-gray-500">{getModalSubtitle()}</p>
+              {/* v391: indikator anggota merged + aksi Un-merge. */}
+              {editingMember?.mergedIntoId != null && (
+                <div className="mt-1 flex items-center space-x-2" data-testid="merged-indicator">
+                  <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">{t('dedup.unmerge.mergedBadge')}</span>
+                  <button
+                    type="button"
+                    data-testid="open-unmerge"
+                    className="text-xs font-medium text-sky-700 underline hover:text-sky-900"
+                    onClick={() => setUnmergeOpen(true)}
+                  >
+                    {t('dedup.unmerge.openUnmerge')}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <button
@@ -772,6 +788,18 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
             setMergeTarget(null);
             setDupCandidates([]);
             dupAckRef.current = false;
+            handleClose();
+          }}
+        />
+      )}
+      {/* v391: dialog un-merge, dibuka dari indikator merged di header. */}
+      {unmergeOpen && editingMember && (
+        <UnmergeMemberDialog
+          isOpen
+          duplicateId={editingMember.id}
+          onClose={() => setUnmergeOpen(false)}
+          onUnmerged={() => {
+            setUnmergeOpen(false);
             handleClose();
           }}
         />
