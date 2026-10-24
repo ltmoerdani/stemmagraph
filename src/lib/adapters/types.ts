@@ -613,3 +613,23 @@ export interface StatsApi {
   /** Ambil peringkat anggota hidup tertua pohon; read-only, non-PII: id dan ageYears tanpa nama. */
   getOldestLiving(treeId: string): Promise<OldestLivingEntryDto[]>;
 }
+
+/** Kandidat duplikat anggota existing untuk satu calon anggota baru (v388). */
+export interface DuplicateCandidateDto {
+  memberId: string;
+  score: number;
+  reasons: string[];
+}
+
+/**
+ * Permukaan cek duplikat saat entri anggota (v388): API berdiri sendiri
+ * ala StatsApi, read-only. Adapter tanpa server (mock, supabase) lewat
+ * getDuplicateCheckApi mendapat null dan UI melompati pemeriksaan.
+ */
+export interface DuplicateCheckApi {
+  /** Bandingkan satu calon anggota dengan anggota existing tree; name wajib, birthDate dan marga opsional. */
+  checkDuplicateCandidates(
+    treeId: string,
+    params: { name: string; birthDate?: string; marga?: string },
+  ): Promise<{ candidates: DuplicateCandidateDto[] }>;
+}

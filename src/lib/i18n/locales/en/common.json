@@ -533,6 +533,25 @@
   "dedupReview": {
     "open": "Check duplicates"
   },
+  "dedup": {
+    "entry": {
+      "warningTitle": "A member with a similar name already exists in this tree. Check before saving.",
+      "scoreLabel": "Score",
+      "reasonsLabel": "Reasons",
+      "proceed": "Proceed",
+      "cancel": "Cancel",
+      "reason": {
+        "EXACT_NAME": "Exact same name",
+        "NORMALIZED_NAME": "Same name after normalization",
+        "FUZZY_NAME": "Similar name",
+        "SAME_MARGA": "Same clan name",
+        "SAME_BIRTH_YEAR": "Same birth year",
+        "BIRTH_YEAR_OVERLAP": "Close birth years",
+        "SAME_GENDER": "Same gender",
+        "SAME_NICKNAME": "Same nickname"
+      }
+    }
+  },
   "memberEdit": {
     "privacyStatus": "Privacy Status",
     "privacyShared": "Shared, include in public tree exports",

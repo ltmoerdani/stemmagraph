@@ -4,8 +4,14 @@ import { useTranslation } from 'react-i18next';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { getChangeReviewApi } from '../../lib/adapters';
+import { getChangeReviewApi, getDuplicateCheckApi } from '../../lib/adapters';
 import { suggestMargaValues } from '../../lib/genealogy/leksikon-bank';
+
+interface DuplicateCandidateView {
+  memberId: string;
+  score: number;
+  reasons: string[];
+}
 
 const buildInitialFormData = (editingMember?: FamilyMember): FormData => {
   if (!editingMember) return initialFormData;
@@ -86,6 +92,12 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   const [reasonNote, setReasonNote] = useState('');
   const [proposeSent, setProposeSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // v388: peringatan duplikat non-blocking khusus mode create.
+  const [dupCandidates, setDupCandidates] = useState<DuplicateCandidateView[]>([]);
+  // v388: ack duplikat disimpan di ref (bukan state) supaya requestSubmit
+  // sinkron di handleDupProceed membaca nilai terbaru tanpa re-render.
+  const dupAckRef = useRef(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   // v250-ii: saran marga dari bank leksikon, dihitung sekali per mount.
   const margaSuggestions = useMemo(() => suggestMargaValues(), []);
@@ -101,6 +113,8 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
     setError('');
     setReasonNote('');
     setProposeSent(false);
+    setDupCandidates([]);
+    dupAckRef.current = false;
   }
 
   if (!isOpen) return null;
@@ -108,6 +122,8 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
   const updateFormData = (updates: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
     setError('');
+    setDupCandidates([]);
+    dupAckRef.current = false;
   };
 
   const validateForm = (): boolean => {
@@ -162,6 +178,30 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
     setError('');
 
     try {
+      // v388: peringatan duplikat non-blocking, khusus mode create.
+      // Acknowledge sekali per isi form: bila kandidat muncul, submit
+      // berhenti di panel peringatan; Lanjut menandai ack lalu submit
+      // berikutnya jalan normal. Tanpa API rest, alur persis sebelum v388.
+      if (!editingMember && !dupAckRef.current) {
+        const dupApi = getDuplicateCheckApi();
+        if (dupApi && currentFamilyTreeId) {
+          try {
+            const res = await dupApi.checkDuplicateCandidates(currentFamilyTreeId, {
+              name: formData.name.trim(),
+              birthDate: formData.birthDate || undefined,
+              marga: formData.marga.trim() || undefined,
+            });
+            if (res.candidates.length > 0) {
+              setDupCandidates(res.candidates);
+              setIsSubmitting(false);
+              return;
+            }
+          } catch {
+            // Cek duplikat gagal (jaringan, 4xx): jangan blokir entri.
+          }
+        }
+      }
+
       const memberData: Partial<FamilyMember> = {
         name: formData.name.trim(),
         nickname: formData.nickname.trim() || undefined,
@@ -264,6 +304,22 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
     }
   };
 
+  /**
+   * v388 Lanjut: tandai kandidat sudah dilihat, submit ulang memakai
+   * formData terkini sehingga create jalan persis jalur biasa.
+   */
+  const handleDupProceed = () => {
+    dupAckRef.current = true;
+    setDupCandidates([]);
+    const form = formRef.current;
+    if (form) form.requestSubmit();
+  };
+
+  const handleDupCancel = () => {
+    setDupCandidates([]);
+    dupAckRef.current = false;
+  };
+
   const handleClose = () => {
     if (!isSubmitting) {
       onClose();
@@ -310,7 +366,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="p-6">
           {/* First Member Context */}
           {isFirstMember && (
             <div className="mb-6 text-center">
@@ -590,6 +646,54 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                   placeholder={t('changeReview.reasonNotePlaceholder')}
                   disabled={isSubmitting}
                 />
+              </div>
+            )}
+
+            {/* v388: peringatan duplikat non-blocking, kandidat dari API saat submit. */}
+            {dupCandidates.length > 0 && (
+              <div
+                data-testid="duplicate-warning"
+                role="alert"
+                className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg"
+              >
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-amber-800 text-sm font-medium">{t('dedup.entry.warningTitle')}</p>
+                    <ul className="mt-2 space-y-2">
+                      {dupCandidates.map((c) => (
+                        <li key={c.memberId} className="text-sm text-amber-800">
+                          <span className="font-medium">{c.memberId}</span>
+                          <span className="mx-1">·</span>
+                          <span>{t('dedup.entry.scoreLabel')}: {c.score}</span>
+                          {c.reasons.length > 0 && (
+                            <span className="ml-2 text-xs text-amber-700">
+                              {t('dedup.entry.reasonsLabel')}: {c.reasons.map((r) => t(`dedup.entry.reason.${r}`)).join(', ')}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 flex items-center space-x-3">
+                      <button
+                        type="button"
+                        data-testid="duplicate-proceed"
+                        onClick={handleDupProceed}
+                        className="px-4 py-1.5 text-sm bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+                      >
+                        {t('dedup.entry.proceed')}
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="duplicate-cancel"
+                        onClick={handleDupCancel}
+                        className="px-4 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+                      >
+                        {t('dedup.entry.cancel')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

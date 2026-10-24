@@ -533,6 +533,25 @@
   "dedupReview": {
     "open": "Cek Duplikat"
   },
+  "dedup": {
+    "entry": {
+      "warningTitle": "Anggota dengan nama serupa sudah ada di tree ini. Periksa sebelum menyimpan.",
+      "scoreLabel": "Skor",
+      "reasonsLabel": "Alasan",
+      "proceed": "Lanjut",
+      "cancel": "Batal",
+      "reason": {
+        "EXACT_NAME": "Nama sama persis",
+        "NORMALIZED_NAME": "Nama sama setelah penyeragaman",
+        "FUZZY_NAME": "Nama mirip",
+        "SAME_MARGA": "Marga sama",
+        "SAME_BIRTH_YEAR": "Tahun lahir sama",
+        "BIRTH_YEAR_OVERLAP": "Tahun lahir berdekatan",
+        "SAME_GENDER": "Gender sama",
+        "SAME_NICKNAME": "Nama panggilan sama"
+      }
+    }
+  },
   "memberEdit": {
     "privacyStatus": "Status Privasi",
     "privacyShared": "Dibagikan, sertakan dalam ekspor silsilah publik",
