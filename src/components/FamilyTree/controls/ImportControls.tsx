@@ -25,6 +25,11 @@ import {
   applyCitationPlan,
   type CitationApplyReport,
 } from '../../../lib/gedcom/citationApply';
+import {
+  previewCsvImport,
+  generateCsvTemplate,
+  type CsvImportPreview,
+} from '../../../lib/importcsv/validateCsv';
 
 /**
  * Import controls (S1F6-C): wires the pure import libs
@@ -45,6 +50,15 @@ export const ImportControls: React.FC = () => {
   const [undoPlan, setUndoPlan] = useState<UndoPlan | null>(null);
   const [undoSummary, setUndoSummary] = useState<UndoExecuteReport | null>(null);
   const [isUndoing, setIsUndoing] = useState(false);
+  const [csvPreview, setCsvPreview] = useState<CsvImportPreview | null>(null);
+  const [csvFileName, setCsvFileName] = useState<string | null>(null);
+  const [csvErrorKey, setCsvErrorKey] = useState<string | null>(null);
+  const [csvSummary, setCsvSummary] = useState<{
+    ok: number;
+    fail: number;
+  } | null>(null);
+  const [isCsvImporting, setIsCsvImporting] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation('common');
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
@@ -229,6 +243,92 @@ export const ImportControls: React.FC = () => {
     void importFile(file);
   };
 
+  // v386 CSV: baca file, validasi murni, tampilkan preview. Import
+  // baru jalan setelah konfirmasi eksplisit pengguna (dua langkah).
+  const handleCsvChosen = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setCsvErrorKey(null);
+    setCsvSummary(null);
+    setCsvPreview(null);
+    setCsvFileName(file.name);
+    try {
+      const text = await file.text();
+      const preview = previewCsvImport(text);
+      setCsvPreview(preview);
+    } catch (error) {
+      console.error('CSV read failed:', error);
+      setCsvErrorKey('import.csv.errors.unreadable');
+    } finally {
+      if (csvInputRef.current) csvInputRef.current.value = '';
+    }
+  };
+
+  // v386 CSV: konfirmasi preview menjadi create member per baris valid
+  // via adapter existing. Gagal per baris dihitung jujur; sisa baris
+  // tetap dicoba. Setelah selesai: refresh pohon.
+  const handleCsvConfirm = async () => {
+    if (!currentFamilyTreeId || !csvPreview || isCsvImporting) return;
+    setIsCsvImporting(true);
+    setCsvErrorKey(null);
+    try {
+      const adapter = getAdapter();
+      const treeId = currentFamilyTreeId;
+      let ok = 0;
+      let fail = 0;
+      for (const draft of csvPreview.valid) {
+        try {
+          await adapter.createMember(treeId, {
+            name: draft.name,
+            nickname: draft.nickname,
+            marga: draft.marga,
+            gender: draft.gender,
+            birthDate: draft.birthDate,
+            deathDate: draft.deathDate,
+            birthPlace: draft.birthPlace,
+            isAlive: draft.isAlive,
+            generation: draft.generation,
+            maritalStatus: draft.maritalStatus,
+          });
+          ok += 1;
+        } catch (error) {
+          console.error('CSV member create failed:', error);
+          fail += 1;
+        }
+      }
+      setCsvSummary({ ok, fail });
+      setCsvPreview(null);
+      setCsvFileName(null);
+      await fetchMembers(treeId);
+    } catch (error) {
+      console.error('CSV import failed:', error);
+      setCsvErrorKey('import.csv.errors.generic');
+    } finally {
+      setIsCsvImporting(false);
+    }
+  };
+
+  const handleCsvCancel = () => {
+    setCsvPreview(null);
+    setCsvFileName(null);
+    setCsvErrorKey(null);
+  };
+
+  const handleCsvTemplateDownload = () => {
+    const csv = generateCsvTemplate();
+    const blob = new Blob(['\ufeff' + csv], {
+      type: 'text/csv;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = 'stemmagraph-member-template.csv';
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Undo import terakhir (v377): eksekusi plan lewat io adapter, lalu
   // refresh tampilan. Tombol disabled saat berjalan (anti klik ganda).
   // executeUndoPlan tidak pernah melempar; kegagalan per entri atau
@@ -313,6 +413,119 @@ export const ImportControls: React.FC = () => {
               <Upload className="w-4 h-4" />
               <span>{t('import.chooseFile')}</span>
             </button>
+
+            {/* v386 CSV import: pilih file, unduh template, preview,
+                konfirmasi. Dua langkah dengan preview agar pengguna
+                melihat valid/invalid sebelum data dibuat. */}
+            <div className="mt-2 border-t border-gray-100 pt-2">
+              <p className="text-xs font-semibold text-gray-700">
+                {t('import.csv.title')}
+              </p>
+              <button
+                onClick={handleCsvTemplateDownload}
+                className="mt-1 w-full text-left px-3 py-2 text-sm rounded border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                data-testid="import-csv-template"
+              >
+                <Upload className="w-4 h-4" />
+                <span>{t('import.csv.template')}</span>
+              </button>
+              <button
+                onClick={() => csvInputRef.current?.click()}
+                disabled={isCsvImporting || !currentFamilyTreeId}
+                className="mt-1 w-full text-left px-3 py-2 text-sm rounded border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="import-csv-choose"
+              >
+                <Upload className="w-4 h-4" />
+                <span>{t('import.csv.choose')}</span>
+              </button>
+              <input
+                ref={csvInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={handleCsvChosen}
+                data-testid="import-csv-input"
+              />
+
+              {csvErrorKey && (
+                <p className="mt-1 text-xs text-red-600" role="alert">
+                  {t(csvErrorKey)}
+                </p>
+              )}
+
+              {csvPreview && (
+                <div
+                  className="mt-2 text-xs text-gray-700 space-y-1"
+                  data-testid="import-csv-preview"
+                >
+                  <p className="font-semibold text-gray-800">
+                    {t('import.csv.preview.title', { file: csvFileName ?? '' })}
+                  </p>
+                  <p>
+                    {t('import.csv.preview.valid', {
+                      count: csvPreview.valid.length,
+                    })}
+                  </p>
+                  {csvPreview.invalid.length > 0 && (
+                    <div>
+                      <p className="text-amber-700">
+                        {t('import.csv.preview.invalid', {
+                          count: csvPreview.invalid.length,
+                        })}
+                      </p>
+                      <ul className="mt-1 max-h-32 overflow-y-auto">
+                        {csvPreview.invalid.slice(0, 20).map((bad) => (
+                          <li key={bad.row} className="text-amber-700">
+                            {t('import.csv.preview.rowItem', {
+                              row: bad.row,
+                              reason: bad.reason,
+                            })}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="flex space-x-2 pt-1">
+                    <button
+                      onClick={() => {
+                        void handleCsvConfirm();
+                      }}
+                      disabled={
+                        isCsvImporting || csvPreview.valid.length === 0
+                      }
+                      className="px-3 py-1.5 text-sm rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid="import-csv-confirm"
+                    >
+                      {isCsvImporting
+                        ? t('import.csv.busy')
+                        : t('import.csv.confirm')}
+                    </button>
+                    <button
+                      onClick={handleCsvCancel}
+                      disabled={isCsvImporting}
+                      className="px-3 py-1.5 text-sm rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      data-testid="import-csv-cancel"
+                    >
+                      {t('import.csv.cancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {csvSummary && (
+                <div
+                  className="mt-2 text-xs text-gray-700 space-y-1"
+                  data-testid="import-csv-summary"
+                >
+                  <p>
+                    {t('import.csv.summary', {
+                      ok: csvSummary.ok,
+                      fail: csvSummary.fail,
+                    })}
+                  </p>
+                </div>
+              )}
+            </div>
 
             {!currentFamilyTreeId && (
               <p className="mt-2 text-xs text-amber-700" role="alert">
