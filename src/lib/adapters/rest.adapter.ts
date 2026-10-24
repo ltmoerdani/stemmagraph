@@ -69,6 +69,7 @@ import {
   AdapterError,
   AuthError,
 } from './types';
+import type { DuplicateCandidateDto } from './types';
 import type { FeedItem } from '../feed';
 
 /**
@@ -84,7 +85,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -545,6 +546,22 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
       decisionNote === undefined || decisionNote === '' ? {} : { decisionNote },
     );
     return body.proposal;
+  }
+
+  // ── Duplicate check on member entry (v388) ─────────────
+  // Non-blocking warning surface: one GET per submission attempt.
+  async checkDuplicateCandidates(
+    treeId: string,
+    params: { name: string; birthDate?: string; marga?: string },
+  ): Promise<{ candidates: DuplicateCandidateDto[] }> {
+    const query = new URLSearchParams();
+    query.set('name', params.name);
+    if (params.birthDate) query.set('birthDate', params.birthDate);
+    if (params.marga) query.set('marga', params.marga);
+    return this.request<{ candidates: DuplicateCandidateDto[] }>(
+      'GET',
+      `/trees/${encodeURIComponent(treeId)}/members/duplicates?${query.toString()}`
+    );
   }
 
   // ── Member consent ledger (S-06c) ───────────────────────
