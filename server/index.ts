@@ -1863,6 +1863,13 @@ app.post('/api/v1/trees/:treeId/members/:memberId/merge', requireAuthStatsLiving
       select: { id: true, memberId: true, type: true },
     });
     const eventIds = planEventReassign(dupEvents);
+    // LifeEvent (v380 entity) milik duplikat ikut pindah assign: tanpa
+    // menimpa nilai existing, event dengan type sama tetap dua-duanya
+    // hidup di sisi primary (kontrak GOAL v390).
+    const dupLifeEvents = await prisma.lifeEvent.findMany({
+      where: { memberId: duplicate.id },
+      select: { id: true },
+    });
     const now = new Date();
     // peta id relasi ke baris aslinya untuk menentukan sisi update.
     const relById = new Map(rels.map((r) => [r.id, r]));
@@ -1878,9 +1885,12 @@ app.post('/api/v1/trees/:treeId/members/:memberId/merge', requireAuthStatsLiving
       }),
       // baris ganda dan edge internal merge dihapus.
       ...plan.delete.map((id) => prisma.familyRelationship.delete({ where: { id } })),
-      // facts duplikat pindah assign ke primary (tanpa menimpa isi).
+      // facts GED dan LifeEvent duplikat pindah assign ke primary.
       ...eventIds.map((id) =>
         prisma.genealogyEvent.update({ where: { id }, data: { memberId: primary.id } }),
+      ),
+      ...dupLifeEvents.map((e) =>
+        prisma.lifeEvent.update({ where: { id: e.id }, data: { memberId: primary.id } }),
       ),
       // jejak audit: duplikat ditandai, baris tetap hidup.
       prisma.familyMember.update({

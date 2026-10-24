@@ -23,6 +23,7 @@ const prismaMock = vi.hoisted(() => ({
   familyMember: { findUnique: vi.fn(), update: vi.fn() },
   familyRelationship: { findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
   genealogyEvent: { findMany: vi.fn(), update: vi.fn() },
+  lifeEvent: { findMany: vi.fn(), update: vi.fn() },
   $transaction: vi.fn(),
 }));
 
@@ -235,9 +236,13 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
     prismaMock.genealogyEvent.findMany.mockResolvedValue([
       { id: 'e-1', memberId: 'dup-1', type: 'BIRT' },
     ]);
+    prismaMock.lifeEvent.findMany.mockResolvedValue([
+      { id: 'le-1' },
+    ]);
     prismaMock.familyRelationship.update.mockResolvedValue({});
     prismaMock.familyRelationship.delete.mockResolvedValue({});
     prismaMock.genealogyEvent.update.mockResolvedValue({});
+    prismaMock.lifeEvent.update.mockResolvedValue({});
     prismaMock.familyMember.update.mockResolvedValue({});
     prismaMock.$transaction.mockImplementation(async (ops: unknown[]) => {
       await Promise.all(ops);
@@ -247,11 +252,11 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
     expect(out.status).toBe(200);
     expect(out.body['merged']).toBe(true);
     expect(out.body['primaryId']).toBe('pri-1');
-    // transaksi terpanggil dengan 4 jenis operasi: 1 rewire, 1 delete,
-    // 1 event reassign, 1 penandaan merged.
+    // transaksi terpanggil dengan operasi: 1 rewire, 1 delete,
+    // 1 genealogy event, 1 life event, 1 penandaan merged.
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
     const ops = prismaMock.$transaction.mock.calls[0][0] as unknown[];
-    expect(ops).toHaveLength(4);
+    expect(ops).toHaveLength(5);
     expect(prismaMock.familyRelationship.update).toHaveBeenCalledWith({
       where: { id: 'r-w' },
       data: { memberId: 'pri-1' },
@@ -259,6 +264,10 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
     expect(prismaMock.familyRelationship.delete).toHaveBeenCalledWith({ where: { id: 'r-d' } });
     expect(prismaMock.genealogyEvent.update).toHaveBeenCalledWith({
       where: { id: 'e-1' },
+      data: { memberId: 'pri-1' },
+    });
+    expect(prismaMock.lifeEvent.update).toHaveBeenCalledWith({
+      where: { id: 'le-1' },
       data: { memberId: 'pri-1' },
     });
     expect(prismaMock.familyMember.update).toHaveBeenCalledWith({
@@ -277,6 +286,7 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
       { id: 'r-c', memberId: 'w-1', relatedId: 'dup-1', type: 'parent' },
     ]);
     prismaMock.genealogyEvent.findMany.mockResolvedValue([]);
+    prismaMock.lifeEvent.findMany.mockResolvedValue([]);
     prismaMock.familyRelationship.update.mockResolvedValue({});
     prismaMock.familyMember.update.mockResolvedValue({});
     prismaMock.$transaction.mockImplementation(async (ops: unknown[]) => {
@@ -301,6 +311,7 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
       .mockResolvedValueOnce(PRIMARY);
     prismaMock.familyRelationship.findMany.mockResolvedValue([]);
     prismaMock.genealogyEvent.findMany.mockResolvedValue([]);
+    prismaMock.lifeEvent.findMany.mockResolvedValue([]);
     prismaMock.$transaction.mockRejectedValue(new Error('db down'));
     const out = await post(PATH, { targetId: 'pri-1', confirmName: 'Andi' }, { Authorization: authHeader('user-1') });
     expect(out.status).toBe(500);
