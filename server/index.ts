@@ -61,6 +61,11 @@ import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import { computeLivingStats } from '../src/lib/stats/living-stats';
 import { findDuplicateCandidates } from '../src/lib/dedup/duplicateDetector';
+import {
+  isParentChildConnected,
+  planRelationshipRewire,
+  planEventReassign,
+} from '../src/lib/dedup/mergeMembers';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
@@ -1798,6 +1803,94 @@ app.get('/api/v1/trees/:treeId/members/duplicates', requireAuthStatsLiving, asyn
     res.json({ candidates });
   } catch (e) {
     res.status(500).json({ code: 'DUPLICATES_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Guided member merge (v390 fase 1) ───────────────────
+//
+// POST /api/v1/trees/:treeId/members/:memberId/merge menggabungkan anggota
+// duplikat (`memberId`) ke anggota primary (`body.targetId`) dalam satu
+// transaksi: relasi di-rewire dengan dedup kanonik, facts pindah assign
+// tanpa menimpa, duplikat ditandai mergedIntoId + mergedAt tanpa hapus
+// baris (jejak audit). Guard pola v275: 401 challenge Bearer via
+// requireAuthStatsLiving, 403 FORBIDDEN_TREE via guardTreeAction
+// 'manage_tree' setara edit (owner/editor). 422 { code, message } per
+// kasus; 404 tree atau member. confirmName wajib cocok nama primary
+// (pengunci salah klik).
+app.post('/api/v1/trees/:treeId/members/:memberId/merge', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string; memberId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'edit_member');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const bodyTarget = (req.body as { targetId?: unknown; confirmName?: unknown }) ?? {};
+    const targetId = typeof bodyTarget.targetId === 'string' ? bodyTarget.targetId : '';
+    const confirmName = typeof bodyTarget.confirmName === 'string' ? bodyTarget.confirmName.trim() : '';
+    if (targetId.length === 0) {
+      return res.status(422).json({ code: 'INVALID_TARGET', message: 'targetId is required' });
+    }
+    if (confirmName.length === 0) {
+      return res.status(422).json({ code: 'INVALID_CONFIRM_NAME', message: 'confirmName is required' });
+    }
+    const duplicateId = req.params.memberId;
+    if (duplicateId === targetId) {
+      return res.status(422).json({ code: 'MERGE_SELF', message: 'Cannot merge a member into itself' });
+    }
+    const [duplicate, primary] = await Promise.all([
+      prisma.familyMember.findUnique({ where: { id: duplicateId } }),
+      prisma.familyMember.findUnique({ where: { id: targetId } }),
+    ]);
+    if (!duplicate || duplicate.treeId !== req.params.treeId) {
+      return res.status(404).json({ code: 'NOT_FOUND', message: 'Duplicate member not found in this tree' });
+    }
+    if (!primary || primary.treeId !== req.params.treeId) {
+      return res.status(404).json({ code: 'NOT_FOUND', message: 'Target member not found in this tree' });
+    }
+    if (primary.name !== confirmName) {
+      return res.status(422).json({ code: 'CONFIRM_NAME_MISMATCH', message: 'confirmName does not match the target member name' });
+    }
+    if (duplicate.mergedIntoId !== null || primary.mergedIntoId !== null) {
+      return res.status(422).json({ code: 'ALREADY_MERGED', message: 'One of the members is already merged' });
+    }
+    const rels = await prisma.familyRelationship.findMany({
+      where: { treeId: req.params.treeId },
+      select: { id: true, memberId: true, relatedId: true, type: true },
+    });
+    if (isParentChildConnected(primary.id, duplicate.id, rels)) {
+      return res.status(422).json({ code: 'MERGE_CYCLE', message: 'Merge would create a parent-child cycle' });
+    }
+    const plan = planRelationshipRewire(duplicate.id, primary.id, rels);
+    const dupEvents = await prisma.genealogyEvent.findMany({
+      where: { memberId: duplicate.id },
+      select: { id: true, memberId: true, type: true },
+    });
+    const eventIds = planEventReassign(dupEvents);
+    const now = new Date();
+    // peta id relasi ke baris aslinya untuk menentukan sisi update.
+    const relById = new Map(rels.map((r) => [r.id, r]));
+    await prisma.$transaction([
+      // rewire: sisi yang menunjuk duplikat diarahkan ke primary.
+      ...plan.rewire.map((id) => {
+        const r = relById.get(id);
+        if (!r) throw new Error(`relation ${id} missing during merge rewire`);
+        const data = r.memberId === duplicate.id
+          ? { memberId: primary.id }
+          : { relatedId: primary.id };
+        return prisma.familyRelationship.update({ where: { id }, data });
+      }),
+      // baris ganda dan edge internal merge dihapus.
+      ...plan.delete.map((id) => prisma.familyRelationship.delete({ where: { id } })),
+      // facts duplikat pindah assign ke primary (tanpa menimpa isi).
+      ...eventIds.map((id) =>
+        prisma.genealogyEvent.update({ where: { id }, data: { memberId: primary.id } }),
+      ),
+      // jejak audit: duplikat ditandai, baris tetap hidup.
+      prisma.familyMember.update({
+        where: { id: duplicate.id },
+        data: { mergedIntoId: primary.id, mergedAt: now },
+      }),
+    ]);
+    return res.json({ merged: true, primaryId: primary.id });
+  } catch (e) {
+    res.status(500).json({ code: 'MERGE_ERROR', message: (e as Error).message });
   }
 });
 
