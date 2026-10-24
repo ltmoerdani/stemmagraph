@@ -127,6 +127,11 @@ model FamilyMember {
   email           String?
   phone           String?
   isAlive         Boolean  @default(true)
+  // v390 Merge Anggota Terpandu fase 1, additive only. Baris yang sudah
+  // digabung TIDAK dihapus: mergedIntoId menunjuk anggota primary,
+  // mergedAt mencatat waktu merge (jejak audit). NULL = belum di-merge.
+  mergedIntoId    String?
+  mergedAt        DateTime?
   // Per-individual sharing consent (S-06 Wave 1). Application domain
   // values: "shared" | "private". NULL means not yet recorded; the
   // export privacy gate treats NULL living members as redact.
