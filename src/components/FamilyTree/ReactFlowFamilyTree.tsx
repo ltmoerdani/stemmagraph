@@ -45,6 +45,7 @@ import {
   type StableHydrationEntry,
 } from './generations';
 import { shouldOnlyRenderVisibleElements } from './generations';
+import { parentChildMarkerEnd } from './edges/edgeMarkers';
 
 // Define custom node and edge types
 const nodeTypes: NodeTypes = {
@@ -155,6 +156,14 @@ const createFamilyEdgeSpecs = (
             target: member.id,
             type: 'parentChild',
             data: { relationship: 'parentChild' },
+            // Semantik arah relasi (v385): konvensi top-down, panah menunjuk anak.
+            // Model hub GEDCOM 7 (FAMC/FAMS) tidak mendefinisikan arah visual;
+            // preseden Gramps menjadikan arah panah opsi pengguna.
+            // Marker dari helper pure parentChildMarkerEnd(): color null agar
+            // mengikuti tema --xy-edge-stroke; pasangan dan sibling tanpa panah.
+            // markerUnits default strokeWidth; pindah ke userSpaceOnUse bila
+            // stroke-width dibedakan per relasi atau berubah saat selected.
+            markerEnd: parentChildMarkerEnd(),
           }),
         });
       });
