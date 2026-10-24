@@ -47,6 +47,16 @@ Skema lengkap ada di `prisma/schema-genealogy-draft.prisma` (DRAFT, tidak dimuat
 | `INDI.NOTE` (tanpa SOUR) | `LifeEvent.notes` / anggota | teks bebas tetap teks bebas |
 | Tanggal tak terurai | `originalDateString` + `dateKind=ABOUT` | aturan kejujuran: jangan mengarang presisi |
 
+## Cutover (v384, kontrak fase akhir GAP 0.6)
+
+Status cutover agregasi by-century ke sumber LifeEvent, sesuai pola expand-contract (engine sama, tanpa pergantian database):
+
+1. **Tahapan.** expand (schema add-only, tuntas v380) lalu backfill (skrip idempoten add-only, lihat butir 4) lalu dual-write dan dual-read (tuntas v380, terverifikasi modul event-entity-parity) lalu flip baca (v383, empat route by-century dilayani dari LifeEvent) lalu contract (drop kolom legacy, DI LUAR v384, gerbang di butir 3).
+2. **Saklar dan rollback.** Sumber baca dipilih env `STATS_READ_SOURCE` (`entity` | `legacy`, default `entity`) di server; `legacy` menjalankan compute legacy existing atas rekaman yang dipetakan dari baris LifeEvent yang sama. Rollback instan tanpa redeploy: restart dengan env `legacy`. Nilai env tidak dikenal jatuh ke default.
+3. **Kriteria flip dan retensi (pemilik keputusan: Pak).** Flip permanen (menghapus jalur legacy) hanya setelah mismatch paritas dekat nol stabil minimal 3 hari berjalan (observasi operasional milik Pak, bukti harness shadow-read paritas); jalur baca lama read-only dipertahankan minimal satu siklus backup penuh + satu minggu kerja pasca-flip sebelum contract/drop kolom String legacy. Status ADR tetap Proposed sampai rehearsal migrasi di dump data lulus QA.
+4. **Backfill batched resumable.** Perencana backfill (backfillPlan.ts untuk BIRTH/DEATH, backfillFamilyPlan.ts untuk MARRIAGE/DIVORCE) murni menghasilkan actions idempoten: member/event yang sudah ada di-skip (`already-exists`), sumber kosong di-skip tanpa mengarang (`empty-source`), sehingga skrip eksekutor aman dijalankan ulang (resume) per chunk sumber tanpa transaksi panjang yang menghambat DDL; rate limit eksekusi ditentukan skrip eksekutor di lingkungan yang menjalankannya.
+5. **Alat verifikasi.** Harness shadow-read paritas (shadow-read-parity.ts) menjalankan compute legacy vs compute entity atas data sama dan menghasilkan laporan diff deterministik ber-fingerprint sha256; fingerprint menjadi penanda rekam jejak paritas per pemeriksaan.
+
 ## Strategi migrasi bertahap
 
 - **Fase 1 (draft ini):** berkas skema draft terpisah, nol sentuhan ke `schema.prisma`, nol migrasi database. Kode existing tidak dapat rusak.
