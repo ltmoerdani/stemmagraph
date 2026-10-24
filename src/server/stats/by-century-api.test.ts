@@ -16,7 +16,7 @@
  * 0011), weddings dan divorces hanya MARRIAGE/DIVORCE berpasangan
  * (partnerMemberId not null), 304 mengulang ETag dan Cache-Control.
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -290,5 +290,95 @@ describe('v383 stats by-century endpoints', () => {
     expect(status).toBe(200);
     expect(cacheControl).toBe('private, no-cache');
     expect(etag).toMatch(/^"[0-9a-f]{64}"$/);
+  });
+});
+
+describe('v384 stats by-century saklar STATS_READ_SOURCE', () => {
+  const ORIGINAL = process.env['STATS_READ_SOURCE'];
+
+  function setSource(raw: string | undefined): void {
+    if (raw === undefined) {
+      delete process.env['STATS_READ_SOURCE'];
+    } else {
+      process.env['STATS_READ_SOURCE'] = raw;
+    }
+  }
+
+  afterEach(() => {
+    setSource(ORIGINAL);
+  });
+
+  it('default (env undefined): births dilayani jalur entity, payload bentuk sama', async () => {
+    setSource(undefined);
+    mockGuardAman();
+    prismaMock.lifeEvent.findMany.mockResolvedValue([
+      ev('a', null, 'EXACT', 1875, 3, 12),
+      ev('b', null, 'EXACT', 1955, null, null),
+    ] as EventRow[]);
+    const { status, body } = await get(PATH_BIRTHS, { authorization: authHeader('user-1') });
+    expect(status).toBe(200);
+    expect(body['centuries']).toEqual([{ century: '1800', count: 1 }]);
+    expect(body['total']).toBe(1);
+    expect(body['undated']).toBe(1);
+    expectStrukturAgregat(body);
+  });
+
+  it('legacy: births payload bentuk sama dengan jalur entity (kasus sama, angka sama)', async () => {
+    setSource('legacy');
+    mockGuardAman();
+    prismaMock.lifeEvent.findMany.mockResolvedValue([
+      ev('a', null, 'EXACT', 1875, 3, 12),
+      ev('b', null, 'EXACT', 1955, null, null),
+    ] as EventRow[]);
+    const { status, body } = await get(PATH_BIRTHS, { authorization: authHeader('user-1') });
+    expect(status).toBe(200);
+    expect(body['centuries']).toEqual([{ century: '1800', count: 1 }]);
+    expect(body['total']).toBe(1);
+    expect(body['undated']).toBe(1);
+    expectStrukturAgregat(body);
+  });
+
+  it('legacy: weddings familyId pola parity subjectId<partnerId, payload identik entity', async () => {
+    setSource('legacy');
+    mockGuardAman();
+    prismaMock.lifeEvent.findMany.mockResolvedValue([
+      ev('a', 'b', 'EXACT', 1910, 5, 20),
+      ev('c', null, 'EXACT', 1999, 12, 31),
+    ] as EventRow[]);
+    const { status, body } = await get(PATH_WEDDINGS, { authorization: authHeader('user-1') });
+    expect(status).toBe(200);
+    expect(body['centuries']).toEqual([
+      { century: '1900', count: 2 },
+    ]);
+    expect(body['total']).toBe(2);
+    expect(body['undated']).toBe(0);
+    expectStrukturAgregat(body);
+  });
+
+  it('legacy: divorces payload valid dan 304 ETag tetap berjalan', async () => {
+    setSource('legacy');
+    mockGuardAman();
+    prismaMock.lifeEvent.findMany.mockResolvedValue([
+      ev('a', 'b', 'EXACT', 1925, 4, 2),
+    ] as EventRow[]);
+    const first = await get(PATH_DIVORCES, { authorization: authHeader('user-1') });
+    expect(first.status).toBe(200);
+    expect(first.body['centuries']).toEqual([{ century: '1900', count: 1 }]);
+    const etag = first.etag ?? '';
+    const bareHex = etag.replace(/^W\//, '').replaceAll('"', '');
+    const second = await get(PATH_DIVORCES, { authorization: authHeader('user-1'), 'if-none-match': bareHex });
+    expect(second.status).toBe(304);
+    expect(second.etag).toBe(etag);
+  });
+
+  it('nilai env tidak dikenal jatuh ke entity (default), bukan error', async () => {
+    setSource('postgres');
+    mockGuardAman();
+    prismaMock.lifeEvent.findMany.mockResolvedValue([
+      ev('a', null, 'EXACT', 1875, 3, 12),
+    ] as EventRow[]);
+    const { status, body } = await get(PATH_BIRTHS, { authorization: authHeader('user-1') });
+    expect(status).toBe(200);
+    expect(body['centuries']).toEqual([{ century: '1800', count: 1 }]);
   });
 });

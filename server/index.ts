@@ -74,6 +74,12 @@ import {
   computeWeddingsByCenturyFromEvents,
   type EntityEventInput,
 } from '../src/lib/stats/event-entity-reads';
+import { computeBirthsByCentury } from '../src/lib/stats/births-by-century';
+import { computeDeathsByCentury } from '../src/lib/stats/deaths-by-century';
+import { computeWeddingsByCentury } from '../src/lib/stats/weddings-by-century';
+import { computeDivorcesByCentury } from '../src/lib/stats/divorces-by-century';
+import { isoDateFromPartial } from '../src/lib/stats/event-entity-parity';
+import { resolveReadSource } from '../src/lib/stats/read-source';
 import { computeChildrenPerFamilyDistribution } from '../src/lib/stats/children-per-family';
 import { computeGenerationDepth, computePedigreeCompleteness } from '../src/lib/genealogy/tree-health';
 import type { FamilyGraph, ParentEdge } from '../src/lib/genealogy/family-graph';
@@ -2198,6 +2204,13 @@ app.get('/api/v1/trees/:treeId/stats/oldest-living', requireAuthStatsLiving, asy
 // tanpa N+1 dan tanpa relasi prisma baru. Respons agregat non-PII dari
 // compute*ByCenturyFromEvents. Cache private dengan revalidasi 304, ETag
 // STRONG dari hash body, 304 mengulang ETag dan Cache-Control per RFC 9111.
+//
+// v384 cutover: env STATS_READ_SOURCE (entity | legacy, default entity)
+// memilih jalur agregasi. legacy menjalankan compute legacy existing
+// atas rekaman yang dipetakan dari baris LifeEvent yang sama
+// (isoDateFromPartial hanya EXACT lengkap, familyId pola parity),
+// menjadi jalur rollback instan tanpa redeploy (restart cukup).
+// Path dan kontrak respons tidak berubah di kedua jalur.
 
 // GET /api/v1/trees/:treeId/stats/births-by-century dari LifeEvent BIRTH.
 app.get('/api/v1/trees/:treeId/stats/births-by-century', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
@@ -2216,7 +2229,12 @@ app.get('/api/v1/trees/:treeId/stats/births-by-century', requireAuthStatsLiving,
       monthStart: ev.date?.monthStart ?? null,
       dayStart: ev.date?.dayStart ?? null,
     }));
-    const payload = computeBirthsByCenturyFromEvents(rows);
+    const payload = resolveReadSource(process.env['STATS_READ_SOURCE']) === 'legacy'
+      ? computeBirthsByCentury(events.map((ev) => ({
+          personId: ev.memberId,
+          birthDate: isoDateFromPartial(ev.date?.dateKind ?? null, ev.date?.yearStart ?? null, ev.date?.monthStart ?? null, ev.date?.dayStart ?? null),
+        })))
+      : computeBirthsByCenturyFromEvents(rows);
     const body = JSON.stringify(payload);
     const etagHex = createHash('sha256').update(body).digest('hex');
     res.set('Cache-Control', 'private, no-cache');
@@ -2253,7 +2271,12 @@ app.get('/api/v1/trees/:treeId/stats/deaths-by-century', requireAuthStatsLiving,
       monthStart: ev.date?.monthStart ?? null,
       dayStart: ev.date?.dayStart ?? null,
     }));
-    const payload = computeDeathsByCenturyFromEvents(rows);
+    const payload = resolveReadSource(process.env['STATS_READ_SOURCE']) === 'legacy'
+      ? computeDeathsByCentury(events.map((ev) => ({
+          personId: ev.memberId,
+          deathDate: isoDateFromPartial(ev.date?.dateKind ?? null, ev.date?.yearStart ?? null, ev.date?.monthStart ?? null, ev.date?.dayStart ?? null),
+        })))
+      : computeDeathsByCenturyFromEvents(rows);
     const body = JSON.stringify(payload);
     const etagHex = createHash('sha256').update(body).digest('hex');
     res.set('Cache-Control', 'private, no-cache');
@@ -2291,7 +2314,12 @@ app.get('/api/v1/trees/:treeId/stats/weddings-by-century', requireAuthStatsLivin
       monthStart: ev.date?.monthStart ?? null,
       dayStart: ev.date?.dayStart ?? null,
     }));
-    const payload = computeWeddingsByCenturyFromEvents(rows);
+    const payload = resolveReadSource(process.env['STATS_READ_SOURCE']) === 'legacy'
+      ? computeWeddingsByCentury(events.map((ev) => ({
+          familyId: ev.partnerMemberId ? `${ev.memberId}<${ev.partnerMemberId}>` : ev.memberId,
+          marriageDate: isoDateFromPartial(ev.date?.dateKind ?? null, ev.date?.yearStart ?? null, ev.date?.monthStart ?? null, ev.date?.dayStart ?? null),
+        })))
+      : computeWeddingsByCenturyFromEvents(rows);
     const body = JSON.stringify(payload);
     const etagHex = createHash('sha256').update(body).digest('hex');
     res.set('Cache-Control', 'private, no-cache');
@@ -2329,7 +2357,12 @@ app.get('/api/v1/trees/:treeId/stats/divorces-by-century', requireAuthStatsLivin
       monthStart: ev.date?.monthStart ?? null,
       dayStart: ev.date?.dayStart ?? null,
     }));
-    const payload = computeDivorcesByCenturyFromEvents(rows);
+    const payload = resolveReadSource(process.env['STATS_READ_SOURCE']) === 'legacy'
+      ? computeDivorcesByCentury(events.map((ev) => ({
+          familyId: ev.partnerMemberId ? `${ev.memberId}<${ev.partnerMemberId}>` : ev.memberId,
+          divorceDate: isoDateFromPartial(ev.date?.dateKind ?? null, ev.date?.yearStart ?? null, ev.date?.monthStart ?? null, ev.date?.dayStart ?? null),
+        })))
+      : computeDivorcesByCenturyFromEvents(rows);
     const body = JSON.stringify(payload);
     const etagHex = createHash('sha256').update(body).digest('hex');
     res.set('Cache-Control', 'private, no-cache');
