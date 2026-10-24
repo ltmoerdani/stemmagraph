@@ -147,6 +147,25 @@
       "unreadable": "File tidak dapat dibaca sebagai GEDCOM atau GEDZIP.",
       "empty": "Tidak ada data individu pada file ini.",
       "generic": "Impor gagal. Periksa file lalu coba lagi."
+    },
+    "csv": {
+      "title": "Impor CSV (anggota)",
+      "template": "Unduh template CSV",
+      "choose": "Pilih file .csv",
+      "confirm": "Impor baris valid",
+      "cancel": "Batal",
+      "busy": "Mengimpor...",
+      "preview": {
+        "title": "Pratinjau: {{file}}",
+        "valid": "{{count}} baris valid",
+        "invalid": "{{count}} baris tidak valid:",
+        "rowItem": "Baris {{row}}: {{reason}}"
+      },
+      "summary": "Impor CSV selesai: {{ok}} anggota dibuat, {{fail}} gagal",
+      "errors": {
+        "unreadable": "File tidak dapat dibaca sebagai teks.",
+        "generic": "Impor CSV gagal. Periksa file lalu coba lagi."
+      }
     }
   },
   "toolbar": {

@@ -147,6 +147,25 @@
       "unreadable": "The file could not be read as GEDCOM or GEDZIP.",
       "empty": "No individual records were found in this file.",
       "generic": "Import failed. Check the file and try again."
+    },
+    "csv": {
+      "title": "CSV import (members)",
+      "template": "Download CSV template",
+      "choose": "Choose a .csv file",
+      "confirm": "Import valid rows",
+      "cancel": "Cancel",
+      "busy": "Importing...",
+      "preview": {
+        "title": "Preview: {{file}}",
+        "valid": "{{count}} valid rows",
+        "invalid": "{{count}} invalid rows:",
+        "rowItem": "Row {{row}}: {{reason}}"
+      },
+      "summary": "CSV import complete: {{ok}} members created, {{fail}} failed",
+      "errors": {
+        "unreadable": "The file could not be read as text.",
+        "generic": "CSV import failed. Check the file and try again."
+      }
     }
   },
   "toolbar": {
