@@ -564,6 +564,21 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     );
   }
 
+  // ── Guided member merge (v390 fase 1) ──────────────────
+  // One POST per execution; server holds the transaction. Errors come
+  // back as 4xx { code, message } and are surfaced to the dialog inline.
+  async mergeMember(
+    treeId: string,
+    duplicateId: string,
+    params: { targetId: string; confirmName: string },
+  ): Promise<{ merged: boolean; primaryId: string }> {
+    return this.request<{ merged: boolean; primaryId: string }>(
+      'POST',
+      `/trees/${encodeURIComponent(treeId)}/members/${encodeURIComponent(duplicateId)}/merge`,
+      { targetId: params.targetId, confirmName: params.confirmName },
+    );
+  }
+
   // ── Member consent ledger (S-06c) ───────────────────────
   // Pure routing: the server replays the append-only ledger through the
   // pure reducer and guards tree access; invalid transitions come back as

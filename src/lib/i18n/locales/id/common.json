@@ -550,6 +550,22 @@
         "SAME_GENDER": "Gender sama",
         "SAME_NICKNAME": "Nama panggilan sama"
       }
+    },
+    "merge": {
+      "title": "Gabung anggota duplikat",
+      "subtitle": "Tinjau dua anggota sebelum digabung",
+      "duplicateSide": "Entri baru (akan ditandai merged)",
+      "primarySide": "Anggota existing (dipertahankan)",
+      "birthDate": "Tanggal lahir",
+      "marga": "Marga",
+      "relationCount": "Jumlah relasi",
+      "explain": "Relasi dan catatan peristiwa entri baru dipindah ke anggota existing, entri baru ditandai merged tanpa menghapus data. Tindakan ini tidak dapat dibatalkan.",
+      "confirmLabel": "Ketik nama anggota existing ({{name}}) untuk mengaktifkan tombol gabung",
+      "execute": "Gabungkan",
+      "merging": "Menggabungkan...",
+      "cancel": "Batal",
+      "success": "Anggota berhasil digabung. Data tree sudah diperbarui.",
+      "failed": "Gagal menggabungkan anggota. Coba lagi."
     }
   },
   "memberEdit": {

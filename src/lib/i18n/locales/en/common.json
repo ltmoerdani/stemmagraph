@@ -550,6 +550,22 @@
         "SAME_GENDER": "Same gender",
         "SAME_NICKNAME": "Same nickname"
       }
+    },
+    "merge": {
+      "title": "Merge duplicate member",
+      "subtitle": "Review both members before merging",
+      "duplicateSide": "New entry (will be marked merged)",
+      "primarySide": "Existing member (kept)",
+      "birthDate": "Birth date",
+      "marga": "Clan name",
+      "relationCount": "Relations",
+      "explain": "Relations and event records of the new entry move to the existing member, the new entry is marked merged without deleting data. This action cannot be undone.",
+      "confirmLabel": "Type the existing member name ({{name}}) to enable the merge button",
+      "execute": "Merge",
+      "merging": "Merging...",
+      "cancel": "Cancel",
+      "success": "Members merged successfully. Tree data has been refreshed.",
+      "failed": "Failed to merge members. Try again."
     }
   },
   "memberEdit": {
