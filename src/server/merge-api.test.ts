@@ -272,7 +272,22 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
     });
     expect(prismaMock.familyMember.update).toHaveBeenCalledWith({
       where: { id: 'dup-1' },
-      data: { mergedIntoId: 'pri-1', mergedAt: expect.any(Date) },
+      data: {
+        mergedIntoId: 'pri-1',
+        mergedAt: expect.any(Date),
+        // v391 AC2: jurnal merge ditulis atomik dengan penandaan merged.
+        mergeJournal: expect.objectContaining({
+          version: 1,
+          duplicateId: 'dup-1',
+          primary: { id: 'pri-1', name: 'Andi' },
+          rewire: [
+            expect.objectContaining({ relationId: 'r-w', side: 'memberId', memberId: 'pri-1', relatedId: 'w-1', type: 'spouse' }),
+          ],
+          deleted: [expect.objectContaining({ id: 'r-d', memberId: 'pri-1', relatedId: 'dup-1', type: 'spouse' })],
+          movedGenealogyEventIds: ['e-1'],
+          movedLifeEventIds: ['le-1'],
+        }),
+      },
     });
   });
 

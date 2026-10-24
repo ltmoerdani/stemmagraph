@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import type { ChangeProposal, FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event, Invitation, TreeMember } from '../generated/prisma/client';
+import type { ChangeProposal, FamilyTree, FamilyMember, FamilyRelationship, User, Notification, Event, Invitation, TreeMember, Prisma } from '../generated/prisma/client';
 import { prisma } from './db';
 import {
   bootstrapAccountState,
@@ -66,6 +66,7 @@ import {
   planRelationshipRewire,
   planEventReassign,
 } from '../src/lib/dedup/mergeMembers';
+import { buildMergeJournal, type RewireSide } from '../src/lib/dedup/mergeJournal';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
@@ -1873,6 +1874,39 @@ app.post('/api/v1/trees/:treeId/members/:memberId/merge', requireAuthStatsLiving
     const now = new Date();
     // peta id relasi ke baris aslinya untuk menentukan sisi update.
     const relById = new Map(rels.map((r) => [r.id, r]));
+    // v391: snapshot reverse disusun dari keputusan merge SEBELUM eksekusi,
+    // ditulis ATOMIK di transaksi yang sama (AC2). Entri rewire memakai isi
+    // baris PASCA update (sisi duplikat diarahkan ke primary) sehingga
+    // un-merge bisa memverifikasi state sebelum membalik.
+    const journalRewire = plan.rewire.map((id) => {
+      const r = relById.get(id);
+      if (!r) throw new Error(`relation ${id} missing during merge rewire`);
+      const side: RewireSide = r.memberId === duplicate.id ? 'memberId' : 'relatedId';
+      return {
+        rel: {
+          id: r.id,
+          treeId: r.treeId,
+          // snapshot PASCA update: sisi duplikat menunjuk primary.
+          memberId: side === 'memberId' ? primary.id : r.memberId,
+          relatedId: side === 'relatedId' ? primary.id : r.relatedId,
+          type: r.type,
+        },
+        side,
+      };
+    });
+    const journal = buildMergeJournal({
+      duplicateId: duplicate.id,
+      primary: { id: primary.id, name: primary.name },
+      mergedAt: now,
+      rewire: journalRewire,
+      deleted: plan.delete.map((id) => {
+        const r = relById.get(id);
+        if (!r) throw new Error(`relation ${id} missing during merge delete`);
+        return { id: r.id, treeId: r.treeId, memberId: r.memberId, relatedId: r.relatedId, type: r.type };
+      }),
+      movedGenealogyEventIds: [...eventIds],
+      movedLifeEventIds: dupLifeEvents.map((e) => e.id),
+    });
     await prisma.$transaction([
       // rewire: sisi yang menunjuk duplikat diarahkan ke primary.
       ...plan.rewire.map((id) => {
@@ -1892,10 +1926,11 @@ app.post('/api/v1/trees/:treeId/members/:memberId/merge', requireAuthStatsLiving
       ...dupLifeEvents.map((e) =>
         prisma.lifeEvent.update({ where: { id: e.id }, data: { memberId: primary.id } }),
       ),
-      // jejak audit: duplikat ditandai, baris tetap hidup.
+      // jejak audit: duplikat ditandai, baris tetap hidup. v391: jurnal
+      // merge ikut di sini sehingga merge dan jurnal atomik (AC2).
       prisma.familyMember.update({
         where: { id: duplicate.id },
-        data: { mergedIntoId: primary.id, mergedAt: now },
+        data: { mergedIntoId: primary.id, mergedAt: now, mergeJournal: journal as unknown as Prisma.InputJsonValue },
       }),
     ]);
     return res.json({ merged: true, primaryId: primary.id });
