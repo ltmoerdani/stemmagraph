@@ -51,6 +51,19 @@ export interface DigestRecipientRef {
   readonly name: string;
 }
 
+/** One upcoming reminder row reduced to what the email renders. */
+export interface DigestReminder {
+  readonly kind: 'birthday' | 'wedding';
+  /** Ready-to-render label: one name or 'Name A & Name B'. */
+  readonly displayName: string;
+  /** Next occurrence date, YYYY-MM-DD (calendar only). */
+  readonly nextDate: string;
+  /** Days until the occurrence; 0 means today. */
+  readonly daysUntil: number;
+  /** Full years reached at that occurrence (age / years married). */
+  readonly yearsCompleted: number;
+}
+
 export interface DigestBuildInput {
   readonly recipient: DigestRecipientRef;
   readonly events: readonly DigestSourceEvent[];
@@ -59,6 +72,8 @@ export interface DigestBuildInput {
   readonly trees: readonly DigestTreeRef[];
   readonly actors: readonly DigestActorRef[];
   readonly window: WeeklyWindow;
+  /** Upcoming reminders merged into the digest; empty means no section. */
+  readonly reminders?: readonly DigestReminder[];
 }
 
 /** One tree's slice of the digest: counts for all twelve types plus names. */
@@ -77,6 +92,7 @@ export type WeeklyDigestBuild =
       readonly empty: false;
       readonly subject: string;
       readonly body: string;
+      readonly reminders: readonly DigestReminder[];
       readonly treeSections: readonly DigestTreeSection[];
       /** Distinct actor display names across the whole digest, alphabetical. */
       readonly actorNames: readonly string[];
@@ -119,7 +135,8 @@ export function buildWeeklyDigest(input: DigestBuildInput): WeeklyDigestBuild {
   const actorNames = new Map(input.actors.map((actor) => [actor.id, actor.name] as const));
 
   const included = input.events.filter((event) => isDigestEvent(event, input));
-  if (included.length === 0) return { empty: true };
+  const reminders = input.reminders ?? [];
+  if (included.length === 0 && reminders.length === 0) return { empty: true };
 
   const sectionsByTree = new Map<string, { counts: Record<EventType, number>; actors: Set<string> }>();
   const allActors = new Set<string>();
@@ -154,8 +171,9 @@ export function buildWeeklyDigest(input: DigestBuildInput): WeeklyDigestBuild {
     recipientName: input.recipient.name,
     window: input.window,
     treeSections,
+    reminders,
   });
-  return { empty: false, subject, body, treeSections, actorNames: sortedActorNames };
+  return { empty: false, subject, body, reminders, treeSections, actorNames: sortedActorNames };
 }
 
 // ─── The single EN plaintext template (ADR 0008) ─────────
@@ -176,6 +194,15 @@ interface RenderInput {
   readonly recipientName: string;
   readonly window: WeeklyWindow;
   readonly treeSections: readonly DigestTreeSection[];
+  readonly reminders: readonly DigestReminder[];
+}
+
+function renderReminderLine(reminder: DigestReminder): string {
+  const when = reminder.daysUntil === 0 ? 'today' : `in ${reminder.daysUntil} days`;
+  if (reminder.kind === 'birthday') {
+    return `- birthday: ${reminder.displayName} on ${reminder.nextDate} (${when}, turning ${reminder.yearsCompleted})`;
+  }
+  return `- wedding: ${reminder.displayName} on ${reminder.nextDate} (${when}, ${reminder.yearsCompleted} years married)`;
 }
 
 export function renderDigestBody(input: RenderInput): string {
@@ -193,6 +220,13 @@ export function renderDigestBody(input: RenderInput): string {
       if (count > 0) lines.push(`- ${type}: ${count}`);
     }
     lines.push(`- Activity by: ${section.actorNames.join(', ')}`);
+    lines.push('');
+  }
+  if (input.reminders.length > 0) {
+    lines.push('# Reminders');
+    for (const reminder of input.reminders) {
+      lines.push(renderReminderLine(reminder));
+    }
     lines.push('');
   }
   lines.push(
