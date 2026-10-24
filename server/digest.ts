@@ -22,6 +22,9 @@ import {
 } from '../src/lib/digest/builder';
 import { shouldSendDigest, weeklyWindow, type WeeklyWindow } from '../src/lib/digest/window';
 import { mailerDisabled, sendDigestEmail } from '../src/lib/digest/mailer';
+import { buildDigestSentNotification } from '../src/lib/notifications/digestNotification';
+import { computeNextAnniversaries, type NextAnniversaryInput } from '../src/lib/anniversaries/nextAnniversaries';
+import type { DigestReminder } from '../src/lib/digest/builder';
 
 const HOUR_MS = 3_600_000;
 
@@ -56,6 +59,7 @@ export async function buildDigestForUser(
   trees: readonly DigestTreeRef[],
   actors: readonly DigestActorRef[],
   membershipTreeIds: readonly string[],
+  reminders: readonly DigestReminder[] = [],
 ): Promise<WeeklyDigestBuild> {
   const sources: DigestSourceEvent[] = [];
   for (const row of events) {
@@ -75,7 +79,78 @@ export async function buildDigestForUser(
     trees,
     actors,
     window,
+    reminders,
   });
+}
+
+/** Reminder window width for the digest section (v387). */
+const REMINDER_DAYS = 30;
+
+/**
+ * Loads upcoming reminders (v387) across the recipient's trees: living
+ * members' birthdays and living couples' wedding anniversaries within
+ * REMINDER_DAYS. Read-only over the same rows the reminders endpoint
+ * uses, so both surfaces agree on what "upcoming" means. The pure
+ * module drops broken dates and sorts; here we only reduce to the
+ * render shape the digest builder consumes.
+ */
+export async function loadUpcomingReminders(
+  treeIds: readonly string[],
+  now: Date = new Date(),
+): Promise<DigestReminder[]> {
+  if (treeIds.length === 0) return [];
+  const [members, events] = await Promise.all([
+    prisma.familyMember.findMany({
+      where: { treeId: { in: [...treeIds] }, isAlive: true, birthDate: { not: '' } },
+      select: { id: true, name: true, birthDate: true },
+    }),
+    prisma.lifeEvent.findMany({
+      where: { treeId: { in: [...treeIds] }, eventType: 'MARRIAGE', partnerMemberId: { not: null } },
+      include: { date: true },
+    }),
+  ]);
+  const pairIds = new Set<string>();
+  for (const ev of events) {
+    if (ev.memberId) pairIds.add(ev.memberId);
+    if (ev.partnerMemberId) pairIds.add(ev.partnerMemberId);
+  }
+  const involved = pairIds.size === 0
+    ? []
+    : await prisma.familyMember.findMany({ where: { id: { in: Array.from(pairIds) } }, select: { id: true, name: true, isAlive: true } });
+  const byId = new Map(involved.map((m) => [m.id, m]));
+  const items: NextAnniversaryInput[] = members.map((m) => ({
+    kind: 'birthday' as const,
+    refId: m.id,
+    displayName: m.name,
+    date: m.birthDate,
+  }));
+  const seenPairs = new Set<string>();
+  for (const ev of events) {
+    if (!ev.partnerMemberId) continue;
+    const date = ev.date;
+    if (!date || date.dateKind !== 'EXACT') continue;
+    if (date.yearStart === null || date.monthStart === null || date.dayStart === null) continue;
+    const a = byId.get(ev.memberId);
+    const b = byId.get(ev.partnerMemberId);
+    if (!a || !a.isAlive || !b || !b.isAlive) continue;
+    const pairId = [ev.memberId, ev.partnerMemberId].sort().join(':');
+    if (seenPairs.has(pairId)) continue;
+    seenPairs.add(pairId);
+    const partnerNames: [string, string] = pairId.split(':')[0] === ev.memberId ? [a.name, b.name] : [b.name, a.name];
+    items.push({
+      kind: 'wedding' as const,
+      refId: pairId,
+      displayName: partnerNames.join(' & '),
+      date: `${String(date.yearStart).padStart(4, '0')}-${String(date.monthStart).padStart(2, '0')}-${String(date.dayStart).padStart(2, '0')}`,
+    });
+  }
+  return computeNextAnniversaries(items, now, REMINDER_DAYS).map((entry) => ({
+    kind: entry.kind,
+    displayName: entry.displayName,
+    nextDate: entry.nextDate,
+    daysUntil: entry.daysUntil,
+    yearsCompleted: entry.yearsCompleted,
+  }));
 }
 
 /** Loads the window-wide rows every recipient shares (read-only). */
@@ -134,6 +209,7 @@ export async function runWeeklyDigestPass(now: Date = new Date()): Promise<Diges
       const membershipTreeIds = memberships
         .filter((membership) => membership.userId === user.id)
         .map((membership) => membership.treeId);
+      const reminders = await loadUpcomingReminders(membershipTreeIds, now);
       const built = await buildDigestForUser(
         { id: user.id, name: user.name },
         window,
@@ -141,6 +217,7 @@ export async function runWeeklyDigestPass(now: Date = new Date()): Promise<Diges
         trees,
         actors,
         membershipTreeIds,
+        reminders,
       );
       if (built.empty) {
         skipped += 1;
@@ -156,6 +233,20 @@ export async function runWeeklyDigestPass(now: Date = new Date()): Promise<Diges
             where: { id: user.id },
             data: { digestLastSentAt: now },
           });
+          // v387: in-app trace of the real send. Dry-run rehearsals and
+          // empty digests leave no Notification behind.
+          if (!built.empty) {
+            const draft = buildDigestSentNotification(
+              user.id,
+              {
+                subject: built.subject,
+                treeCount: built.treeSections.length,
+                reminderCount: built.reminders.length,
+              },
+              window,
+            );
+            await prisma.notification.create({ data: draft });
+          }
         }
       } else {
         failed += 1;
