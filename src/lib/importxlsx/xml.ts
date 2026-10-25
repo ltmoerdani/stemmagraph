@@ -55,6 +55,7 @@ export function localName(qualified: string): string {
 export function parseMiniXml(input: string, handlers: MiniXmlHandlers): void {
   let i = 0;
   const n = input.length;
+  const openStack: string[] = [];
 
   const skipUntil = (needle: string, from: number): number => {
     const hit = input.indexOf(needle, from);
@@ -109,13 +110,22 @@ export function parseMiniXml(input: string, handlers: MiniXmlHandlers): void {
     if (gt === -1) throw new Error('parseMiniXml: truncated tag');
     const inner = input.slice(lt + 1, gt);
     if (inner.startsWith('/')) {
-      handlers.onEndTag(inner.slice(1).trim());
+      const closing = inner.slice(1).trim();
+      const opened = openStack.pop();
+      if (opened !== closing) {
+        throw new Error(`parseMiniXml: tag penutup ${closing} tidak cocok dengan ${opened ?? 'nis'} yang terbuka`);
+      }
+      handlers.onEndTag(closing);
     } else {
       const selfClosing = inner.endsWith('/');
       const body = selfClosing ? inner.slice(0, -1) : inner;
       const { name, attrs } = readStartTag(body);
       handlers.onStartTag(name, attrs);
-      if (selfClosing) handlers.onEndTag(name);
+      if (selfClosing) {
+        handlers.onEndTag(name);
+      } else {
+        openStack.push(name);
+      }
     }
     i = gt + 1;
     textStart = i;
