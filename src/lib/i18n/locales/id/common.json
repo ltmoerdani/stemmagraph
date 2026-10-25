@@ -627,6 +627,21 @@
       "PLAN_MISMATCH": "Data sekarang tidak cocok dengan rencana yang disetujui; ajukan merge lagi"
     }
   },
+  "calendarFeed": {
+    "open": "Langganan kalender",
+    "panel": {
+      "title": "Langganan kalender: {{name}}",
+      "inactive": "Feed kalender belum aktif untuk pohon ini. Buat token untuk mendapatkan URL langganan ICS.",
+      "urlLabel": "URL langganan (rahasia: jangan dibagikan ke luar keluarga):",
+      "copy": "Salin URL",
+      "copied": "Tersalin",
+      "hintGoogle": "Google Calendar: Setelan, Tambahkan kalender, From URL, tempel URL di atas.",
+      "hintApple": "Apple Calendar: ikuti URL feed lewat menu File (kalender baru dari URL). Outlook: Add Calendar, subscribe from web.",
+      "create": "Buat token",
+      "rotate": "Rotate token",
+      "revoke": "Cabut akses"
+    }
+  },
   "memberEdit": {
     "privacyStatus": "Status Privasi",
     "privacyShared": "Dibagikan, sertakan dalam ekspor silsilah publik",

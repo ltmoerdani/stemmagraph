@@ -693,3 +693,11 @@ export interface MergeApprovalDecision {
   decidedAt: string;
   primaryId?: string;
 }
+
+/** Permukaan token feed ICS kalender keluarga (v394 AC5). */
+export interface CalendarFeedApi {
+  /** Buat token baru (token lama mati); token penuh hanya ada di respons ini. */
+  rotateCalendarToken(treeId: string): Promise<{ token: string }>;
+  /** Cabut token feed (set null); feed menjawab 404 setelah revoke. */
+  revokeCalendarToken(treeId: string): Promise<{ revoked: boolean }>;
+}

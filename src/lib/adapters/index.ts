@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -34,6 +34,16 @@ export function getDuplicateCheckApi(): DuplicateCheckApi | null {
  * hides the merge action for null and behaves exactly as before v390.
  */
 export function getMergeApi(): MergeApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+/**
+ * Calendar feed token surface (v394 AC5): only the REST adapter can talk
+ * to the server; mock/supabase adapters return null and the panel hides
+ * itself, mirroring getMergeApi.
+ */
+export function getCalendarFeedApi(): CalendarFeedApi | null {
   const adapter = getAdapter();
   return adapter instanceof RestAdapter ? adapter : null;
 }

@@ -75,6 +75,7 @@ import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeNextAnniversaries } from '../src/lib/anniversaries/nextAnniversaries';
+import { buildIcsFeed, effectiveHaulDate } from '../src/lib/calendar/icsFeed';
 import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { computeOldestLiving } from '../src/lib/stats/oldest-living';
@@ -122,6 +123,13 @@ import { weeklyWindow } from '../src/lib/digest/window';
 // ─── Config ──────────────────────────────────────────────
 
 const app = express();
+
+// v394: label kind reminder di SUMMARY feed ICS (deterministik, satu sumber).
+const ICS_LABELS: Record<string, string> = {
+  birthday: 'Ulang tahun',
+  wedding: 'Anniversary nikah',
+  haul: 'Haul',
+};
 const PORT = process.env['API_PORT'] || 3001;
 const JWT_SECRET = process.env['JWT_SECRET'] || 'dev-only-insecure-secret-change-me';
 const JWT_EXPIRES_IN = '7d';
@@ -2569,6 +2577,149 @@ app.get('/api/v1/trees/:treeId/reminders/upcoming', requireAuthStatsLiving, asyn
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'REMINDERS_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── ICS feed kalender keluarga (v394, fase 1) ───────────
+//
+// GET /api/v1/trees/:treeId/calendar.ics mengembalikan langganan kalender
+// (RFC 5545) satu tree: ulang tahun anggota hidup, hari jadi pernikahan
+// pasangan hidup, dan haul anggota wafat (tanggal efektif
+// haulOverrideDate fallback deathDate), horizon dua tahun penuh lewat
+// computeNextAnniversaries days=730 lalu dirangkai buildIcsFeed.
+//
+// Auth TANPA JWT: klien kalender (Google, Apple) tidak bisa login.
+// Autentikasi lewat query ?token= dicocokkan ke FamilyTree.icsFeedToken
+// (unique). Token salah, kosong, atau kolom null dijawab 404, bukan 401,
+// agar keberadaan tree tidak bisa ditebak dari perbedaan respons.
+// Isi feed dianggap privat: guard kontrak token memang milik tree ini
+// (query by treeId + token, bukan hanya by token global).
+// Cache-Control private, no-cache seperti preseden reminders/upcoming,
+// dengan ETag weak dari hash payload untuk revalidasi 304.
+app.get('/api/v1/trees/:treeId/calendar.ics', async (req: express.Request<{ treeId: string }>, res) => {
+  try {
+    const rawToken = req.query['token'];
+    if (typeof rawToken !== 'string' || rawToken.length === 0) {
+      return res.status(404).type('text/plain').send('Not Found');
+    }
+    // Kontrak token milik tree: satu query treeId + token; token benar
+    // tapi milik tree lain tetap tidak cocok di sini.
+    const tree = await prisma.familyTree.findFirst({
+      where: { id: req.params.treeId, icsFeedToken: rawToken },
+      select: { id: true, name: true },
+    });
+    if (!tree) {
+      return res.status(404).type('text/plain').send('Not Found');
+    }
+    const members = await prisma.familyMember.findMany({
+      where: { treeId: tree.id, isAlive: true, birthDate: { not: '' } },
+      select: { id: true, name: true, birthDate: true },
+    });
+    const deceased = await prisma.familyMember.findMany({
+      where: {
+        treeId: tree.id,
+        isAlive: false,
+        OR: [{ haulOverrideDate: { not: null } }, { deathDate: { not: null } }],
+      },
+      select: { id: true, name: true, deathDate: true, haulOverrideDate: true },
+    });
+    const events = await prisma.lifeEvent.findMany({
+      where: { treeId: tree.id, eventType: 'MARRIAGE', partnerMemberId: { not: null } },
+      include: { date: true },
+    });
+    const pairIds = new Set<string>();
+    for (const ev of events) {
+      if (ev.memberId) pairIds.add(ev.memberId);
+      if (ev.partnerMemberId) pairIds.add(ev.partnerMemberId);
+    }
+    const involved = pairIds.size === 0
+      ? []
+      : await prisma.familyMember.findMany({ where: { id: { in: Array.from(pairIds) } }, select: { id: true, name: true, isAlive: true } });
+    const byId = new Map(involved.map((m) => [m.id, m]));
+    const items: Parameters<typeof computeNextAnniversaries>[0] = [];
+    for (const m of members) {
+      items.push({ kind: 'birthday' as const, refId: m.id, displayName: m.name, date: m.birthDate });
+    }
+    for (const m of deceased) {
+      const haulDate = effectiveHaulDate(m.deathDate, m.haulOverrideDate);
+      if (!haulDate) continue;
+      items.push({ kind: 'haul' as const, refId: m.id, displayName: m.name, date: haulDate });
+    }
+    const seenPairs = new Set<string>();
+    for (const ev of events) {
+      if (!ev.partnerMemberId) continue;
+      const date = ev.date;
+      if (!date || date.dateKind !== 'EXACT') continue;
+      if (date.yearStart === null || date.monthStart === null || date.dayStart === null) continue;
+      const a = byId.get(ev.memberId);
+      const b = byId.get(ev.partnerMemberId);
+      if (!a || !a.isAlive || !b || !b.isAlive) continue;
+      const marriageDate = `${String(date.yearStart).padStart(4, '0')}-${String(date.monthStart).padStart(2, '0')}-${String(date.dayStart).padStart(2, '0')}`;
+      const pairId = [ev.memberId, ev.partnerMemberId].sort().join(':');
+      if (seenPairs.has(pairId)) continue;
+      seenPairs.add(pairId);
+      const partnerNames: [string, string] = pairId.split(':')[0] === ev.memberId ? [a.name, b.name] : [b.name, a.name];
+      items.push({ kind: 'wedding' as const, refId: pairId, displayName: partnerNames.join(' & '), date: marriageDate });
+    }
+    const entries = computeNextAnniversaries(items, new Date(), 730);
+    const ics = buildIcsFeed(entries, { labels: ICS_LABELS, now: new Date(), name: tree.name });
+    const etag = `W/"${createHash('sha256').update(ics).digest('hex')}"`;
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', etag);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => {
+      const candidate = t.trim();
+      return candidate === etag || candidate === etag.slice(2);
+    })) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'text/calendar; charset=utf-8');
+    return res.send(ics);
+  } catch {
+    res.status(500).type('text/plain').send('Internal Server Error');
+  }
+});
+
+// ─── ICS feed token management (v394, fase 1) ────────────
+//
+// POST /api/v1/trees/:treeId/calendar-token/rotate: token baru CSPRNG
+// (pola generateInvitationToken ADR 0004), token lama langsung mati.
+// DELETE /api/v1/trees/:treeId/calendar-token: revoke, kolom di-set null
+// sehingga feed menjawab 404. Keduanya hanya owner/editor sesuai kontrak
+// GOAL v394 AC4 (lebih ketat dari matrix umum: viewer bukan pengelola
+// token feed). Token penuh ditampilkan tepat satu kali di respons rotate,
+// preseden invitation: "The full token is returned exactly once".
+
+const isFeedTokenManager = (role: TreeRole): boolean => role === 'owner' || role === 'editor';
+
+app.post('/api/v1/trees/:treeId/calendar-token/rotate', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const tree = await prisma.familyTree.findUnique({ where: { id: req.params.treeId }, select: { id: true } });
+    if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
+    const role = await resolveTreeRole(req.userId!, req.params.treeId);
+    if (role === null || !isFeedTokenManager(role)) {
+      return res.status(403).json({ code: 'FORBIDDEN_TREE', message: 'Your role on this tree does not allow this action (manage_calendar_token)' });
+    }
+    const token = generateInvitationToken();
+    await prisma.familyTree.update({ where: { id: req.params.treeId }, data: { icsFeedToken: token } });
+    return res.status(200).json({ token });
+  } catch {
+    return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal Server Error' });
+  }
+});
+
+app.delete('/api/v1/trees/:treeId/calendar-token', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const tree = await prisma.familyTree.findUnique({ where: { id: req.params.treeId }, select: { id: true } });
+    if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
+    const role = await resolveTreeRole(req.userId!, req.params.treeId);
+    if (role === null || !isFeedTokenManager(role)) {
+      return res.status(403).json({ code: 'FORBIDDEN_TREE', message: 'Your role on this tree does not allow this action (manage_calendar_token)' });
+    }
+    await prisma.familyTree.update({ where: { id: req.params.treeId }, data: { icsFeedToken: null } });
+    return res.status(200).json({ revoked: true });
+  } catch {
+    return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal Server Error' });
   }
 });
 
