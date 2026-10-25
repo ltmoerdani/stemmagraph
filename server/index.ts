@@ -3,7 +3,9 @@
 // Run: npx tsx server/index.ts
 
 import express from 'express';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -59,6 +61,8 @@ import {
 import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
+import { validatePhotoUpload, type PhotoMime } from '../src/lib/photo/photoFile';
+import { extractPhotoPayload } from '../src/lib/photo/multipart';
 import { computeLivingStats } from '../src/lib/stats/living-stats';
 import { findDuplicateCandidates } from '../src/lib/dedup/duplicateDetector';
 import {
@@ -190,6 +194,40 @@ function toPublicUser(user: User): PublicUser {
  *     on its next request)
  *   - pending  -> 403 ACCOUNT_PENDING
  */
+// ─── Member photo (v398 fase 1 lokal) ───────────────────
+//
+// File disimpan di direktori uploads LUAR webroot publik dengan nama
+// internal UUID yang selalu di-generate server (bukan input klien, nihil
+// path traversal). photoUrl menyimpan endpoint GET + penanda file
+// (?f=<uuid>.<ext>), sehingga render komponen eksisting hidup tanpa
+// tabel mapping baru. Direktori bisa dialihkan via PHOTO_UPLOADS_DIR
+// untuk pengujian.
+const PHOTO_EXT: Record<PhotoMime, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+function photoUploadsDir(): string {
+  return process.env['PHOTO_UPLOADS_DIR'] || path.join(process.cwd(), 'data', 'uploads');
+}
+
+/** Nama file yang sah persis pola UUID.ext hasil generate server. */
+function safePhotoFileName(photoUrl: string | null | undefined): string | null {
+  if (!photoUrl) return null;
+  const m = /[?&]f=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:jpg|png|webp))$/.exec(photoUrl);
+  return m ? m[1] : null;
+}
+
+function photoFilePath(member: { photoUrl?: string | null }): string | null {
+  const name = safePhotoFileName(member.photoUrl);
+  return name === null ? null : path.join(photoUploadsDir(), name);
+}
+
+function photoEndpointUrl(memberId: string, fileName: string): string {
+  return `/api/v1/members/${memberId}/photo?f=${fileName}`;
+}
+
 async function requireAuth(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -3412,6 +3450,103 @@ app.post('/api/v1/trees/:treeId/members', requireAuth, async (req: Authenticated
   }
 });
 
+// POST /api/v1/members/:id/photo (v398): unggah foto anggota. Menerima
+// multipart/form-data (file field `photo`) atau JSON { photoBase64 }.
+// Guard pola v275: 401 via requireAuth, 403 FORBIDDEN_TREE role
+// owner/editor (edit_member) via guardTreeAction, 404 member/tree.
+// Validasi ukuran 10 MB + magic bytes allowlist JPEG/PNG/WebP di satu
+// pintu validatePhotoUpload; filename UUID di-generate server dan
+// disimpan di direktori uploads luar webroot; nihil eksekusi file.
+// 422 jujur per kode: EMPTY_FILE, TOO_LARGE, NOT_AN_IMAGE, NO_PAYLOAD.
+app.post('/api/v1/members/:id/photo', requireAuth, express.raw({ type: () => true, limit: '12mb' }), async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const existing = await prisma.familyMember.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const guard = await guardTreeAction(req.userId!, existing.treeId, 'edit_member');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+
+    // express.raw hanya aktif untuk multipart; JSON sudah diparse
+    // express.json() global. Ambil raw body multipart dari req.body.
+    const contentType = req.headers['content-type'];
+    const isMultipart = typeof contentType === 'string' && contentType.toLowerCase().includes('multipart/form-data');
+    const rawBody = isMultipart && Buffer.isBuffer(req.body) ? new Uint8Array(req.body) : null;
+    const payload = extractPhotoPayload(req.body, rawBody, contentType);
+    if (payload === null) {
+      return res.status(422).json({ code: 'NO_PAYLOAD', message: 'No photo payload found (expected file field photo or photoBase64)' });
+    }
+    const verdict = validatePhotoUpload(payload.bytes);
+    if (!verdict.ok) {
+      return res.status(422).json({ code: verdict.reason, message: `Photo rejected: ${verdict.reason}` });
+    }
+
+    const fileName = `${randomUUID()}.${PHOTO_EXT[verdict.mime]}`;
+    const dir = photoUploadsDir();
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, fileName), payload.bytes);
+
+    const photoUrl = photoEndpointUrl(existing.id, fileName);
+    const m = await prisma.familyMember.update({ where: { id: existing.id }, data: { photoUrl } });
+
+    // Bersihkan file lama supaya tidak jadi yatim saat ganti foto.
+    const oldPath = photoFilePath(existing);
+    if (oldPath !== null && fs.existsSync(oldPath)) {
+      try {
+        fs.unlinkSync(oldPath);
+      } catch {
+        // Gagal hapus file lama tidak menggagalkan unggahan baru.
+      }
+    }
+    res.json({ ok: true, photoUrl, member: formatMember(m) });
+  } catch (e) {
+    res.status(500).json({ code: 'PHOTO_UPLOAD_ERROR', message: (e as Error).message });
+  }
+});
+
+// GET /api/v1/members/:id/photo (v398): sajikan file foto berotorisasi.
+// Semua anggota tree (view_tree) boleh melihat; tamu luar tree 403,
+// member/tree nihil 404. Cache-Control private, nihil cache publik.
+app.get('/api/v1/members/:id/photo', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const existing = await prisma.familyMember.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const guard = await guardTreeAction(req.userId!, existing.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const filePath = photoFilePath(existing);
+    if (filePath === null || !fs.existsSync(filePath)) {
+      return res.status(404).json({ code: 'NOT_FOUND', message: 'Photo not found' });
+    }
+    const bytes = fs.readFileSync(filePath);
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    res.setHeader('Content-Type', existing.photoUrl?.endsWith('.png') ? 'image/png' : existing.photoUrl?.endsWith('.webp') ? 'image/webp' : 'image/jpeg');
+    res.send(bytes);
+  } catch (e) {
+    res.status(500).json({ code: 'PHOTO_GET_ERROR', message: (e as Error).message });
+  }
+});
+
+// DELETE /api/v1/members/:id/photo (v398): hapus file fisik + kosongkan
+// photoUrl. Role owner/editor (edit_member).
+app.delete('/api/v1/members/:id/photo', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
+  try {
+    const existing = await prisma.familyMember.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const guard = await guardTreeAction(req.userId!, existing.treeId, 'edit_member');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const filePath = photoFilePath(existing);
+    if (filePath !== null && fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch {
+        // tetap kosongkan photoUrl walau file sudah hilang sendiri
+      }
+    }
+    const m = await prisma.familyMember.update({ where: { id: existing.id }, data: { photoUrl: null } });
+    res.json({ ok: true, member: formatMember(m) });
+  } catch (e) {
+    res.status(500).json({ code: 'PHOTO_DELETE_ERROR', message: (e as Error).message });
+  }
+});
+
 app.put('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ id: string }>, res) => {
   try {
     const existing = await prisma.familyMember.findUnique({ where: { id: req.params.id } });
@@ -3455,6 +3590,14 @@ app.delete('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<
     if (!existing) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
     const guard = await guardTreeAction(req.userId!, existing.treeId, 'delete_member');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const photoPath = photoFilePath(existing);
+    if (photoPath !== null && fs.existsSync(photoPath)) {
+      try {
+        fs.unlinkSync(photoPath);
+      } catch {
+        // file foto hilang sendiri tidak menggagalkan penghapusan anggota
+      }
+    }
     await prisma.familyMember.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (e) {

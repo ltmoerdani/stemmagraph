@@ -586,6 +586,23 @@
       "errJournalMismatch": "Data sekarang tidak cocok dengan jurnal merge; undo ditolak demi keamanan"
     }
   },
+  "memberPhoto": {
+    "upload": "Unggah foto",
+    "change": "Ganti foto",
+    "remove": "Hapus foto",
+    "confirmTitle": "Konfirmasi foto anggota",
+    "confirmApply": "Terapkan",
+    "confirmCancel": "Batal",
+    "removing": "Menghapus...",
+    "uploading": "Mengunggah...",
+    "TOO_LARGE": "Ukuran foto melebihi 10 MB.",
+    "TOO_SMALL": "Dimensi foto terlalu kecil (minimum 16 piksel).",
+    "NOT_AN_IMAGE": "File bukan gambar JPEG, PNG, atau WebP yang sah.",
+    "EMPTY_FILE": "File kosong.",
+    "FORBIDDEN_TREE": "Peran Anda pada pohon ini tidak mengizinkan mengubah foto anggota.",
+    "API_ERROR": "Gagal memproses foto. Coba lagi.",
+    "loadFailed": "Gagal memuat foto."
+  },
   "mergeApproval": {
     "status": {
       "PENDING": "Menunggu persetujuan",

@@ -74,6 +74,8 @@ import {
   CalendarFeedApi,
   AdapterError,
   AuthError,
+  MemberPhotoApi,
+  MemberPhotoUploadResult,
 } from './types';
 import type { DuplicateCandidateDto } from './types';
 import type { FeedItem } from '../feed';
@@ -91,7 +93,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -653,6 +655,64 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
       'DELETE',
       `/trees/${encodeURIComponent(treeId)}/calendar-token`,
     );
+  }
+
+  // -- Member photo (v398 fase 1) --------------------------
+  // Unggah multipart FormData (hindari limit express.json global), hapus
+  // via DELETE, dan muat byte berotorisasi untuk object URL (elemen img
+  // tidak bisa membawa header Authorization). Strip EXIF terjadi di
+  // client sebelum bytes sampai di sini (AC2, canvas toBlob).
+  async uploadMemberPhoto(
+    memberId: string,
+    bytes: Uint8Array,
+    mime: 'image/jpeg' | 'image/png' | 'image/webp',
+  ): Promise<MemberPhotoUploadResult> {
+    const form = new FormData();
+    form.append('photo', new Blob([bytes as BlobPart], { type: mime }), 'photo');
+    const url = `${this.options.baseUrl}/members/${encodeURIComponent(memberId)}/photo`;
+    const headers: Record<string, string> = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    let res = await fetch(url, { method: 'POST', headers, body: form });
+    if (res.status === 401 && this.options.onTokenRefresh) {
+      const newToken = await this.options.onTokenRefresh();
+      if (newToken) {
+        this.token = newToken;
+        headers['Authorization'] = `Bearer ${newToken}`;
+        res = await fetch(url, { method: 'POST', headers, body: form });
+      }
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new AdapterError(err.message || res.statusText, err.code || 'API_ERROR', res.status);
+    }
+    return res.json();
+  }
+
+  async deleteMemberPhoto(memberId: string): Promise<{ ok: boolean; member: FamilyMemberRecord }> {
+    return this.request<{ ok: boolean; member: FamilyMemberRecord }>(
+      'DELETE',
+      `/members/${encodeURIComponent(memberId)}/photo`,
+    );
+  }
+
+  async fetchMemberPhoto(memberId: string): Promise<Uint8Array> {
+    const url = `${this.options.baseUrl}/members/${encodeURIComponent(memberId)}/photo`;
+    const headers: Record<string, string> = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    let res = await fetch(url, { method: 'GET', headers });
+    if (res.status === 401 && this.options.onTokenRefresh) {
+      const newToken = await this.options.onTokenRefresh();
+      if (newToken) {
+        this.token = newToken;
+        headers['Authorization'] = `Bearer ${newToken}`;
+        res = await fetch(url, { method: 'GET', headers });
+      }
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new AdapterError(err.message || res.statusText, err.code || 'API_ERROR', res.status);
+    }
+    return new Uint8Array(await res.arrayBuffer());
   }
 
   // ── Member consent ledger (S-06c) ───────────────────────

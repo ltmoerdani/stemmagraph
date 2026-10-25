@@ -3,9 +3,11 @@ import { X, Phone, Mail, MapPin, Calendar, Briefcase, GraduationCap, Heart, Mess
 import { useFamilyStore } from '../../store/familyStore';
 import { UnifiedMemberModal } from '../Forms/UnifiedMemberModal';
 import { MemberDetailSidebarKinship } from './MemberDetailSidebarKinship';
+import { MemberAuthPhoto } from './MemberAuthPhoto';
+import { MemberPhotoControls } from './MemberPhotoControls';
 
 export const MemberDetailSidebar: React.FC = () => {
-  const { selectedMember, setSelectedMember } = useFamilyStore();
+  const { selectedMember, setSelectedMember, updateMember } = useFamilyStore();
   const [showEditModal, setShowEditModal] = useState(false);
 
   if (!selectedMember) return null;
@@ -49,18 +51,22 @@ export const MemberDetailSidebar: React.FC = () => {
         {/* Profile Photo */}
         <div className="text-center mb-6">
           <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden bg-gray-200">
-            {selectedMember.photoUrl ? (
-              <img
-                src={selectedMember.photoUrl}
-                alt={selectedMember.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl font-bold">
-                {selectedMember.name.charAt(0)}
-              </div>
-            )}
+            <MemberAuthPhoto
+              memberId={selectedMember.id}
+              photoUrl={selectedMember.photoUrl}
+              name={selectedMember.name}
+            />
           </div>
+          <MemberPhotoControls
+            memberId={selectedMember.id}
+            hasPhoto={Boolean(selectedMember.photoUrl)}
+            onUpdated={(url) => {
+              if (selectedMember === null) return;
+              const next = { ...selectedMember, photoUrl: url ?? undefined };
+              setSelectedMember(next);
+              void updateMember(selectedMember.id, { photoUrl: url ?? undefined });
+            }}
+          />
           <h3 className="text-2xl font-bold text-gray-900">{selectedMember.name}</h3>
           {selectedMember.nickname && (
             <p className="text-gray-600">"{selectedMember.nickname}"</p>

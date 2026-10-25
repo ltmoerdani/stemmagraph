@@ -586,6 +586,23 @@
       "errJournalMismatch": "Current data no longer matches the merge journal; undo rejected for safety"
     }
   },
+  "memberPhoto": {
+    "upload": "Upload photo",
+    "change": "Change photo",
+    "remove": "Remove photo",
+    "confirmTitle": "Confirm member photo",
+    "confirmApply": "Apply",
+    "confirmCancel": "Cancel",
+    "removing": "Removing...",
+    "uploading": "Uploading...",
+    "TOO_LARGE": "Photo exceeds the 10 MB size limit.",
+    "TOO_SMALL": "Photo dimensions are too small (minimum 16 pixels).",
+    "NOT_AN_IMAGE": "File is not a valid JPEG, PNG, or WebP image.",
+    "EMPTY_FILE": "File is empty.",
+    "FORBIDDEN_TREE": "Your role on this tree does not allow changing member photos.",
+    "API_ERROR": "Failed to process the photo. Please try again.",
+    "loadFailed": "Failed to load the photo."
+  },
   "mergeApproval": {
     "status": {
       "PENDING": "Awaiting approval",
