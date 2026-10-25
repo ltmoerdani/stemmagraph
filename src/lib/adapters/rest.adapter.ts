@@ -66,6 +66,7 @@ import {
   UpcomingAnniversaryDto,
   GenerationsCountDto,
   FamilySizeStatsDto,
+  PlaceDistributionDto,
   MergeApi,
   MergeMemberResult,
   MergeApprovalRecord,
@@ -497,6 +498,17 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return this.request<OldestLivingEntryDto[]>(
       'GET',
       `/trees/${encodeURIComponent(treeId)}/stats/oldest-living`,
+    );
+  }
+
+  // Read-only routing ke endpoint peta sebaran place (v399). Server
+  // mengagregasi sel 2 desimal murni {lat,lng,count}, adapter hanya
+  // membawa tree id. Error jaringan dan respons non-OK naik via
+  // this.request tanpa penangkap lokal, pola persis getOldestLiving.
+  async getPlaceDistribution(treeId: string): Promise<PlaceDistributionDto> {
+    return this.request<PlaceDistributionDto>(
+      'GET',
+      `/trees/${encodeURIComponent(treeId)}/places/distribution`,
     );
   }
 

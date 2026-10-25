@@ -6,6 +6,7 @@ import { computeLivingStats, AGE_BUCKETS } from '../../lib/stats/living-stats';
 import { computeAgeGroupsPBB, AGE_GROUPS_PBB } from '../../lib/stats/age-groups';
 import { computeUpcomingBirthdays } from '../../lib/stats/upcoming-birthdays';
 import { getStatsApi } from '../../lib/adapters';
+import { PlaceDistributionMap } from './PlaceDistributionMap';
 import type { UpcomingAnniversaryDto } from '../../lib/adapters';
 import type { FamilySizeStatsDto } from '../../lib/adapters';
 
@@ -386,6 +387,9 @@ export const StatsSidebar: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Place Distribution Map (v399, sumber endpoint server via adapter) */}
+      <PlaceDistributionMap />
 
       {/* Age Distribution */}
       <div className="mb-8">
