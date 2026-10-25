@@ -2597,6 +2597,7 @@ app.get('/api/v1/trees/:treeId/reminders/upcoming', requireAuthStatsLiving, asyn
 // Cache-Control private, no-cache seperti preseden reminders/upcoming,
 // dengan ETag weak dari hash payload untuk revalidasi 304.
 app.get('/api/v1/trees/:treeId/calendar.ics', async (req: express.Request<{ treeId: string }>, res) => {
+  res.setHeader('Referrer-Policy', 'no-referrer');
   try {
     const rawToken = req.query['token'];
     if (typeof rawToken !== 'string' || rawToken.length === 0) {
@@ -2693,6 +2694,7 @@ app.get('/api/v1/trees/:treeId/calendar.ics', async (req: express.Request<{ tree
 const isFeedTokenManager = (role: TreeRole): boolean => role === 'owner' || role === 'editor';
 
 app.post('/api/v1/trees/:treeId/calendar-token/rotate', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  res.setHeader('Referrer-Policy', 'no-referrer');
   try {
     const tree = await prisma.familyTree.findUnique({ where: { id: req.params.treeId }, select: { id: true } });
     if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
@@ -2709,6 +2711,7 @@ app.post('/api/v1/trees/:treeId/calendar-token/rotate', requireAuth, async (req:
 });
 
 app.delete('/api/v1/trees/:treeId/calendar-token', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  res.setHeader('Referrer-Policy', 'no-referrer');
   try {
     const tree = await prisma.familyTree.findUnique({ where: { id: req.params.treeId }, select: { id: true } });
     if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
