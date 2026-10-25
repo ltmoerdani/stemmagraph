@@ -701,3 +701,27 @@ export interface CalendarFeedApi {
   /** Cabut token feed (set null); feed menjawab 404 setelah revoke. */
   revokeCalendarToken(treeId: string): Promise<{ revoked: boolean }>;
 }
+
+/** Hasil unggah foto anggota (v398). */
+export interface MemberPhotoUploadResult {
+  ok: boolean;
+  photoUrl: string;
+  member: FamilyMemberRecord;
+}
+
+/** Permukaan foto anggota (v398): unggah dan hapus foto profil. */
+export interface MemberPhotoApi {
+  /**
+   * Unggah foto anggota. bytes WAJIB hasil re-encode canvas (AC2: strip
+   * metadata EXIF termasuk GPS terjadi di client sebelum kirim).
+   */
+  uploadMemberPhoto(memberId: string, bytes: Uint8Array, mime: 'image/jpeg' | 'image/png' | 'image/webp'): Promise<MemberPhotoUploadResult>;
+  /** Hapus foto anggota (file fisik + kolom photoUrl dikosongkan). */
+  deleteMemberPhoto(memberId: string): Promise<{ ok: boolean; member: FamilyMemberRecord }>;
+  /**
+   * Muat byte foto berotorisasi untuk dirender via object URL (elemen img
+   * tidak bisa membawa header Authorization, sehingga sajian berotorisasi
+   * dilakukan lewat fetch + blob).
+   */
+  fetchMemberPhoto(memberId: string): Promise<Uint8Array>;
+}

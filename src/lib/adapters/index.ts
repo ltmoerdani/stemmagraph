@@ -48,6 +48,16 @@ export function getCalendarFeedApi(): CalendarFeedApi | null {
   return adapter instanceof RestAdapter ? adapter : null;
 }
 
+/**
+ * Member photo surface (v398): only the REST adapter can talk to the
+ * server; mock/supabase adapters return null and the UI hides upload
+ * actions, mirroring getMergeApi.
+ */
+export function getMemberPhotoApi(): MemberPhotoApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 // ─── Singleton ────────────────────────────────────────────
 
 let _adapter: DataAdapter | null = null;
@@ -289,6 +299,8 @@ export type {
   CitationEventType,
   StatsApi,
   UpcomingAnniversaryDto,
+  MemberPhotoApi,
+  MemberPhotoUploadResult,
 } from './types';
 
 export {
