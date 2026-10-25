@@ -16,14 +16,18 @@ interface Props {
 }
 
 export const MemberAuthPhoto: React.FC<Props> = ({ memberId, photoUrl, name }) => {
-  const [src, setSrc] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState<{ key: string; url: string } | null>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const key = `${memberId}:${photoUrl ?? ''}`;
 
   useEffect(() => {
     let alive = true;
     const api = getMemberPhotoApi();
     if (api === null || !photoUrl) {
-      setSrc(null);
+      if (objectUrlRef.current !== null) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
       return;
     }
     api
@@ -33,15 +37,15 @@ export const MemberAuthPhoto: React.FC<Props> = ({ memberId, photoUrl, name }) =
         if (objectUrlRef.current !== null) URL.revokeObjectURL(objectUrlRef.current);
         const url = URL.createObjectURL(new Blob([bytes as BlobPart]));
         objectUrlRef.current = url;
-        setSrc(url);
+        setLoaded({ key, url });
       })
       .catch(() => {
-        if (alive) setSrc(null);
+        if (alive) setLoaded(null);
       });
     return () => {
       alive = false;
     };
-  }, [memberId, photoUrl]);
+  }, [memberId, photoUrl, key]);
 
   useEffect(() => {
     return () => {
@@ -49,12 +53,12 @@ export const MemberAuthPhoto: React.FC<Props> = ({ memberId, photoUrl, name }) =
     };
   }, []);
 
-  if (src === null) {
+  if (!photoUrl || loaded === null || loaded.key !== key) {
     return (
       <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl font-bold">
         {name.charAt(0)}
       </div>
     );
   }
-  return <img src={src} alt={name} className="w-full h-full object-cover" data-testid="member-auth-photo" />;
+  return <img src={loaded.url} alt={name} className="w-full h-full object-cover" data-testid="member-auth-photo" />;
 };
