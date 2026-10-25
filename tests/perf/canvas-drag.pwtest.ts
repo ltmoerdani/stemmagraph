@@ -137,6 +137,8 @@ const avg = (scenario: DragRunStats['scenario'], nodes: number): number | null =
 for (const nodes of DATASETS) {
   test.describe(`canvas drag v395 ${nodes} node`, () => {
     test(`fps drag dan panzoom ${RUNS} run`, async ({ page }) => {
+      // 6 run x 10 dtk interaksi + load host dataset 5000 node: butuh lebih dari default 120 dtk
+      test.setTimeout(600_000);
       await openHost(page, nodes);
       for (let run = 0; run < RUNS; run += 1) {
         const evalPromise = collectFrameStats(page, SAMPLE_MS);
