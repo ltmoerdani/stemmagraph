@@ -136,7 +136,7 @@ beforeEach(() => {
 
 describe('GET /api/v1/trees/:treeId/places/distribution', () => {
   it('401 tanpa Authorization dengan challenge Bearer', async () => {
-    const res = await call(undefined ?? '/api/v1/trees/tree-1/places/distribution', false);
+    const res = await call('/api/v1/trees/tree-1/places/distribution', false);
     expect(res.status).toBe(401);
     expect(res.body['code']).toBe('UNAUTHORIZED');
     expect(res.wwwAuth).toBe('Bearer');

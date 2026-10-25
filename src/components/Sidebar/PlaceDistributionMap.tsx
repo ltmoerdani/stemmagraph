@@ -23,8 +23,11 @@ function project(lat: number, lng: number): { x: number; y: number } {
 export const PlaceDistributionMap: React.FC = () => {
   const { t } = useTranslation();
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
-  const [points, setPoints] = useState<PlaceDistributionPointDto[] | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  // Data dibawa bersama treeId asalnya (pola v398 loaded key guard):
+  // render hanya bila data sudah termuat DAN masih milik tree aktif,
+  // sehingga perpindahan tree tidak memflash peta lama tanpa perlu
+  // setState sinkron di effect body.
+  const [data, setData] = useState<{ treeId: string; points: PlaceDistributionPointDto[] } | null>(null);
 
   // Pola fetch persis StatsSidebar: adapter null (mock, supabase),
   // treeId kosong, fetch berjalan, atau gagal berarti section tidak
@@ -33,25 +36,23 @@ export const PlaceDistributionMap: React.FC = () => {
     const api = currentFamilyTreeId ? getStatsApi() : null;
     if (!currentFamilyTreeId || !api) return;
     let cancelled = false;
-    setLoaded(false);
     api
       .getPlaceDistribution(currentFamilyTreeId)
       .then((dto) => {
         if (cancelled) return;
-        setPoints(dto.points);
-        setLoaded(true);
+        setData({ treeId: currentFamilyTreeId, points: dto.points });
       })
       .catch(() => {
         if (cancelled) return;
-        setPoints(null);
-        setLoaded(false);
+        setData(null);
       });
     return () => {
       cancelled = true;
     };
   }, [currentFamilyTreeId]);
 
-  if (!loaded || !points) return null;
+  if (!data || data.treeId !== currentFamilyTreeId) return null;
+  const points = data.points;
 
   // Fallback daftar teks: tidak ada place berkooordinat di tree ini.
   if (points.length === 0) {

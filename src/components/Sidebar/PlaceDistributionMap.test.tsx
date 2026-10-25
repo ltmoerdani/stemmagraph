@@ -13,7 +13,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
-import type { ReactNode } from 'react';
 import { PlaceDistributionMap } from './PlaceDistributionMap';
 import idCommon from '../../lib/i18n/locales/id/common.json';
 import enCommon from '../../lib/i18n/locales/en/common.json';
