@@ -76,6 +76,7 @@ import {
   isGenerationConnected,
 } from '../src/lib/dedup/mergeApproval';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
+import { buildTreeJsonExport } from '../src/lib/portability/treeJsonExport';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeNextAnniversaries } from '../src/lib/anniversaries/nextAnniversaries';
@@ -2413,6 +2414,102 @@ function requireAuthStatsLiving(req: express.Request, res: express.Response, nex
   } as typeof res.status;
   requireAuth(req as AuthenticatedRequest, res, next);
 }
+
+// ─── Portability JSON export (v402, VISION 2.8 fase 1) ─────
+//
+// GET /api/v1/trees/:treeId/export/json menghasilkan dokumen JSON
+// ber-schema (stemmagraph-tree-export/1) lewat modul pure
+// src/lib/portability/treeJsonExport.ts. Privacy gate sama dengan
+// jalur GEDCOM: mode clean (default) mereduksi anggota hidup tanpa
+// consent shared; mode full hanya untuk owner tree (setara keluarga
+// aksi manage_*), selaras checkbox konfirmasi full archive di UI.
+// Respons attachment dengan header aman: nosniff, no-store,
+// no-referrer, filename disanitasi (regex membuang semua karakter
+// di luar A-Za-z0-9-_ sehingga CRLF dan karakter terlarang Windows
+// tidak mungkin lolos; pola Evidence wake-165 MDN/OWASP).
+app.get('/api/v1/trees/:treeId/export/json', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    // Query param mode opsional: 'clean' (default) atau 'full'. Nilai
+    // lain ditolak 422 pola route members v401. Mode full melebarkan
+    // isi export, jadi dibatasi owner (aksi kelola tree).
+    const modeRaw = req.query['mode'];
+    if (modeRaw !== undefined && modeRaw !== 'clean' && modeRaw !== 'full') {
+      return res.status(422).json({ code: 'INVALID_MODE', message: 'mode only supports clean or full' });
+    }
+    const mode = modeRaw === 'full' ? 'full' : 'clean';
+    if (mode === 'full') {
+      const role = await resolveTreeRole(req.userId!, req.params.treeId);
+      if (role !== 'owner') {
+        return res.status(403).json({ code: 'FORBIDDEN_FULL_EXPORT', message: 'full export requires tree owner' });
+      }
+    }
+    const [tree, members, relationships] = await Promise.all([
+      prisma.familyTree.findUnique({
+        where: { id: req.params.treeId },
+        select: { id: true, name: true },
+      }),
+      prisma.familyMember.findMany({ where: { treeId: req.params.treeId } }),
+      prisma.familyRelationship.findMany({ where: { treeId: req.params.treeId } }),
+    ]);
+    if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
+    const doc = buildTreeJsonExport({
+      members: members.map((m) => ({
+        ...m,
+        privacyStatus: m.privacyStatus ?? undefined,
+        gender: (['male', 'female', 'other'].includes(m.gender) ? m.gender : 'other') as 'male' | 'female' | 'other',
+        maritalStatus: (['single', 'married', 'divorced', 'widowed'].includes(m.maritalStatus)
+          ? m.maritalStatus
+          : 'single') as 'single' | 'married' | 'divorced' | 'widowed',
+        birthDateGed: m.birthDateGed ?? undefined,
+        deathDateGed: m.deathDateGed ?? undefined,
+        nickname: m.nickname ?? undefined,
+        marga: m.marga ?? undefined,
+        deathDate: m.deathDate ?? undefined,
+        haulOverrideDate: m.haulOverrideDate ?? undefined,
+        birthPlace: m.birthPlace ?? undefined,
+        currentLocation: m.currentLocation ?? undefined,
+        profession: m.profession ?? undefined,
+        education: m.education ?? undefined,
+        sexGed: m.sexGed ?? undefined,
+        photoUrl: m.photoUrl ?? undefined,
+        email: m.email ?? undefined,
+        phone: m.phone ?? undefined,
+        notes: m.notes ?? undefined,
+        createdAt: m.createdAt?.toISOString?.() ?? undefined,
+        updatedAt: m.updatedAt?.toISOString?.() ?? undefined,
+      })),
+      relationships: relationships.map((r) => ({
+        id: r.id,
+        treeId: r.treeId,
+        memberId: r.memberId,
+        relatedId: r.relatedId,
+        type: r.type as 'spouse' | 'parent' | 'child' | 'sibling',
+      })),
+      exportedAt: new Date(),
+      privacyMode: mode,
+      tree: { id: tree.id, name: tree.name },
+    });
+    const safeName = (tree.name ?? 'family-tree')
+      .trim()
+      .replace(/[^a-zA-Z0-9-_]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'family-tree';
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const filename = `${safeName}-${yyyy}${mm}${dd}.json`;
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    return res.status(200).send(JSON.stringify(doc, null, 2));
+  } catch (e) {
+    return res.status(500).json({ code: 'EXPORT_JSON_ERROR', message: (e as Error).message });
+  }
+});
 
 app.get('/api/v1/trees/:treeId/stats/living', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
   try {
