@@ -2481,8 +2481,10 @@ app.get('/api/v1/trees/:treeId/stats/anniversaries/upcoming', requireAuthStatsLi
 // ─── Upcoming reminders (v387, reminder haul, read-only) ─────────────
 //
 // GET /api/v1/trees/:treeId/reminders/upcoming returns the merged,
-// date-sorted reminder list of one tree: birthdays of living members and
-// wedding anniversaries of living couples, computed by the pure module
+// date-sorted reminder list of one tree: birthdays of living members,
+// wedding anniversaries of living couples, and haul (death) anniversaries
+// of deceased members with an effective haul date (family-set
+// haulOverrideDate falling back to deathDate, v393), computed by the pure module
 // src/lib/anniversaries/nextAnniversaries.ts. Pola persis route
 // anniversaries v275: guardTreeAction untuk 403 non-anggota (tanpa
 // WWW-Authenticate), requireAuthStatsLiving supaya 401 jalur ini
@@ -2502,6 +2504,16 @@ app.get('/api/v1/trees/:treeId/reminders/upcoming', requireAuthStatsLiving, asyn
       where: { treeId: req.params.treeId, isAlive: true, birthDate: { not: '' } },
       select: { id: true, name: true, birthDate: true },
     });
+    // v393: anggota wafat dengan tanggal haul efektif (haulOverrideDate
+    // bila terisi, selain itu deathDate) ikut masuk antrean reminder.
+    const deceased = await prisma.familyMember.findMany({
+      where: {
+        treeId: req.params.treeId,
+        isAlive: false,
+        OR: [{ haulOverrideDate: { not: null } }, { deathDate: { not: null } }],
+      },
+      select: { id: true, name: true, deathDate: true, haulOverrideDate: true },
+    });
     const events = await prisma.lifeEvent.findMany({
       where: { treeId: req.params.treeId, eventType: 'MARRIAGE', partnerMemberId: { not: null } },
       include: { date: true },
@@ -2518,6 +2530,12 @@ app.get('/api/v1/trees/:treeId/reminders/upcoming', requireAuthStatsLiving, asyn
     const items: Parameters<typeof computeNextAnniversaries>[0] = [];
     for (const m of members) {
       items.push({ kind: 'birthday' as const, refId: m.id, displayName: m.name, date: m.birthDate });
+    }
+    for (const m of deceased) {
+      // v393: tanggal haul efektif = override keluarga bila terisi, fallback deathDate.
+      const haulDate = m.haulOverrideDate && m.haulOverrideDate !== '' ? m.haulOverrideDate : m.deathDate;
+      if (!haulDate) continue;
+      items.push({ kind: 'haul' as const, refId: m.id, displayName: m.name, date: haulDate });
     }
     const seenPairs = new Set<string>();
     for (const ev of events) {
