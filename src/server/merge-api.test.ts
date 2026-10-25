@@ -229,9 +229,12 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
       .mockResolvedValueOnce(PRIMARY);
     const rels = [
       { id: 'r-w', memberId: 'dup-1', relatedId: 'w-1', type: 'spouse' }, // rewire
-      { id: 'r-d', memberId: 'pri-1', relatedId: 'dup-1', type: 'spouse' }, // edge internal
       { id: 'r-x', memberId: 'w-1', relatedId: 'w-2', type: 'parent' }, // hidup
     ];
+    // v392: fixture TANPA edge internal primary<->duplicate. Edge internal
+    // memicu jalur NEEDS_APPROVAL (RELATION_DELETE, threshold 1) sehingga
+    // kasus ini tidak lagi menguji transaksi 200. Kasus NEEDS_APPROVAL
+    // diperiksa terpisah di merge-approval-api.test.ts.
     prismaMock.familyRelationship.findMany.mockResolvedValue(rels);
     prismaMock.genealogyEvent.findMany.mockResolvedValue([
       { id: 'e-1', memberId: 'dup-1', type: 'BIRT' },
@@ -252,16 +255,17 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
     expect(out.status).toBe(200);
     expect(out.body['merged']).toBe(true);
     expect(out.body['primaryId']).toBe('pri-1');
-    // transaksi terpanggil dengan operasi: 1 rewire, 1 delete,
-    // 1 genealogy event, 1 life event, 1 penandaan merged.
+    // transaksi terpanggil dengan operasi: 1 rewire, 1 genealogy event,
+    // 1 life event, 1 penandaan merged (tanpa delete: fixture bebas edge
+    // internal sejak v392 agar jalur ALLOW).
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
     const ops = prismaMock.$transaction.mock.calls[0][0] as unknown[];
-    expect(ops).toHaveLength(5);
+    expect(ops).toHaveLength(4);
     expect(prismaMock.familyRelationship.update).toHaveBeenCalledWith({
       where: { id: 'r-w' },
       data: { memberId: 'pri-1' },
     });
-    expect(prismaMock.familyRelationship.delete).toHaveBeenCalledWith({ where: { id: 'r-d' } });
+    expect(prismaMock.familyRelationship.delete).not.toHaveBeenCalled();
     expect(prismaMock.genealogyEvent.update).toHaveBeenCalledWith({
       where: { id: 'e-1' },
       data: { memberId: 'pri-1' },
@@ -283,7 +287,7 @@ describe('POST /api/v1/trees/:treeId/members/:memberId/merge (v390)', () => {
           rewire: [
             expect.objectContaining({ relationId: 'r-w', side: 'memberId', memberId: 'pri-1', relatedId: 'w-1', type: 'spouse' }),
           ],
-          deleted: [expect.objectContaining({ id: 'r-d', memberId: 'pri-1', relatedId: 'dup-1', type: 'spouse' })],
+          deleted: [],
           movedGenealogyEventIds: ['e-1'],
           movedLifeEventIds: ['le-1'],
         }),
