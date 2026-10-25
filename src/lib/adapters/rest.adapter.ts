@@ -66,6 +66,11 @@ import {
   UpcomingAnniversaryDto,
   GenerationsCountDto,
   FamilySizeStatsDto,
+  MergeApi,
+  MergeMemberResult,
+  MergeApprovalRecord,
+  MergeApprovalDecision,
+  MergeRiskReasonView,
   AdapterError,
   AuthError,
 } from './types';
@@ -85,7 +90,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -567,16 +572,28 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
   // ── Guided member merge (v390 fase 1) ──────────────────
   // One POST per execution; server holds the transaction. Errors come
   // back as 4xx { code, message } and are surfaced to the dialog inline.
+  // v392: the server answers 202 NEEDS_APPROVAL when the merge is risky;
+  // request() passes 2xx through, so the union result branches here and
+  // the dialog shows the queued-for-approval state instead of silence.
   async mergeMember(
     treeId: string,
     duplicateId: string,
     params: { targetId: string; confirmName: string },
-  ): Promise<{ merged: boolean; primaryId: string }> {
-    return this.request<{ merged: boolean; primaryId: string }>(
+  ): Promise<MergeMemberResult> {
+    const body = await this.request<{ merged: boolean; primaryId: string; approvalId?: string; status?: string; reasons?: MergeRiskReasonView[] }>(
       'POST',
       `/trees/${encodeURIComponent(treeId)}/members/${encodeURIComponent(duplicateId)}/merge`,
       { targetId: params.targetId, confirmName: params.confirmName },
     );
+    if (body.merged) {
+      return { merged: true, primaryId: body.primaryId };
+    }
+    return {
+      merged: false,
+      needsApproval: true,
+      approvalId: body.approvalId ?? '',
+      reasons: Array.isArray(body.reasons) ? body.reasons : [],
+    };
   }
 
   // ── Un-merge from journal (v391 fase 1) ────────────────
@@ -591,6 +608,32 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return this.request<{ unmerged: boolean; duplicateId: string }>(
       'POST',
       `/trees/${encodeURIComponent(treeId)}/members/${encodeURIComponent(duplicateId)}/unmerge`,
+    );
+  }
+
+  // ── Merge approvals (v392 AC6) ─────────────────────────
+  // Queue listing for the Dashboard panel plus the approve/reject
+  // decision calls; guard lives server-side (owner/editor other than
+  // the requester), the panel only renders outcomes honestly.
+  async listMergeApprovals(treeId: string, params?: { status?: string }): Promise<MergeApprovalRecord[]> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    const qs = query.toString();
+    const body = await this.request<{ approvals: MergeApprovalRecord[] }>(
+      'GET',
+      `/trees/${encodeURIComponent(treeId)}/merge-approvals${qs ? `?${qs}` : ''}`,
+    );
+    return Array.isArray(body.approvals) ? body.approvals : [];
+  }
+
+  async decideMergeApproval(
+    treeId: string,
+    approvalId: string,
+    action: 'approve' | 'reject',
+  ): Promise<MergeApprovalDecision> {
+    return this.request<MergeApprovalDecision>(
+      'POST',
+      `/trees/${encodeURIComponent(treeId)}/merge-approvals/${encodeURIComponent(approvalId)}/${action}`,
     );
   }
 

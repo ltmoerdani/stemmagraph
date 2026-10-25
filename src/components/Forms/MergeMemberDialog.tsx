@@ -18,6 +18,7 @@ import { X, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFamilyStore } from '../../store/familyStore';
 import { getMergeApi } from '../../lib/adapters';
+import type { MergeRiskReasonView } from '../../lib/adapters';
 
 /** Draft entri baru (sisi duplikat) dari form UnifiedMemberModal. */
 export interface MergeEntryDraft {
@@ -48,6 +49,9 @@ export function MergeMemberDialog({ isOpen, onClose, entryDraft, primaryId, onMe
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [done, setDone] = useState(false);
+  // v392: merge berisiko tidak dieksekusi; server menjawab 202 dengan
+  // daftar alasan berbahaya. Dialog berpindah ke status antrian persetujuan.
+  const [queuedReasons, setQueuedReasons] = useState<MergeRiskReasonView[] | null>(null);
 
   const primary = useMemo(() => members.find((m) => m.id === primaryId), [members, primaryId]);
 
@@ -79,7 +83,8 @@ export function MergeMemberDialog({ isOpen, onClose, entryDraft, primaryId, onMe
         maritalStatus: 'single',
       });
       if (!newId) throw new Error(t('dedup.merge.failed'));
-      // 2) merge baris baru ke primary lewat API server.
+      // 2) merge baris baru ke primary lewat API server. 202 berarti
+      // merge berisiko masuk antrian persetujuan (v392), bukan kegagalan.
       const res = await mergeApi.mergeMember(currentFamilyTreeId, newId, {
         targetId: primaryId,
         confirmName: confirmName.trim(),
@@ -88,6 +93,8 @@ export function MergeMemberDialog({ isOpen, onClose, entryDraft, primaryId, onMe
         setDone(true);
         await fetchMembers(currentFamilyTreeId);
         onMerged?.(res.primaryId);
+      } else {
+        setQueuedReasons(res.reasons);
       }
     } catch (err) {
       setErrorMsg(
@@ -105,6 +112,7 @@ export function MergeMemberDialog({ isOpen, onClose, entryDraft, primaryId, onMe
     setConfirmName('');
     setErrorMsg('');
     setDone(false);
+    setQueuedReasons(null);
     onClose();
   };
 
@@ -139,6 +147,37 @@ export function MergeMemberDialog({ isOpen, onClose, entryDraft, primaryId, onMe
                 <p className="text-green-800 text-sm font-medium" data-testid="merge-success">{t('dedup.merge.success')}</p>
               </div>
             </div>
+          ) : queuedReasons ? (
+            <>
+              {/* v392: merge berisiko masuk antrian persetujuan; tampilkan
+                  alasan berbahaya tanpa mengeksekusi apa pun. */}
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg" role="status" data-testid="merge-approval-queued">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-amber-900 text-sm font-medium">{t('mergeApproval.pending.success')}</p>
+                    <p className="text-xs text-amber-800 font-medium mt-3">{t('mergeApproval.dialog.reasonsLabel')}:</p>
+                    <ul className="mt-1 space-y-1">
+                      {queuedReasons.map((r) => (
+                        <li key={r.code} className="text-xs text-amber-800" data-testid={`approval-reason-${r.code}`}>
+                          {t(`mergeApproval.reason.${r.code}`, { actual: r.actual, threshold: r.threshold })}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  data-testid="merge-queued-close"
+                  onClick={handleClose}
+                  className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+                >
+                  {t('mergeApproval.dialog.cancel')}
+                </button>
+              </div>
+            </>
           ) : (
             <>
               {/* Ringkasan side-by-side kedua sisi merge. */}

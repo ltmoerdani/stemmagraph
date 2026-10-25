@@ -585,6 +585,48 @@
       "errJournalMismatch": "Data sekarang tidak cocok dengan jurnal merge; undo ditolak demi keamanan"
     }
   },
+  "mergeApproval": {
+    "status": {
+      "PENDING": "Menunggu persetujuan",
+      "APPROVED": "Disetujui",
+      "REJECTED": "Ditolak",
+      "EXECUTED": "Dieksekusi",
+      "EXPIRED": "Kedaluwarsa"
+    },
+    "reason": {
+      "RELATION_REWIRE": "Relasi yang diarahkan ulang: {{actual}} (batas {{threshold}})",
+      "RELATION_DELETE": "Relasi internal yang terhapus: {{actual}} (batas {{threshold}})",
+      "FACTS_MOVED": "Facts yang dipindah: {{actual}} (batas {{threshold}})",
+      "GENERATION_BOTH_CONNECTED": "Kedua anggota sama-sama terhubung di graf generasi"
+    },
+    "dialog": {
+      "approveTitle": "Setujui merge berisiko",
+      "rejectTitle": "Tolak merge berisiko",
+      "approveConfirm": "Setujui",
+      "rejectConfirm": "Tolak",
+      "cancel": "Batal",
+      "reasonsLabel": "Alasan merge masuk antrian",
+      "expiresLabel": "Batas waktu keputusan"
+    },
+    "pending": {
+      "success": "Merge berisiko masuk antrian persetujuan. Anggota belum digabung sampai owner atau editor lain menyetujui.",
+      "queueEmpty": "Tidak ada permintaan persetujuan merge",
+      "requestedBy": "Diminta oleh",
+      "decidedBy": "Diputuskan oleh"
+    },
+    "panel": {
+      "open": "Lihat antrian persetujuan merge",
+      "title": "Persetujuan merge: {{name}}",
+      "loading": "Memuat antrian persetujuan...",
+      "loadFailed": "Gagal memuat antrian persetujuan."
+    },
+    "error": {
+      "CANNOT_APPROVE_OWN_REQUEST": "Pemohon merge tidak boleh memutuskan sendiri; minta owner atau editor lain",
+      "ALREADY_DECIDED": "Permintaan ini sudah diputuskan",
+      "EXPIRED": "Permintaan persetujuan sudah kedaluwarsa; ajukan merge lagi",
+      "PLAN_MISMATCH": "Data sekarang tidak cocok dengan rencana yang disetujui; ajukan merge lagi"
+    }
+  },
   "memberEdit": {
     "privacyStatus": "Status Privasi",
     "privacyShared": "Dibagikan, sertakan dalam ekspor silsilah publik",

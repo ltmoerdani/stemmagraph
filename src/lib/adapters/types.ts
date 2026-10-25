@@ -645,7 +645,51 @@ export interface MergeApi {
     treeId: string,
     duplicateId: string,
     params: { targetId: string; confirmName: string },
-  ): Promise<{ merged: boolean; primaryId: string }>;
+  ): Promise<MergeMemberResult>;
   /** Balikkan merge dari jurnal (v391); 422 bila belum merged, tanpa jurnal, atau state tak cocok. */
   unmergeMember(treeId: string, duplicateId: string): Promise<{ unmerged: boolean; duplicateId: string }>;
+  /** Daftar approval merge tree (v392 AC6); status opsional untuk saring PENDING. */
+  listMergeApprovals(treeId: string, params?: { status?: string }): Promise<MergeApprovalRecord[]>;
+  /** Putuskan approval: approve mengeksekusi merge, reject nihil eksekusi. */
+  decideMergeApproval(
+    treeId: string,
+    approvalId: string,
+    action: 'approve' | 'reject',
+  ): Promise<MergeApprovalDecision>;
+}
+
+/** Hasil merge v392: 200 merged langsung, atau 202 antrian persetujuan berisi reasons. */
+export type MergeMemberResult =
+  | { merged: true; primaryId: string }
+  | { merged: false; needsApproval: true; approvalId: string; reasons: MergeRiskReasonView[] };
+
+/** Satu alasan merge berisiko (v392), tampil di dialog dan panel approval. */
+export interface MergeRiskReasonView {
+  code: 'RELATION_REWIRE' | 'RELATION_DELETE' | 'FACTS_MOVED' | 'GENERATION_BOTH_CONNECTED';
+  actual: number;
+  threshold: number;
+}
+
+/** Baris approval merge (v392 AC6) dari GET merge-approvals. */
+export interface MergeApprovalRecord {
+  id: string;
+  treeId: string;
+  primaryId: string;
+  duplicateId: string;
+  reasons: MergeRiskReasonView[];
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXECUTED' | 'EXPIRED';
+  requesterId: string;
+  deciderId: string | null;
+  createdAt: string;
+  decidedAt: string | null;
+  expiresAt: string;
+}
+
+/** Hasil keputusan approval (approve = EXECUTED, reject = REJECTED). */
+export interface MergeApprovalDecision {
+  approvalId: string;
+  status: 'EXECUTED' | 'REJECTED';
+  deciderId: string;
+  decidedAt: string;
+  primaryId?: string;
 }
