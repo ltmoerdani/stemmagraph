@@ -151,7 +151,7 @@
     "csv": {
       "title": "Impor CSV (anggota)",
       "template": "Unduh template CSV",
-      "choose": "Pilih file .csv",
+      "choose": "Pilih file .csv atau .xlsx",
       "confirm": "Impor baris valid",
       "cancel": "Batal",
       "busy": "Mengimpor...",
@@ -164,7 +164,8 @@
       "summary": "Impor CSV selesai: {{ok}} anggota dibuat, {{fail}} gagal",
       "errors": {
         "unreadable": "File tidak dapat dibaca sebagai teks.",
-        "generic": "Impor CSV gagal. Periksa file lalu coba lagi."
+        "generic": "Impor CSV gagal. Periksa file lalu coba lagi.",
+        "xlsxUnreadable": "File Excel tidak dapat dibaca sebagai .xlsx yang sah."
       }
     }
   },

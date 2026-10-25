@@ -151,7 +151,7 @@
     "csv": {
       "title": "CSV import (members)",
       "template": "Download CSV template",
-      "choose": "Choose a .csv file",
+      "choose": "Choose a .csv or .xlsx file",
       "confirm": "Import valid rows",
       "cancel": "Cancel",
       "busy": "Importing...",
@@ -164,7 +164,8 @@
       "summary": "CSV import complete: {{ok}} members created, {{fail}} failed",
       "errors": {
         "unreadable": "The file could not be read as text.",
-        "generic": "CSV import failed. Check the file and try again."
+        "generic": "CSV import failed. Check the file and try again.",
+        "xlsxUnreadable": "The Excel file could not be read as a valid .xlsx."
       }
     }
   },
