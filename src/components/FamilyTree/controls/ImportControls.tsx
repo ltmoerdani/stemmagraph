@@ -30,6 +30,8 @@ import {
   generateCsvTemplate,
   type CsvImportPreview,
 } from '../../../lib/importcsv/validateCsv';
+import { previewXlsxImport } from '../../../lib/importxlsx/previewXlsx';
+import { XlsxReadError } from '../../../lib/importxlsx/openXlsx';
 
 /**
  * Import controls (S1F6-C): wires the pure import libs
@@ -255,12 +257,22 @@ export const ImportControls: React.FC = () => {
     setCsvPreview(null);
     setCsvFileName(file.name);
     try {
-      const text = await file.text();
-      const preview = previewCsvImport(text);
+      // v397: file Excel .xlsx dideteksi lewat magic bytes ZIP (PK),
+      // konsisten dengan filosofi deteksi konten komponen ini; sisanya
+      // diperlakukan sebagai teks CSV. Kontrak preview identik.
+      const head = new Uint8Array(await file.slice(0, 2).arrayBuffer());
+      const isXlsx = head.length === 2 && head[0] === 0x50 && head[1] === 0x4b;
+      const preview = isXlsx
+        ? previewXlsxImport(new Uint8Array(await file.arrayBuffer()))
+        : previewCsvImport(await file.text());
       setCsvPreview(preview);
     } catch (error) {
-      console.error('CSV read failed:', error);
-      setCsvErrorKey('import.csv.errors.unreadable');
+      console.error('Import read failed:', error);
+      setCsvErrorKey(
+        error instanceof XlsxReadError
+          ? 'import.csv.errors.xlsxUnreadable'
+          : 'import.csv.errors.unreadable',
+      );
     } finally {
       if (csvInputRef.current) csvInputRef.current.value = '';
     }
@@ -441,7 +453,7 @@ export const ImportControls: React.FC = () => {
               <input
                 ref={csvInputRef}
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 className="hidden"
                 onChange={handleCsvChosen}
                 data-testid="import-csv-input"
