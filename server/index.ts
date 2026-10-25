@@ -121,9 +121,10 @@ import {
   parseGrowthMetricsQuery,
   roundGrowthMetric,
 } from '../src/lib/metrics/kfactor';
-import { buildDigestForUser, loadUpcomingReminders, runWeeklyDigestPass, startDigestScheduler } from './digest';
+import { buildDigestForUser, loadUpcomingReminders, runWeeklyDigestPass, startDigestScheduler, startIcsTokenRotationScheduler } from './digest';
 import { mailerDisabled } from '../src/lib/digest/mailer';
 import { weeklyWindow } from '../src/lib/digest/window';
+import { isPrevTokenWithinGrace } from '../src/lib/calendar/tokenLifecycle';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -2629,8 +2630,11 @@ app.get('/api/v1/trees/:treeId/reminders/upcoming', requireAuthStatsLiving, asyn
 //
 // Auth TANPA JWT: klien kalender (Google, Apple) tidak bisa login.
 // Autentikasi lewat query ?token= dicocokkan ke FamilyTree.icsFeedToken
-// (unique). Token salah, kosong, atau kolom null dijawab 404, bukan 401,
-// agar keberadaan tree tidak bisa ditebak dari perbedaan respons.
+// (unique). Sejak v400 token lama hasil rotasi masih hidup sebentar
+// sebagai icsFeedTokenPrev selama grace 7 hari sejak icsFeedRotatedAt
+// (transisi subscriber kalender), sesudahnya mati. Token salah, kosong,
+// prev lewat grace, atau kolom null dijawab 404, bukan 401, agar
+// keberadaan tree tidak bisa ditebak dari perbedaan respons.
 // Isi feed dianggap privat: guard kontrak token memang milik tree ini
 // (query by treeId + token, bukan hanya by token global).
 // Cache-Control private, no-cache seperti preseden reminders/upcoming,
@@ -2643,11 +2647,21 @@ app.get('/api/v1/trees/:treeId/calendar.ics', async (req: express.Request<{ tree
       return res.status(404).type('text/plain').send('Not Found');
     }
     // Kontrak token milik tree: satu query treeId + token; token benar
-    // tapi milik tree lain tetap tidak cocok di sini.
-    const tree = await prisma.familyTree.findFirst({
+    // tapi milik tree lain tetap tidak cocok di sini. Coba token aktif
+    // dulu, lalu token prev (v400) yang masih dalam grace 7 hari.
+    let tree = await prisma.familyTree.findFirst({
       where: { id: req.params.treeId, icsFeedToken: rawToken },
       select: { id: true, name: true },
     });
+    if (!tree) {
+      const prev = await prisma.familyTree.findFirst({
+        where: { id: req.params.treeId, icsFeedTokenPrev: rawToken },
+        select: { id: true, name: true, icsFeedRotatedAt: true },
+      });
+      if (prev && isPrevTokenWithinGrace(prev.icsFeedRotatedAt, new Date())) {
+        tree = { id: prev.id, name: prev.name };
+      }
+    }
     if (!tree) {
       return res.status(404).type('text/plain').send('Not Found');
     }
@@ -2723,26 +2737,39 @@ app.get('/api/v1/trees/:treeId/calendar.ics', async (req: express.Request<{ tree
 // ─── ICS feed token management (v394, fase 1) ────────────
 //
 // POST /api/v1/trees/:treeId/calendar-token/rotate: token baru CSPRNG
-// (pola generateInvitationToken ADR 0004), token lama langsung mati.
-// DELETE /api/v1/trees/:treeId/calendar-token: revoke, kolom di-set null
-// sehingga feed menjawab 404. Keduanya hanya owner/editor sesuai kontrak
-// GOAL v394 AC4 (lebih ketat dari matrix umum: viewer bukan pengelola
-// token feed). Token penuh ditampilkan tepat satu kali di respons rotate,
-// preseden invitation: "The full token is returned exactly once".
+// (pola generateInvitationToken ADR 0004). Sejak v400 token aktif lama
+// turun ke icsFeedTokenPrev beserta icsFeedRotatedAt = now sehingga URL
+// langganan lama masih hidup selama grace 7 hari (lihat handler feed),
+// lalu mati sendiri tanpa intervensi. Rotasi otomatis scheduler 90 hari
+// memakai mekanisme yang persis sama.
+// DELETE /api/v1/trees/:treeId/calendar-token: revoke membersihkan token
+// aktif DAN token prev sekaligus sehingga feed mati total. Keduanya
+// hanya owner/editor sesuai kontrak GOAL v394 AC4 (lebih ketat dari
+// matrix umum: viewer bukan pengelola token feed). Token penuh
+// ditampilkan tepat satu kali di respons rotate, preseden invitation:
+// "The full token is returned exactly once".
 
 const isFeedTokenManager = (role: TreeRole): boolean => role === 'owner' || role === 'editor';
 
 app.post('/api/v1/trees/:treeId/calendar-token/rotate', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
   res.setHeader('Referrer-Policy', 'no-referrer');
   try {
-    const tree = await prisma.familyTree.findUnique({ where: { id: req.params.treeId }, select: { id: true } });
+    const tree = await prisma.familyTree.findUnique({ where: { id: req.params.treeId }, select: { id: true, icsFeedToken: true } });
     if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
     const role = await resolveTreeRole(req.userId!, req.params.treeId);
     if (role === null || !isFeedTokenManager(role)) {
       return res.status(403).json({ code: 'FORBIDDEN_TREE', message: 'Your role on this tree does not allow this action (manage_calendar_token)' });
     }
     const token = generateInvitationToken();
-    await prisma.familyTree.update({ where: { id: req.params.treeId }, data: { icsFeedToken: token } });
+    await prisma.familyTree.update({
+      where: { id: req.params.treeId },
+      data: {
+        icsFeedToken: token,
+        // v400: token lama (bila ada) tinggal di prev sampai grace habis.
+        icsFeedTokenPrev: tree.icsFeedToken ?? null,
+        icsFeedRotatedAt: new Date(),
+      },
+    });
     return res.status(200).json({ token });
   } catch {
     return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal Server Error' });
@@ -2758,7 +2785,7 @@ app.delete('/api/v1/trees/:treeId/calendar-token', requireAuth, async (req: Auth
     if (role === null || !isFeedTokenManager(role)) {
       return res.status(403).json({ code: 'FORBIDDEN_TREE', message: 'Your role on this tree does not allow this action (manage_calendar_token)' });
     }
-    await prisma.familyTree.update({ where: { id: req.params.treeId }, data: { icsFeedToken: null } });
+    await prisma.familyTree.update({ where: { id: req.params.treeId }, data: { icsFeedToken: null, icsFeedTokenPrev: null, icsFeedRotatedAt: null } });
     return res.status(200).json({ revoked: true });
   } catch {
     return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal Server Error' });
@@ -4137,6 +4164,10 @@ function formatRelationship(r: FamilyRelationship) {
 
 // P2-7: the hourly digest check exists only when a mailer is configured.
 startDigestScheduler();
+
+// v400: rotasi otomatis token ICS feed berjalan bersebelahan digest,
+// tanpa prasyarat konfigurasi karena feed tidak bergantung SMTP.
+startIcsTokenRotationScheduler();
 
 app.listen(PORT, () => {
   console.log(`🚀 API server running at http://localhost:${PORT}/api/v1`);

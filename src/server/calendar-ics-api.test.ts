@@ -405,3 +405,108 @@ describe('Referrer-Policy no-referrer (v396 AC1)', () => {
     expect(r.policy).toBe('no-referrer');
   });
 });
+
+// --- Rotasi token dengan grace period (v400) ---
+//
+// Rotate menurunkan token aktif lama ke icsFeedTokenPrev beserta
+// icsFeedRotatedAt; URL lama masih 200 selama grace 7 hari sejak
+// rotasi, sesudahnya 404. Revoke membersihkan token aktif DAN prev
+// sekaligus sehingga feed mati total. Kontrak respons feed dan route
+// tidak berubah dari v394.
+describe('Rotasi token dengan grace period (v400)', () => {
+  const OWNER = { id: 'user-owner-v400', status: 'ACTIVE', role: 'user' };
+  const AKTIF = 'tok-aktif-v400';
+  const PREV = 'tok-prev-v400';
+  const DAY_MS = 86_400_000;
+
+  function mockOwner(): void {
+    prismaMock.user.findUnique.mockImplementation(async (args: { where: { id: string } }) =>
+      args.where.id === OWNER.id ? OWNER : null);
+    prismaMock.treeMember.findUnique.mockImplementation(async (args: { where: { treeId_userId: { treeId: string; userId: string } } }) =>
+      args.where.treeId_userId.userId === OWNER.id ? { userId: OWNER.id, role: 'owner' } : null);
+    prismaMock.familyTree.findUnique.mockResolvedValue({ id: 'tree-1', icsFeedToken: AKTIF });
+    prismaMock.familyTree.update.mockResolvedValue({ id: 'tree-1' });
+  }
+
+  function mockFeedDenganPrev(rotatedAt: Date | null): void {
+    prismaMock.familyTree.findFirst.mockImplementation(async (args: { where: { id: string; icsFeedToken?: string; icsFeedTokenPrev?: string } }) => {
+      if (args.where.id !== 'tree-1') return null;
+      if (args.where.icsFeedToken === AKTIF) return { id: 'tree-1', name: 'Keluarga Uji' };
+      if (args.where.icsFeedTokenPrev === PREV) return { id: 'tree-1', name: 'Keluarga Uji', icsFeedRotatedAt: rotatedAt };
+      return null;
+    });
+    prismaMock.familyMember.findMany.mockResolvedValue([]);
+    prismaMock.lifeEvent.findMany.mockResolvedValue([]);
+  }
+
+  it('rotate menyimpan prev + timestamp: token lama turun ke icsFeedTokenPrev, icsFeedRotatedAt terisi', async () => {
+    mockOwner();
+    const r = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token/rotate`, { method: 'POST', headers: { authorization: authHeader(OWNER.id) } });
+    expect(r.status).toBe(200);
+    const body = (await r.json()) as { token: string };
+    expect(body.token.length).toBeGreaterThan(20);
+    const args = prismaMock.familyTree.update.mock.calls[0]?.[0] as { where: { id: string }; data: { icsFeedToken: string; icsFeedTokenPrev: string | null; icsFeedRotatedAt: Date } };
+    expect(args.where.id).toBe('tree-1');
+    expect(args.data.icsFeedToken).toBe(body.token);
+    expect(args.data.icsFeedTokenPrev).toBe(AKTIF);
+    expect(args.data.icsFeedRotatedAt).toBeInstanceOf(Date);
+  });
+
+  it('feed token aktif: 200, kontrak respons tidak berubah', async () => {
+    mockFeedDenganPrev(new Date());
+    const r = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${AKTIF}`);
+    expect(r.status).toBe(200);
+    expect(r.text.startsWith('BEGIN:VCALENDAR')).toBe(true);
+  });
+
+  it('feed token prev dalam grace (2 hari sejak rotasi): 200', async () => {
+    mockFeedDenganPrev(new Date(Date.now() - 2 * DAY_MS));
+    const r = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${PREV}`);
+    expect(r.status).toBe(200);
+    expect(r.text.startsWith('BEGIN:VCALENDAR')).toBe(true);
+  });
+
+  it('feed token prev lewat grace (8 hari sejak rotasi): 404', async () => {
+    mockFeedDenganPrev(new Date(Date.now() - 8 * DAY_MS));
+    const r = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${PREV}`);
+    expect(r.status).toBe(404);
+    expect(r.contentType).toContain('text/plain');
+  });
+
+  it('feed token prev tanpa timestamp (icsFeedRotatedAt null): 404 fail closed', async () => {
+    mockFeedDenganPrev(null);
+    const r = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${PREV}`);
+    expect(r.status).toBe(404);
+  });
+
+  it('revoke membersihkan kedua token sekaligus: kedua URL 404 setelahnya', async () => {
+    mockOwner();
+    let revoked = false;
+    prismaMock.familyTree.update.mockImplementation(async (args: { data: { icsFeedToken: string | null } }) => {
+      if (args.data.icsFeedToken === null) revoked = true;
+      return { id: 'tree-1' };
+    });
+    prismaMock.familyTree.findFirst.mockImplementation(async (args: { where: { id: string; icsFeedToken?: string; icsFeedTokenPrev?: string } }) => {
+      if (revoked || args.where.id !== 'tree-1') return null;
+      if (args.where.icsFeedToken === AKTIF) return { id: 'tree-1', name: 'Keluarga Uji' };
+      if (args.where.icsFeedTokenPrev === PREV) return { id: 'tree-1', name: 'Keluarga Uji', icsFeedRotatedAt: new Date() };
+      return null;
+    });
+    prismaMock.familyMember.findMany.mockResolvedValue([]);
+    prismaMock.lifeEvent.findMany.mockResolvedValue([]);
+    const sebelumAktif = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${AKTIF}`);
+    expect(sebelumAktif.status).toBe(200);
+    const sebelumPrev = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${PREV}`);
+    expect(sebelumPrev.status).toBe(200);
+    const r = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token`, { method: 'DELETE', headers: { authorization: authHeader(OWNER.id) } });
+    expect(r.status).toBe(200);
+    const args = prismaMock.familyTree.update.mock.calls[0]?.[0] as { data: { icsFeedToken: string | null; icsFeedTokenPrev: string | null; icsFeedRotatedAt: unknown } };
+    expect(args.data.icsFeedToken).toBeNull();
+    expect(args.data.icsFeedTokenPrev).toBeNull();
+    expect(args.data.icsFeedRotatedAt).toBeNull();
+    const sesudahAktif = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${AKTIF}`);
+    expect(sesudahAktif.status).toBe(404);
+    const sesudahPrev = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${PREV}`);
+    expect(sesudahPrev.status).toBe(404);
+  });
+});
