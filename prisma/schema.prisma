@@ -103,6 +103,10 @@ model FamilyTree {
   // v392 approval workflow merge berisiko (relation side only, FK di
   // baris MergeApproval). Additive only.
   mergeApprovals  MergeApproval[]
+  // v394 ICS feed kalender keluarga (fase 1): token subscribe pribadi tree.
+  // Null = feed mati (belum dibuat atau sudah di-revoke). Diisi token acak
+  // base64url dari CSPRNG, di-rotate dan di-revoke lewat route khusus.
+  icsFeedToken    String?  @unique
 }
 
 // ─── Family Member ────────────────────────────────────────
