@@ -1783,14 +1783,57 @@ app.get('/api/v1/trees/:treeId/members', requireAuth, async (req: AuthenticatedR
   try {
     const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    // v401: pencarian dan filter anggota sisi server. Semua query param
+    // opsional; tanpa parameter perilaku respons identik sebelum v401
+    // (backward compatible). Nilai param tidak valid ditolak 422 mengikuti
+    // pola route duplicates v388.
+    const qRaw = req.query['q'];
+    const livingRaw = req.query['living'];
+    const margaRaw = req.query['marga'];
+    const sortRaw = req.query['sort'];
+    if (qRaw !== undefined && typeof qRaw !== 'string') {
+      return res.status(422).json({ code: 'INVALID_Q', message: 'q must be a string' });
+    }
+    if (livingRaw !== undefined && livingRaw !== 'true' && livingRaw !== 'false') {
+      return res.status(422).json({ code: 'INVALID_LIVING', message: 'living must be true or false' });
+    }
+    if (margaRaw !== undefined && typeof margaRaw !== 'string') {
+      return res.status(422).json({ code: 'INVALID_MARGA', message: 'marga must be a string' });
+    }
+    if (sortRaw !== undefined && sortRaw !== 'name') {
+      return res.status(422).json({ code: 'INVALID_SORT', message: 'sort only supports name' });
+    }
+    // Filter di level database (where findMany), bukan in-memory. q adalah
+    // substring atas nama depan maupun belakang: kolom name tunggal memuat
+    // nama lengkap, contains memetakan ke LIKE SQLite yang case-insensitive
+    // ASCII sehingga token mana pun tercakup. marga exact match kolom marga.
+    // living konsisten definisi umur eksisting (isAlive boolean, kandidat
+    // hidup = isAlive true, pola oldest-living v301).
+    const q = typeof qRaw === 'string' ? qRaw.trim() : undefined;
+    const where: Prisma.FamilyMemberWhereInput = { treeId: req.params.treeId };
+    if (q !== undefined && q.length > 0) where.name = { contains: q };
+    if (livingRaw !== undefined) where.isAlive = livingRaw === 'true';
+    if (typeof margaRaw === 'string') where.marga = { equals: margaRaw };
     // Privacy read wiring v261-i: redaksi berbasis relasi viewer (gap 3).
     // Viewer diidentifikasi lewat email User vs FamilyMember.email;
     // relasi viewer-target dari tabel FamilyRelationship.
     const [members, relationships, viewer] = await Promise.all([
-      prisma.familyMember.findMany({ where: { treeId: req.params.treeId }, orderBy: { generation: 'asc' } }),
+      prisma.familyMember.findMany({ where, orderBy: { generation: 'asc' } }),
       prisma.familyRelationship.findMany({ where: { treeId: req.params.treeId } }),
       prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } }),
     ]);
+    // v401 AC sort=name: urutan deterministik locale-aware sederhana,
+    // localeCompare id dengan tie-break id leksikograf. Diurutkan di memori
+    // setelah query karena SQLite tidak menyediakan collation locale id;
+    // filter tetap sepenuhnya di level database. Tanpa sort, urutan hasil
+    // tetap orderBy generation asc seperti sebelum v401.
+    if (sortRaw === 'name') {
+      members.sort((a, b) => {
+        const byName = a.name.localeCompare(b.name, 'id');
+        if (byName !== 0) return byName;
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+      });
+    }
     const viewerRelationInput = {
       viewerEmail: viewer?.email ?? null,
       members: members.map((m) => ({ id: m.id, email: m.email })),
