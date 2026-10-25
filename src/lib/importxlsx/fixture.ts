@@ -49,7 +49,6 @@ export function buildXlsx(cells: FixtureCell[], rowsCount: number, opts: Fixture
       .map(([r, list]) => {
         const cs = list
           .map((c) => {
-            const col = c.ref.replace(/\d+$/, '');
             if (c.kind === 'inline') {
               return `<${sheetTagPrefix}c r="${c.ref}" t="inlineStr"><is><t>${xmlEscape(c.value)}</t></is></${sheetTagPrefix}c>`;
             }
@@ -73,7 +72,7 @@ export function buildXlsx(cells: FixtureCell[], rowsCount: number, opts: Fixture
     .map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`)
     .join('');
   const relsDoc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels}</Relationships>`;
-  const ssXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><${ns}sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${shared.length}" uniqueCount="${shared.length}">${shared.map((s, i) => `<${ns}si><${ns}t>${xmlEscape(s)}</${ns}t></${ns}si>`).join('')}</${ns}sst>`;
+  const ssXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><${ns}sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${shared.length}" uniqueCount="${shared.length}">${shared.map((s) => `<${ns}si><${ns}t>${xmlEscape(s)}</${ns}t></${ns}si>`).join('')}</${ns}sst>`;
   const files: Record<string, Uint8Array> = {
     'xl/workbook.xml': strToU8(workbook),
     'xl/_rels/workbook.xml.rels': strToU8(relsDoc),

@@ -13,6 +13,7 @@ import { colRefToIndex, openXlsxFirstSheet, XlsxReadError } from './openXlsx';
 import { decodeXmlEntities, localName, parseMiniXml } from './xml';
 import { normalizeXlsxGrid, previewXlsxImport } from './previewXlsx';
 import { buildXlsx, type FixtureCell } from './fixture';
+import { zipSync, strToU8 } from 'fflate';
 
 const HEADER: FixtureCell[] = [
   { ref: 'A1', value: 'name' },
@@ -153,10 +154,8 @@ describe('v397 openXlsxFirstSheet (AC1)', () => {
   });
 
   it('zip tanpa workbook.xml melempar XlsxReadError', () => {
-    const { zipSync, strToU8 } = require('fflate') as typeof import('fflate');
     const noWb = zipSync({ 'readme.txt': strToU8('bukan xlsx') });
     expect(() => openXlsxFirstSheet(noWb)).toThrow(XlsxReadError);
-    void noWb;
   });
 });
 
