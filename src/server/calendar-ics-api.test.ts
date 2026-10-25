@@ -22,7 +22,7 @@ import { computeNextAnniversaries } from '../../src/lib/anniversaries/nextAnnive
 
 const prismaMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
-  familyTree: { findUnique: vi.fn(), findFirst: vi.fn() },
+  familyTree: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
   treeMember: { findUnique: vi.fn() },
   familyMember: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
   lifeEvent: { findMany: vi.fn() },
@@ -222,5 +222,121 @@ describe('GET calendar.ics cache (v394 AC3)', () => {
     mockDataTree();
     const res = await fetch(`${BASE}/api/v1/trees/tree-1/calendar.ics?token=${TOKEN}`, { headers: { authorization: authHeader('user-1') } });
     expect(res.status).toBe(200);
+  });
+});
+
+describe('Manajemen token feed (v394 AC4)', () => {
+  const OWNER = { id: 'user-owner', status: 'ACTIVE', role: 'user' };
+  const EDITOR = { id: 'user-editor', status: 'ACTIVE', role: 'user' };
+  const VIEWER = { id: 'user-viewer', status: 'ACTIVE', role: 'user' };
+
+  function mockUser(u: { id: string; status: string; role: string }): void {
+    prismaMock.user.findUnique.mockImplementation(async (args: { where: { id: string } }) => (args.where.id === u.id ? u : null));
+  }
+
+  function mockMembership(userId: string, role: string | null): void {
+    prismaMock.treeMember.findUnique.mockImplementation(async (args: { where: { treeId_userId: { treeId: string; userId: string } } }) =>
+      args.where.treeId_userId.userId === userId && role !== null ? { userId, role } : null,
+    );
+  }
+
+  function mockTreeExists(exists: boolean): void {
+    prismaMock.familyTree.findUnique.mockImplementation(async () => (exists ? { id: 'tree-1' } : null));
+    prismaMock.familyTree.update.mockResolvedValue({ id: 'tree-1' });
+  }
+
+  it('tanpa login: 401 di rotate dan revoke', async () => {
+    const r1 = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token/rotate`, { method: 'POST' });
+    expect(r1.status).toBe(401);
+    const r2 = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token`, { method: 'DELETE' });
+    expect(r2.status).toBe(401);
+  });
+
+  it('viewer: 403 di rotate dan revoke, prisma.update tidak dipanggil', async () => {
+    mockUser(VIEWER);
+    mockMembership(VIEWER.id, 'viewer');
+    mockTreeExists(true);
+    const h = { authorization: authHeader(VIEWER.id), 'content-type': 'application/json' };
+    const r1 = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token/rotate`, { method: 'POST', headers: h });
+    expect(r1.status).toBe(403);
+    const r2 = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token`, { method: 'DELETE', headers: h });
+    expect(r2.status).toBe(403);
+    expect(prismaMock.familyTree.update).not.toHaveBeenCalled();
+  });
+
+  it('non-anggota: 403 di rotate', async () => {
+    mockUser(OWNER);
+    mockMembership(OWNER.id, null);
+    mockTreeExists(true);
+    const r = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token/rotate`, { method: 'POST', headers: { authorization: authHeader(OWNER.id) } });
+    expect(r.status).toBe(403);
+  });
+
+  it('tree tidak ada: 404 di rotate', async () => {
+    mockUser(OWNER);
+    mockMembership(OWNER.id, 'owner');
+    mockTreeExists(false);
+    const r = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token/rotate`, { method: 'POST', headers: { authorization: authHeader(OWNER.id) } });
+    expect(r.status).toBe(404);
+  });
+
+  it('owner rotate: 200 token baru unguessable, token lama mati (feed 404 token lama, 200 token baru)', async () => {
+    mockUser(OWNER);
+    mockMembership(OWNER.id, 'owner');
+    mockTreeExists(true);
+    const OLD = 'tok-lama';
+    let current = OLD;
+    prismaMock.familyTree.update.mockImplementation(async (args: { data: { icsFeedToken: string | null } }) => {
+      current = args.data.icsFeedToken;
+      return { id: 'tree-1' };
+    });
+    prismaMock.familyTree.findFirst.mockImplementation(async (args: { where: { id: string; icsFeedToken: string } }) =>
+      args.where.id === 'tree-1' && args.where.icsFeedToken === current ? { id: 'tree-1', name: 'Keluarga Uji' } : null,
+    );
+    prismaMock.familyMember.findMany.mockResolvedValue([]);
+    prismaMock.lifeEvent.findMany.mockResolvedValue([]);
+    const r = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token/rotate`, { method: 'POST', headers: { authorization: authHeader(OWNER.id) } });
+    expect(r.status).toBe(200);
+    const body = (await r.json()) as { token: string };
+    expect(body.token.length).toBeGreaterThan(20);
+    expect(body.token).not.toBe(OLD);
+    const feedLama = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${OLD}`);
+    expect(feedLama.status).toBe(404);
+    const feedBaru = await getFeed(`/api/v1/trees/tree-1/calendar.ics?token=${body.token}`);
+    expect(feedBaru.status).toBe(200);
+  });
+
+  it('editor rotate: 200 (owner/editor boleh mengelola token feed)', async () => {
+    mockUser(EDITOR);
+    mockMembership(EDITOR.id, 'editor');
+    mockTreeExists(true);
+    const r = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token/rotate`, { method: 'POST', headers: { authorization: authHeader(EDITOR.id) } });
+    expect(r.status).toBe(200);
+    const body = (await r.json()) as { token: string };
+    expect(typeof body.token).toBe('string');
+  });
+
+  it('revoke: 200, kolom null, feed menjawab 404', async () => {
+    mockUser(OWNER);
+    mockMembership(OWNER.id, 'owner');
+    mockTreeExists(true);
+    let current: string | null = 'tok-aktif';
+    prismaMock.familyTree.update.mockImplementation(async (args: { data: { icsFeedToken: string | null } }) => {
+      current = args.data.icsFeedToken;
+      return { id: 'tree-1' };
+    });
+    prismaMock.familyTree.findFirst.mockImplementation(async (args: { where: { id: string; icsFeedToken: string } }) =>
+      current !== null && args.where.id === 'tree-1' && args.where.icsFeedToken === current ? { id: 'tree-1', name: 'Keluarga Uji' } : null,
+    );
+    prismaMock.familyMember.findMany.mockResolvedValue([]);
+    prismaMock.lifeEvent.findMany.mockResolvedValue([]);
+    const feedSebelum = await getFeed('/api/v1/trees/tree-1/calendar.ics?token=tok-aktif');
+    expect(feedSebelum.status).toBe(200);
+    const r = await fetch(`${BASE}/api/v1/trees/tree-1/calendar-token`, { method: 'DELETE', headers: { authorization: authHeader(OWNER.id) } });
+    expect(r.status).toBe(200);
+    const body = (await r.json()) as { revoked: boolean };
+    expect(body.revoked).toBe(true);
+    const feedSesudah = await getFeed('/api/v1/trees/tree-1/calendar.ics?token=tok-aktif');
+    expect(feedSesudah.status).toBe(404);
   });
 });

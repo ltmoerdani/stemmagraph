@@ -2680,6 +2680,49 @@ app.get('/api/v1/trees/:treeId/calendar.ics', async (req: express.Request<{ tree
   }
 });
 
+// ─── ICS feed token management (v394, fase 1) ────────────
+//
+// POST /api/v1/trees/:treeId/calendar-token/rotate: token baru CSPRNG
+// (pola generateInvitationToken ADR 0004), token lama langsung mati.
+// DELETE /api/v1/trees/:treeId/calendar-token: revoke, kolom di-set null
+// sehingga feed menjawab 404. Keduanya hanya owner/editor sesuai kontrak
+// GOAL v394 AC4 (lebih ketat dari matrix umum: viewer bukan pengelola
+// token feed). Token penuh ditampilkan tepat satu kali di respons rotate,
+// preseden invitation: "The full token is returned exactly once".
+
+const isFeedTokenManager = (role: TreeRole): boolean => role === 'owner' || role === 'editor';
+
+app.post('/api/v1/trees/:treeId/calendar-token/rotate', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const tree = await prisma.familyTree.findUnique({ where: { id: req.params.treeId }, select: { id: true } });
+    if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
+    const role = await resolveTreeRole(req.userId!, req.params.treeId);
+    if (role === null || !isFeedTokenManager(role)) {
+      return res.status(403).json({ code: 'FORBIDDEN_TREE', message: 'Your role on this tree does not allow this action (manage_calendar_token)' });
+    }
+    const token = generateInvitationToken();
+    await prisma.familyTree.update({ where: { id: req.params.treeId }, data: { icsFeedToken: token } });
+    return res.status(200).json({ token });
+  } catch {
+    return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal Server Error' });
+  }
+});
+
+app.delete('/api/v1/trees/:treeId/calendar-token', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const tree = await prisma.familyTree.findUnique({ where: { id: req.params.treeId }, select: { id: true } });
+    if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
+    const role = await resolveTreeRole(req.userId!, req.params.treeId);
+    if (role === null || !isFeedTokenManager(role)) {
+      return res.status(403).json({ code: 'FORBIDDEN_TREE', message: 'Your role on this tree does not allow this action (manage_calendar_token)' });
+    }
+    await prisma.familyTree.update({ where: { id: req.params.treeId }, data: { icsFeedToken: null } });
+    return res.status(200).json({ revoked: true });
+  } catch {
+    return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal Server Error' });
+  }
+});
+
 // ─── Citation coverage (v281 fase ii, read-only aggregate) ───────────
 //
 // GET /api/v1/trees/:treeId/stats/citation-coverage returns the percentage
