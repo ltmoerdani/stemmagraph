@@ -107,6 +107,13 @@ model FamilyTree {
   // Null = feed mati (belum dibuat atau sudah di-revoke). Diisi token acak
   // base64url dari CSPRNG, di-rotate dan di-revoke lewat route khusus.
   icsFeedToken    String?  @unique
+  // v400 rotasi otomatis token feed: saat rotasi, token aktif lama turun
+  // ke sini agar URL lama masih hidup selama masa grace 7 hari (transisi
+  // subscriber kalender), lalu mati sendiri. icsFeedRotatedAt mencatat
+  // momen rotasi terakhir dan menjadi pemangkal umur token untuk
+  // rotasi otomatis 90 hari (fallback createdAt bila null). Additive only.
+  icsFeedTokenPrev String?
+  icsFeedRotatedAt DateTime?
 }
 
 // ─── Family Member ────────────────────────────────────────

@@ -1,4 +1,4 @@
-# Keamanan Kanal ICS Feed (v394 + v396)
+# Keamanan Kanal ICS Feed (v394 + v396 + v400)
 
 ## Model ancaman
 
@@ -20,7 +20,8 @@ Referensi: CWE-598 (Use of GET Request Method With Sensitive Query Strings).
 |---|---|---|
 | Token unguessable | 256-bit CSPRNG per tree (pola invitation token ADR 0004) | v394 |
 | Anti-enumerasi | Token salah/kosong/null dibalas 404 (bukan 401) agar token valid tidak terkonfirmasi | v394 |
-| Rotasi dan revoke manual | POST calendar-token/rotate mematikan token lama langsung; DELETE calendar-token mematikan feed | v394 |
+| Rotasi dan revoke manual | POST calendar-token/rotate menurunkan token lama ke prev (grace 7 hari); DELETE calendar-token mematikan kedua token sekaligus | v394, grace v400 |
+| Rotasi otomatis 90 hari | Tree dengan token aktif berumur lebih dari 90 hari dirotasi senyap oleh scheduler per jam; URL lama tetap hidup selama grace 7 hari lalu mati sendiri | v400 |
 | Referrer-Policy header | no-referrer pada semua respons route ICS termasuk 401/403/404 | v396 |
 | Meta referrer dokumen | no-referrer di index.html, lapisan kedua untuk navigasi/resource SPA | v396 |
 
@@ -41,7 +42,23 @@ Batasan yang diketahui: Google Calendar From URL dirancang untuk kalender
 publik (batas 400 kalender per akun); feed ini aman dipakai karena URL
 inguessable, tetapi rotasi berkala tetap dianjurkan sebagai higiene.
 
+## Rotasi otomatis 90 hari dengan grace 7 hari (v400)
+
+Sejak v400 URL feed punya umur maksimum. Setiap tree dengan token aktif
+berumur lebih dari 90 hari dirotasi otomatis oleh scheduler yang berjalan
+per jam di server (pola scheduler digest v387). Umur dihitung dari rotasi
+terakhir; tree yang belum pernah dirotasi memakai tanggal dibuatnya tree.
+Pass idempoten: dipanggil berulang pada jam yang sama menghasilkan
+keputusan yang sama, tanpa rotasi ganda.
+
+Mekanisme rotasinya sama dengan rotate manual: token lama turun ke
+kolom prev, token baru menggantikan, dan momen rotasi dicatat. URL lama
+masih dijawab selama grace 7 hari sejak rotasi supaya subscriber kalender
+sempat memakai URL baru, lalu mati sendiri tanpa intervensi. Revoke manual
+mematikan token aktif dan token prev sekaligus, sehingga feed benar-benar
+mati saat diminta. Tanpa notifikasi ke owner saat rotasi (non-goal v400).
+
 ## Non-goals
 
-Tanpa OAuth kalender, tanpa rotasi otomatis terjadwal (kandidat v397 bila
-muncul kebutuhan nyata), tanpa webcal:// khusus.
+Tanpa OAuth kalender, tanpa webcal:// khusus, tanpa notifikasi email/wa
+saat rotasi otomatis.

@@ -13,6 +13,8 @@
 
 import { prisma } from './db';
 import { isEventType } from '../src/lib/events';
+import { ICS_TOKEN_MAX_AGE_DAYS, isTokenDueForRotation } from '../src/lib/calendar/tokenLifecycle';
+import { generateInvitationToken } from '../src/lib/invitations/token';
 import {
   buildWeeklyDigest,
   type DigestActorRef,
@@ -276,5 +278,97 @@ export function startDigestScheduler(): NodeJS.Timeout | null {
     });
   }, HOUR_MS);
   console.log('[digest] weekly digest scheduler running (hourly check, last complete ISO week)');
+  return timer;
+}
+
+// ─── v400: rotasi otomatis token ICS feed ─────────────────
+//
+// URL langganan kalender setara kredensial (docs/ics-feed-security.md);
+// higiene rotasi berkala kini otomatis: tree dengan token aktif
+// berumur lebih dari 90 hari sejak icsFeedRotatedAt terakhir (fallback
+// createdAt bila null) dirotasi senyap lewat mekanisme route rotate
+// yang sama (token lama turun ke icsFeedTokenPrev, grace 7 hari),
+// tanpa notifikasi ke owner (non-goal v400).
+//
+// Pass idempoten: filter umur ada di query WHERE, jadi dipanggil
+// berulang pada jam yang sama memilih baris yang sama dan menghasilkan
+// keputusan yang sama; update per baris diisolasi try/catch agar satu
+// tree rusak tidak menghentikan pass.
+
+export interface IcsTokenRotationSummary {
+  /** Tree yang tokennya lolos filter umur dan dirotasi. */
+  readonly rotated: number;
+  /** Tree dengan feed aktif yang umurnya masih muda, dibiarkan. */
+  readonly skipped: number;
+  /** Kegagalan update per tree; diisolasi agar pass tetap lanjut. */
+  readonly failed: number;
+}
+
+/**
+ * Satu pass rotasi otomatis di atas seluruh tree berfeed aktif.
+ * Umur dihitung lewat modul pure tokenLifecycle (rotatedAt fallback
+ * createdAt); pembatas 90 hari diterjemahkan jadi cutoff absolut di
+ * sisi query sehingga keputusan tetap satu sumber di test maupun
+ * produksi. Aman dipanggil berulang: pilihan baris murni fungsi now.
+ */
+export async function runIcsTokenRotationPass(now: Date = new Date()): Promise<IcsTokenRotationSummary> {
+  const cutoff = new Date(now.getTime() - ICS_TOKEN_MAX_AGE_DAYS * 86_400_000);
+  const trees = await prisma.familyTree.findMany({
+    where: {
+      icsFeedToken: { not: null },
+      OR: [
+        { icsFeedRotatedAt: { lt: cutoff } },
+        { icsFeedRotatedAt: null, createdAt: { lt: cutoff } },
+      ],
+    },
+    select: { id: true, icsFeedToken: true, icsFeedRotatedAt: true, createdAt: true },
+  });
+  let rotated = 0;
+  let skipped = 0;
+  let failed = 0;
+  for (const tree of trees) {
+    // Double guard modul pure: query memilih kandidat, keputusan per
+    // baris tetap lewat aturan yang sama yang diuji di test pure.
+    // Mapping field eksplisit: baris prisma memakai icsFeedRotatedAt,
+    // kontrak TokenAgeInput memakai rotatedAt.
+    if (!isTokenDueForRotation({ rotatedAt: tree.icsFeedRotatedAt, createdAt: tree.createdAt }, now)) {
+      skipped += 1;
+      continue;
+    }
+    try {
+      const token = generateInvitationToken();
+      await prisma.familyTree.update({
+        where: { id: tree.id },
+        data: {
+          icsFeedToken: token,
+          icsFeedTokenPrev: tree.icsFeedToken ?? null,
+          icsFeedRotatedAt: now,
+        },
+      });
+      rotated += 1;
+    } catch (e) {
+      failed += 1;
+      console.error(`[ics-rotation] tree ${tree.id} failed:`, (e as Error).message);
+    }
+  }
+  return { rotated, skipped, failed };
+}
+
+/**
+ * Jalur rotasi otomatis, dipasang bersebelahan scheduler digest v387.
+ * Interval mengikuti HOUR_MS; pass pertama langsung jalan saat start.
+ * Tidak memiliki prasyarat konfigurasi (tanpa SMTP pun feed tetap
+ * ada), jadi timer ini selalu menyala pada server yang hidup.
+ */
+export function startIcsTokenRotationScheduler(): NodeJS.Timeout {
+  const timer = setInterval(() => {
+    void runIcsTokenRotationPass().catch((e) => {
+      console.error('[ics-rotation] pass failed:', (e as Error).message);
+    });
+  }, HOUR_MS);
+  void runIcsTokenRotationPass().catch((e) => {
+    console.error('[ics-rotation] initial pass failed:', (e as Error).message);
+  });
+  console.log('[ics-rotation] automatic token rotation scheduler running (hourly check, age > 90 days)');
   return timer;
 }
