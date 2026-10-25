@@ -13,7 +13,7 @@ import { MergeMemberDialog } from '../MergeMemberDialog';
 const mocks = vi.hoisted(() => ({
   addMember: vi.fn(async () => 'new-1'),
   fetchMembers: vi.fn(async () => undefined),
-  mergeMember: vi.fn(async () => ({ merged: true, primaryId: 'pri-1' })),
+  mergeMember: vi.fn(async () => ({ merged: true, primaryId: 'pri-1' } as { merged: boolean; primaryId?: string; needsApproval?: boolean; approvalId?: string; reasons?: unknown[] })),
 }));
 
 function ambilTeks(kamus: unknown, key: string): string {
@@ -28,8 +28,11 @@ function ambilTeks(kamus: unknown, key: string): string {
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: Record<string, unknown>) => {
-      const base = ambilTeks(idCommon, key);
-      return opts && typeof base === 'string' ? base.replace('{{name}}', String(opts['name'] ?? '')) : base;
+      let base = ambilTeks(idCommon, key);
+      if (opts && typeof base === 'string') {
+        for (const [k, v] of Object.entries(opts)) base = base.replace(`{{${k}}}`, String(v));
+      }
+      return base;
     },
     i18n: { language: 'id' },
   }),
@@ -142,5 +145,44 @@ describe('MergeMemberDialog (v390)', () => {
     fireEvent.click(screen.getByTestId('merge-execute'));
     await waitFor(() => expect(screen.getByTestId('merge-error')).toBeTruthy());
     expect(screen.getByTestId('merge-error').textContent).toContain('ALREADY_MERGED');
+  });
+
+  // v392 AC6: server menjawab 202 NEEDS_APPROVAL; adapter memetakan ke
+  // hasil union merged:false + reasons. Dialog wajib menampilkan status
+  // antrian + daftar alasan, tanpa sukses, tanpa error, tanpa onMerged.
+  it('v392 202 NEEDS_APPROVAL: status antrian + alasan tampil, tanpa sukses dan tanpa onMerged', async () => {
+    const onMerged = vi.fn();
+    const onClose = vi.fn();
+    mocks.mergeMember.mockResolvedValueOnce({
+      merged: false,
+      needsApproval: true,
+      approvalId: 'apr-1',
+      reasons: [
+        { code: 'RELATION_REWIRE', actual: 5, threshold: 4 },
+        { code: 'GENERATION_BOTH_CONNECTED', actual: 1, threshold: 1 },
+      ],
+    });
+    render(
+      <MergeMemberDialog
+        isOpen
+        entryDraft={{ name: 'Andi', birthDate: '1980-01-01', marga: 'Siregar' }}
+        primaryId="pri-1"
+        onClose={onClose}
+        onMerged={onMerged}
+      />,
+    );
+    fireEvent.change(screen.getByTestId('merge-confirm-input'), { target: { value: 'Andi' } });
+    fireEvent.click(screen.getByTestId('merge-execute'));
+    const queued = await waitFor(() => screen.getByTestId('merge-approval-queued'));
+    expect(queued.textContent).toContain('Alasan merge masuk antrian');
+    expect(screen.getByTestId('approval-reason-RELATION_REWIRE').textContent).toContain('5');
+    expect(screen.getByTestId('approval-reason-GENERATION_BOTH_CONNECTED')).toBeTruthy();
+    expect(screen.queryByTestId('merge-success')).toBeNull();
+    expect(screen.queryByTestId('merge-error')).toBeNull();
+    expect(onMerged).not.toHaveBeenCalled();
+    expect(mocks.fetchMembers).not.toHaveBeenCalled();
+    // Tutup dari status antrian memanggil onClose dan reset state dialog.
+    fireEvent.click(screen.getByTestId('merge-queued-close'));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
