@@ -215,6 +215,18 @@ test.afterAll(async () => {
   }
 
   lines.push('');
+  lines.push('## Perbandingan langsung drag vs pan/zoom (pembanding internal run sama)');
+  lines.push('');
+  lines.push('| Node | FPS drag | FPS pan/zoom | Selisih (drag minus pan/zoom) |');
+  lines.push('|---|---|---|---|');
+  for (const nodes of DATASETS) {
+    const d = avg('drag', nodes);
+    const p = avg('panzoom', nodes);
+    if (d === null || p === null) continue;
+    lines.push(`| ${nodes} | ${d.toFixed(2)} | ${p.toFixed(2)} | ${(d - p).toFixed(2)} |`);
+  }
+
+  lines.push('');
   lines.push('## Kesimpulan');
   lines.push('');
   const parseRef = (nodes: number): number[] =>
