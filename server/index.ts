@@ -3264,6 +3264,30 @@ app.put('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
     if (!existing) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
     const guard = await guardTreeAction(req.userId!, existing.treeId, 'edit_member');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    // v393: validasi haulOverrideDate bila ada di body. String kosong =
+    // hapus override (fallback deathDate). Format wajib YYYY-MM-DD
+    // kalender valid, dan override hanya sah pada anggota wafat.
+    if (Object.prototype.hasOwnProperty.call(req.body, 'haulOverrideDate')) {
+      const v = req.body.haulOverrideDate;
+      if (v !== null && v !== '') {
+        if (typeof v !== 'string') {
+          return res.status(422).json({ code: 'INVALID_HAUL_DATE', message: 'haulOverrideDate must be a YYYY-MM-DD string, empty string, or null' });
+        }
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+        const valid = match !== null && (() => {
+          const y = Number(match[1]); const mo = Number(match[2]); const d = Number(match[3]);
+          if (mo < 1 || mo > 12 || d < 1) return false;
+          const len = [31, (y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
+          return d <= len;
+        })();
+        if (!valid) {
+          return res.status(422).json({ code: 'INVALID_HAUL_DATE', message: 'haulOverrideDate must be a valid calendar date in YYYY-MM-DD format' });
+        }
+        if (existing.isAlive) {
+          return res.status(422).json({ code: 'HAUL_OVERRIDE_ON_LIVING', message: 'haulOverrideDate can only be set on deceased members' });
+        }
+      }
+    }
     const m = await prisma.familyMember.update({ where: { id: req.params.id }, data: req.body });
     res.json(formatMember(m));
   } catch (e) {
