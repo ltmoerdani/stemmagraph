@@ -340,3 +340,68 @@ describe('Manajemen token feed (v394 AC4)', () => {
     expect(feedSesudah.status).toBe(404);
   });
 });
+
+// --- Referrer-Policy no-referrer (v396 AC1) ---
+//
+// Header diset baris pertama di ketiga handler ICS sehingga semua exit
+// path yang lewat handler membawa header. Kasus diuji: feed 200 dan 404,
+// rotate 200 dan 403, revoke 200.
+describe('Referrer-Policy no-referrer (v396 AC1)', () => {
+  const OWNER = { id: 'user-owner-rp', status: 'ACTIVE', role: 'user' };
+
+  function mockOwnerMampuKelolaToken(): void {
+    prismaMock.user.findUnique.mockImplementation(async (args: { where: { id: string } }) =>
+      args.where.id === OWNER.id ? OWNER : null);
+    prismaMock.treeMember.findUnique.mockImplementation(async (args: { where: { treeId_userId: { treeId: string; userId: string } } }) =>
+      args.where.treeId_userId.userId === OWNER.id ? { userId: OWNER.id, role: 'owner' } : null);
+    prismaMock.familyTree.findUnique.mockResolvedValue({ id: 'tree-1' });
+    prismaMock.familyTree.update.mockResolvedValue({ id: 'tree-1' });
+  }
+
+  async function referrerPolicyOf(path: string, init: { method?: string; headers?: Record<string, string> } = {}): Promise<{ status: number; policy: string }> {
+    const res = await fetch(`${BASE}${path}`, init);
+    await res.text();
+    return { status: res.status, policy: res.headers.get('referrer-policy') ?? '' };
+  }
+
+  function authOwner(): Record<string, string> {
+    return { authorization: authHeader(OWNER.id) };
+  }
+
+  it('feed 200: header Referrer-Policy no-referrer', async () => {
+    mockTreeDenganToken();
+    mockDataTree();
+    const r = await referrerPolicyOf(`/api/v1/trees/tree-1/calendar.ics?token=${TOKEN}`);
+    expect(r.status).toBe(200);
+    expect(r.policy).toBe('no-referrer');
+  });
+
+  it('feed 404 token salah dan tanpa token: header tetap no-referrer', async () => {
+    mockTreeDenganToken();
+    const salah = await referrerPolicyOf('/api/v1/trees/tree-1/calendar.ics?token=tok-ngawur');
+    expect(salah.status).toBe(404);
+    expect(salah.policy).toBe('no-referrer');
+    const kosong = await referrerPolicyOf('/api/v1/trees/tree-1/calendar.ics');
+    expect(kosong.status).toBe(404);
+    expect(kosong.policy).toBe('no-referrer');
+  });
+
+  it('rotate 200 owner dan 403 viewer: header no-referrer', async () => {
+    mockOwnerMampuKelolaToken();
+    const ok = await referrerPolicyOf('/api/v1/trees/tree-1/calendar-token/rotate', { method: 'POST', headers: authOwner() });
+    expect(ok.status).toBe(200);
+    expect(ok.policy).toBe('no-referrer');
+    prismaMock.treeMember.findUnique.mockImplementation(async (args: { where: { treeId_userId: { treeId: string; userId: string } } }) =>
+      args.where.treeId_userId.userId === OWNER.id ? { userId: OWNER.id, role: 'viewer' } : null);
+    const forbidden = await referrerPolicyOf('/api/v1/trees/tree-1/calendar-token/rotate', { method: 'POST', headers: authOwner() });
+    expect(forbidden.status).toBe(403);
+    expect(forbidden.policy).toBe('no-referrer');
+  });
+
+  it('revoke 200 owner: header no-referrer', async () => {
+    mockOwnerMampuKelolaToken();
+    const r = await referrerPolicyOf('/api/v1/trees/tree-1/calendar-token', { method: 'DELETE', headers: authOwner() });
+    expect(r.status).toBe(200);
+    expect(r.policy).toBe('no-referrer');
+  });
+});
