@@ -585,6 +585,42 @@
       "errJournalMismatch": "Current data no longer matches the merge journal; undo rejected for safety"
     }
   },
+  "mergeApproval": {
+    "status": {
+      "PENDING": "Awaiting approval",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "EXECUTED": "Executed",
+      "EXPIRED": "Expired"
+    },
+    "reason": {
+      "RELATION_REWIRE": "Relations to rewire: {{actual}} (limit {{threshold}})",
+      "RELATION_DELETE": "Internal relations removed: {{actual}} (limit {{threshold}})",
+      "FACTS_MOVED": "Facts moved: {{actual}} (limit {{threshold}})",
+      "GENERATION_BOTH_CONNECTED": "Both members are connected in the generation graph"
+    },
+    "dialog": {
+      "approveTitle": "Approve risky merge",
+      "rejectTitle": "Reject risky merge",
+      "approveConfirm": "Approve",
+      "rejectConfirm": "Reject",
+      "cancel": "Cancel",
+      "reasonsLabel": "Reasons the merge was queued",
+      "expiresLabel": "Decision deadline"
+    },
+    "pending": {
+      "success": "The risky merge is queued for approval. Members stay unmerged until another owner or editor approves it.",
+      "queueEmpty": "No pending merge approvals",
+      "requestedBy": "Requested by",
+      "decidedBy": "Decided by"
+    },
+    "error": {
+      "CANNOT_APPROVE_OWN_REQUEST": "The requester cannot decide their own merge; ask another owner or editor",
+      "ALREADY_DECIDED": "This request has already been decided",
+      "EXPIRED": "The approval request has expired; submit the merge again",
+      "PLAN_MISMATCH": "Current data no longer matches the approved plan; submit the merge again"
+    }
+  },
   "memberEdit": {
     "privacyStatus": "Privacy Status",
     "privacyShared": "Shared, include in public tree exports",
