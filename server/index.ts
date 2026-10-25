@@ -67,6 +67,10 @@ import {
   planEventReassign,
 } from '../src/lib/dedup/mergeMembers';
 import { buildMergeJournal, planUnmerge, type RewireSide, type MergeJournal } from '../src/lib/dedup/mergeJournal';
+import {
+  assessMergeRisk,
+  isGenerationConnected,
+} from '../src/lib/dedup/mergeApproval';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
@@ -1871,6 +1875,41 @@ app.post('/api/v1/trees/:treeId/members/:memberId/merge', requireAuthStatsLiving
       where: { memberId: duplicate.id },
       select: { id: true },
     });
+    // v392: penilaian risiko merge dari hitungan plan. Merge kecil
+    // (ALLOW) jalan seperti sebelumnya; merge berisiko TIDAK dieksekusi
+    // dan masuk antrian persetujuan owner/editor lain (baris PENDING).
+    const risk = assessMergeRisk({
+      rewireCount: plan.rewire.length,
+      deleteCount: plan.delete.length,
+      movedFactCount: eventIds.length + dupLifeEvents.length,
+      bothGenerationsConnected:
+        isGenerationConnected(primary.id, rels) && isGenerationConnected(duplicate.id, rels),
+    });
+    if (risk.needsApproval) {
+      const nowApproval = new Date();
+      const approval = await prisma.mergeApproval.create({
+        data: {
+          treeId: req.params.treeId,
+          primaryId: primary.id,
+          duplicateId: duplicate.id,
+          reasons: risk.reasons as unknown as Prisma.InputJsonValue,
+          planStats: {
+            rewireCount: risk.stats.rewireCount,
+            deleteCount: risk.stats.deleteCount,
+            factsCount: risk.stats.movedFactCount,
+            generationsConnected: risk.stats.bothGenerationsConnected,
+          } as unknown as Prisma.InputJsonValue,
+          status: 'PENDING',
+          requesterId: req.userId!,
+          expiresAt: new Date(nowApproval.getTime() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+      return res.status(202).json({
+        approvalId: approval.id,
+        status: 'PENDING',
+        reasons: risk.reasons,
+      });
+    }
     const now = new Date();
     // peta id relasi ke baris aslinya untuk menentukan sisi update.
     const relById = new Map(rels.map((r) => [r.id, r]));
@@ -2024,6 +2063,241 @@ app.post('/api/v1/trees/:treeId/members/:memberId/unmerge', requireAuthStatsLivi
     return res.json({ unmerged: true, duplicateId });
   } catch (e) {
     res.status(500).json({ code: 'UNMERGE_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Merge approval decision (v392 fase 1) ───────────────
+//
+// POST .../merge-approvals/:approvalId/approve dan /reject: pemilik
+// keputusan adalah role owner/editor LAIN dari requester (guard
+// self-approval 422). Approve menghitung ulang plan dari data current;
+// data yang bergeser sejak request ditolak 422 PLAN_MISMATCH supaya
+// persetujuan atas kondisi lama tidak dieksekusi atas kondisi baru.
+// Eksekusi merge + jurnal + status EXECUTED berada dalam SATU
+// transaksi (atomik, pola route merge v390/v391).
+
+/**
+ * Muat approval + validasi kepemilikan tree. 404 bila approval bukan
+ * milik tree ini; guard tree dicek penelepon sebelum fungsi ini.
+ */
+async function loadTreeApproval(treeId: string, approvalId: string) {
+  const approval = await prisma.mergeApproval.findUnique({ where: { id: approvalId } });
+  if (!approval || approval.treeId !== treeId) return null;
+  return approval;
+}
+
+/**
+ * Susun ulang plan merge dari data current (satu sumber dengan route
+ * merge): relasi tree, events GED + LifeEvent duplikat. Return null
+ * bila anggota sudah tidak merge-able (hilang atau sudah merged).
+ */
+async function buildCurrentMergePlan(treeId: string, duplicateId: string, primaryId: string) {
+  const [duplicate, primary] = await Promise.all([
+    prisma.familyMember.findUnique({ where: { id: duplicateId } }),
+    prisma.familyMember.findUnique({ where: { id: primaryId } }),
+  ]);
+  if (!duplicate || duplicate.treeId !== treeId || duplicate.mergedIntoId !== null) return null;
+  if (!primary || primary.treeId !== treeId || primary.mergedIntoId !== null) return null;
+  const rels = await prisma.familyRelationship.findMany({
+    where: { treeId },
+    select: { id: true, memberId: true, relatedId: true, type: true, treeId: true },
+  });
+  if (isParentChildConnected(primary.id, duplicate.id, rels)) return null;
+  const plan = planRelationshipRewire(duplicate.id, primary.id, rels);
+  const dupEvents = await prisma.genealogyEvent.findMany({
+    where: { memberId: duplicate.id },
+    select: { id: true, memberId: true, type: true },
+  });
+  const eventIds = planEventReassign(dupEvents);
+  const dupLifeEvents = await prisma.lifeEvent.findMany({
+    where: { memberId: duplicate.id },
+    select: { id: true },
+  });
+  return { duplicate, primary, rels, plan, eventIds, dupLifeEvents };
+}
+
+/** Bandingkan plan current dengan planStats tersimpan (angka + boolean). */
+function planMatchesStats(
+  stats: { rewireCount: number; deleteCount: number; factsCount: number; generationsConnected: boolean },
+  plan: { rewire: string[]; delete: string[] },
+  eventIds: string[],
+  dupLifeEvents: Array<{ id: string }>,
+  rels: Array<{ id: string; memberId: string; relatedId: string; type: string }>,
+  duplicateId: string,
+  primaryId: string,
+): boolean {
+  return (
+    stats.rewireCount === plan.rewire.length &&
+    stats.deleteCount === plan.delete.length &&
+    stats.factsCount === eventIds.length + dupLifeEvents.length &&
+    stats.generationsConnected ===
+      (isGenerationConnected(primaryId, rels) && isGenerationConnected(duplicateId, rels))
+  );
+}
+
+for (const action of ['approve', 'reject'] as const) {
+  app.post(`/api/v1/trees/:treeId/merge-approvals/:approvalId/${action}`, requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string; approvalId: string }>, res) => {
+    try {
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'edit_member');
+      if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+      const approval = await loadTreeApproval(req.params.treeId, req.params.approvalId);
+      if (!approval) {
+        return res.status(404).json({ code: 'NOT_FOUND', message: 'Merge approval not found in this tree' });
+      }
+      if (approval.requesterId === req.userId) {
+        return res.status(422).json({ code: 'CANNOT_APPROVE_OWN_REQUEST', message: 'The requester of a risky merge cannot decide it; ask another owner or editor' });
+      }
+      if (approval.status !== 'PENDING') {
+        return res.status(422).json({ code: 'ALREADY_DECIDED', message: `This merge approval is already decided (${approval.status})` });
+      }
+      const now = new Date();
+      if (now.getTime() > approval.expiresAt.getTime()) {
+        await prisma.mergeApproval.update({ where: { id: approval.id }, data: { status: 'EXPIRED' } });
+        return res.status(422).json({ code: 'EXPIRED', message: 'This merge approval request has expired; submit the merge again' });
+      }
+      if (action === 'reject') {
+        const updated = await prisma.mergeApproval.update({
+          where: { id: approval.id },
+          data: { status: 'REJECTED', deciderId: req.userId!, decidedAt: now },
+        });
+        return res.json({
+          approvalId: updated.id,
+          status: updated.status,
+          deciderId: updated.deciderId,
+          decidedAt: updated.decidedAt,
+        });
+      }
+      // approve: re-hitung plan dari data current, cocokkan dengan
+      // planStats tersimpan sebelum eksekusi apa pun.
+      const current = await buildCurrentMergePlan(req.params.treeId, approval.duplicateId, approval.primaryId);
+      if (!current) {
+        return res.status(422).json({ code: 'PLAN_MISMATCH', message: 'Current data no longer matches the approved plan; merge the members again' });
+      }
+      const statsRaw = approval.planStats as unknown;
+      const stats = (statsRaw ?? {}) as { rewireCount?: unknown; deleteCount?: unknown; factsCount?: unknown; generationsConnected?: unknown };
+      const matches = planMatchesStats(
+        {
+          rewireCount: typeof stats.rewireCount === 'number' ? stats.rewireCount : -1,
+          deleteCount: typeof stats.deleteCount === 'number' ? stats.deleteCount : -1,
+          factsCount: typeof stats.factsCount === 'number' ? stats.factsCount : -1,
+          generationsConnected: stats.generationsConnected === true,
+        },
+        current.plan,
+        current.eventIds,
+        current.dupLifeEvents,
+        current.rels,
+        approval.duplicateId,
+        approval.primaryId,
+      );
+      if (!matches) {
+        return res.status(422).json({ code: 'PLAN_MISMATCH', message: 'Current data no longer matches the approved plan; merge the members again' });
+      }
+      // Susun jurnal merge persis pola route merge v391, lalu eksekusi
+      // merge + tulis jurnal + set status EXECUTED dalam SATU transaksi.
+      const duplicate = current.duplicate;
+      const primary = current.primary;
+      const relById = new Map(current.rels.map((r) => [r.id, r]));
+      const nowExec = new Date();
+      const journalRewire = current.plan.rewire.map((id) => {
+        const r = relById.get(id);
+        if (!r) throw new Error(`relation ${id} missing during approval merge rewire`);
+        const side: RewireSide = r.memberId === duplicate.id ? 'memberId' : 'relatedId';
+        return {
+          rel: {
+            id: r.id,
+            treeId: r.treeId,
+            memberId: side === 'memberId' ? primary.id : r.memberId,
+            relatedId: side === 'relatedId' ? primary.id : r.relatedId,
+            type: r.type,
+          },
+          side,
+        };
+      });
+      const journal = buildMergeJournal({
+        duplicateId: duplicate.id,
+        primary: { id: primary.id, name: primary.name },
+        mergedAt: nowExec,
+        rewire: journalRewire,
+        deleted: current.plan.delete.map((id) => {
+          const r = relById.get(id);
+          if (!r) throw new Error(`relation ${id} missing during approval merge delete`);
+          return { id: r.id, treeId: r.treeId, memberId: r.memberId, relatedId: r.relatedId, type: r.type };
+        }),
+        movedGenealogyEventIds: [...current.eventIds],
+        movedLifeEventIds: current.dupLifeEvents.map((e) => e.id),
+      });
+      const executed = await prisma.$transaction([
+        ...current.plan.rewire.map((id) => {
+          const r = relById.get(id);
+          if (!r) throw new Error(`relation ${id} missing during approval merge rewire`);
+          const data = r.memberId === duplicate.id
+            ? { memberId: primary.id }
+            : { relatedId: primary.id };
+          return prisma.familyRelationship.update({ where: { id }, data });
+        }),
+        ...current.plan.delete.map((id) => prisma.familyRelationship.delete({ where: { id } })),
+        ...current.eventIds.map((id) =>
+          prisma.genealogyEvent.update({ where: { id }, data: { memberId: primary.id } }),
+        ),
+        ...current.dupLifeEvents.map((e) =>
+          prisma.lifeEvent.update({ where: { id: e.id }, data: { memberId: primary.id } }),
+        ),
+        prisma.familyMember.update({
+          where: { id: duplicate.id },
+          data: { mergedIntoId: primary.id, mergedAt: nowExec, mergeJournal: journal as unknown as Prisma.InputJsonValue },
+        }),
+        prisma.mergeApproval.update({
+          where: { id: approval.id },
+          data: { status: 'EXECUTED', deciderId: req.userId!, decidedAt: nowExec },
+        }),
+      ]);
+      void executed;
+      return res.json({
+        approvalId: approval.id,
+        status: 'EXECUTED',
+        deciderId: req.userId,
+        decidedAt: nowExec,
+        primaryId: primary.id,
+      });
+    } catch (e) {
+      res.status(500).json({ code: 'MERGE_APPROVAL_ERROR', message: (e as Error).message });
+    }
+  });
+}
+
+// GET daftar approval tree untuk panel Dashboard (AC6): disaring status
+// via query (?status=PENDING); guard edit_member supaya viewer tidak
+// melihat antrian persetujuan.
+app.get('/api/v1/trees/:treeId/merge-approvals', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'edit_member');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const approvals = await prisma.mergeApproval.findMany({
+      where: {
+        treeId: req.params.treeId,
+        ...(status ? { status } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return res.json({
+      approvals: approvals.map((a) => ({
+        id: a.id,
+        treeId: a.treeId,
+        primaryId: a.primaryId,
+        duplicateId: a.duplicateId,
+        reasons: a.reasons,
+        planStats: a.planStats,
+        status: a.status,
+        requesterId: a.requesterId,
+        deciderId: a.deciderId,
+        createdAt: a.createdAt,
+        decidedAt: a.decidedAt,
+        expiresAt: a.expiresAt,
+      })),
+    });
+  } catch (e) {
+    res.status(500).json({ code: 'MERGE_APPROVAL_LIST_ERROR', message: (e as Error).message });
   }
 });
 
