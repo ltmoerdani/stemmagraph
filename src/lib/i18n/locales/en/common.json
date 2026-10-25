@@ -627,6 +627,21 @@
       "PLAN_MISMATCH": "Current data no longer matches the approved plan; submit the merge again"
     }
   },
+  "calendarFeed": {
+    "open": "Calendar feed",
+    "panel": {
+      "title": "Calendar feed: {{name}}",
+      "inactive": "The calendar feed is not active for this tree yet. Create a token to get the ICS feed URL.",
+      "urlLabel": "Feed URL (secret: do not share outside the family):",
+      "copy": "Copy URL",
+      "copied": "Copied",
+      "hintGoogle": "Google Calendar: Settings, Add calendar, From URL, paste the URL above.",
+      "hintApple": "Apple Calendar: subscribe via the feed URL (File menu). Outlook: Add Calendar, subscribe from web.",
+      "create": "Create token",
+      "rotate": "Rotate token",
+      "revoke": "Revoke access"
+    }
+  },
   "memberEdit": {
     "privacyStatus": "Privacy Status",
     "privacyShared": "Shared, include in public tree exports",

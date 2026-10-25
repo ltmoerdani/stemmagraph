@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff, Link2, ShieldAlert } from 'lucide-react';
+import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff, Link2, ShieldAlert, CalendarPlus } from 'lucide-react';
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { FeedPanel } from './FeedPanel';
 import { InvitationsPanel } from './InvitationsPanel';
 import { ShareLinksPanel } from './ShareLinksPanel';
 import { ChangeReviewPanel } from './ChangeReviewPanel';
 import { MergeApprovalsPanel } from './MergeApprovalsPanel';
+import { CalendarFeedPanel } from './CalendarFeedPanel';
 import { DedupReviewMount } from '../FamilyTree/DedupReviewMount';
 import { TemplatePicker } from '../Onboarding/TemplatePicker';
 import type { SeedTemplate } from '../../lib/onboarding/seedTemplates';
@@ -39,6 +40,8 @@ export const Dashboard: React.FC = () => {
   const [pendingApprovalCounts, setPendingApprovalCounts] = useState<Record<string, number> | null>(null);
   // Tree whose merge-approvals panel is open (v392 AC6).
   const [approvalsTreeId, setApprovalsTreeId] = useState<string | null>(null);
+  // Tree whose calendar feed panel is open (v394 AC5): owner/editor only.
+  const [calendarFeedTreeId, setCalendarFeedTreeId] = useState<string | null>(null);
 
   useEffect(() => {
     const mergeApi = getMergeApi();
@@ -372,6 +375,16 @@ export const Dashboard: React.FC = () => {
                           <Link2 className="w-4 h-4 text-gray-600" />
                         </button>
                       )}
+                      {(tree.role === 'owner' || tree.role === 'editor') && (
+                        <button
+                          onClick={() => setCalendarFeedTreeId(tree.id)}
+                          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          title={t('calendarFeed.open')}
+                          aria-label={t('calendarFeed.open')}
+                        >
+                          <CalendarPlus className="w-4 h-4 text-gray-600" />
+                        </button>
+                      )}
                       <button
                         onClick={() => setSharingTreeId(tree.id)}
                         className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -531,6 +544,15 @@ export const Dashboard: React.FC = () => {
           treeId={approvalsTreeId}
           treeName={familyTrees.find((tree) => tree.id === approvalsTreeId)?.name ?? ''}
           onClose={() => setApprovalsTreeId(null)}
+        />
+      )}
+
+      {/* Calendar feed panel (v394 AC5): langganan ICS kalender keluarga */}
+      {calendarFeedTreeId !== null && (
+        <CalendarFeedPanel
+          treeId={calendarFeedTreeId}
+          treeName={familyTrees.find((tree) => tree.id === calendarFeedTreeId)?.name ?? ''}
+          onClose={() => setCalendarFeedTreeId(null)}
         />
       )}
     </div>

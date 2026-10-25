@@ -71,6 +71,7 @@ import {
   MergeApprovalRecord,
   MergeApprovalDecision,
   MergeRiskReasonView,
+  CalendarFeedApi,
   AdapterError,
   AuthError,
 } from './types';
@@ -90,7 +91,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -634,6 +635,23 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return this.request<MergeApprovalDecision>(
       'POST',
       `/trees/${encodeURIComponent(treeId)}/merge-approvals/${encodeURIComponent(approvalId)}/${action}`,
+    );
+  }
+
+  // ── Calendar feed token (v394 AC4/AC5) ─────────────────
+  // Guard lives server-side (owner/editor); rotate returns the full token
+  // exactly once, revoke sets the column null so the feed answers 404.
+  async rotateCalendarToken(treeId: string): Promise<{ token: string }> {
+    return this.request<{ token: string }>(
+      'POST',
+      `/trees/${encodeURIComponent(treeId)}/calendar-token/rotate`,
+    );
+  }
+
+  async revokeCalendarToken(treeId: string): Promise<{ revoked: boolean }> {
+    return this.request<{ revoked: boolean }>(
+      'DELETE',
+      `/trees/${encodeURIComponent(treeId)}/calendar-token`,
     );
   }
 
