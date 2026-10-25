@@ -140,3 +140,71 @@ describe('computeNextAnniversaries: core semantics', () => {
     expect(compute([])).toEqual([]);
   });
 });
+
+describe('computeNextAnniversaries: kind haul v393', () => {
+  it('kind haul memakai tanggal efektif yang diberikan pemanggil (haulOverrideDate sudah dipilih di upstream)', () => {
+    const res = computeNextAnniversaries(
+      [item({ kind: 'haul', refId: 'h1', date: '2018-11-15' })],
+      { y: 2026, m: 10, d: 24 },
+      30,
+    );
+    expect(res).toHaveLength(1);
+    expect(res[0]).toMatchObject({
+      kind: 'haul',
+      refId: 'h1',
+      nextDate: '2026-11-15',
+      daysUntil: 22,
+      yearsCompleted: 8,
+    });
+  });
+
+  it('kind haul dengan tanggal deathDate (fallback upstream) berperilaku sama seperti anniversary tahunan', () => {
+    const res = computeNextAnniversaries(
+      [item({ kind: 'haul', refId: 'h2', date: '2020-05-10' })],
+      { y: 2026, m: 5, d: 1 },
+      30,
+    );
+    expect(res).toHaveLength(1);
+    expect(res[0]?.nextDate).toBe('2026-05-10');
+    expect(res[0]?.yearsCompleted).toBe(6);
+  });
+
+  it('rollover tahun: haul sudah lewat tahun ini bergulir ke tahun depan', () => {
+    const res = computeNextAnniversaries(
+      [item({ kind: 'haul', refId: 'h3', date: '2015-01-05' })],
+      { y: 2026, m: 12, d: 20 },
+      30,
+    );
+    expect(res).toHaveLength(1);
+    expect(res[0]?.nextDate).toBe('2027-01-05');
+    expect(res[0]?.yearsCompleted).toBe(12);
+  });
+
+  it('haul 29 Feb: 1 Mar pada tahun non-kabisat, 29 Feb pada tahun kabisat', () => {
+    const haulLeap = item({ kind: 'haul', refId: 'hl', date: '2020-02-29' });
+    const rLeap = computeNextAnniversaries([haulLeap], { y: 2028, m: 2, d: 1 }, 40);
+    expect(rLeap[0]?.nextDate).toBe('2028-02-29');
+    const rNonLeap = computeNextAnniversaries([haulLeap], { y: 2027, m: 2, d: 1 }, 40);
+    expect(rNonLeap[0]?.nextDate).toBe('2027-03-01');
+  });
+
+  it('haul di luar jendela hari tidak masuk hasil', () => {
+    const res = computeNextAnniversaries(
+      [item({ kind: 'haul', refId: 'h4', date: '2000-12-31' })],
+      { y: 2026, m: 10, d: 24 },
+      30,
+    );
+    expect(res).toHaveLength(0);
+  });
+
+  it('determinisme urutan pada campuran birthday, wedding, dan haul di hari yang sama', () => {
+    const list = [
+      item({ kind: 'wedding', refId: 'w1', date: '2015-10-24', displayName: 'A & B' }),
+      item({ kind: 'haul', refId: 'h1', date: '2010-10-24' }),
+      item({ refId: 'b1', date: '1990-10-24' }),
+    ];
+    const res = compute(list);
+    expect(res.map((e) => e.kind)).toEqual(['birthday', 'haul', 'wedding']);
+    expect(compute(list)).toEqual(compute([...list].reverse()));
+  });
+});
