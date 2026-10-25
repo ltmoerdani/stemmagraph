@@ -87,6 +87,13 @@
     "datasetOverview": {
       "title": "Dataset Overview",
       "description": "Aggregate summary across statistics modules: record inventory, family size, living population, sources, citation quality, and notes"
+    },
+    "placeDistribution": {
+      "title": "Member distribution map",
+      "empty": "No geocoded places in this tree yet",
+      "legend": "Circle size = number of places rounded to the 2-decimal cell",
+      "markerTitle_one": "{{count}} place in this area",
+      "markerTitle_other": "{{count}} places in this area"
     }
   },
   "header": {

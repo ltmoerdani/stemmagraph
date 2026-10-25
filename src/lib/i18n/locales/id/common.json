@@ -87,6 +87,13 @@
     "datasetOverview": {
       "title": "Ringkasan Dataset",
       "description": "Ringkasan agregat lintas modul statistik: inventaris rekaman, ukuran keluarga, populasi hidup, sumber, kualitas sitasi, dan catatan"
+    },
+    "placeDistribution": {
+      "title": "Peta sebaran anggota",
+      "empty": "Belum ada tempat berkooordinat pada pohon ini",
+      "legend": "Ukuran lingkaran = jumlah tempat yang bulat ke sel 2 desimal",
+      "markerTitle_one": "{{count}} tempat di area ini",
+      "markerTitle_other": "{{count}} tempat di area ini"
     }
   },
   "header": {

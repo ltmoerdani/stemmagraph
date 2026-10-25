@@ -612,6 +612,28 @@ export interface StatsApi {
   getFamilySizeStats(treeId: string): Promise<FamilySizeStatsDto>;
   /** Ambil peringkat anggota hidup tertua pohon; read-only, non-PII: id dan ageYears tanpa nama. */
   getOldestLiving(treeId: string): Promise<OldestLivingEntryDto[]>;
+  /** Ambil titik agregat peta sebaran place (v399); read-only, non-PII murni lat/lng/count. */
+  getPlaceDistribution(treeId: string): Promise<PlaceDistributionDto>;
+}
+
+/**
+ * Titik agregat peta sebaran place (v399). Non-PII: pembulatan 2
+ * desimal, tanpa nama place, tanpa identitas anggota.
+ */
+export interface PlaceDistributionPointDto {
+  lat: number;
+  lng: number;
+  count: number;
+}
+
+/**
+ * Payload route places/distribution (v399): titik agregat murni plus
+ * dua hitungan audit non-identitas.
+ */
+export interface PlaceDistributionDto {
+  points: PlaceDistributionPointDto[];
+  totalPlaced: number;
+  excludedNoCoords: number;
 }
 
 /** Kandidat duplikat anggota existing untuk satu calon anggota baru (v388). */

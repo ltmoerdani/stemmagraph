@@ -83,6 +83,7 @@ import { buildIcsFeed, effectiveHaulDate } from '../src/lib/calendar/icsFeed';
 import { computeGenerations } from '../src/lib/stats/generations';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { computeOldestLiving } from '../src/lib/stats/oldest-living';
+import { computePlaceDistribution } from '../src/lib/places/distribution/placeDistribution';
 import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
 import {
   computeBirthsByCenturyFromEvents,
@@ -3015,6 +3016,43 @@ app.get('/api/v1/trees/:treeId/stats/oldest-living', requireAuthStatsLiving, asy
     return res.send(body);
   } catch (e) {
     res.status(500).json({ code: 'OLDEST_LIVING_API_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Place distribution map (v399, read-only aggregate) ──────────
+//
+// GET /api/v1/trees/:treeId/places/distribution mengembalikan titik
+// agregat {lat,lng,count} dari modul pure
+// src/lib/places/distribution/placeDistribution.ts (v399). Payload
+// murni angka: tanpa nama place, tanpa identitas anggota. Pembulatan
+// 2 desimal menyatukan koordinat yang jatuh di sel yang sama. Pola
+// persis route stats: requireAuthStatsLiving supaya 401 membawa
+// challenge Bearer, guardTreeAction 'view_tree' sehingga semua role
+// anggota tree (owner, editor, viewer) boleh melihat, 404 tree nihil,
+// 403 non-anggota. Cache-Control private tanpa max-age positif.
+app.get('/api/v1/trees/:treeId/places/distribution', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const places = await prisma.place.findMany({
+      where: { treeId: req.params.treeId },
+      select: { latitude: true, longitude: true },
+    });
+    const result = computePlaceDistribution(
+      places.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
+    );
+    const body = JSON.stringify(result);
+    const etag = `"${createHash('sha256').update(body).digest('hex')}"`;
+    res.set('Cache-Control', 'private, no-cache');
+    res.set('ETag', etag);
+    const inm = req.headers['if-none-match'];
+    if (inm && inm.split(',').some((t) => t.trim() === etag)) {
+      return res.status(304).end();
+    }
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    return res.send(body);
+  } catch (e) {
+    res.status(500).json({ code: 'PLACES_DISTRIBUTION_ERROR', message: (e as Error).message });
   }
 });
 
