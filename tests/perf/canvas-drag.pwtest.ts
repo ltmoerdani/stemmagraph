@@ -10,8 +10,9 @@
  *
  * Memo edge S-04 fase i kini aktif di build (MarriageEdge, ParentChildEdge,
  * SiblingEdge dibungkus React.memo). Tidak ada flag on-off untuk memo edge;
- * pengukuran mewakili kondisi build kini. Skenario pan/zoom sebagai pembanding
- * internal menyusul di komit berikutnya.
+ * pengukuran mewakili kondisi build kini. Skenario pan/zoom diukur dalam
+ * run yang sama sebagai pembanding internal (AC2) sehingga drag vs pan/zoom
+ * comparable dalam satu laporan.
  *
  * GATE: test ini TIDAK dijalankan otomatis vitest (pola include vitest hanya
  * test di bawah src); testMatch playwright *.pwtest.ts anti tabrakan.
@@ -91,6 +92,40 @@ const dragNodeContinuous = async (page: Page, durationMs: number): Promise<void>
   await page.mouse.up();
 };
 
+/** Pan viewport di pane lalu zoom wheel, bolak-balik kontinu sampai deadline. */
+const panZoomContinuous = async (page: Page, durationMs: number): Promise<void> => {
+  const pane = page.locator('.react-flow__pane').first();
+  const box = await pane.boundingBox().catch(() => null);
+  if (!box) return;
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  const deadline = Date.now() + durationMs;
+  let phase = 0;
+  while (Date.now() < deadline) {
+    if (phase % 2 === 0) {
+      // pan bolak-balik di pane (viewport, bukan node)
+      await page.mouse.move(cx, cy);
+      await page.mouse.down();
+      for (let i = 0; i < 10 && Date.now() < deadline; i += 1) {
+        await page.mouse.move(cx + i * 6, cy + i * 3, { steps: 2 });
+      }
+      for (let i = 10; i > 0 && Date.now() < deadline; i -= 1) {
+        await page.mouse.move(cx + i * 6, cy + i * 3, { steps: 2 });
+      }
+      await page.mouse.up();
+    } else {
+      // zoom in lalu zoom out via wheel
+      for (let i = 0; i < 10 && Date.now() < deadline; i += 1) {
+        await page.mouse.wheel(0, 120);
+      }
+      for (let i = 0; i < 10 && Date.now() < deadline; i += 1) {
+        await page.mouse.wheel(0, -120);
+      }
+    }
+    phase += 1;
+  }
+};
+
 const allStats: DragRunStats[] = [];
 
 /** Rata-rata FPS untuk satu kombinasi skenario dan dataset; null bila kosong. */
@@ -101,7 +136,7 @@ const avg = (scenario: DragRunStats['scenario'], nodes: number): number | null =
 
 for (const nodes of DATASETS) {
   test.describe(`canvas drag v395 ${nodes} node`, () => {
-    test(`fps drag node tunggal ${RUNS} run`, async ({ page }) => {
+    test(`fps drag dan panzoom ${RUNS} run`, async ({ page }) => {
       await openHost(page, nodes);
       for (let run = 0; run < RUNS; run += 1) {
         const evalPromise = collectFrameStats(page, SAMPLE_MS);
@@ -110,6 +145,19 @@ for (const nodes of DATASETS) {
         const { deltas } = await evalPromise;
         allStats.push({
           scenario: 'drag',
+          nodes,
+          fpsAvg: computeFpsAvg(deltas),
+          p95DeltaMs: computeP95Delta(deltas),
+        });
+        expect(deltas.length).toBeGreaterThan(0);
+      }
+      for (let run = 0; run < RUNS; run += 1) {
+        const evalPromise = collectFrameStats(page, SAMPLE_MS);
+        // pan/zoom pembanding internal dalam run yang sama (AC2), build kini
+        await panZoomContinuous(page, SAMPLE_MS);
+        const { deltas } = await evalPromise;
+        allStats.push({
+          scenario: 'panzoom',
           nodes,
           fpsAvg: computeFpsAvg(deltas),
           p95DeltaMs: computeP95Delta(deltas),
