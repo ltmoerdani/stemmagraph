@@ -2,7 +2,7 @@
  * v397 XLSX Import Fase 1: pembuka file .xlsx murni lokal (AC1).
  *
  * XLSX adalah zip berisi XML. Buffer dibuka via fflate unzipSync
- * (dependency existing, taxan dependency baru). Hanya tiga part
+ * (dependency existing, tanpa dependency baru). Hanya tiga part
  * dibaca: xl/workbook.xml (daftar sheet, ambil sheet pertama yang
  * terdaftar), xl/_rels/workbook.xml.rels (pemetaan r:id ke target
  * part), dan part worksheet-nya ditambah xl/sharedStrings.xml bila
