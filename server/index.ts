@@ -2481,8 +2481,10 @@ app.get('/api/v1/trees/:treeId/stats/anniversaries/upcoming', requireAuthStatsLi
 // ─── Upcoming reminders (v387, reminder haul, read-only) ─────────────
 //
 // GET /api/v1/trees/:treeId/reminders/upcoming returns the merged,
-// date-sorted reminder list of one tree: birthdays of living members and
-// wedding anniversaries of living couples, computed by the pure module
+// date-sorted reminder list of one tree: birthdays of living members,
+// wedding anniversaries of living couples, and haul (death) anniversaries
+// of deceased members with an effective haul date (family-set
+// haulOverrideDate falling back to deathDate, v393), computed by the pure module
 // src/lib/anniversaries/nextAnniversaries.ts. Pola persis route
 // anniversaries v275: guardTreeAction untuk 403 non-anggota (tanpa
 // WWW-Authenticate), requireAuthStatsLiving supaya 401 jalur ini
@@ -2502,6 +2504,16 @@ app.get('/api/v1/trees/:treeId/reminders/upcoming', requireAuthStatsLiving, asyn
       where: { treeId: req.params.treeId, isAlive: true, birthDate: { not: '' } },
       select: { id: true, name: true, birthDate: true },
     });
+    // v393: anggota wafat dengan tanggal haul efektif (haulOverrideDate
+    // bila terisi, selain itu deathDate) ikut masuk antrean reminder.
+    const deceased = await prisma.familyMember.findMany({
+      where: {
+        treeId: req.params.treeId,
+        isAlive: false,
+        OR: [{ haulOverrideDate: { not: null } }, { deathDate: { not: null } }],
+      },
+      select: { id: true, name: true, deathDate: true, haulOverrideDate: true },
+    });
     const events = await prisma.lifeEvent.findMany({
       where: { treeId: req.params.treeId, eventType: 'MARRIAGE', partnerMemberId: { not: null } },
       include: { date: true },
@@ -2518,6 +2530,12 @@ app.get('/api/v1/trees/:treeId/reminders/upcoming', requireAuthStatsLiving, asyn
     const items: Parameters<typeof computeNextAnniversaries>[0] = [];
     for (const m of members) {
       items.push({ kind: 'birthday' as const, refId: m.id, displayName: m.name, date: m.birthDate });
+    }
+    for (const m of deceased) {
+      // v393: tanggal haul efektif = override keluarga bila terisi, fallback deathDate.
+      const haulDate = m.haulOverrideDate && m.haulOverrideDate !== '' ? m.haulOverrideDate : m.deathDate;
+      if (!haulDate) continue;
+      items.push({ kind: 'haul' as const, refId: m.id, displayName: m.name, date: haulDate });
     }
     const seenPairs = new Set<string>();
     for (const ev of events) {
@@ -3246,6 +3264,30 @@ app.put('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
     if (!existing) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
     const guard = await guardTreeAction(req.userId!, existing.treeId, 'edit_member');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    // v393: validasi haulOverrideDate bila ada di body. String kosong =
+    // hapus override (fallback deathDate). Format wajib YYYY-MM-DD
+    // kalender valid, dan override hanya sah pada anggota wafat.
+    if (Object.prototype.hasOwnProperty.call(req.body, 'haulOverrideDate')) {
+      const v = req.body.haulOverrideDate;
+      if (v !== null && v !== '') {
+        if (typeof v !== 'string') {
+          return res.status(422).json({ code: 'INVALID_HAUL_DATE', message: 'haulOverrideDate must be a YYYY-MM-DD string, empty string, or null' });
+        }
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+        const valid = match !== null && (() => {
+          const y = Number(match[1]); const mo = Number(match[2]); const d = Number(match[3]);
+          if (mo < 1 || mo > 12 || d < 1) return false;
+          const len = [31, (y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
+          return d <= len;
+        })();
+        if (!valid) {
+          return res.status(422).json({ code: 'INVALID_HAUL_DATE', message: 'haulOverrideDate must be a valid calendar date in YYYY-MM-DD format' });
+        }
+        if (existing.isAlive) {
+          return res.status(422).json({ code: 'HAUL_OVERRIDE_ON_LIVING', message: 'haulOverrideDate can only be set on deceased members' });
+        }
+      }
+    }
     const m = await prisma.familyMember.update({ where: { id: req.params.id }, data: req.body });
     res.json(formatMember(m));
   } catch (e) {
@@ -3727,6 +3769,7 @@ function formatMember(m: FamilyMember) {
     nickname: m.nickname,
     birthDate: m.birthDate,
     deathDate: m.deathDate,
+    haulOverrideDate: m.haulOverrideDate,
     birthPlace: m.birthPlace,
     currentLocation: m.currentLocation,
     profession: m.profession,

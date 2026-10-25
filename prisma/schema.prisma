@@ -115,6 +115,11 @@ model FamilyMember {
   marga           String?
   birthDate       String
   deathDate       String?
+  // v393 Override Tanggal Haul Manual fase 2 reminder, additive only.
+  // Tanggal haul (peringatan wafat tahunan) yang ditetapkan keluarga;
+  // banyak tradisi haul tidak jatuh tepat pada tanggal wafat. Format
+  // YYYY-MM-DD. NULL = fallback ke deathDate.
+  haulOverrideDate String?
   // GEDCOM-aligned optional columns (v116-ii). JSON of GenealogicalDate
   // (src/lib/genealogy/genealogical-date.ts), see migration-map.ts.
   birthDateGed    String?

@@ -11,7 +11,10 @@
  * murni transformasi array input menjadi array terurut.
  *
  * Kontrak: computeNextAnniversaries(items, now, days) menerima array
- * { kind, refId, displayName, date }, kind 'birthday' atau 'wedding',
+ * { kind, refId, displayName, date }, kind 'birthday', 'wedding', atau
+ * 'haul' (v393: peringatan wafat tahunan anggota yang telah wafat,
+ * tanggal efektif haulOverrideDate bila terisi selain deathDate,
+ * penyaringan di route/pemanggil),
  * now berupa Date atau komponen { y, m, d } (injeksi waktu untuk
  * determinisme test), dan days sebagai lebar jendela. Output array
  * { kind, refId, displayName, date, nextDate, daysUntil, yearsCompleted }
@@ -34,10 +37,10 @@
  * (now eksplisit), urutan input tidak mengubah urutan output.
  */
 
-export type NextAnniversaryKind = 'birthday' | 'wedding'
+export type NextAnniversaryKind = 'birthday' | 'wedding' | 'haul'
 
 export interface NextAnniversaryInput {
-  /** 'birthday' untuk ulang tahun anggota, 'wedding' untuk hari jadi pernikahan. */
+  /** 'birthday' ulang tahun anggota hidup, 'wedding' hari jadi pernikahan pasangan hidup, 'haul' peringatan wafat tahunan anggota wafat (v393). */
   kind: NextAnniversaryKind
   /** personId untuk birthday, pairId untuk wedding (stabil untuk tie-break). */
   refId: string
@@ -63,7 +66,7 @@ export interface NextAnniversaryEntry {
   nextDate: string
   /** Hari menuju peringatan itu; 0 berarti tepat hari query. */
   daysUntil: number
-  /** Tahun penuh yang dijangkau pada peringatan itu (umur / tahun menikah). */
+  /** Tahun penuh yang dijangkau pada peringatan itu (umur / tahun menikah / tahun sejak wafat). */
   yearsCompleted: number
 }
 

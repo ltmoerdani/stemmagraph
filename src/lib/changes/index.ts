@@ -93,6 +93,7 @@ export const MEMBER_PROPOSAL_FIELDS = [
   'nickname',
   'birthDate',
   'deathDate',
+  'haulOverrideDate',
   'birthPlace',
   'currentLocation',
   'profession',

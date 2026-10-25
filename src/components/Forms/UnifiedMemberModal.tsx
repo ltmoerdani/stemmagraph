@@ -25,6 +25,7 @@ const buildInitialFormData = (editingMember?: FamilyMember): FormData => {
     birthPlace: editingMember.birthPlace ?? '',
     isAlive: editingMember.isAlive ?? true,
     deathDate: editingMember.deathDate ?? '',
+    haulOverrideDate: editingMember.haulOverrideDate ?? '',
     role: 'myself',
   };
 };
@@ -54,6 +55,8 @@ interface FormData {
   birthPlace: string;
   isAlive: boolean;
   deathDate: string;
+  /** v393: tanggal haul manual keluarga, kosong = fallback deathDate. */
+  haulOverrideDate: string;
   role?: 'myself' | 'parent' | 'grandparent' | 'other'; // Only for first member
 }
 
@@ -66,6 +69,7 @@ const initialFormData: FormData = {
   birthPlace: '',
   isAlive: true,
   deathDate: '',
+  haulOverrideDate: '',
   role: 'myself'
 };
 
@@ -217,7 +221,8 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
         birthDate: formData.birthDate || undefined,
         birthPlace: formData.birthPlace.trim() || undefined,
         isAlive: formData.isAlive,
-        deathDate: !formData.isAlive ? formData.deathDate || undefined : undefined
+        deathDate: !formData.isAlive ? formData.deathDate || undefined : undefined,
+        haulOverrideDate: !formData.isAlive && formData.haulOverrideDate ? formData.haulOverrideDate : undefined
       };
 
       if (editingMember) {
@@ -235,6 +240,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
             birthPlace: formData.birthPlace.trim() || null,
             isAlive: formData.isAlive,
             deathDate: !formData.isAlive ? formData.deathDate || null : null,
+            haulOverrideDate: !formData.isAlive && formData.haulOverrideDate ? formData.haulOverrideDate : null,
           };
           await changeApi.createChangeProposal(currentFamilyTreeId, {
             targetType: 'member',
@@ -261,6 +267,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
           birthPlace: formData.birthPlace.trim() || undefined,
           isAlive: formData.isAlive,
           deathDate: !formData.isAlive ? formData.deathDate || undefined : undefined,
+          haulOverrideDate: !formData.isAlive && formData.haulOverrideDate ? formData.haulOverrideDate : undefined,
           // Smart generation assignment based on role for first member
           generation: isFirstMember ? getGenerationFromRole(formData.role) : 1,
           maritalStatus: 'single' // Default marital status
@@ -566,7 +573,7 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                     <input
                       type="radio"
                       checked={formData.isAlive}
-                      onChange={() => updateFormData({ isAlive: true, deathDate: '' })}
+                      onChange={() => updateFormData({ isAlive: true, deathDate: '', haulOverrideDate: '' })}
                       className="mr-2 text-blue-600 focus:ring-blue-500"
                       disabled={isSubmitting}
                     />
@@ -601,6 +608,27 @@ export const UnifiedMemberModal: React.FC<UnifiedMemberModalProps> = ({
                         disabled={isSubmitting}
                       />
                     </div>
+                  </div>
+                )}
+
+                {/* v393: manual haul date (family-set), only for deceased members */}
+                {!formData.isAlive && (
+                  <div>
+                    <label htmlFor="haul-override-date" className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('memberForm.haulOverrideDate')}
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        id="haul-override-date"
+                        type="date"
+                        value={formData.haulOverrideDate}
+                        onChange={(e) => updateFormData({ haulOverrideDate: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">{t('memberForm.haulOverrideHint')}</p>
                   </div>
                 )}
               </fieldset>

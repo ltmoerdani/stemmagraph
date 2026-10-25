@@ -5,6 +5,8 @@ export interface FamilyMember {
   marga?: string;
   birthDate: string;
   deathDate?: string;
+  /** v393: tanggal haul keluarga (override), NULL atau kosong = fallback deathDate. */
+  haulOverrideDate?: string | null;
   birthPlace?: string;
   currentLocation?: string;
   profession?: string;

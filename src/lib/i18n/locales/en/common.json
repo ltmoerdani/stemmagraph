@@ -678,5 +678,9 @@
     "margaHelper": "Clan name by ethnic variant: marga (Toba, Angkola, Mandailing), merga (Karo, Pakpak), morga (Simalungun). The general equivalent is fam.",
     "margaSuggestLabel": "Suggestions:",
     "margaSuggestAria": "Use marga suggestion"
+  },
+  "memberForm": {
+    "haulOverrideDate": "Haul date (manual)",
+    "haulOverrideHint": "Leave empty when the haul falls on the death date. Fill in when the family set a different haul date."
   }
 }
