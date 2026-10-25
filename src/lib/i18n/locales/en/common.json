@@ -614,6 +614,12 @@
       "requestedBy": "Requested by",
       "decidedBy": "Decided by"
     },
+    "panel": {
+      "open": "View merge approval queue",
+      "title": "Merge approvals: {{name}}",
+      "loading": "Loading the approval queue...",
+      "loadFailed": "Failed to load the approval queue."
+    },
     "error": {
       "CANNOT_APPROVE_OWN_REQUEST": "The requester cannot decide their own merge; ask another owner or editor",
       "ALREADY_DECIDED": "This request has already been decided",

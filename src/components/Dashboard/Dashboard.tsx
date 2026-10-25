@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff, Link2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff, Link2, ShieldAlert } from 'lucide-react';
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { FeedPanel } from './FeedPanel';
 import { InvitationsPanel } from './InvitationsPanel';
 import { ShareLinksPanel } from './ShareLinksPanel';
 import { ChangeReviewPanel } from './ChangeReviewPanel';
+import { MergeApprovalsPanel } from './MergeApprovalsPanel';
 import { DedupReviewMount } from '../FamilyTree/DedupReviewMount';
 import { TemplatePicker } from '../Onboarding/TemplatePicker';
 import type { SeedTemplate } from '../../lib/onboarding/seedTemplates';
@@ -13,6 +14,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { navigate } from '../../utils/routing';
 import { buildMergeProposal } from '../../lib/genealogy/build-merge-proposal';
+import { getMergeApi } from '../../lib/adapters';
 import { useTranslation } from 'react-i18next';
 import { formatDate as formatDateWithLocale } from '../../lib/i18n';
 
@@ -32,6 +34,34 @@ export const Dashboard: React.FC = () => {
   const [dedupOpen, setDedupOpen] = useState(false);
   // Dashboard section: family trees or the activity feed (P2-6 AC-4).
   const [activeTab, setActiveTab] = useState<'trees' | 'activity'>('trees');
+  // v392 AC6: jumlah approval merge PENDING per tree (owner/editor saja;
+  // fetch gagal atau adapter tanpa server menyisakan null = badge sembunyi).
+  const [pendingApprovalCounts, setPendingApprovalCounts] = useState<Record<string, number> | null>(null);
+  // Tree whose merge-approvals panel is open (v392 AC6).
+  const [approvalsTreeId, setApprovalsTreeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const mergeApi = getMergeApi();
+    if (!mergeApi) return;
+    let cancelled = false;
+    (async () => {
+      const decidable = familyTrees.filter((tree) => tree.role === 'owner' || tree.role === 'editor');
+      const results = await Promise.all(
+        decidable.map(async (tree) => {
+          try {
+            const pending = await mergeApi.listMergeApprovals(tree.id, { status: 'PENDING' });
+            return [tree.id, pending.length] as const;
+          } catch {
+            return [tree.id, 0] as const;
+          }
+        }),
+      );
+      if (!cancelled) setPendingApprovalCounts(Object.fromEntries(results));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [familyTrees]);
 
   const currentMemberCount = familyTrees.reduce((total, tree) => total + tree.memberCount, 0);
 
@@ -90,6 +120,26 @@ export const Dashboard: React.FC = () => {
       decisions,
     });
     console.info(JSON.stringify({ event: 'dedup-decision', pairId, decision, payload, timestamp: new Date().toISOString() }));
+  };
+
+  // v392 AC6: badge antrian persetujuan merge berisiko untuk satu tree
+  // (hanya owner/editor; sembunyi bila jumlah nihil atau fetch gagal).
+  const renderApprovalsBadge = (treeId: string) => {
+    const count = pendingApprovalCounts?.[treeId] ?? 0;
+    if (count === 0) return null;
+    return (
+      <button
+        type="button"
+        onClick={() => setApprovalsTreeId(treeId)}
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium hover:bg-amber-200 transition-colors"
+        title={t('mergeApproval.panel.open')}
+        aria-label={`${t('mergeApproval.panel.open')}: ${count}`}
+        data-testid={`approvals-badge-${treeId}`}
+      >
+        <ShieldAlert className="w-3 h-3" />
+        {count}
+      </button>
+    );
   };
 
   // Helper: Render the create new card button
@@ -279,6 +329,7 @@ export const Dashboard: React.FC = () => {
                     <h3 className="font-bold text-gray-900 text-lg mb-2 truncate">
                       {tree.name}
                     </h3>
+                    {(tree.role === 'owner' || tree.role === 'editor') && renderApprovalsBadge(tree.id)}
                     
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -360,6 +411,7 @@ export const Dashboard: React.FC = () => {
                             <div>
                               <h3 className="font-semibold text-gray-900">{tree.name}</h3>
                               <p className="text-sm text-gray-500">{t('dashboard.created', { date: formatDate(tree.createdAt) })}</p>
+                              {(tree.role === 'owner' || tree.role === 'editor') && renderApprovalsBadge(tree.id)}
                             </div>
                           </div>
                         </td>
@@ -472,6 +524,15 @@ export const Dashboard: React.FC = () => {
 
       {/* Dedup review panel (v148-ii): decisions logged, no merge (ADR 0009) */}
       {dedupOpen && <DedupReviewMount onDecision={handleDedupDecision} />}
+
+      {/* Merge approvals panel (v392 AC6): antrian persetujuan merge berisiko */}
+      {approvalsTreeId !== null && (
+        <MergeApprovalsPanel
+          treeId={approvalsTreeId}
+          treeName={familyTrees.find((tree) => tree.id === approvalsTreeId)?.name ?? ''}
+          onClose={() => setApprovalsTreeId(null)}
+        />
+      )}
     </div>
   );
 };

@@ -614,6 +614,12 @@
       "requestedBy": "Diminta oleh",
       "decidedBy": "Diputuskan oleh"
     },
+    "panel": {
+      "open": "Lihat antrian persetujuan merge",
+      "title": "Persetujuan merge: {{name}}",
+      "loading": "Memuat antrian persetujuan...",
+      "loadFailed": "Gagal memuat antrian persetujuan."
+    },
     "error": {
       "CANNOT_APPROVE_OWN_REQUEST": "Pemohon merge tidak boleh memutuskan sendiri; minta owner atau editor lain",
       "ALREADY_DECIDED": "Permintaan ini sudah diputuskan",
