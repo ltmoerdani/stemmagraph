@@ -678,5 +678,9 @@
     "margaHelper": "Nama marga sesuai etnis: marga (Toba, Angkola, Mandailing), merga (Karo, Pakpak), morga (Simalungun). Padanan umumnya fam.",
     "margaSuggestLabel": "Saran:",
     "margaSuggestAria": "Gunakan saran marga"
+  },
+  "memberForm": {
+    "haulOverrideDate": "Tanggal haul (manual)",
+    "haulOverrideHint": "Kosongkan bila haul jatuh pada tanggal wafat. Isi bila keluarga menetapkan tanggal haul berbeda."
   }
 }

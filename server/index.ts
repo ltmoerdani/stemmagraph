@@ -3769,6 +3769,7 @@ function formatMember(m: FamilyMember) {
     nickname: m.nickname,
     birthDate: m.birthDate,
     deathDate: m.deathDate,
+    haulOverrideDate: m.haulOverrideDate,
     birthPlace: m.birthPlace,
     currentLocation: m.currentLocation,
     profession: m.profession,
