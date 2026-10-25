@@ -119,6 +119,8 @@
     "share": "Share"
   },
   "export": {
+    "jsonButton": "Export schema JSON",
+    "jsonError": "JSON export failed",
     "privacy": {
       "title": "Export Privacy",
       "modeClean": "Clean private copy (safe to share)",

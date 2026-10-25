@@ -119,6 +119,8 @@
     "share": "Bagikan"
   },
   "export": {
+    "jsonButton": "Export JSON ber-schema",
+    "jsonError": "Export JSON gagal",
     "privacy": {
       "title": "Privasi Ekspor",
       "modeClean": "Privat bersih (siap dibagikan)",

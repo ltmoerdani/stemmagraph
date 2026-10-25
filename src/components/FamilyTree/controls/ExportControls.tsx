@@ -51,6 +51,24 @@ function gedcomFileName(
   return `${safeName}-${yyyy}${mm}${dd}${ext}`;
 }
 
+/**
+ * Reads the download filename from a Content-Disposition attachment
+ * header safely. Only the quoted form is honored, characters outside
+ * A-Za-z0-9-_. are stripped (same discipline as the server side
+ * sanitizer), and any malformed or missing header falls back to the
+ * local <tree-name>-<date>.json convention.
+ */
+function filenameFromContentDisposition(
+  header: string | null,
+  fallback: string
+): string {
+  if (!header) return fallback;
+  const match = /filename="([^"]*)"/.exec(header);
+  if (!match) return fallback;
+  const clean = match[1].replace(/[^a-zA-Z0-9-_.]+/g, '-');
+  return clean.length > 0 ? clean : fallback;
+}
+
 /** Triggers a browser download for an in-memory blob. */
 function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
@@ -75,6 +93,9 @@ export const ExportControls: React.FC = () => {
     useState<PaperPreset['kind']>(DEFAULT_PAPER_KIND);
   const [isPosterBusy, setIsPosterBusy] = useState(false);
   const [posterError, setPosterError] = useState(false);
+  // v402: schema JSON export failure gets its own visible flag so the
+  // dropdown can show an honest error line (same pattern as posterError).
+  const [jsonError, setJsonError] = useState(false);
   const { t } = useTranslation(['poster', 'common']);
   // Canonical adapter-layer data (not the legacy merged UI shape) so the
   // GEDCOM export reads exactly what the backend stores.
@@ -159,6 +180,44 @@ export const ExportControls: React.FC = () => {
       downloadBlob(blob, gedcomFileName(treeName, now));
     } catch (error) {
       console.error('GEDZIP export failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  /**
+   * v402 schema JSON export: fetches the server-generated document
+   * (stemmagraph-tree-export/1) and hands the blob to the browser.
+   * Mode follows the same privacy state as GEDCOM/GEDZIP: clean by
+   * default, full only when the user explicitly unlocked it.
+   */
+  const exportAsJson = async () => {
+    if (!currentFamilyTreeId) return;
+    setIsExporting(true);
+    setJsonError(false);
+    try {
+      const treeName = await resolveTreeName();
+      const mode = privacyMode === 'full' && fullArchiveUnlocked ? 'full' : 'clean';
+      const response = await fetch(
+        `/api/v1/trees/${currentFamilyTreeId}/export/json${mode === 'full' ? '?mode=full' : ''}`,
+        { credentials: 'include' }
+      );
+      if (!response.ok) {
+        console.error('JSON export failed:', response.status);
+        setJsonError(true);
+        return;
+      }
+      const blob = await response.blob();
+      const fallback = gedcomFileName(treeName, new Date(), '.json');
+      const filename = filenameFromContentDisposition(
+        response.headers.get('Content-Disposition'),
+        fallback
+      );
+      downloadBlob(blob, filename);
+      handleDropdownClose();
+    } catch (error) {
+      console.error('JSON export failed:', error);
+      setJsonError(true);
     } finally {
       setIsExporting(false);
     }
@@ -438,6 +497,30 @@ export const ExportControls: React.FC = () => {
               <FileArchive className="w-4 h-4" />
               <span>Export as GEDZIP (.gedzip)</span>
             </button>
+
+            {/* v402 schema JSON export: server-side document fetch.
+                The menu stays open while the request runs so busy and
+                error feedback stay visible; success closes it. */}
+            <button
+              onClick={exportAsJson}
+              disabled={isExporting || !currentFamilyTreeId}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              role="menuitem"
+              aria-busy={isExporting}
+              data-testid="export-json-button"
+            >
+              <FileJson className="w-4 h-4" />
+              <span>{t('export.jsonButton')}</span>
+            </button>
+            {jsonError && (
+              <p
+                className="mt-1 mx-4 text-xs text-red-600"
+                role="alert"
+                data-testid="export-json-error"
+              >
+                {t('export.jsonError')}
+              </p>
+            )}
 
             {/* Poster PDF (beta, S-10): vector single-sheet poster with a
                 paper size choice. Renders from family state directly, no
