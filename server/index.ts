@@ -59,6 +59,7 @@ import {
   targetPrivacyStatus,
 } from '../src/lib/consent/dispatch';
 import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
+import { resolveSelfConsentAccess } from '../src/lib/consent/self-consent';
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import { validatePhotoUpload, type PhotoMime } from '../src/lib/photo/photoFile';
@@ -4048,6 +4049,94 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
   } catch (e) {
     // S-06e: a reducer rejection is a domain conflict (409); anything else
     // is an infrastructure failure and answers 500 like sibling endpoints.
+    if (e instanceof ConsentLedgerError) {
+      return res.status(409).json({ code: 'CONSENT_INVALID_TRANSITION', message: e.message });
+    }
+    res.status(500).json({ code: 'CONSENT_ERROR', message: (e as Error).message });
+  }
+});
+
+
+// ─── Consent self-service (v408, VISION gap 3: subjek data mengelola consent dirinya) ───
+// Satu lintasan tulis ledger tetap di atas reducer pure; route ini HANYA
+// menambah keputusan akses self (email User vs email member, pola
+// viewer-relation.ts) sebelum memakai ulang alur POST owner apa adanya.
+// 403 SELF_ONLY sengaja identik untuk semua penolakan agar tidak
+// membocorkan ada-tidaknya member (anti-enumerasi pola v261-i).
+
+app.post('/api/v1/members/:memberId/consent/self', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
+  try {
+    const [viewer, m] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } }),
+      prisma.familyMember.findUnique({ where: { id: req.params.memberId } }),
+    ]);
+    if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const access = resolveSelfConsentAccess({
+      viewerEmail: viewer?.email ?? null,
+      memberEmail: m.email,
+      memberId: m.id,
+      targetMemberId: req.params.memberId,
+    });
+    if (!access.ok) {
+      console.error('consent self-service denied:', access.reason, { memberId: req.params.memberId, userId: req.userId });
+      return res.status(403).json({ code: 'SELF_ONLY', message: 'Consent self-service is limited to the data subject themselves' });
+    }
+    const parsed = parseConsentBody(req.body ?? {});
+    if (!parsed.ok) return res.status(400).json({ code: parsed.code, message: parsed.message });
+    const now = new Date();
+    const at = now.toISOString();
+    let record: ConsentRecord;
+    try {
+      record = createRecord(req.params.memberId, parsed.action, parsed.scope, at, parsed.note);
+    } catch (e) {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: (e as Error).message });
+    }
+    // Transaksi ledger identik POST owner (S-06e): replay, applyRecord,
+    // create ledger row, dan update privacyStatus satu unit komit.
+    const updated = await prisma.$transaction(async (tx) => {
+      const rows = await tx.consentRecord.findMany({
+        where: { memberId: req.params.memberId },
+        orderBy: { at: 'asc' },
+      });
+      const state = replayConsentState(rows);
+      const next = applyRecord(state, record);
+      await tx.consentRecord.create({
+        data: {
+          id: record.id,
+          memberId: record.memberId,
+          action: record.action,
+          scope: record.scope,
+          note: record.note,
+          at: now,
+        },
+      });
+      const member = await tx.familyMember.update({
+        where: { id: req.params.memberId },
+        data: { privacyStatus: targetPrivacyStatus(parsed.action) },
+      });
+      return { member, granted: next.granted, last: next.records[next.records.length - 1] };
+    });
+    // Emit audit ke owners dengan actorId = subjek data sendiri (jujur,
+    // tanpa spoof owner). Kegagalan emit tidak gagalkan POST: ledger row
+    // adalah sumber kebenaran (pola POST owner existing).
+    try {
+      const owners = await activeTreeOwnerIds(m.treeId, req.userId!);
+      const emitResult = await safeEmitConsentEvent(
+        { record, treeId: m.treeId, actorId: req.userId!, owners },
+        consentEventSink,
+      );
+      if (!emitResult.ok) {
+        console.error('consent event emission failed (ledger row kept):', emitResult.error);
+      }
+    } catch (emitError) {
+      console.error('consent event emission failed (ledger row kept):', emitError);
+    }
+    res.status(201).json({
+      record: updated.last,
+      granted: updated.granted,
+      privacyStatus: updated.member.privacyStatus,
+    });
+  } catch (e) {
     if (e instanceof ConsentLedgerError) {
       return res.status(409).json({ code: 'CONSENT_INVALID_TRANSITION', message: e.message });
     }
