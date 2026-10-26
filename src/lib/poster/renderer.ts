@@ -28,15 +28,12 @@ import {
 } from './geometry';
 import { loadPosterFonts, splitScriptRuns, type PosterFontBundle } from './fonts';
 import {
-  CONNECTOR,
-  NAME_TEXT,
-  NODE_BORDER,
-  NODE_FILL,
-  PAGE_BG,
-  TITLE_TEXT,
-  TRIM_FRAME,
   hexToRgb,
 } from './palette';
+import {
+  DEFAULT_POSTER_PALETTE,
+  type PosterThemePalette,
+} from './theme';
 import type {
   PosterNodePosition,
   PosterRenderResult,
@@ -50,6 +47,11 @@ export interface RenderPosterOptions {
   fonts?: PosterFontBundle;
   /** Extra clear millimeters above content when a title is drawn. */
   titleGapMm?: number;
+  /**
+   * v404: color theme palette. Omitted means the S-10 ivory default, byte
+   * identical to the pre-v404 output; only flat sRGB values are accepted.
+   */
+  palette?: PosterThemePalette;
 }
 
 /** Extra headroom reserved for the title line, in millimeters. */
@@ -100,7 +102,8 @@ function drawName(
   boxX: number,
   boxBottomY: number,
   boxWidth: number,
-  boxHeight: number
+  boxHeight: number,
+  nameText: string
 ): void {
   const available = boxWidth - 2 * NAME_PAD_PT;
   const measure = (text: string, sizePt: number) =>
@@ -116,7 +119,7 @@ function drawName(
       y: baselineY,
       size: fit.sizePt,
       font: pickFont(run.script, fonts),
-      color: hexToRgb(NAME_TEXT),
+      color: hexToRgb(nameText),
     });
     cursorX += pickFont(run.script, fonts).widthOfTextAtSize(
       run.text,
@@ -131,14 +134,15 @@ function drawConnector(
   placement: ReturnType<typeof computePlacement>,
   parent: PosterNodePosition,
   child: PosterNodePosition,
-  railY: number
+  railY: number,
+  palette: PosterThemePalette
 ): void {
   const pTopX = layoutToPageX(parent.x + parent.width / 2, placement);
   const pBottomY = layoutToPageY(parent.y + parent.height, placement);
   const cTopX = layoutToPageX(child.x + child.width / 2, placement);
   const cTopY = layoutToPageY(child.y, placement);
   const railPageY = layoutToPageY(railY, placement);
-  const stroke = { color: hexToRgb(CONNECTOR), thickness: CONNECTOR_PT };
+  const stroke = { color: hexToRgb(palette.connector), thickness: CONNECTOR_PT };
   // Parent bottom drops down to the rail.
   page.drawLine({
     start: { x: pTopX, y: pBottomY },
@@ -165,14 +169,15 @@ function drawConnector(
  */
 function drawPageChrome(
   page: PDFPage,
-  placement: ReturnType<typeof computePlacement>
+  placement: ReturnType<typeof computePlacement>,
+  palette: PosterThemePalette
 ): void {
   page.drawRectangle({
     x: 0,
     y: 0,
     width: placement.pageWidthPt,
     height: placement.pageHeightPt,
-    color: hexToRgb(PAGE_BG),
+    color: hexToRgb(palette.pageBg),
   });
   // Trim frame marks the 0.125 inch bleed boundary as a background decorator.
   page.drawRectangle({
@@ -180,7 +185,7 @@ function drawPageChrome(
     y: placement.bleedPt,
     width: placement.pageWidthPt - 2 * placement.bleedPt,
     height: placement.pageHeightPt - 2 * placement.bleedPt,
-    borderColor: hexToRgb(TRIM_FRAME),
+    borderColor: hexToRgb(palette.trimFrame),
     borderWidth: 0.5,
   });
   // Corner crop marks (bonus): short strokes from each page corner to the
@@ -188,7 +193,7 @@ function drawPageChrome(
   const w = placement.pageWidthPt;
   const h = placement.pageHeightPt;
   const b = placement.bleedPt;
-  const markColor = { color: hexToRgb(NODE_BORDER), thickness: 0.4 };
+  const markColor = { color: hexToRgb(palette.nodeBorder), thickness: 0.4 };
   const drawMarks = (cx: number, cy: number, sx: number, sy: number) => {
     page.drawLine({
       start: { x: cx, y: cy },
@@ -218,6 +223,10 @@ export async function renderPosterPdf(
   options: RenderPosterOptions = {}
 ): Promise<PosterRenderResult> {
   const warnings: PosterWarning[] = [];
+
+  // v404: theme palette. Omitted option falls back to the S-10 ivory
+  // default so existing callers keep byte-identical output.
+  const palette = options.palette ?? DEFAULT_POSTER_PALETTE;
 
   // Validate positions up front; individuals without a box are skipped with
   // a warning instead of aborting the whole poster.
@@ -275,7 +284,7 @@ export async function renderPosterPdf(
   }
 
   const page = pdf.addPage([placement.pageWidthPt, placement.pageHeightPt]);
-  drawPageChrome(page, placement);
+  drawPageChrome(page, placement, palette);
 
   if (hasTitle) {
     let titleSize = POSTER_TITLE_FONT_PT;
@@ -300,7 +309,7 @@ export async function renderPosterPdf(
         y: baselineY,
         size: titleSize,
         font,
-        color: hexToRgb(TITLE_TEXT),
+        color: hexToRgb(palette.titleText),
       });
       cursorX += font.widthOfTextAtSize(run.text, titleSize);
     }
@@ -319,7 +328,7 @@ export async function renderPosterPdf(
       conn.railY == null
         ? (parentBottom + childPos.y) / 2
         : Math.min(Math.max(conn.railY, parentBottom), childPos.y);
-    drawConnector(page, placement, parentPos, childPos, clampedRail);
+    drawConnector(page, placement, parentPos, childPos, clampedRail, palette);
   }
 
   for (const ind of placed) {
@@ -333,11 +342,11 @@ export async function renderPosterPdf(
       y: boxBottomY,
       width: boxWidth,
       height: boxHeight,
-      color: hexToRgb(NODE_FILL),
-      borderColor: hexToRgb(NODE_BORDER),
+      color: hexToRgb(palette.nodeFill),
+      borderColor: hexToRgb(palette.nodeBorder),
       borderWidth: NODE_BORDER_PT,
     });
-    drawName(page, ind.name, fonts, boxX, boxBottomY, boxWidth, boxHeight);
+    drawName(page, ind.name, fonts, boxX, boxBottomY, boxWidth, boxHeight, palette.nameText);
 
     const available = boxWidth - 2 * NAME_PAD_PT;
     const measure = (text: string, sizePt: number) =>

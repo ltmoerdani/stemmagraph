@@ -25,6 +25,11 @@ import {
   resolvePaper,
   type PaperPreset,
 } from '../../../lib/poster/geometry';
+import {
+  DEFAULT_POSTER_THEME,
+  resolvePosterPalette,
+  type PosterThemeKind,
+} from '../../../lib/poster/theme';
 
 /** MIME type used when saving .ged downloads (de facto standard). */
 const GEDCOM_MIME = 'application/x-gedcom';
@@ -91,6 +96,9 @@ export const ExportControls: React.FC = () => {
   // select stays controlled even while a render is in flight.
   const [posterPaperKind, setPosterPaperKind] =
     useState<PaperPreset['kind']>(DEFAULT_PAPER_KIND);
+  // v404: poster color theme, default keeps the S-10 ivory look.
+  const [posterThemeKind, setPosterThemeKind] =
+    useState<PosterThemeKind>(DEFAULT_POSTER_THEME);
   const [isPosterBusy, setIsPosterBusy] = useState(false);
   const [posterError, setPosterError] = useState(false);
   // v402: schema JSON export failure gets its own visible flag so the
@@ -333,7 +341,9 @@ export const ExportControls: React.FC = () => {
       const treeName = await resolveTreeName();
       const paper = resolvePaper(posterPaperKind);
       const spec = buildPosterSpec({ members, paper, title: treeName });
-      const { pdfBytes, warnings } = await renderPosterPdf(spec);
+      const { pdfBytes, warnings } = await renderPosterPdf(spec, {
+        palette: resolvePosterPalette(posterThemeKind),
+      });
       // Warnings (clamped names, overflow) are print-quality hints, not
       // failures; surface them in the console for follow-up.
       if (warnings.length > 0) {
@@ -621,6 +631,31 @@ export const ExportControls: React.FC = () => {
                 {POSTER_PAPER_PRESETS.map((preset) => (
                   <option key={preset.kind} value={preset.kind}>
                     {t(`poster:paper.${preset.kind}`)}
+                  </option>
+                ))}
+              </select>
+
+              {/* v404: color theme choice. Default keeps the S-10 ivory
+                  look; batik and songket swap all seven flat tokens. */}
+              <label
+                className="block mt-2 text-xs text-gray-600"
+                htmlFor="poster-theme-kind"
+              >
+                {t('poster:theme.label')}
+              </label>
+              <select
+                id="poster-theme-kind"
+                value={posterThemeKind}
+                onChange={(e) =>
+                  setPosterThemeKind(e.target.value as PosterThemeKind)
+                }
+                disabled={isPosterBusy || isExporting}
+                className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700"
+                data-testid="poster-theme-kind"
+              >
+                {(['default', 'batik', 'songket'] as const).map((kind) => (
+                  <option key={kind} value={kind}>
+                    {t(`poster:theme.${kind}`)}
                   </option>
                 ))}
               </select>

@@ -13,5 +13,11 @@
     "a1": "A1 (594 × 841 mm)",
     "a0": "A0 (841 × 1189 mm)"
   },
+  "theme": {
+    "label": "Color theme",
+    "default": "Standard (ivory)",
+    "batik": "Batik (sogan)",
+    "songket": "Songket (Palembang)"
+  },
   "notice": "Single-sheet vector poster, generated automatically from the tree layout."
 }
