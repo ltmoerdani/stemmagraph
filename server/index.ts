@@ -125,6 +125,7 @@ import {
 } from '../src/lib/metrics/kfactor';
 import { buildDigestForUser, loadUpcomingReminders, runWeeklyDigestPass, startDigestScheduler, startIcsTokenRotationScheduler } from './digest';
 import { startBackupScheduler } from '../src/server/backup/backupScheduler';
+import { runBackup } from '../src/server/backup/backupRunner';
 import { mailerDisabled } from '../src/lib/digest/mailer';
 import { weeklyWindow } from '../src/lib/digest/window';
 import { isPrevTokenWithinGrace } from '../src/lib/calendar/tokenLifecycle';
@@ -483,6 +484,44 @@ function formatAccount(user: User) {
     createdAt: user.createdAt.toISOString(),
   };
 }
+
+// v406: daftar file backup SQLite (khusus owner).
+app.get('/api/v1/backups', requireAuth, requireOwner, async (_req: AuthenticatedRequest, res) => {
+  try {
+    const dir = process.env.BACKUP_DIR || 'data/backups';
+    let names: string[] = [];
+    try {
+      names = fs.readdirSync(dir);
+    } catch {
+      names = [];
+    }
+    const backups = names
+      .filter((n) => n.endsWith('.db'))
+      .map((n) => {
+        const full = path.join(dir, n);
+        const st = fs.statSync(full);
+        return { name: n, sizeBytes: st.size, createdAt: st.birthtime.toISOString() };
+      })
+      .sort((a, b) => (a.name < b.name ? 1 : a.name > b.name ? -1 : 0));
+    res.json({ backups });
+  } catch (e) {
+    res.status(500).json({ code: 'BACKUP_LIST_ERROR', message: (e as Error).message });
+  }
+});
+
+// v406: trigger backup manual (khusus owner).
+app.post('/api/v1/backups', requireAuth, requireOwner, async (_req: AuthenticatedRequest, res) => {
+  try {
+    const result = await runBackup();
+    if (!result.ok) {
+      res.status(500).json({ code: 'BACKUP_FAILED', message: result.error ?? 'backup failed' });
+      return;
+    }
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ code: 'BACKUP_FAILED', message: (e as Error).message });
+  }
+});
 
 app.get('/api/v1/admin/accounts', requireAuth, requireOwner, async (_req: AuthenticatedRequest, res) => {
   try {
