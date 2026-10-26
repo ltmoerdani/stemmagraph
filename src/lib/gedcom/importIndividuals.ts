@@ -34,6 +34,8 @@ import { citationsOf } from './citation'
 import type { ParsedCitation } from './citation'
 import { parseFamcStat } from './famcStat'
 import type { FamcStatResult } from './famcStat'
+import { resolveAssoRole } from './assoRole'
+import type { ParsedAssociation } from './assoRole'
 
 /** One parsed INDI record: raw payloads plus structured event dates. */
 export interface ImportedIndividual {
@@ -59,6 +61,8 @@ export interface ImportedIndividual {
   citations?: ParsedCitation[]
   /** Relasi anak-orang tua FAMC, satu entri per FAMC berpointer, urut dokumen; kosong bila record nihil FAMC. */
   famcStat?: ImportedFamcStat[]
+  /** Asosiasi ASSO level record (v405), urut dokumen; kosong bila record nihil ASSO ber-ROLE. */
+  associations?: ParsedAssociation[]
 }
 
 /** Satu relasi FAMC: pointer FAM tanpa @, plus hasil urai STAT lewat parseFamcStat. */
@@ -132,6 +136,49 @@ function famcStatsOf(record: GEDCStruct): ImportedFamcStat[] {
 }
 
 /**
+ * ASSO payload as the target INDI xref, null for @VOID@, undefined for
+ * non-pointer non-void payloads (skipped: not a legal association form).
+ */
+function assoXrefOf(asso: GEDCStruct): string | null | undefined {
+  const p = asso.payload
+  if (p instanceof GEDCStruct) return p.xref_id ?? null
+  if (p === null) return null
+  return undefined
+}
+
+/**
+ * All ASSO associations of an INDI record (v405), in file order.
+ * ROLE is mandatory under ASSO per spec: an ASSO without a ROLE sub
+ * is skipped with an honest log line, never a throw. PHRASE is read
+ * from inside ROLE. Payloads stay verbatim.
+ */
+function associationsOf(
+  record: GEDCStruct,
+  logger?: (msg: string) => void,
+): ParsedAssociation[] {
+  const out: ParsedAssociation[] = []
+  for (const asso of record.sub) {
+    if (asso.tag !== 'ASSO') continue
+    const roleStruct = asso.sub.find((s) => s.tag === 'ROLE')
+    if (roleStruct === undefined) {
+      logger?.('ASSO without ROLE skipped (invalid per GEDCOM 7)')
+      continue
+    }
+    const role = typeof roleStruct.payload === 'string' ? roleStruct.payload : ''
+    const phrase = payloadOf(roleStruct.sub.find((s) => s.tag === 'PHRASE'))
+    const xref = assoXrefOf(asso)
+    if (xref === undefined) continue
+    out.push({
+      xref,
+      role,
+      roleResolved: resolveAssoRole(role),
+      ...(phrase !== undefined ? { phrase } : {}),
+    })
+  }
+  return out
+}
+
+/**
  * Parses GEDCOM 7.0 text and returns one ImportedIndividual per INDI
  * record, in file order. Non-INDI records are ignored. The optional
  * logger receives vendor parse diagnostics (line, message) without any
@@ -165,6 +212,12 @@ export function importIndividuals(
     const famcStat = famcStatsOf(record)
     if (famcStat.length > 0) {
       entry.famcStat = famcStat
+    }
+    // v405: associations opsional, hanya hadir bila INDI punya ASSO
+    // ber-ROLE; INDI tanpa ASSO tidak mengubah bentuk output sama sekali.
+    const associations = associationsOf(record, logger)
+    if (associations.length > 0) {
+      entry.associations = associations
     }
     out.push(entry)
   }
