@@ -125,7 +125,7 @@ import {
 } from '../src/lib/metrics/kfactor';
 import { buildDigestForUser, loadUpcomingReminders, runWeeklyDigestPass, startDigestScheduler, startIcsTokenRotationScheduler } from './digest';
 import { startBackupScheduler } from '../src/server/backup/backupScheduler';
-import { runBackup } from '../src/server/backup/backupRunner';
+import { resolveBackupDir, runBackup } from '../src/server/backup/backupRunner';
 import { mailerDisabled } from '../src/lib/digest/mailer';
 import { weeklyWindow } from '../src/lib/digest/window';
 import { isPrevTokenWithinGrace } from '../src/lib/calendar/tokenLifecycle';
@@ -488,7 +488,7 @@ function formatAccount(user: User) {
 // v406: daftar file backup SQLite (khusus owner).
 app.get('/api/v1/backups', requireAuth, requireOwner, async (_req: AuthenticatedRequest, res) => {
   try {
-    const dir = process.env.BACKUP_DIR || 'data/backups';
+    const dir = resolveBackupDir();
     let names: string[] = [];
     try {
       names = fs.readdirSync(dir);
