@@ -4144,6 +4144,79 @@ app.post('/api/v1/members/:memberId/consent/self', requireAuth, async (req: Auth
   }
 });
 
+// ─── Consent self-service read (v409, VISION gap 3: jalur BACA subjek data) ───
+// Guard akses identik POST /consent/self: resolveSelfConsentAccess dipakai
+// ulang apa adanya, 403 SELF_ONLY identik untuk semua penolakan agar tidak
+// membocorkan ada-tidaknya member (anti-enumerasi pola v261-i).
+
+app.get('/api/v1/consent/self/members', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const viewer = await prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } });
+    const email = (viewer?.email ?? '').trim().toLowerCase();
+    if (email.length === 0) return res.json({ members: [] });
+    // Normalisasi email di sisi aplikasi (pola viewer-relation.ts): kandidat
+    // dibandingkan setelah trim lowercase supaya konsisten dengan guard self
+    // lain; respons hanya memuat member milik pemanggil sendiri.
+    const candidates = await prisma.familyMember.findMany({
+      where: { email: { not: null } },
+      select: { id: true, treeId: true, email: true },
+    });
+    const mine = candidates.filter((c) => (c.email ?? '').trim().toLowerCase() === email);
+    const members = await Promise.all(
+      mine.map(async (c) => {
+        const [rows, tree] = await Promise.all([
+          prisma.consentRecord.findMany({ where: { memberId: c.id }, orderBy: { at: 'asc' } }),
+          prisma.familyTree.findUnique({ where: { id: c.treeId }, select: { name: true } }),
+        ]);
+        const state = replayConsentState(rows);
+        const last = state.records[state.records.length - 1] ?? null;
+        return {
+          memberId: c.id,
+          treeId: c.treeId,
+          treeName: tree?.name ?? '',
+          granted: state.granted,
+          lastAction: last?.action ?? null,
+          lastAt: last?.at ?? null,
+        };
+      }),
+    );
+    res.json({ members });
+  } catch (e) {
+    res.status(500).json({ code: 'CONSENT_ERROR', message: (e as Error).message });
+  }
+});
+
+app.get('/api/v1/members/:memberId/consent/self', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
+  try {
+    const [viewer, m] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } }),
+      prisma.familyMember.findUnique({ where: { id: req.params.memberId } }),
+    ]);
+    if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const access = resolveSelfConsentAccess({
+      viewerEmail: viewer?.email ?? null,
+      memberEmail: m.email,
+      memberId: m.id,
+      targetMemberId: req.params.memberId,
+    });
+    if (!access.ok) {
+      console.error('consent self-service denied:', access.reason, { memberId: req.params.memberId, userId: req.userId });
+      return res.status(403).json({ code: 'SELF_ONLY', message: 'Consent self-service is limited to the data subject themselves' });
+    }
+    const rows = await prisma.consentRecord.findMany({
+      where: { memberId: req.params.memberId },
+      orderBy: { at: 'asc' },
+    });
+    const state = replayConsentState(rows);
+    res.json({ records: state.records, granted: state.granted });
+  } catch (e) {
+    if (e instanceof ConsentLedgerError) {
+      return res.status(409).json({ code: 'CONSENT_INVALID_TRANSITION', message: e.message });
+    }
+    res.status(500).json({ code: 'CONSENT_ERROR', message: (e as Error).message });
+  }
+});
+
 // ─── Erasure (S-09b-vi-ii-b, wiring adapter Express ke server hidup) ───────────
 
 createErasureExpressAdapter({ app, prisma });

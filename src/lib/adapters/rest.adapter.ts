@@ -57,8 +57,10 @@ import {
   ChangeProposalRecord,
   CreateChangeProposalInput,
   ConsentApi,
+  ConsentSelfApi,
   ConsentStateView,
   ConsentMutationResult,
+  SelfConsentOverview,
   CitationApi,
   CitationSpec,
   CitationEventType,
@@ -94,7 +96,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, ConsentSelfApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -744,6 +746,34 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     note?: string,
   ): Promise<ConsentMutationResult> {
     const body = await this.request<ConsentMutationResult>('POST', `/members/${memberId}/consent`, {
+      action,
+      scope,
+      ...(note === undefined ? {} : { note }),
+    });
+    return body;
+  }
+
+  // ── Consent self-service (v409) ────────────────────────
+  // Subject data surface: pure routing ke route /consent/self v408-v409.
+  // Bentuk respons dipagari minimal valid sama seperti jalur owner.
+
+  async listSelfConsent(): Promise<SelfConsentOverview> {
+    const body = await this.request<SelfConsentOverview>('GET', '/consent/self/members');
+    return { members: Array.isArray(body.members) ? body.members : [] };
+  }
+
+  async getSelfConsent(memberId: string): Promise<ConsentStateView> {
+    const body = await this.request<ConsentStateView>('GET', `/members/${memberId}/consent/self`);
+    return { records: body.records ?? [], granted: body.granted ?? false };
+  }
+
+  async postSelfConsent(
+    memberId: string,
+    action: ConsentMutationResult['record']['action'],
+    scope: string,
+    note?: string,
+  ): Promise<ConsentMutationResult> {
+    const body = await this.request<ConsentMutationResult>('POST', `/members/${memberId}/consent/self`, {
       action,
       scope,
       ...(note === undefined ? {} : { note }),
