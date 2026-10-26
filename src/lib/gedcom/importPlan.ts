@@ -64,6 +64,8 @@ export interface PlannedMember {
    * keputusan tetap milik wiring layer, tidak ada fabrikasi nilai.
    */
   privacyStatus?: 'shared' | 'private'
+  /** Asosiasi ASSO hasil capture import (v405), verbatim; undefined saat record nihil ASSO ber-ROLE. */
+  associations?: unknown[]
 }
 
 /** One planned relation. parent: memberXref is the parent, relatedXref the child. */
@@ -96,7 +98,7 @@ function plannedGender(sex: string | undefined): PlannedGender {
 
 /** Maps one parsed individual losslessly onto a planned member. */
 function plannedMember(individual: ImportedIndividual): PlannedMember {
-  return {
+  const member: PlannedMember = {
     xref: individual.xref,
     name: individual.name,
     gender: plannedGender(individual.sex),
@@ -118,6 +120,12 @@ function plannedMember(individual: ImportedIndividual): PlannedMember {
       deathDate: individual.deathDate,
     }).livingSuggested,
   }
+  // ASSO asosiasi (v405): add-only, key hanya hadir bila ada asosiasi
+  // supaya bentuk output utk INDI nihil ASSO tetap persis perilaku lama.
+  if (individual.associations !== undefined && individual.associations.length > 0) {
+    member.associations = individual.associations
+  }
+  return member
 }
 
 /**

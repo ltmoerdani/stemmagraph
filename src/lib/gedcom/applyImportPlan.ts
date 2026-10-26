@@ -41,6 +41,8 @@ export interface CreateMemberInput {
   birthPlace?: string
   /** Status privasi awal hasil RESN + living gate; wiring layer boleh memetakan ke kolom privacyStatus. */
   privacyStatus?: 'shared' | 'private'
+  /** ASSO asosiasi verbatim (v405); undefined bila nihil, wiring adapter yang menentukan penyimpanan. */
+  associations?: unknown[]
 }
 
 /** Laporan jujur hasil penerapan plan; dilempar tidak pernah terjadi. */
@@ -89,6 +91,9 @@ function memberInput(member: PlannedMember): CreateMemberInput {
       privacyStatus: member.privacyStatus,
       livingSuggested: member.livingSuggested,
     }),
+    ...(member.associations !== undefined && member.associations.length > 0
+      ? { associations: member.associations }
+      : {}),
   }
 }
 

@@ -4374,6 +4374,7 @@ function formatMember(m: FamilyMember) {
     education: m.education,
     gender: m.gender,
     sexGed: m.sexGed,
+    associations: m.associations ?? undefined,
     photoUrl: m.photoUrl,
     email: m.email,
     phone: m.phone,
