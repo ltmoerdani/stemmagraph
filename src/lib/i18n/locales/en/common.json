@@ -691,6 +691,26 @@
     "regrantAction": "Regrant",
     "loadFailed": "Failed to load the consent history."
   },
+  "consentSelf": {
+    "title": "Your Personal Data Consent",
+    "close": "Close",
+    "statusGranted": "Consent granted",
+    "statusRevoked": "Consent not granted",
+    "lastAction": "Last action",
+    "noHistory": "No consent recorded yet.",
+    "manage": "Manage Consent",
+    "scopeLabel": "Scope",
+    "scopePlaceholder": "e.g. photo export",
+    "noteLabel": "Note",
+    "notePlaceholder": "Optional note for this entry",
+    "scopeRequired": "Scope is required.",
+    "grantAction": "Grant",
+    "revokeAction": "Revoke",
+    "regrantAction": "Grant Again",
+    "cancel": "Cancel",
+    "confirmRevoke": "Revoke consent for {{name}}? This action is recorded in the consent history.",
+    "confirmRegrant": "Grant consent again for {{name}}? This action is recorded in the consent history."
+  },
   "sharePanel": {
     "open": "Manage share links",
     "title": "Share links: {{treeName}}",

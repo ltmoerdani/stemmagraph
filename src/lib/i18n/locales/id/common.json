@@ -691,6 +691,26 @@
     "regrantAction": "Berikan Lagi",
     "loadFailed": "Gagal memuat riwayat persetujuan."
   },
+  "consentSelf": {
+    "title": "Persetujuan Data Pribadi Anda",
+    "close": "Tutup",
+    "statusGranted": "Persetujuan diberikan",
+    "statusRevoked": "Persetujuan tidak diberikan",
+    "lastAction": "Aksi terakhir",
+    "noHistory": "Belum ada catatan persetujuan.",
+    "manage": "Kelola Persetujuan",
+    "scopeLabel": "Cakupan",
+    "scopePlaceholder": "cth. ekspor foto",
+    "noteLabel": "Catatan",
+    "notePlaceholder": "Catatan opsional untuk entri ini",
+    "scopeRequired": "Cakupan wajib diisi.",
+    "grantAction": "Berikan",
+    "revokeAction": "Cabut",
+    "regrantAction": "Berikan Lagi",
+    "cancel": "Batal",
+    "confirmRevoke": "Cabut persetujuan untuk {{name}}? Tindakan ini tercatat di riwayat persetujuan.",
+    "confirmRegrant": "Berikan lagi persetujuan untuk {{name}}? Tindakan ini tercatat di riwayat persetujuan."
+  },
   "sharePanel": {
     "open": "Kelola tautan bagikan",
     "title": "Tautan bagikan: {{treeName}}",
