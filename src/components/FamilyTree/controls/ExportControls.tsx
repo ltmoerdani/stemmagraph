@@ -96,6 +96,8 @@ export const ExportControls: React.FC = () => {
   // v402: schema JSON export failure gets its own visible flag so the
   // dropdown can show an honest error line (same pattern as posterError).
   const [jsonError, setJsonError] = useState(false);
+  // v403: photo ZIP export follows the same honest-error pattern.
+  const [photosError, setPhotosError] = useState(false);
   const { t } = useTranslation(['poster', 'common']);
   // Canonical adapter-layer data (not the legacy merged UI shape) so the
   // GEDCOM export reads exactly what the backend stores.
@@ -218,6 +220,46 @@ export const ExportControls: React.FC = () => {
     } catch (error) {
       console.error('JSON export failed:', error);
       setJsonError(true);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  /**
+   * v403 photo ZIP export: fetches the server-generated archive
+   * (stemmagraph-photo-export/1 manifest inside). Mode follows the
+   * same privacy state as GEDCOM/GEDZIP/JSON: clean by default, full
+   * only when the user explicitly unlocked it. Spinner-only feedback:
+   * the shared isExporting state drives the button label, no progress
+   * streaming.
+   */
+  const exportAsPhotoZip = async () => {
+    if (!currentFamilyTreeId) return;
+    setIsExporting(true);
+    setPhotosError(false);
+    try {
+      const mode = privacyMode === 'full' && fullArchiveUnlocked ? 'full' : 'clean';
+      const response = await fetch(
+        `/api/v1/trees/${currentFamilyTreeId}/export/photos${mode === 'full' ? '?mode=full' : ''}`,
+        { credentials: 'include' }
+      );
+      if (!response.ok) {
+        console.error('Photo ZIP export failed:', response.status);
+        setPhotosError(true);
+        return;
+      }
+      const blob = await response.blob();
+      const treeName = await resolveTreeName();
+      const fallback = gedcomFileName(treeName, new Date(), '-photos.zip');
+      const filename = filenameFromContentDisposition(
+        response.headers.get('Content-Disposition'),
+        fallback
+      );
+      downloadBlob(blob, filename);
+      handleDropdownClose();
+    } catch (error) {
+      console.error('Photo ZIP export failed:', error);
+      setPhotosError(true);
     } finally {
       setIsExporting(false);
     }
@@ -519,6 +561,31 @@ export const ExportControls: React.FC = () => {
                 data-testid="export-json-error"
               >
                 {t('export.jsonError')}
+              </p>
+            )}
+
+            {/* v403 photo ZIP export: server-side archive fetch with the
+                manifest inside. Menu stays open while the request runs
+                so busy and error feedback stay visible; success closes
+                it. */}
+            <button
+              onClick={exportAsPhotoZip}
+              disabled={isExporting || !currentFamilyTreeId}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              role="menuitem"
+              aria-busy={isExporting}
+              data-testid="export-photos-button"
+            >
+              <FileImage className="w-4 h-4" />
+              <span>{t('export.photosButton')}</span>
+            </button>
+            {photosError && (
+              <p
+                className="mt-1 mx-4 text-xs text-red-600"
+                role="alert"
+                data-testid="export-photos-error"
+              >
+                {t('export.photosError')}
               </p>
             )}
 

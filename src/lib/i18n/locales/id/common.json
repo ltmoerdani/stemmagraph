@@ -121,6 +121,8 @@
   "export": {
     "jsonButton": "Export JSON ber-schema",
     "jsonError": "Export JSON gagal",
+    "photosButton": "Export Foto ZIP",
+    "photosError": "Export foto gagal",
     "privacy": {
       "title": "Privasi Ekspor",
       "modeClean": "Privat bersih (siap dibagikan)",

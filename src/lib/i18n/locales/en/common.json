@@ -121,6 +121,8 @@
   "export": {
     "jsonButton": "Export schema JSON",
     "jsonError": "JSON export failed",
+    "photosButton": "Export Photo ZIP",
+    "photosError": "Photo export failed",
     "privacy": {
       "title": "Export Privacy",
       "modeClean": "Clean private copy (safe to share)",
