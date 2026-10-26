@@ -79,6 +79,8 @@ export interface FamilyMemberRecord {
   gender: 'male' | 'female' | 'other';
   /** GEDCOM 7 SEX payload verbatim (v262): M/F/X/U atau nilai non-enum dari sumber. */
   sexGed?: string;
+  /** ASSO asosiasi antar individu hasil import GEDCOM (v405), verbatim; undefined bila nihil. */
+  associations?: unknown[];
   photoUrl?: string;
   email?: string;
   phone?: string;
@@ -109,6 +111,8 @@ export interface CreateMemberInput {
   generation?: number;
   maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
   privacyStatus?: 'shared' | 'private';
+  /** ASSO asosiasi verbatim hasil import GEDCOM (v405); undefined bila nihil. */
+  associations?: unknown[];
 }
 
 export interface MemberRelationship {
