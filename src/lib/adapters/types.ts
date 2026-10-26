@@ -483,6 +483,35 @@ export interface ConsentApi {
   postConsent(memberId: string, action: ConsentRecordView['action'], scope: string, note?: string): Promise<ConsentMutationResult>;
 }
 
+/** One row of the self-service overview (v409 AC1): members matching the
+ *  logged-in user email, with current consent state per member. */
+export interface SelfConsentEntry {
+  memberId: string;
+  treeId: string;
+  treeName: string;
+  granted: boolean;
+  lastAction: ConsentRecordView['action'] | null;
+  lastAt: string | null;
+}
+
+/** Whole GET /consent/self/members response (v409 AC1). */
+export interface SelfConsentOverview {
+  members: SelfConsentEntry[];
+}
+
+/** Self-service consent surface (v409 AC3). Only the REST adapter
+ *  implements it: the subject data routes go behind /api/v1 like the owner
+ *  surface. Mock and supabase adapters get null from getConsentSelfApi and
+ *  the panel hides. */
+export interface ConsentSelfApi {
+  /** GET /consent/self/members: list of self members plus consent state. */
+  listSelfConsent(): Promise<SelfConsentOverview>;
+  /** GET /members/:memberId/consent/self: replayed ledger, oldest first. */
+  getSelfConsent(memberId: string): Promise<ConsentStateView>;
+  /** POST /members/:memberId/consent/self: append one grant/revoke/regrant row as the data subject. */
+  postSelfConsent(memberId: string, action: ConsentRecordView['action'], scope: string, note?: string): Promise<ConsentMutationResult>;
+}
+
 // ─── Error Types ──────────────────────────────────────────
 
 export class AdapterError extends Error {

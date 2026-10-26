@@ -213,6 +213,16 @@ export function getConsentApi(): ConsentApi | null {
 }
 
 /**
+ * Returns the self-service consent surface (v409) of the active adapter, or
+ * null when the adapter has no server backend (mock, supabase): the panel
+ * hides for null instead of crashing (same shape as getConsentApi).
+ */
+export function getConsentSelfApi(): ConsentSelfApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+/**
  * Override adapter with a custom implementation (useful for testing).
  */
 export function setAdapter(adapter: DataAdapter): void {
@@ -289,6 +299,8 @@ export type {
   ChangeProposalRecord,
   CreateChangeProposalInput,
   ConsentApi,
+  ConsentSelfApi,
+  SelfConsentOverview,
   ConsentRecordView,
   ConsentStateView,
   ConsentMutationResult,
