@@ -344,6 +344,30 @@ function addCitations(event: GEDCStruct, list: ParsedCitation[]): void {
 }
 
 /**
+ * Writes record-level ASSO associations (v405) captured at GEDCOM import.
+ * Payloads pass through verbatim: xref null (void) becomes '@VOID@', a
+ * string xref becomes '@<xref>@', ROLE is written under the ASSO and
+ * PHRASE under the ROLE when present. Entries without a string role are
+ * skipped honestly (ROLE is mandatory per spec); absent/empty input
+ * writes nothing, so pre-v405 exports stay byte-identical.
+ */
+function addAssociations(indi: GEDCStruct, list: unknown[]): void {
+  for (const raw of list) {
+    if (typeof raw !== 'object' || raw === null) continue
+    const rec = raw as Record<string, unknown>
+    const role = typeof rec.role === 'string' && rec.role !== '' ? rec.role : undefined
+    if (role === undefined) continue
+    // Pointer via vendor third param (pola FAMS/FAMC): xref string jadi
+    // pointer '@<xref>@', null menjadi '@VOID@' lewat id VOID bawaan vendor.
+    const asso = new GEDCStruct('ASSO', indi, rec.xref === null || rec.xref === undefined ? 'VOID' : String(rec.xref))
+    const roleStruct = new GEDCStruct('ROLE', asso, undefined, role)
+    if (typeof rec.phrase === 'string' && rec.phrase !== '') {
+      new GEDCStruct('PHRASE', roleStruct, undefined, rec.phrase)
+    }
+  }
+}
+
+/**
  * Writes event-level SOURCE citations for one record (v151-iii).
  * `citations` is keyed `${keyPrefix}:${TAG}`; each tag's citation list
  * lands under the event structure of the same tag, in input order
@@ -744,6 +768,16 @@ export function exportGedcom70(input: ExportGedcom70Input): ExportGedcom70Result
       if (pediRaw !== undefined && pediRaw !== '') {
         addText(famc, 'PEDI', pediRaw)
       }
+    }
+
+    // Record-level ASSO associations (v405): captured at import, written
+    // back verbatim here. Skipped entirely for redacted members: PHRASE
+    // is free-form text and can carry a name, so a redacted INDI must
+    // not carry associations. Absent/empty input writes nothing, so
+    // pre-v405 exports stay byte-identical.
+    const memberAssoc = (m as { associations?: unknown }).associations
+    if (!redact && Array.isArray(memberAssoc) && memberAssoc.length > 0) {
+      addAssociations(indi, memberAssoc)
     }
 
     // Event-level SOURCE citations (v151-iii): routed to the BIRT/DEAT
