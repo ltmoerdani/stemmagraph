@@ -97,13 +97,14 @@ afterAll(async () => {
   });
 });
 
-async function postSelf(body: unknown): Promise<{ status: number; json: any }> {
+interface SelfResponse { status: number; json: Record<string, unknown> }
+async function postSelf(body: unknown): Promise<SelfResponse> {
   const res = await fetch(`${BASE}/api/v1/members/${MEMBER_ID}/consent/self`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: authHeader() },
     body: JSON.stringify(body),
   });
-  return { status: res.status, json: (await res.json()) as any };
+  return { status: res.status, json: (await res.json()) as Record<string, unknown> };
 }
 
 describe('POST /api/v1/members/:memberId/consent/self (v408)', () => {
