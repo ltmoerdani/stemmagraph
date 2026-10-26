@@ -77,6 +77,7 @@ import {
 } from '../src/lib/dedup/mergeApproval';
 import { computeUpcomingBirthdays } from '../src/lib/stats/upcoming-birthdays';
 import { buildTreeJsonExport } from '../src/lib/portability/treeJsonExport';
+import { buildPhotoZipManifest } from '../src/lib/portability/photoZipExport';
 import { computeUpcomingAnniversaries } from '../src/lib/stats/upcoming-anniversaries';
 import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeNextAnniversaries } from '../src/lib/anniversaries/nextAnniversaries';
@@ -2508,6 +2509,101 @@ app.get('/api/v1/trees/:treeId/export/json', requireAuth, async (req: Authentica
     return res.status(200).send(JSON.stringify(doc, null, 2));
   } catch (e) {
     return res.status(500).json({ code: 'EXPORT_JSON_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── Portability Photo ZIP export (v403, fase 2) ─────────
+//
+// GET /api/v1/trees/:treeId/export/photos mengemas foto anggota ke
+// dalam satu arsip ZIP lewat modul pure
+// src/lib/portability/photoZipExport.ts. Privacy gate sama dengan
+// jalur GEDCOM/GEDZIP/JSON: mode clean (default) hanya menyertakan
+// foto mendiang dan anggota hidup ber-consent shared; mode full hanya
+// untuk owner tree. Manifest stemmagraph-photo-export/1 turut disertakan
+// sebagai manifest.json di akar arsip, mencatat foto yang dikirim dan
+// yang di-skip secara jujur (file hilang bukan kegagalan total).
+// Header aman pola v402: nosniff, no-store, no-referrer, filename
+// disanitasi regex. Tanpa SSRF: foto dibaca dari PHOTO_UPLOADS_DIR
+// lokal, tidak ada fetch URL eksternal.
+app.get('/api/v1/trees/:treeId/export/photos', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const modeRaw = req.query['mode'];
+    if (modeRaw !== undefined && modeRaw !== 'clean' && modeRaw !== 'full') {
+      return res.status(422).json({ code: 'INVALID_MODE', message: 'mode only supports clean or full' });
+    }
+    const mode = modeRaw === 'full' ? 'full' : 'clean';
+    if (mode === 'full') {
+      const role = await resolveTreeRole(req.userId!, req.params.treeId);
+      if (role !== 'owner') {
+        return res.status(403).json({ code: 'FORBIDDEN_FULL_EXPORT', message: 'full export requires tree owner' });
+      }
+    }
+    const [tree, members] = await Promise.all([
+      prisma.familyTree.findUnique({
+        where: { id: req.params.treeId },
+        select: { id: true, name: true },
+      }),
+      prisma.familyMember.findMany({ where: { treeId: req.params.treeId } }),
+    ]);
+    if (!tree) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tree not found' });
+
+    // AC3: aggregate bound is measured from disk BEFORE zipping. Photo
+    // bytes are read from PHOTO_UPLOADS_DIR, then the pure module sums
+    // the SELECTED photos (after privacy filtering) and refuses with a
+    // structured AGGREGATE_LIMIT result instead of building a giant
+    // archive. Missing files are skipped here and recorded honestly in
+    // the manifest as file_not_found entries.
+    const photos = new Map<string, Uint8Array>();
+    const memberAdapterRows = members.map((m) => ({
+      ...m,
+      privacyStatus: m.privacyStatus ?? undefined,
+      deathDate: m.deathDate ?? undefined,
+      photoUrl: m.photoUrl ?? undefined,
+    }));
+    for (const m of memberAdapterRows) {
+      const filePath = photoFilePath(m);
+      if (filePath === null) continue;
+      try {
+        photos.set(m.id, new Uint8Array(await fs.promises.readFile(filePath)));
+      } catch {
+        // leave absent: the pure module records file_not_found
+      }
+    }
+
+    const result = buildPhotoZipManifest({
+      members: memberAdapterRows,
+      photos,
+      exportedAt: new Date(),
+      privacyMode: mode,
+      tree: { id: tree.id, name: tree.name },
+    });
+    if (!result.ok) {
+      return res.status(422).json({
+        code: result.code,
+        message: result.message,
+        totalBytes: result.totalBytes,
+        limitBytes: result.limitBytes,
+      });
+    }
+    const safeName = (tree.name ?? 'family-tree')
+      .trim()
+      .replace(/[^a-zA-Z0-9-_]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'family-tree';
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const filename = `${safeName}-${yyyy}${mm}${dd}-photos.zip`;
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    return res.status(200).send(Buffer.from(result.zip));
+  } catch (e) {
+    return res.status(500).json({ code: 'EXPORT_PHOTOS_ERROR', message: (e as Error).message });
   }
 });
 
