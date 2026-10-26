@@ -62,6 +62,10 @@ import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } fro
 import { resolveSelfConsentAccess } from '../src/lib/consent/self-consent';
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
+import {
+  filterRelationshipsForViewer,
+  type MemberVisibilityDecision,
+} from '../src/lib/privacy/relationshipVisibility';
 import { validatePhotoUpload, type PhotoMime } from '../src/lib/photo/photoFile';
 import { extractPhotoPayload } from '../src/lib/photo/multipart';
 import { computeLivingStats } from '../src/lib/stats/living-stats';
@@ -4266,6 +4270,51 @@ app.get('/api/v1/trees/:treeId/relationships', requireAuth, async (req: Authenti
   try {
     const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    // v412 fase 1 relationship-based privacy: owner dan editor menerima
+    // daftar penuh tanpa filter; role viewer disaring lewat modul pure
+    // relationshipVisibility dengan keputusan per anggota pola v261-i
+    // (email User vs FamilyMember.email, resolveViewerRelation reuse).
+    if (guard.role !== 'owner' && guard.role !== 'editor') {
+      const [rels, members, viewer] = await Promise.all([
+        prisma.familyRelationship.findMany({ where: { treeId: req.params.treeId } }),
+        prisma.familyMember.findMany({
+          where: { treeId: req.params.treeId },
+          select: { id: true, treeId: true, email: true, isAlive: true, privacyStatus: true },
+        }),
+        prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } }),
+      ]);
+      const viewerRelationInput = {
+        viewerEmail: viewer?.email ?? null,
+        members: members.map((m) => ({ id: m.id, email: m.email })),
+        relationships: rels.map((r) => ({ memberId: r.memberId, relatedId: r.relatedId, type: r.type })),
+      };
+      const visibilityByMemberId: Record<string, MemberVisibilityDecision> = {};
+      for (const m of members) {
+        const relation = resolveViewerRelation({ ...viewerRelationInput, targetMemberId: m.id });
+        // Bentuk minimal RedactableMember untuk applyMemberVisibility;
+        // yang dipakai hanya keputusannya (full/name-only/hidden),
+        // isi payload name-only tidak ikut ke respons.
+        const minimal = {
+          id: m.id,
+          treeId: m.treeId,
+          name: '',
+          isAlive: m.isAlive,
+          privacyStatus: m.privacyStatus,
+          generation: null,
+          gender: null,
+        };
+        const decision = applyMemberVisibility(minimal, relation);
+        visibilityByMemberId[m.id] =
+          decision === null ? 'hidden' : decision === minimal ? 'full' : 'name-only';
+      }
+      const visible = filterRelationshipsForViewer({
+        visibilityByMemberId,
+        relationships: rels,
+      });
+      // Respons sukses biasa tanpa indikator jumlah asli (anti-enumerasi):
+      // viewer tidak diberi tahu ada relasi yang dibuang.
+      return res.json(visible.map((r) => formatRelationship(r)));
+    }
     const rels = await prisma.familyRelationship.findMany({ where: { treeId: req.params.treeId } });
     res.json(rels.map((r) => formatRelationship(r)));
   } catch (e) {
