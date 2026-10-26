@@ -124,6 +124,7 @@ import {
   roundGrowthMetric,
 } from '../src/lib/metrics/kfactor';
 import { buildDigestForUser, loadUpcomingReminders, runWeeklyDigestPass, startDigestScheduler, startIcsTokenRotationScheduler } from './digest';
+import { startBackupScheduler } from '../src/server/backup/backupScheduler';
 import { mailerDisabled } from '../src/lib/digest/mailer';
 import { weeklyWindow } from '../src/lib/digest/window';
 import { isPrevTokenWithinGrace } from '../src/lib/calendar/tokenLifecycle';
@@ -4405,6 +4406,9 @@ startDigestScheduler();
 // v400: rotasi otomatis token ICS feed berjalan bersebelahan digest,
 // tanpa prasyarat konfigurasi karena feed tidak bergantung SMTP.
 startIcsTokenRotationScheduler();
+
+// v406: backup SQLite terjadwal, default 24 jam, tanpa pass saat boot.
+startBackupScheduler();
 
 app.listen(PORT, () => {
   console.log(`🚀 API server running at http://localhost:${PORT}/api/v1`);
