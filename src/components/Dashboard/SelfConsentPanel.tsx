@@ -14,7 +14,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { X, UserCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getConsentSelfApi } from '../../lib/adapters';
-import type { SelfConsentEntry } from '../../lib/adapters';
+import type { SelfConsentEntry, ConsentRecordView } from '../../lib/adapters';
 import { formatDate } from '../../lib/i18n';
 
 type ConsentSelfAction = 'grant' | 'revoke' | 'regrant';
@@ -32,6 +32,9 @@ export const SelfConsentPanel: React.FC<{ onClose: () => void }> = ({ onClose })
   const [confirming, setConfirming] = useState<'revoke' | 'regrant' | null>(null);
   const [scope, setScope] = useState('');
   const [note, setNote] = useState('');
+  // v411 AC3: riwayat penuh per member (timeline), diambil saat member
+  // dipilih kelola; kosong = null berarti belum diambil.
+  const [eventsByMember, setEventsByMember] = useState<Record<string, ConsentRecordView[] | null>>({});
 
   const load = useCallback(async (): Promise<void> => {
     if (!selfApi) return;
@@ -216,11 +219,42 @@ export const SelfConsentPanel: React.FC<{ onClose: () => void }> = ({ onClose })
                 setSelectedId(entry.memberId);
                 setConfirming(null);
                 setActionError(null);
+                // v411 AC3: ambil riwayat penuh saat kelola dibuka (sekali,
+                // hasil di-cache sampai panel ditutup).
+                if (eventsByMember[entry.memberId] === undefined && selfApi) {
+                  setEventsByMember((prev) => ({ ...prev, [entry.memberId]: null }));
+                  void selfApi
+                    .getSelfConsentEvents(entry.memberId)
+                    .then((res) => {
+                      setEventsByMember((prev) => ({ ...prev, [entry.memberId]: res.records }));
+                    })
+                    .catch(() => {
+                      setEventsByMember((prev) => ({ ...prev, [entry.memberId]: [] }));
+                    });
+                }
               }}
               className="min-w-[24px] min-h-[24px] px-3 py-1.5 text-xs rounded-md border border-teal-300 text-teal-700 hover:bg-teal-50 transition-colors"
             >
               {t('consentSelf.manage')}
             </button>
+          </div>
+        )}
+        {isSelected && eventsByMember[entry.memberId] !== undefined && (
+          <div data-testid={`self-consent-history-${entry.memberId}`} className="border-t border-gray-100 pt-2 space-y-1">
+            <p className="text-xs font-medium text-gray-700">{t('consentSelf.historyTitle')}</p>
+            {eventsByMember[entry.memberId] === null ? (
+              <p className="text-xs text-gray-400">{t('consentSelf.historyLoading')}</p>
+            ) : (eventsByMember[entry.memberId] as ConsentRecordView[]).length === 0 ? (
+              <p className="text-xs text-gray-400">{t('consentSelf.noHistory')}</p>
+            ) : (
+              <ul className="space-y-1">
+                {(eventsByMember[entry.memberId] as ConsentRecordView[]).map((ev) => (
+                  <li key={ev.id} className="text-xs text-gray-600" data-testid={`self-consent-history-row-${ev.id}`}>
+                    {`${formatDate(ev.at, i18n.language)} : ${ev.action} : ${ev.scope}${ev.note ? ` : ${ev.note}` : ''}`}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </article>

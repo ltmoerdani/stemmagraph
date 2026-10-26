@@ -709,7 +709,9 @@
     "regrantAction": "Berikan Lagi",
     "cancel": "Batal",
     "confirmRevoke": "Cabut persetujuan untuk {{name}}? Tindakan ini tercatat di riwayat persetujuan.",
-    "confirmRegrant": "Berikan lagi persetujuan untuk {{name}}? Tindakan ini tercatat di riwayat persetujuan."
+    "confirmRegrant": "Berikan lagi persetujuan untuk {{name}}? Tindakan ini tercatat di riwayat persetujuan.",
+    "historyTitle": "Riwayat Persetujuan",
+    "historyLoading": "Memuat riwayat..."
   },
   "sharePanel": {
     "open": "Kelola tautan bagikan",

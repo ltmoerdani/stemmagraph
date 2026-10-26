@@ -767,6 +767,11 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return { records: body.records ?? [], granted: body.granted ?? false };
   }
 
+  async getSelfConsentEvents(memberId: string): Promise<{ records: ConsentRecordView[] }> {
+    const body = await this.request<{ records?: ConsentRecordView[] }>('GET', `/members/${memberId}/consent/self/events`);
+    return { records: Array.isArray(body.records) ? body.records : [] };
+  }
+
   async postSelfConsent(
     memberId: string,
     action: ConsentMutationResult['record']['action'],
