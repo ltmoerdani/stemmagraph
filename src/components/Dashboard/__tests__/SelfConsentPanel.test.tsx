@@ -16,6 +16,7 @@ import { SelfConsentPanel } from '../SelfConsentPanel';
 const mocks = vi.hoisted(() => ({
   listSelfConsent: vi.fn(async () => ({ members: [] as Array<Record<string, unknown>> })),
   getSelfConsent: vi.fn(async () => ({ records: [], granted: false })),
+  getSelfConsentEvents: vi.fn(async () => ({ records: [] as Array<Record<string, unknown>> })),
   postSelfConsent: vi.fn(async () => ({ record: { action: 'grant' }, granted: true, privacyStatus: 'shared' })),
 }));
 
@@ -47,6 +48,7 @@ vi.mock('../../../lib/adapters', () => ({
   getConsentSelfApi: () => mocks.apiNull === true ? null : ({
     listSelfConsent: mocks.listSelfConsent,
     getSelfConsent: mocks.getSelfConsent,
+    getSelfConsentEvents: mocks.getSelfConsentEvents,
     postSelfConsent: mocks.postSelfConsent,
   }),
 }));
@@ -151,5 +153,41 @@ describe('SelfConsentPanel (v409)', () => {
     state.apiNull = true;
     render(<SelfConsentPanel onClose={() => undefined} />);
     expect(screen.queryByTestId('self-consent-title')).toBeNull();
+  });
+});
+
+describe('SelfConsentPanel timeline riwayat (v411 AC3)', () => {
+  it('kelola dibuka: getSelfConsentEvents dipanggil, baris riwayat tampil kronologis', async () => {
+    mocks.getSelfConsentEvents.mockResolvedValue({
+      records: [
+        { id: 'rec-a', memberId: 'm-self', action: 'grant', scope: 'share', note: null, at: '2026-10-01T00:00:00.000Z' },
+        { id: 'rec-b', memberId: 'm-self', action: 'revoke', scope: 'share', note: 'tarik', at: '2026-10-02T00:00:00.000Z' },
+      ],
+    });
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    await waitFor(() => expect(mocks.getSelfConsentEvents).toHaveBeenCalledWith('m-self'));
+    const box = await waitFor(() => screen.getByTestId(`self-consent-history-${ENTRY.memberId}`));
+    expect(box).toBeTruthy();
+    expect(screen.getByTestId('self-consent-history-row-rec-a').textContent).toContain('grant');
+    expect(screen.getByTestId('self-consent-history-row-rec-b').textContent).toContain('revoke');
+    expect(screen.getByTestId('self-consent-history-row-rec-b').textContent).toContain('tarik');
+  });
+
+  it('riwayat kosong: teks noHistory tampil, tanpa crash', async () => {
+    mocks.getSelfConsentEvents.mockResolvedValue({ records: [] });
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    await waitFor(() => expect(mocks.getSelfConsentEvents).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByTestId(`self-consent-history-${ENTRY.memberId}`).textContent).toContain('Belum ada catatan'));
+  });
+
+  it('getSelfConsentEvents gagal: fallback array kosong, panel tetap hidup', async () => {
+    mocks.getSelfConsentEvents.mockRejectedValueOnce(new Error('boom'));
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    await waitFor(() => expect(mocks.getSelfConsentEvents).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByTestId(`self-consent-history-${ENTRY.memberId}`).textContent).toContain('Belum ada catatan'));
+    expect(screen.getByTestId(`self-consent-grant-${ENTRY.memberId}`)).toBeTruthy();
   });
 });

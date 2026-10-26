@@ -508,6 +508,8 @@ export interface ConsentSelfApi {
   listSelfConsent(): Promise<SelfConsentOverview>;
   /** GET /members/:memberId/consent/self: replayed ledger, oldest first. */
   getSelfConsent(memberId: string): Promise<ConsentStateView>;
+  /** GET /members/:memberId/consent/self/events (v411): full ledger rows, oldest first. */
+  getSelfConsentEvents(memberId: string): Promise<{ records: ConsentRecordView[] }>;
   /** POST /members/:memberId/consent/self: append one grant/revoke/regrant row as the data subject. */
   postSelfConsent(memberId: string, action: ConsentRecordView['action'], scope: string, note?: string): Promise<ConsentMutationResult>;
 }

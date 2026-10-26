@@ -4217,6 +4217,40 @@ app.get('/api/v1/members/:memberId/consent/self', requireAuth, async (req: Authe
   }
 });
 
+// GET /api/v1/members/:memberId/consent/self/events (v411 AC1): riwayat
+// penuh ledger consent milik subjek data, urut at ascending. Guard identik
+// GET /consent/self: resolveSelfConsentAccess reuse apa adanya, 403
+// SELF_ONLY identik semua alasan tanpa membocorkan member, 404 NOT_FOUND.
+app.get('/api/v1/members/:memberId/consent/self/events', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
+  try {
+    const [viewer, m] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } }),
+      prisma.familyMember.findUnique({ where: { id: req.params.memberId } }),
+    ]);
+    if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const access = resolveSelfConsentAccess({
+      viewerEmail: viewer?.email ?? null,
+      memberEmail: m.email,
+      memberId: m.id,
+      targetMemberId: req.params.memberId,
+    });
+    if (!access.ok) {
+      console.error('consent self-service denied:', access.reason, { memberId: req.params.memberId, userId: req.userId });
+      return res.status(403).json({ code: 'SELF_ONLY', message: 'Consent self-service is limited to the data subject themselves' });
+    }
+    const rows = await prisma.consentRecord.findMany({
+      where: { memberId: req.params.memberId },
+      orderBy: { at: 'asc' },
+    });
+    res.json({ records: rows });
+  } catch (e) {
+    if (e instanceof ConsentLedgerError) {
+      return res.status(409).json({ code: 'CONSENT_INVALID_TRANSITION', message: e.message });
+    }
+    res.status(500).json({ code: 'CONSENT_ERROR', message: (e as Error).message });
+  }
+});
+
 // ─── Erasure (S-09b-vi-ii-b, wiring adapter Express ke server hidup) ───────────
 
 createErasureExpressAdapter({ app, prisma });

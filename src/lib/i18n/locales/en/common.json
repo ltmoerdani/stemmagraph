@@ -709,7 +709,9 @@
     "regrantAction": "Grant Again",
     "cancel": "Cancel",
     "confirmRevoke": "Revoke consent for {{name}}? This action is recorded in the consent history.",
-    "confirmRegrant": "Grant consent again for {{name}}? This action is recorded in the consent history."
+    "confirmRegrant": "Grant consent again for {{name}}? This action is recorded in the consent history.",
+    "historyTitle": "Consent History",
+    "historyLoading": "Loading history..."
   },
   "sharePanel": {
     "open": "Manage share links",
