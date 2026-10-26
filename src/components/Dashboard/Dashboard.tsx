@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff, Link2, ShieldAlert, CalendarPlus } from 'lucide-react';
+import { Plus, Users, Calendar, Settings, List, Grid3X3, TreePine, FileDiff, Link2, ShieldAlert, CalendarPlus, UserCheck } from 'lucide-react';
 import { CreateFamilyTreeModal } from './CreateFamilyTreeModal';
 import { FeedPanel } from './FeedPanel';
 import { InvitationsPanel } from './InvitationsPanel';
@@ -7,6 +7,8 @@ import { ShareLinksPanel } from './ShareLinksPanel';
 import { ChangeReviewPanel } from './ChangeReviewPanel';
 import { MergeApprovalsPanel } from './MergeApprovalsPanel';
 import { CalendarFeedPanel } from './CalendarFeedPanel';
+import { SelfConsentPanel } from './SelfConsentPanel';
+
 import { DedupReviewMount } from '../FamilyTree/DedupReviewMount';
 import { TemplatePicker } from '../Onboarding/TemplatePicker';
 import type { SeedTemplate } from '../../lib/onboarding/seedTemplates';
@@ -42,6 +44,7 @@ export const Dashboard: React.FC = () => {
   const [approvalsTreeId, setApprovalsTreeId] = useState<string | null>(null);
   // Tree whose calendar feed panel is open (v394 AC5): owner/editor only.
   const [calendarFeedTreeId, setCalendarFeedTreeId] = useState<string | null>(null);
+  const [selfConsentOpen, setSelfConsentOpen] = useState(false);
 
   useEffect(() => {
     const mergeApi = getMergeApi();
@@ -209,6 +212,14 @@ export const Dashboard: React.FC = () => {
 
             {/* User Menu */}
             <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setSelfConsentOpen(true)}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                title={t('consentSelf.manage')}
+                aria-label={t('consentSelf.manage')}
+              >
+                <UserCheck className="w-4 h-4 text-gray-600" />
+              </button>
               <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
                 {user?.avatar ? (
                   <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
@@ -555,6 +566,9 @@ export const Dashboard: React.FC = () => {
           onClose={() => setCalendarFeedTreeId(null)}
         />
       )}
+
+      {/* Self consent panel (v409 AC4/AC5): kelola persetujuan data diri sendiri */}
+      {selfConsentOpen && <SelfConsentPanel onClose={() => setSelfConsentOpen(false)} />}
     </div>
   );
 };
