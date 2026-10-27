@@ -88,9 +88,10 @@ import { computeCitationCoverage } from '../src/lib/stats/citation-coverage';
 import { computeNextAnniversaries } from '../src/lib/anniversaries/nextAnniversaries';
 import { buildIcsFeed, effectiveHaulDate } from '../src/lib/calendar/icsFeed';
 import { computeGenerations } from '../src/lib/stats/generations';
+import { computePlaceDistribution } from '../src/lib/stats/place-distribution';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { computeOldestLiving } from '../src/lib/stats/oldest-living';
-import { computePlaceDistribution } from '../src/lib/places/distribution/placeDistribution';
+import { computePlaceDistribution as computePlaceCoordDistribution } from '../src/lib/places/distribution/placeDistribution';
 import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
 import {
   computeBirthsByCenturyFromEvents,
@@ -2689,6 +2690,37 @@ app.get('/api/v1/trees/:treeId/stats/living', requireAuthStatsLiving, async (req
   }
 });
 
+// ─── Place distribution (v413 fase 1, read-only aggregate) ─────
+//
+// GET /api/v1/trees/:treeId/stats/distribution mengembalikan hanya
+// angka agregat dari modul pure src/lib/stats/place-distribution.ts.
+// K-anonymity k = 3: negara dengan count di bawah 3 dibuang, region
+// per negara dengan count di bawah 3 dibuang. Anggota hidup dengan
+// privacyStatus private dikeluarkan dari agregasi. Body tanpa field
+// per-anggota; pola auth persis route stats/living di atas.
+app.get('/api/v1/trees/:treeId/stats/distribution', requireAuthStatsLiving, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const members = await prisma.familyMember.findMany({
+      where: { treeId: req.params.treeId },
+      select: { birthPlace: true, currentLocation: true, isAlive: true, privacyStatus: true },
+    });
+    const entries = members
+      .filter((m) => !(m.isAlive === true && m.privacyStatus === 'private'))
+      .map((m) => ({ birthPlace: m.birthPlace, currentLocation: m.currentLocation }));
+    const K = 3;
+    const distribution = computePlaceDistribution(entries);
+    const countries = distribution.countries
+      .filter((c) => c.count >= K)
+      .map((c) => ({ country: c.country, count: c.count, regions: c.regions.filter((r) => r.count >= K) }));
+    res.set('Cache-Control', 'private, no-cache');
+    return res.json({ countries, totalWithPlace: distribution.totalWithPlace, excludedNoPlace: distribution.excludedNoPlace });
+  } catch (e) {
+    return res.status(500).json({ code: 'DISTRIBUTION_STATS_ERROR', message: (e as Error).message });
+  }
+});
+
 // ─── Upcoming birthdays (v273 fase i, read-only) ─────────
 //
 // GET /api/v1/trees/:treeId/stats/birthdays/upcoming returns the next
@@ -3346,7 +3378,7 @@ app.get('/api/v1/trees/:treeId/places/distribution', requireAuthStatsLiving, asy
       where: { treeId: req.params.treeId },
       select: { latitude: true, longitude: true },
     });
-    const result = computePlaceDistribution(
+    const result = computePlaceCoordDistribution(
       places.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
     );
     const body = JSON.stringify(result);

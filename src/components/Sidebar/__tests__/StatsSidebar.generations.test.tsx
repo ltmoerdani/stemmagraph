@@ -21,6 +21,21 @@ interface GenerationsCountRow {
   generationCount: number | null;
 }
 
+/** Stub kosong bentuk FamilySizeStatsDto: average null berarti section tak dirender. */
+interface FamilySizeStatsStub {
+  average: number | null;
+  median: number | null;
+  max: number;
+  distribution: {
+    zero: number;
+    oneToTwo: number;
+    threeToFour: number;
+    fivePlus: number;
+  };
+  familyCount: number;
+  excludedCount: number;
+}
+
 const { mockMembers, mockStats, mockTreeId, mockApi } = vi.hoisted(() => ({
   mockMembers: { list: [] as FamilyMember[] },
   mockStats: { value: null as FamilyStats | null },
@@ -75,11 +90,30 @@ function mockApiWith(
   impl: (treeId: string) => Promise<GenerationsCountRow>,
 ): {
   getGenerationsCount: (treeId: string) => Promise<GenerationsCountRow>;
+  getOldestLiving: () => Promise<never[]>;
+  getFamilySizeStats: () => Promise<FamilySizeStatsStub>;
   listUpcomingAnniversaries: () => Promise<never[]>;
+  getPlaceDistribution: () => Promise<{ points: never[]; totalPlaced: number; excludedNoCoords: number }>;
+  getFamilyDistribution: () => Promise<{ countries: never[]; totalWithPlace: number; excludedNoPlace: number }>;
 } {
   return {
     getGenerationsCount: vi.fn(impl),
+    // Stub diam: keenam method API dipanggil saat mount, payload kosong
+    // menjaga section lain tidak dirender pada test wiring generations.
+    getOldestLiving: vi.fn(() => Promise.resolve([])),
+    getFamilySizeStats: vi.fn(() =>
+      Promise.resolve({
+        average: null,
+        median: null,
+        max: 0,
+        distribution: { zero: 0, oneToTwo: 0, threeToFour: 0, fivePlus: 0 },
+        familyCount: 0,
+        excludedCount: 0,
+      }),
+    ),
     listUpcomingAnniversaries: vi.fn(() => Promise.resolve([])),
+    getPlaceDistribution: vi.fn(() => Promise.resolve({ points: [], totalPlaced: 0, excludedNoCoords: 0 })),
+    getFamilyDistribution: vi.fn(() => Promise.resolve({ countries: [], totalWithPlace: 0, excludedNoPlace: 0 })),
   };
 }
 

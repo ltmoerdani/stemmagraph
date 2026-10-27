@@ -8,6 +8,7 @@ import { computeUpcomingBirthdays } from '../../lib/stats/upcoming-birthdays';
 import { getStatsApi } from '../../lib/adapters';
 import { PlaceDistributionMap } from './PlaceDistributionMap';
 import type { UpcomingAnniversaryDto } from '../../lib/adapters';
+import type { FamilyDistributionDto } from '../../lib/adapters';
 import type { FamilySizeStatsDto } from '../../lib/adapters';
 
 /** Format YYYY-MM-DD ke tanggal pendek locale via Intl UTC (bebas geser hari zona). */
@@ -30,6 +31,7 @@ export const StatsSidebar: React.FC = () => {
   const [familySizeLoaded, setFamilySizeLoaded] = useState(false);
   const [oldestLiving, setOldestLiving] = useState<OldestLivingEntryDto[] | null>(null);
   const [oldestLivingLoaded, setOldestLivingLoaded] = useState(false);
+  const [familyDistribution, setFamilyDistribution] = useState<{ treeId: string; dto: FamilyDistributionDto } | null>(null);
 
   const livingStats = useMemo(
     () =>
@@ -168,6 +170,31 @@ export const StatsSidebar: React.FC = () => {
         if (cancelled) return;
         setOldestLiving(null);
         setOldestLivingLoaded(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFamilyTreeId]);
+
+  // Family distribution (v413 fase 1): agregat sebaran negara dan
+  // wilayah dari server. Data dibawa bersama treeId asalnya (pola
+  // v399 loaded key guard): render hanya bila data sudah termuat DAN
+  // masih milik tree aktif. Adapter null (mock, supabase), treeId
+  // kosong, fetch berjalan, fetch gagal, atau semua negara tersupresi
+  // k-anonymity berarti section tidak dirender; tanpa mock data.
+  useEffect(() => {
+    const api = currentFamilyTreeId ? getStatsApi() : null;
+    if (!currentFamilyTreeId || !api) return;
+    let cancelled = false;
+    api
+      .getFamilyDistribution(currentFamilyTreeId)
+      .then((dto) => {
+        if (cancelled) return;
+        setFamilyDistribution({ treeId: currentFamilyTreeId, dto });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setFamilyDistribution(null);
       });
     return () => {
       cancelled = true;
@@ -384,6 +411,39 @@ export const StatsSidebar: React.FC = () => {
                 <span className="font-semibold">{entry.ageYears}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Family Distribution (v413 fase 1, sumber endpoint server via adapter) */}
+      {familyDistribution && familyDistribution.treeId === currentFamilyTreeId && familyDistribution.dto.countries.length > 0 && (
+        <div className="mb-8" data-testid="family-distribution">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.familyDistribution.title')}</h3>
+          <div className="space-y-1">
+            {familyDistribution.dto.countries.map((country) => (
+              <details key={country.country} data-testid="family-distribution-country">
+                <summary className="flex min-h-[24px] cursor-pointer list-none items-center justify-between rounded px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                  <span className="text-sm text-gray-600">{country.country}</span>
+                  <span className="font-semibold">{country.count}</span>
+                </summary>
+                {country.regions.length > 0 && (
+                  <div className="mt-1 mb-2 space-y-1 border-l border-gray-200 pl-3">
+                    {country.regions.map((region) => (
+                      <div key={region.region} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">{region.region}</span>
+                        <span className="font-semibold text-gray-700">{region.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </details>
+            ))}
+          </div>
+          <div className="mt-3 text-xs text-gray-500">
+            {t('stats.familyDistribution.summary', {
+              total: familyDistribution.dto.totalWithPlace,
+              excluded: familyDistribution.dto.excludedNoPlace,
+            })}
           </div>
         </div>
       )}

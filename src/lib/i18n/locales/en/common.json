@@ -88,6 +88,10 @@
       "title": "Dataset Overview",
       "description": "Aggregate summary across statistics modules: record inventory, family size, living population, sources, citation quality, and notes"
     },
+    "familyDistribution": {
+      "title": "Family distribution",
+      "summary": "{{total}} members with location data, {{excluded}} without location"
+    },
     "placeDistribution": {
       "title": "Member distribution map",
       "empty": "No geocoded places in this tree yet",

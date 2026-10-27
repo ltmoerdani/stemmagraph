@@ -97,13 +97,23 @@ function mockApiWith(
   impl: (treeId: string) => Promise<FamilySizeRow>,
 ): {
   getFamilySizeStats: (treeId: string) => Promise<FamilySizeRow>;
+  getOldestLiving: () => Promise<never[]>;
   getGenerationsCount: () => Promise<{ generationCount: number }>;
   listUpcomingAnniversaries: () => Promise<never[]>;
+  getPlaceDistribution: () => Promise<{ points: never[]; totalPlaced: number; excludedNoCoords: number }>;
+  getFamilyDistribution: () => Promise<{ countries: never[]; totalWithPlace: number; excludedNoPlace: number }>;
 } {
   return {
     getFamilySizeStats: vi.fn(impl),
+    // Stub diam: section oldest living tidak dirender pada test wiring
+    // family size; payload array kosong menjaga render tetap minimal.
+    getOldestLiving: vi.fn(() => Promise.resolve([])),
     getGenerationsCount: vi.fn(() => Promise.resolve({ generationCount: 1 })),
     listUpcomingAnniversaries: vi.fn(() => Promise.resolve([])),
+    // Stub diam (payload kosong): section lain tidak dirender pada test
+    // wiring family size; sekalian menutup utang stub v399.
+    getPlaceDistribution: vi.fn(() => Promise.resolve({ points: [], totalPlaced: 0, excludedNoCoords: 0 })),
+    getFamilyDistribution: vi.fn(() => Promise.resolve({ countries: [], totalWithPlace: 0, excludedNoPlace: 0 })),
   };
 }
 

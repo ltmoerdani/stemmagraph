@@ -30,6 +30,8 @@ const { mockMembers, mockStats, mockTreeId, mockEntries, mockApi } = vi.hoisted(
         days?: number,
       ) => Promise<AnniversaryRow[]>;
       getGenerationsCount: (treeId: string) => Promise<{ generationCount: number }>;
+      getOldestLiving: (treeId: string) => Promise<never[]>;
+      getFamilySizeStats: (treeId: string) => Promise<never>;
     } | null,
   },
 }));
@@ -146,6 +148,21 @@ beforeEach(async () => {
   mockApi.value = {
     listUpcomingAnniversaries: vi.fn(() => Promise.resolve(mockEntries.value)),
     getGenerationsCount: vi.fn(() => Promise.resolve({ generationCount: 2 })),
+    // Stub diam: keenam method API dipanggil saat mount komponen.
+    getOldestLiving: vi.fn(() => Promise.resolve([])),
+    getFamilySizeStats: vi.fn(() =>
+      Promise.resolve({
+        average: null,
+        median: null,
+        max: 0,
+        distribution: { zero: 0, oneToTwo: 0, threeToFour: 0, fivePlus: 0 },
+        familyCount: 0,
+        excludedCount: 0,
+      }),
+    ),
+    // Stub diam: section peta/distribution tidak relevan di test ini.
+    getPlaceDistribution: vi.fn(() => Promise.resolve({ points: [], totalPlaced: 0, excludedNoCoords: 0 })),
+    getFamilyDistribution: vi.fn(() => Promise.resolve({ countries: [], totalWithPlace: 0, excludedNoPlace: 0 })),
   };
 });
 
@@ -294,6 +311,19 @@ describe('StatsSidebar Upcoming Anniversaries wiring v277-ii', () => {
     mockApi.value = {
       listUpcomingAnniversaries: vi.fn(() => Promise.reject(new Error('network down'))),
       getGenerationsCount: vi.fn(() => Promise.resolve({ generationCount: 2 })),
+      getOldestLiving: vi.fn(() => Promise.resolve([])),
+      getFamilySizeStats: vi.fn(() =>
+        Promise.resolve({
+          average: null,
+          median: null,
+          max: 0,
+          distribution: { zero: 0, oneToTwo: 0, threeToFour: 0, fivePlus: 0 },
+          familyCount: 0,
+          excludedCount: 0,
+        }),
+      ),
+      getPlaceDistribution: vi.fn(() => Promise.resolve({ points: [], totalPlaced: 0, excludedNoCoords: 0 })),
+      getFamilyDistribution: vi.fn(() => Promise.resolve({ countries: [], totalWithPlace: 0, excludedNoPlace: 0 })),
     };
     renderSidebar();
     await flush();
@@ -302,7 +332,23 @@ describe('StatsSidebar Upcoming Anniversaries wiring v277-ii', () => {
 
   it('treeId kosong: api tak dipanggil dan section tidak dirender', async () => {
     const spy = vi.fn(() => Promise.resolve(mockEntries.value));
-    mockApi.value = { listUpcomingAnniversaries: spy, getGenerationsCount: vi.fn(() => Promise.resolve({ generationCount: 2 })) };
+    mockApi.value = {
+      listUpcomingAnniversaries: spy,
+      getGenerationsCount: vi.fn(() => Promise.resolve({ generationCount: 2 })),
+      getOldestLiving: vi.fn(() => Promise.resolve([])),
+      getFamilySizeStats: vi.fn(() =>
+        Promise.resolve({
+          average: null,
+          median: null,
+          max: 0,
+          distribution: { zero: 0, oneToTwo: 0, threeToFour: 0, fivePlus: 0 },
+          familyCount: 0,
+          excludedCount: 0,
+        }),
+      ),
+      getPlaceDistribution: vi.fn(() => Promise.resolve({ points: [], totalPlaced: 0, excludedNoCoords: 0 })),
+      getFamilyDistribution: vi.fn(() => Promise.resolve({ countries: [], totalWithPlace: 0, excludedNoPlace: 0 })),
+    };
     mockTreeId.value = null;
     mockEntries.value = FIXTURE;
     renderSidebar();
