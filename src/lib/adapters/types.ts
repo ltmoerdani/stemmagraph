@@ -819,3 +819,29 @@ export interface MemberPhotoApi {
    */
   fetchMemberPhoto(memberId: string): Promise<Uint8Array>;
 }
+
+// --- Member comments (v416) -------------------------------
+// Read-write comment surface on one member. Only the REST adapter
+// implements it: comments live in the Comment table behind the API. Mock
+// and supabase adapters get null from getCommentApi and the comment
+// section hides instead of crashing.
+
+/** One comment row as the server returns it. */
+export interface CommentItem {
+  id: string;
+  memberId: string;
+  userId: string;
+  userName?: string;
+  body: string;
+  createdAt: string;
+}
+
+/** Paginated comment surface for one member, cursor style. */
+export interface CommentApi {
+  /** GET /members/:memberId/comments: one page plus nextCursor. */
+  listComments(memberId: string, after?: string): Promise<{ comments: CommentItem[]; nextCursor: string | null }>;
+  /** POST /members/:memberId/comments: append one comment. */
+  postComment(memberId: string, body: string): Promise<{ comment: CommentItem }>;
+  /** DELETE /comments/:commentId: remove one comment. */
+  deleteComment(commentId: string): Promise<void>;
+}
