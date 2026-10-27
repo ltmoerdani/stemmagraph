@@ -144,7 +144,7 @@ import { runImportGate } from '../src/lib/gedcom/import-gate';
 import { buildMergePlan, type ExistingIdentityIndex } from '../src/lib/gedcom/importMergePlan';
 import { gateEntriesFromGedcom } from '../src/lib/gedcom/previewGateEntries';
 import { incomingRecordsFromGedcom } from '../src/lib/gedcom/previewIncoming';
-import { parseGedcomUpload } from '../src/lib/gedcom/previewUpload';
+import { looksLikeGedcom, parseGedcomUpload } from '../src/lib/gedcom/previewUpload';
 import { buildPreviewSummary } from '../src/lib/gedcom/previewSummary';
 
 // ─── Config ──────────────────────────────────────────────
@@ -4842,7 +4842,7 @@ function formatRelationship(r: FamilyRelationship) {
 // importPlan, importMergePlan, importPrivacyGate) dijalankan dalam satu
 // request TANPA penulisan database apa pun; applyImportPlan tidak pernah
 // dipanggil di jalur ini. Pola guard pola v275: 401 requireAuth, 404 tree
-// nihil, 403 FORBIDDEN_TREE non-owner (manage_tree owner-only).
+// nihil, 403 FORBIDDEN_TREE non-owner (manage_membership owner-only).
 //
 // Upload multipart reuse parser mini src/lib/photo/multipart.ts (pola
 // upload foto v398, nihil dependency baru): file field `file`, ekstensi
@@ -4887,7 +4887,7 @@ app.post(
   async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
     try {
       // Dry-run murni: guard dulu (404/403), parse file kemudian.
-      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_tree');
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
       if (!guard.ok) {
         return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
       }
@@ -4926,6 +4926,12 @@ app.post(
         text = extractGedcom(upload.bytes).text;
       } catch {
         return res.status(400).json({ code: 'GEDCOM_INVALID_ARCHIVE', message: 'The uploaded archive is not a valid GEDZIP file' });
+      }
+
+      // File acak yang bukan dokumen GEDCOM ditolak 400 kode stabil;
+      // vendor parser sering hanya mencatat warning, bukan melempar.
+      if (!looksLikeGedcom(text)) {
+        return res.status(400).json({ code: 'GEDCOM_MALFORMED', message: 'The uploaded file is not a valid GEDCOM document' });
       }
 
       // Parse vendor g7 + import-gate laporan reject per baris (AC2).

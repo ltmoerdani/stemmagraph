@@ -58,3 +58,12 @@ function indexOfHeaderSep(raw: Uint8Array): number {
   }
   return -1;
 }
+
+/**
+ * Pemeriksaan ringan dokumen GEDCOM: dokumen sah minimal punya record
+ * HEAD di level 0 (spec GEDCOM 7 bab 2.6). Dipakai untuk menolak file
+ * acak yang bukan GEDCOM sebelum pipeline dijalankan (400 stabil).
+ */
+export function looksLikeGedcom(text: string): boolean {
+  return /(?:^|\n)\s*0\s+HEAD\b/.test(text);
+}
