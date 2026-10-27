@@ -91,7 +91,7 @@ import { computeGenerations } from '../src/lib/stats/generations';
 import { computePlaceDistribution } from '../src/lib/stats/place-distribution';
 import { computeFamilySizeStats } from '../src/lib/stats/family-size-stats';
 import { computeOldestLiving } from '../src/lib/stats/oldest-living';
-import { computePlaceDistribution } from '../src/lib/places/distribution/placeDistribution';
+import { computePlaceDistribution as computePlaceCoordDistribution } from '../src/lib/places/distribution/placeDistribution';
 import { computeMarriageMonths, type MarriagePairInput } from '../src/lib/stats/marriage-months';
 import {
   computeBirthsByCenturyFromEvents,
@@ -3378,7 +3378,7 @@ app.get('/api/v1/trees/:treeId/places/distribution', requireAuthStatsLiving, asy
       where: { treeId: req.params.treeId },
       select: { latitude: true, longitude: true },
     });
-    const result = computePlaceDistribution(
+    const result = computePlaceCoordDistribution(
       places.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
     );
     const body = JSON.stringify(result);
