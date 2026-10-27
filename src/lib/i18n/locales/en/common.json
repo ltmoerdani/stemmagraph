@@ -90,8 +90,7 @@
     },
     "familyDistribution": {
       "title": "Family distribution",
-      "summary_one": "{{total}} members with location data, {{excluded}} without location",
-      "summary_other": "{{total}} members with location data, {{excluded}} without location"
+      "summary": "{{total}} members with location data, {{excluded}} without location"
     },
     "placeDistribution": {
       "title": "Member distribution map",

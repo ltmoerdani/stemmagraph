@@ -90,8 +90,7 @@
     },
     "familyDistribution": {
       "title": "Sebaran Keluarga",
-      "summary_one": "{{total}} anggota dengan data lokasi, {{excluded}} tanpa lokasi",
-      "summary_other": "{{total}} anggota dengan data lokasi, {{excluded}} tanpa lokasi"
+      "summary": "{{total}} anggota dengan data lokasi, {{excluded}} tanpa lokasi"
     },
     "placeDistribution": {
       "title": "Peta sebaran anggota",
