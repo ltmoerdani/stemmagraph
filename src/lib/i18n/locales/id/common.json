@@ -88,6 +88,11 @@
       "title": "Ringkasan Dataset",
       "description": "Ringkasan agregat lintas modul statistik: inventaris rekaman, ukuran keluarga, populasi hidup, sumber, kualitas sitasi, dan catatan"
     },
+    "familyDistribution": {
+      "title": "Sebaran Keluarga",
+      "summary_one": "{{total}} anggota dengan data lokasi, {{excluded}} tanpa lokasi",
+      "summary_other": "{{total}} anggota dengan data lokasi, {{excluded}} tanpa lokasi"
+    },
     "placeDistribution": {
       "title": "Peta sebaran anggota",
       "empty": "Belum ada tempat berkooordinat pada pohon ini",
