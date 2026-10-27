@@ -40,7 +40,7 @@ function toIncoming(raw: RawRecord): IncomingRecord {
  * laporan baris bermasalah tetap tugas import-gate.
  */
 export function incomingRecordsFromGedcom(text: string): IncomingRecord[] {
-  const out: IncomingRecord[] = [];
+  const raws: RawRecord[] = [];
   let current: RawRecord | null = null;
   for (const line of text.split('\n')) {
     const m = LINE_RE.exec(line);
@@ -51,7 +51,7 @@ export function incomingRecordsFromGedcom(text: string): IncomingRecord[] {
       const xref = m[2];
       if ((tag === 'INDI' || tag === 'FAM') && typeof xref === 'string' && xref !== '') {
         current = { source: tag, xref, lines: [] };
-        out.push(toIncoming(current));
+        raws.push(current);
       } else {
         current = null;
       }
@@ -61,5 +61,7 @@ export function incomingRecordsFromGedcom(text: string): IncomingRecord[] {
       current.lines.push(line);
     }
   }
-  return out;
+  // Mapping dilakukan setelah seluruh baris terkumpul supaya identitas
+  // durable membaca lines lengkap, bukan potongan kosong awal record.
+  return raws.map(toIncoming);
 }
