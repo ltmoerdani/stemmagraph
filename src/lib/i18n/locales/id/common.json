@@ -752,5 +752,15 @@
   "memberForm": {
     "haulOverrideDate": "Tanggal haul (manual)",
     "haulOverrideHint": "Kosongkan bila haul jatuh pada tanggal wafat. Isi bila keluarga menetapkan tanggal haul berbeda."
+  },
+  "commentSection": {
+    "title": "Komentar",
+    "placeholder": "Tulis komentar untuk anggota ini",
+    "send": "Kirim",
+    "loadMore": "Muat lebih banyak",
+    "loadingMore": "Memuat",
+    "tanpaNama": "Tanpa nama",
+    "errorInline": "Komentar gagal terkirim. Coba lagi.",
+    "charsLeft": "Sisa {{remaining}} karakter"
   }
 }

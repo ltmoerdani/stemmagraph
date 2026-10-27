@@ -752,5 +752,15 @@
   "memberForm": {
     "haulOverrideDate": "Haul date (manual)",
     "haulOverrideHint": "Leave empty when the haul falls on the death date. Fill in when the family set a different haul date."
+  },
+  "commentSection": {
+    "title": "Comments",
+    "placeholder": "Write a comment for this member",
+    "send": "Send",
+    "loadMore": "Load more",
+    "loadingMore": "Loading",
+    "tanpaNama": "No name",
+    "errorInline": "Comment failed to send. Try again.",
+    "charsLeft": "{{remaining}} characters left"
   }
 }
