@@ -39,6 +39,7 @@ model User {
   treeMemberships    TreeMember[]
   createdInvitations Invitation[]     @relation("InvitationCreator")
   proposedChanges    ChangeProposal[] @relation("ChangeProposer")
+  comments           Comment[]
 }
 
 // ─── Notification (in-app, P2-1) ─────────────────────────
@@ -182,9 +183,31 @@ model FamilyMember {
   events            GenealogyEvent[]
   childLinks        FamilyLink[]         @relation("FamilyLinkChild")
   parentLinks       FamilyLink[]         @relation("FamilyLinkParent")
+  // v415 Komentar Profil Fase 1, additive only: diskusi keluarga pada
+  // profil anggota. Komentar mengikuti anggota saat anggota dihapus.
+  comments          Comment[]
 
   @@index([treeId])
   @@index([generation])
+}
+
+// ─── Comment (v415, Pilar 2 kolaborasi keluarga) ─────────
+// Komentar pada profil FamilyMember. Penulis adalah User pohon
+// (onDelete Cascade mengikuti akun). Panjang body dibatasi 2000
+// karakter di lapisan route, bukan di schema.
+model Comment {
+  id        String   @id @default(uuid())
+  treeId    String
+  memberId  String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  member FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([memberId, createdAt])
+  @@index([treeId])
 }
 
 // ─── Family Relationship ─────────────────────────────────

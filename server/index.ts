@@ -4380,6 +4380,115 @@ app.delete('/api/v1/relationships/:id', requireAuth, async (req: AuthenticatedRe
   }
 });
 
+// ─── Comments (v415, Pilar 2 kolaborasi keluarga) ─────────
+// Komentar pada profil FamilyMember. POST butuh edit_member (owner atau
+// editor), GET cukup view_tree, DELETE penulis sendiri atau owner pohon.
+
+const COMMENT_BODY_MAX = 2000;
+const COMMENT_PAGE_DEFAULT = 20;
+const COMMENT_PAGE_MAX = 50;
+
+function formatComment(c: { id: string; memberId: string; userId: string; body: string; createdAt: Date }, userName?: string) {
+  return {
+    id: c.id,
+    memberId: c.memberId,
+    userId: c.userId,
+    body: c.body,
+    createdAt: c.createdAt.toISOString(),
+    ...(userName !== undefined ? { userName } : {}),
+  };
+}
+
+app.post('/api/v1/members/:memberId/comments', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
+  try {
+    const member = await prisma.familyMember.findUnique({ where: { id: req.params.memberId } });
+    if (!member) return res.status(404).json({ code: 'MEMBER_NOT_FOUND', message: 'Member not found' });
+    const guard = await guardTreeAction(req.userId!, member.treeId, 'edit_member');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const raw = (req.body ?? {}) as { body?: unknown };
+    const body = typeof raw.body === 'string' ? raw.body.trim() : '';
+    if (body.length < 1 || body.length > COMMENT_BODY_MAX) {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: `body is required, 1..${COMMENT_BODY_MAX} characters` });
+    }
+    const comment = await prisma.comment.create({
+      data: { treeId: member.treeId, memberId: member.id, userId: req.userId!, body },
+    });
+    res.status(201).json({ comment: formatComment(comment) });
+  } catch (e) {
+    res.status(500).json({ code: 'COMMENT_ERROR', message: (e as Error).message });
+  }
+});
+
+app.get('/api/v1/members/:memberId/comments', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
+  try {
+    const member = await prisma.familyMember.findUnique({ where: { id: req.params.memberId } });
+    if (!member) return res.status(404).json({ code: 'MEMBER_NOT_FOUND', message: 'Member not found' });
+    const guard = await guardTreeAction(req.userId!, member.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const raw = req.query as { after?: string; limit?: string };
+    const limitParsed = Number.parseInt(raw.limit ?? '', 10);
+    const limit = Number.isFinite(limitParsed) && limitParsed > 0
+      ? Math.min(limitParsed, COMMENT_PAGE_MAX)
+      : COMMENT_PAGE_DEFAULT;
+    // Cursor: keyset (createdAt, id) desc. `after` berisi base64
+    // "createdAtISO|id" dari nextCursor halaman sebelumnya.
+    let cursor: { createdAt: Date; id: string } | null = null;
+    if (raw.after) {
+      let decoded: string;
+      try {
+        decoded = Buffer.from(raw.after, 'base64').toString('utf8');
+      } catch {
+        return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'invalid after cursor' });
+      }
+      const sep = decoded.lastIndexOf('|');
+      const iso = sep > 0 ? decoded.slice(0, sep) : '';
+      const idPart = sep > 0 ? decoded.slice(sep + 1) : '';
+      const d = new Date(iso);
+      if (!iso || !idPart || Number.isNaN(d.getTime())) {
+        return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'invalid after cursor' });
+      }
+      cursor = { createdAt: d, id: idPart };
+    }
+    const rows = await prisma.comment.findMany({
+      where: {
+        memberId: member.id,
+        ...(cursor
+          ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] }
+          : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      include: { user: { select: { name: true } } },
+    });
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const last = page[page.length - 1];
+    const nextCursor = hasMore && last
+      ? Buffer.from(`${last.createdAt.toISOString()}|${last.id}`, 'utf8').toString('base64')
+      : null;
+    res.json({ comments: page.map((c) => formatComment(c, c.user.name)), nextCursor });
+  } catch (e) {
+    res.status(500).json({ code: 'COMMENT_ERROR', message: (e as Error).message });
+  }
+});
+
+app.delete('/api/v1/comments/:commentId', requireAuth, async (req: AuthenticatedRequest<{ commentId: string }>, res) => {
+  try {
+    const comment = await prisma.comment.findUnique({ where: { id: req.params.commentId } });
+    if (!comment) return res.status(404).json({ code: 'COMMENT_NOT_FOUND', message: 'Comment not found' });
+    if (comment.userId !== req.userId) {
+      const role = await resolveTreeRole(req.userId!, comment.treeId);
+      if (role !== 'owner') {
+        return res.status(403).json({ code: 'FORBIDDEN', message: 'Only the author or a tree owner can delete this comment' });
+      }
+    }
+    await prisma.comment.delete({ where: { id: comment.id } });
+    res.status(204).send();
+  } catch (e) {
+    res.status(500).json({ code: 'COMMENT_ERROR', message: (e as Error).message });
+  }
+});
+
 // ─── Public share links (GAP #4, ADR 0010) ───────────────
 //
 // Read-only public access to one tree through a TreeShareLink row.
