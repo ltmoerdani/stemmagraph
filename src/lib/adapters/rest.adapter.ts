@@ -69,6 +69,7 @@ import {
   GenerationsCountDto,
   FamilySizeStatsDto,
   PlaceDistributionDto,
+  FamilyDistributionDto,
   MergeApi,
   MergeMemberResult,
   MergeApprovalRecord,
@@ -511,6 +512,18 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return this.request<PlaceDistributionDto>(
       'GET',
       `/trees/${encodeURIComponent(treeId)}/places/distribution`,
+    );
+  }
+
+  // Read-only routing ke endpoint agregat sebaran negara/wilayah (v413).
+  // Server menghitung generalisasi dua level dan suppression k-anonymity
+  // k = 3, adapter hanya membawa tree id. Error jaringan dan respons
+  // non-OK naik via this.request tanpa penangkap lokal, pola persis
+  // getPlaceDistribution.
+  async getFamilyDistribution(treeId: string): Promise<FamilyDistributionDto> {
+    return this.request<FamilyDistributionDto>(
+      'GET',
+      `/trees/${encodeURIComponent(treeId)}/stats/distribution`,
     );
   }
 

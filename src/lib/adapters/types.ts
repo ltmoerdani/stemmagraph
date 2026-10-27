@@ -649,6 +649,8 @@ export interface StatsApi {
   getOldestLiving(treeId: string): Promise<OldestLivingEntryDto[]>;
   /** Ambil titik agregat peta sebaran place (v399); read-only, non-PII murni lat/lng/count. */
   getPlaceDistribution(treeId: string): Promise<PlaceDistributionDto>;
+  /** Ambil agregat sebaran negara/wilayah (v413); read-only, non-PII, lolos suppression k=3 di server. */
+  getFamilyDistribution(treeId: string): Promise<FamilyDistributionDto>;
 }
 
 /**
@@ -669,6 +671,41 @@ export interface PlaceDistributionDto {
   points: PlaceDistributionPointDto[];
   totalPlaced: number;
   excludedNoCoords: number;
+}
+
+// ─── Family distribution (v413 fase 1) ───────────────────
+// Agregat sebaran anggota per negara dan wilayah admin dari endpoint
+// stats/distribution server v413. Non-PII: hanya nama negara dan
+// wilayah hasil generalisasi dua level plus hitungan yang lolos
+// suppression k-anonymity k = 3 di server; tanpa koordinat, tanpa
+// nama place presisi, tanpa identitas anggota.
+
+/** Baris wilayah admin di bawah satu negara, count sudah lolos ambang k. */
+export interface FamilyDistributionRegionDto {
+  /** Nama wilayah hasil token sebelum negara, lowercase. */
+  region: string;
+  /** Jumlah anggota pada wilayah ini setelah suppression. */
+  count: number;
+}
+
+/** Baris negara beserta wilayah-wilayahnya yang lolos ambang k. */
+export interface FamilyDistributionCountryDto {
+  /** Nama negara hasil token terakhir setelah koma, lowercase. */
+  country: string;
+  /** Jumlah anggota pada negara ini setelah suppression. */
+  count: number;
+  /** Wilayah pada negara ini yang count-nya memenuhi ambang k. */
+  regions: FamilyDistributionRegionDto[];
+}
+
+/**
+ * Payload route stats/distribution (v413): hierarki negara lalu wilayah
+ * plus dua hitungan audit agregat yang boleh tampil tanpa suppression.
+ */
+export interface FamilyDistributionDto {
+  countries: FamilyDistributionCountryDto[];
+  totalWithPlace: number;
+  excludedNoPlace: number;
 }
 
 /** Kandidat duplikat anggota existing untuk satu calon anggota baru (v388). */

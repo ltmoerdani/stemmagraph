@@ -311,6 +311,9 @@ export type {
   CitationEventType,
   StatsApi,
   UpcomingAnniversaryDto,
+  FamilyDistributionDto,
+  FamilyDistributionCountryDto,
+  FamilyDistributionRegionDto,
   MemberPhotoApi,
   MemberPhotoUploadResult,
 } from './types';
