@@ -761,6 +761,12 @@
     "loadingMore": "Memuat",
     "tanpaNama": "Tanpa nama",
     "errorInline": "Komentar gagal terkirim. Coba lagi.",
-    "charsLeft": "Sisa {{remaining}} karakter"
+    "charsLeft": "Sisa {{remaining}} karakter",
+    "deleteAria": "Hapus komentar ini",
+    "deleteTitle": "Hapus komentar ini?",
+    "deleteBody": "Komentar yang dihapus tidak bisa dikembalikan.",
+    "deleteCancel": "Batal",
+    "deleteConfirm": "Hapus",
+    "deleting": "Menghapus"
   }
 }
