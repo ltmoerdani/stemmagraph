@@ -31,10 +31,12 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<CommentItem | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!api) return;
@@ -78,10 +80,15 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
     return user.role === 'owner' || comment.userId === user.id;
   };
 
-  const handleRequestDelete = useCallback((comment: CommentItem) => {
-    setError(null);
-    setConfirmTarget(comment);
-  }, []);
+  const handleRequestDelete = useCallback(
+    (comment: CommentItem, event: React.MouseEvent<HTMLButtonElement>) => {
+      setError(null);
+      setStatus(null);
+      lastTriggerRef.current = event.currentTarget;
+      setConfirmTarget(comment);
+    },
+    [],
+  );
 
   const handleConfirmDelete = useCallback(() => {
     if (!api || !confirmTarget || deletingId !== null) return;
@@ -93,6 +100,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
       .then(() => {
         setComments((prev) => prev.filter((c) => c.id !== commentId));
         setConfirmTarget(null);
+        setStatus(t('commentSection.deleteSukses'));
       })
       .catch(() => {
         setError(t('commentSection.errorInline'));
@@ -103,11 +111,17 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
   }, [api, confirmTarget, deletingId, t]);
 
   const handleCancelDelete = useCallback(() => {
+    setStatus(null);
     setConfirmTarget(null);
   }, []);
 
   useEffect(() => {
-    if (confirmTarget === null) return;
+    if (confirmTarget === null) {
+      // AC4: hand focus back to the button that opened the dialog.
+      const trigger = lastTriggerRef.current;
+      if (trigger && document.contains(trigger)) trigger.focus();
+      return;
+    }
     cancelButtonRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -200,10 +214,10 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
                 {canDeleteComment(comment) && (
                   <button
                     type="button"
-                    onClick={() => handleRequestDelete(comment)}
+                    onClick={(e) => handleRequestDelete(comment, e)}
                     disabled={deletingId !== null}
                     aria-label={t('commentSection.deleteAria')}
-                    className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -219,7 +233,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
           type="button"
           onClick={handleLoadMore}
           disabled={loadingMore}
-          className="mb-4 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="mb-4 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
         >
           {loadingMore ? t('commentSection.loadingMore') : t('commentSection.loadMore')}
         </button>
@@ -244,18 +258,17 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
           <button
             type="submit"
             disabled={!canSubmit}
-            className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
           >
             {t('commentSection.send')}
           </button>
         </div>
       </form>
 
-      {error !== null && (
-        <p role="alert" className="mt-2 text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      <div aria-live="polite">
+        {error !== null && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {status !== null && <p className="mt-2 text-sm text-green-700">{status}</p>}
+      </div>
 
       {confirmTarget !== null && (
         <div
@@ -278,7 +291,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
                 ref={cancelButtonRef}
                 type="button"
                 onClick={handleCancelDelete}
-                className="px-4 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                className="px-4 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
               >
                 {t('commentSection.deleteCancel')}
               </button>
@@ -286,7 +299,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={deletingId !== null}
-                className="px-4 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
               >
                 {deletingId !== null ? t('commentSection.deleting') : t('commentSection.deleteConfirm')}
               </button>

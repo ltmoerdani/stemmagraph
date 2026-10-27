@@ -767,6 +767,7 @@
     "deleteBody": "Komentar yang dihapus tidak bisa dikembalikan.",
     "deleteCancel": "Batal",
     "deleteConfirm": "Hapus",
-    "deleting": "Menghapus"
+    "deleting": "Menghapus",
+    "deleteSukses": "Komentar telah dihapus."
   }
 }

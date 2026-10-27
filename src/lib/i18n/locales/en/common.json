@@ -767,6 +767,7 @@
     "deleteBody": "A deleted comment cannot be restored.",
     "deleteCancel": "Cancel",
     "deleteConfirm": "Delete",
-    "deleting": "Deleting"
+    "deleting": "Deleting",
+    "deleteSukses": "Comment deleted."
   }
 }
