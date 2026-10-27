@@ -31,11 +31,6 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({ memberId }) =>
   useEffect(() => {
     if (!api) return;
     let cancelled = false;
-    setComments([]);
-    setNextCursor(null);
-    setDraft('');
-    setError(null);
-    setHidden(false);
     api
       .listComments(memberId)
       .then((page) => {

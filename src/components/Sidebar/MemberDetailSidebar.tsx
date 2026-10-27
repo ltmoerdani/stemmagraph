@@ -158,7 +158,7 @@ export const MemberDetailSidebar: React.FC = () => {
           </div>
         </div>
 
-        {selectedMember.id && <CommentsSection memberId={selectedMember.id} />}
+        {selectedMember.id && <CommentsSection key={selectedMember.id} memberId={selectedMember.id} />}
 
         <MemberDetailSidebarKinship />
 
