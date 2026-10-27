@@ -135,6 +135,17 @@ import { resolveBackupDir, runBackup } from '../src/server/backup/backupRunner';
 import { mailerDisabled } from '../src/lib/digest/mailer';
 import { weeklyWindow } from '../src/lib/digest/window';
 import { isPrevTokenWithinGrace } from '../src/lib/calendar/tokenLifecycle';
+// v417 fase 1: preview import GEDCOM dry-run (tanpa penulisan DB).
+import { detectUploadKind, extractGedcom } from '../src/lib/gedcom/importPipeline';
+import { importIndividuals } from '../src/lib/gedcom/importIndividuals';
+import { importFamilies } from '../src/lib/gedcom/importFamilies';
+import { buildImportPlan } from '../src/lib/gedcom/importPlan';
+import { runImportGate } from '../src/lib/gedcom/import-gate';
+import { buildMergePlan, type ExistingIdentityIndex } from '../src/lib/gedcom/importMergePlan';
+import { gateEntriesFromGedcom } from '../src/lib/gedcom/previewGateEntries';
+import { incomingRecordsFromGedcom } from '../src/lib/gedcom/previewIncoming';
+import { looksLikeGedcom, parseGedcomUpload } from '../src/lib/gedcom/previewUpload';
+import { buildPreviewSummary } from '../src/lib/gedcom/previewSummary';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -4822,6 +4833,153 @@ function formatRelationship(r: FamilyRelationship) {
     type: r.type,
   };
 }
+
+// ─── GEDCOM import preview dry-run (v417 fase 1) ──────────
+//
+// POST /api/v1/trees/:treeId/gedcom/preview
+//
+// Dry-run murni: seluruh pipeline import (parse vendor g7, import-gate,
+// importPlan, importMergePlan, importPrivacyGate) dijalankan dalam satu
+// request TANPA penulisan database apa pun; applyImportPlan tidak pernah
+// dipanggil di jalur ini. Pola guard pola v275: 401 requireAuth, 404 tree
+// nihil, 403 FORBIDDEN_TREE non-owner (manage_membership owner-only).
+//
+// Upload multipart reuse parser mini src/lib/photo/multipart.ts (pola
+// upload foto v398, nihil dependency baru): file field `file`, ekstensi
+// .ged/.gdz, batas 10 MB (413 bila lebih). File tidak valid ditolak 400
+// dengan kode error stabil, tanpa stack trace ke klien.
+
+/** Batas ukuran unggahan GEDCOM preview (spec v417 AC1). */
+const GEDCOM_PREVIEW_MAX_BYTES = 10 * 1024 * 1024;
+
+/** Jumlah entri merge plan pertama yang ikut direspons (spec v417 AC2). */
+const GEDCOM_PREVIEW_PLAN_LIMIT = 200;
+
+/** Bentuk ringkas entri merge plan untuk respons preview. */
+interface GedcomPreviewPlanItem {
+  source: 'INDI' | 'FAM';
+  incomingXref: string | undefined;
+  newInternalId: string | undefined;
+  status: 'NEW' | 'MATCH_CANDIDATE' | 'SKIPPED';
+  matchType?: 'EXID' | 'UID' | 'REFN';
+  matchedExistingId?: string;
+  skipReason?: string;
+}
+
+/**
+ * Indeks identitas existing untuk merge preview. Kolom EXID/UID/REFN
+ * belum ada di schema (dibangun di fase apply v418), jadi peta
+ * pencocokan durable dikosongkan dan hanya daftar ID terpakai yang
+ * diisi supaya remap xref tidak tabrakan dengan member existing.
+ */
+async function loadExistingIdentityIndex(treeId: string): Promise<ExistingIdentityIndex> {
+  const members = await prisma.familyMember.findMany({
+    where: { treeId },
+    select: { id: true },
+  });
+  return { byExid: {}, byUid: {}, byRefn: {}, usedIds: members.map((m) => m.id), startCounter: 1 };
+}
+
+app.post(
+  '/api/v1/trees/:treeId/gedcom/preview',
+  requireAuth,
+  express.raw({ type: () => true, limit: '12mb' }),
+  async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+    try {
+      // Dry-run murni: guard dulu (404/403), parse file kemudian.
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
+      if (!guard.ok) {
+        return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+      }
+
+      // Wajib multipart/form-data dengan file field `file`.
+      const contentType = req.headers['content-type'];
+      const isMultipart =
+        typeof contentType === 'string' && contentType.toLowerCase().includes('multipart/form-data');
+      if (!isMultipart || !Buffer.isBuffer(req.body)) {
+        return res.status(400).json({ code: 'GEDCOM_BAD_REQUEST', message: 'Expected multipart/form-data with a file field named file' });
+      }
+      const upload = parseGedcomUpload(new Uint8Array(req.body), contentType);
+      if (!upload.ok) {
+        const message = upload.reason === 'NO_FILE'
+          ? 'No GEDCOM file found in field file'
+          : upload.reason === 'NO_FILENAME'
+            ? 'Upload part must carry a filename'
+            : 'File extension must be .ged or .gdz';
+        const code = upload.reason === 'NO_FILE'
+          ? 'GEDCOM_NO_FILE'
+          : upload.reason === 'NO_FILENAME'
+            ? 'GEDCOM_NO_FILENAME'
+            : 'GEDCOM_BAD_EXTENSION';
+        return res.status(400).json({ code, message });
+      }
+
+      // Batas 10 MB dari ukuran byte aktual, bukan nama berkas (AC1).
+      if (upload.bytes.length > GEDCOM_PREVIEW_MAX_BYTES) {
+        return res.status(413).json({ code: 'GEDCOM_TOO_LARGE', message: 'File exceeds the 10 MB preview limit' });
+      }
+
+      // Ekstraksi teks GEDCOM (gedzip atau polos); arsip ZIP tidak sah
+      // dilempar importGedzip dan dipetakan 400 kode stabil.
+      let text: string;
+      try {
+        text = extractGedcom(upload.bytes).text;
+      } catch {
+        return res.status(400).json({ code: 'GEDCOM_INVALID_ARCHIVE', message: 'The uploaded archive is not a valid GEDZIP file' });
+      }
+
+      // File acak yang bukan dokumen GEDCOM ditolak 400 kode stabil;
+      // vendor parser sering hanya mencatat warning, bukan melempar.
+      if (!looksLikeGedcom(text)) {
+        return res.status(400).json({ code: 'GEDCOM_MALFORMED', message: 'The uploaded file is not a valid GEDCOM document' });
+      }
+
+      // Parse vendor g7 + import-gate laporan reject per baris (AC2).
+      const parseWarnings: string[] = [];
+      const individuals = importIndividuals(text, (msg) => parseWarnings.push(msg));
+      const families = importFamilies(text, (msg) => parseWarnings.push(msg));
+      const gateResult = runImportGate(gateEntriesFromGedcom(text));
+
+      // Import plan, merge plan preview, dan hitungan living.
+      const plan = buildImportPlan(individuals, families);
+      const mergePlan = buildMergePlan(
+        incomingRecordsFromGedcom(text),
+        await loadExistingIdentityIndex(req.params.treeId),
+      );
+      const livingAffected = plan.members.filter((m) => m.livingSuggested === true).length;
+
+      const summary = buildPreviewSummary(mergePlan, gateResult.rejects.length, livingAffected);
+      const planPreview: GedcomPreviewPlanItem[] = mergePlan.entries.slice(0, GEDCOM_PREVIEW_PLAN_LIMIT).map((e) => {
+        const item: GedcomPreviewPlanItem = {
+          source: e.source,
+          incomingXref: e.incomingXref,
+          newInternalId: e.newInternalId,
+          status: e.status,
+        };
+        if (e.matchType !== undefined) item.matchType = e.matchType;
+        if (e.matchedExistingId !== undefined) item.matchedExistingId = e.matchedExistingId;
+        if (e.skipReason !== undefined) item.skipReason = e.skipReason;
+        return item;
+      });
+
+      // Dry-run: respons ringkasan + preview plan, TANPA tulis DB.
+      res.json({
+        ok: true,
+        dryRun: true,
+        uploadKind: detectUploadKind(upload.bytes),
+        summary,
+        plan: planPreview,
+        planTruncated: mergePlan.entries.length > GEDCOM_PREVIEW_PLAN_LIMIT,
+        planTotal: mergePlan.entries.length,
+        gateRejects: gateResult.rejects.slice(0, 50),
+        parseWarningCount: parseWarnings.length,
+      });
+    } catch {
+      // 500 tanpa stack trace ke klien (AC3): pesan generik stabil.
+      res.status(500).json({ code: 'GEDCOM_PREVIEW_ERROR', message: 'Failed to preview GEDCOM file' });
+    }
+  },
+);
 
 // ─── Start ───────────────────────────────────────────────
 
