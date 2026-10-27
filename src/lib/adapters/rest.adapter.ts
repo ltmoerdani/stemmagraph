@@ -80,6 +80,8 @@ import {
   AuthError,
   MemberPhotoApi,
   MemberPhotoUploadResult,
+  CommentApi,
+  CommentItem,
 } from './types';
 import type { DuplicateCandidateDto } from './types';
 import type { FeedItem } from '../feed';
@@ -97,7 +99,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, ConsentSelfApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, ConsentSelfApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi, CommentApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -840,5 +842,26 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     } catch {
       return '';
     }
+  }
+
+  // -- Member comments (v416) -------------------------------
+  // Pure routing ke route /api/v1 (sudah termasuk di baseUrl):
+  // list cursor-style, post satu komentar, hapus lewat 204.
+
+  async listComments(memberId: string, after?: string): Promise<{ comments: CommentItem[]; nextCursor: string | null }> {
+    const query = after === undefined ? '' : `?after=${encodeURIComponent(after)}`;
+    const body = await this.request<{ comments?: CommentItem[]; nextCursor?: string | null }>(
+      'GET',
+      `/members/${memberId}/comments${query}`,
+    );
+    return { comments: Array.isArray(body.comments) ? body.comments : [], nextCursor: body.nextCursor ?? null };
+  }
+
+  async postComment(memberId: string, body: string): Promise<{ comment: CommentItem }> {
+    return this.request<{ comment: CommentItem }>('POST', `/members/${memberId}/comments`, { body });
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    await this.request<void>('DELETE', `/comments/${commentId}`);
   }
 }

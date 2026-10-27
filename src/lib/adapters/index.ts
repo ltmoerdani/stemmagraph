@@ -58,6 +58,17 @@ export function getMemberPhotoApi(): MemberPhotoApi | null {
   return adapter instanceof RestAdapter ? adapter : null;
 }
 
+/**
+ * Returns the member comment surface (v416) of the active adapter, or
+ * null when the adapter has no server backend (mock, supabase): comments
+ * live behind the /api/v1 routes. The UI hides the comment section for
+ * null instead of crashing (same shape as getConsentSelfApi).
+ */
+export function getCommentApi(): CommentApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
 // ─── Singleton ────────────────────────────────────────────
 
 let _adapter: DataAdapter | null = null;
@@ -316,6 +327,7 @@ export type {
   FamilyDistributionRegionDto,
   MemberPhotoApi,
   MemberPhotoUploadResult,
+  CommentApi,
 } from './types';
 
 export {

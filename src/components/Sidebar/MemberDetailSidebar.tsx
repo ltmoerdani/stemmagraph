@@ -5,6 +5,7 @@ import { UnifiedMemberModal } from '../Forms/UnifiedMemberModal';
 import { MemberDetailSidebarKinship } from './MemberDetailSidebarKinship';
 import { MemberAuthPhoto } from './MemberAuthPhoto';
 import { MemberPhotoControls } from './MemberPhotoControls';
+import { CommentsSection } from './CommentsSection';
 
 export const MemberDetailSidebar: React.FC = () => {
   const { selectedMember, setSelectedMember, updateMember } = useFamilyStore();
@@ -156,6 +157,8 @@ export const MemberDetailSidebar: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {selectedMember.id && <CommentsSection key={selectedMember.id} memberId={selectedMember.id} />}
 
         <MemberDetailSidebarKinship />
 
