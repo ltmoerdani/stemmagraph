@@ -87,4 +87,71 @@ describe('describeNotification', () => {
     expect(d.key).toBe('notifications.items.unknown');
     expect(d.values).toEqual({ type: 'SOMETHING_ELSE' });
   });
+
+  it('describes ERASURE_OWNER_NOTICE requested with action and evidence (v421b AC3)', () => {
+    const d = describeNotification('ERASURE_OWNER_NOTICE', {
+      memberId: 'm1',
+      action: 'requested',
+      eventType: 'erasure.requested',
+      evidence: 'req_1',
+    });
+    expect(d.key).toBe('notifications.items.erasureRequested');
+    expect(d.values).toEqual({ action: 'requested', evidence: 'req_1' });
+  });
+
+  it('describes ERASURE_OWNER_NOTICE cancelled with action and evidence (v421b AC3)', () => {
+    const d = describeNotification('ERASURE_OWNER_NOTICE', {
+      memberId: 'm1',
+      action: 'cancelled',
+      eventType: 'erasure.cancelled',
+      evidence: 'req_2',
+    });
+    expect(d.key).toBe('notifications.items.erasureCancelled');
+    expect(d.values).toEqual({ action: 'cancelled', evidence: 'req_2' });
+  });
+
+  it('describes ERASURE_OWNER_NOTICE purged with action and evidence (v421b AC3)', () => {
+    const d = describeNotification('ERASURE_OWNER_NOTICE', {
+      memberId: 'm1',
+      action: 'purged',
+      eventType: 'erasure.purged',
+      evidence: 'req_3',
+    });
+    expect(d.key).toBe('notifications.items.erasurePurged');
+    expect(d.values).toEqual({ action: 'purged', evidence: 'req_3' });
+  });
+
+  it('falls back to unknown when the erasure payload is not an object (v421b AC3)', () => {
+    const d = describeNotification('ERASURE_OWNER_NOTICE', 'not-an-object');
+    expect(d.key).toBe('notifications.items.unknown');
+    expect(d.values).toEqual({ type: 'ERASURE_OWNER_NOTICE' });
+  });
+
+  it('falls back to unknown when the erasure action is not a legal value (v421b AC3)', () => {
+    const d = describeNotification('ERASURE_OWNER_NOTICE', {
+      memberId: 'm1',
+      action: 'exploded',
+      eventType: 'erasure.requested',
+      evidence: 'req_1',
+    });
+    expect(d.key).toBe('notifications.items.unknown');
+    expect(d.values).toEqual({ type: 'ERASURE_OWNER_NOTICE' });
+  });
+
+  it('falls back to unknown when evidence is missing or empty (v421b AC3)', () => {
+    const missing = describeNotification('ERASURE_OWNER_NOTICE', {
+      memberId: 'm1',
+      action: 'requested',
+      eventType: 'erasure.requested',
+    });
+    expect(missing.key).toBe('notifications.items.unknown');
+
+    const empty = describeNotification('ERASURE_OWNER_NOTICE', {
+      memberId: 'm1',
+      action: 'requested',
+      eventType: 'erasure.requested',
+      evidence: '',
+    });
+    expect(empty.key).toBe('notifications.items.unknown');
+  });
 });

@@ -55,6 +55,15 @@ const DIGEST_KEYS = [
   'previewEmpty',
 ];
 
+const NOTIFICATION_ITEMS_KEYS = [
+  'pendingCreated',
+  'activated',
+  'unknown',
+  'erasureRequested',
+  'erasureCancelled',
+  'erasurePurged',
+];
+
 const CHANGE_REVIEW_KEYS = [
   'open',
   'title',
@@ -173,5 +182,32 @@ describe('changeReview namespace (P2-5 U5)', () => {
     expect(placeholders(id.get('changeReview.proposedAt'))).toEqual(['date']);
     expect(placeholders(en.get('changeReview.decidedAt'))).toEqual(['date']);
     expect(placeholders(id.get('changeReview.decidedAt'))).toEqual(['date']);
+  });
+});
+
+
+describe('notifications.items namespace (v421b AC4)', () => {
+  it('ships the full key set in both locales', () => {
+    for (const locale of [en, id]) {
+      const keys = [...locale.keys()]
+        .filter((key) => key.startsWith('notifications.items.'))
+        .map((key) => key.slice('notifications.items.'.length))
+        .sort();
+      expect(keys).toEqual([...NOTIFICATION_ITEMS_KEYS].sort());
+    }
+  });
+
+  it('carries non-empty values in both locales', () => {
+    for (const key of NOTIFICATION_ITEMS_KEYS) {
+      expect(en.get(`notifications.items.${key}`)).not.toBe('');
+      expect(id.get(`notifications.items.${key}`)).not.toBe('');
+    }
+  });
+
+  it('formats erasure lines with the same action and evidence placeholders in both locales', () => {
+    for (const key of ['erasureRequested', 'erasureCancelled', 'erasurePurged']) {
+      expect(placeholders(en.get(`notifications.items.${key}`))).toEqual(['action', 'evidence']);
+      expect(placeholders(id.get(`notifications.items.${key}`))).toEqual(['action', 'evidence']);
+    }
   });
 });

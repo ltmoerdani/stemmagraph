@@ -80,6 +80,18 @@ function asString(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.length > 0 ? value : fallback;
 }
 
+type ErasureOwnerAction = 'requested' | 'cancelled' | 'purged';
+
+const ERASURE_OWNER_NOTICE_KEYS: Readonly<Record<ErasureOwnerAction, string>> = {
+  requested: 'notifications.items.erasureRequested',
+  cancelled: 'notifications.items.erasureCancelled',
+  purged: 'notifications.items.erasurePurged',
+};
+
+function asErasureAction(value: unknown): ErasureOwnerAction | null {
+  return value === 'requested' || value === 'cancelled' || value === 'purged' ? value : null;
+}
+
 /**
  * Maps a stored notification to a resource key under notifications.items
  * plus its interpolation values. Unknown or malformed payloads fall back
@@ -99,6 +111,14 @@ export function describeNotification(type: string, payload: unknown): Notificati
       };
     case 'ACCOUNT_ACTIVATED':
       return { key: 'notifications.items.activated', values: {} };
+    case 'ERASURE_OWNER_NOTICE': {
+      const action = asErasureAction(record?.action);
+      const evidence = record?.evidence;
+      if (action === null || typeof evidence !== 'string' || evidence.length === 0) {
+        return { key: 'notifications.items.unknown', values: { type } };
+      }
+      return { key: ERASURE_OWNER_NOTICE_KEYS[action], values: { action, evidence } };
+    }
     default:
       return { key: 'notifications.items.unknown', values: { type } };
   }

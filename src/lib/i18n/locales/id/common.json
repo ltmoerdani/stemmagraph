@@ -304,7 +304,10 @@
     "items": {
       "pendingCreated": "{{name}} ({{email}}) mendaftar dan menunggu aktivasi.",
       "activated": "Akun Anda sudah diaktifkan. Selamat menyusun silsilah.",
-      "unknown": "Notifikasi baru: {{type}}"
+      "unknown": "Notifikasi baru: {{type}}",
+      "erasureRequested": "Permintaan penghapusan data ({{action}}) tercatat untuk anggota keluarga. Referensi: {{evidence}}.",
+      "erasureCancelled": "Permintaan penghapusan data untuk anggota keluarga dibatalkan ({{action}}). Referensi: {{evidence}}.",
+      "erasurePurged": "Data anggota keluarga sudah dihapus permanen ({{action}}). Referensi: {{evidence}}."
     }
   },
   "admin": {

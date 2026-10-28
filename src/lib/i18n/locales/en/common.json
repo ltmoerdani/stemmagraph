@@ -304,7 +304,10 @@
     "items": {
       "pendingCreated": "{{name}} ({{email}}) registered and is waiting for activation.",
       "activated": "Your account has been activated. Enjoy building your family tree.",
-      "unknown": "New notification: {{type}}"
+      "unknown": "New notification: {{type}}",
+      "erasureRequested": "A data erasure request ({{action}}) was recorded for a family member. Reference: {{evidence}}.",
+      "erasureCancelled": "The data erasure request for a family member was cancelled ({{action}}). Reference: {{evidence}}.",
+      "erasurePurged": "Family member data was permanently erased ({{action}}). Reference: {{evidence}}."
     }
   },
   "admin": {
