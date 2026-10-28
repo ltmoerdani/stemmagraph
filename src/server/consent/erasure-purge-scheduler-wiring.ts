@@ -13,6 +13,10 @@ import {
 } from './erasure-purge-scheduler';
 import { executeErasurePurge, type ErasurePurgeAuditRow, type MemberPurgeableData } from '../../lib/consent/erasure-purge-execute';
 import type { ErasureEventType } from '../../lib/consent/erasure-wiring';
+import {
+  emitErasureOwnerNotifications,
+  erasureMemberIdFromPayload,
+} from './erasure-notify-wiring';
 
 /** Bentuk prisma minimal untuk scheduler purge: familyMember dan event ledger. */
 export interface ErasurePurgeSchedulerPrismaClient {
@@ -134,6 +138,17 @@ export function buildDefaultErasurePurgeSchedulerDeps(
               type: row.type,
               payloadJson: row.payloadJson,
             },
+          });
+
+          // GOAL v421 SLICE 2: setelah audit erasure.purged ter-append,
+          // emisi notifikasi owner fire-and-log. Aktor kosong berarti
+          // pemicunya sistem scheduler, semua owner aktif menerima kabar.
+          await emitErasureOwnerNotifications({
+            prisma,
+            memberId: erasureMemberIdFromPayload(row.payloadJson, memberId),
+            eventType: row.type,
+            actorUserId: '',
+            evidence: new Date().toISOString(),
           });
         },
         nowIso: () => new Date().toISOString(),

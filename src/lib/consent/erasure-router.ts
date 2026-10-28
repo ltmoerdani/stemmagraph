@@ -56,7 +56,8 @@ export interface ErasureRouter {
 /** Ledger access the routes rely on; implemented by the host app. */
 export interface ErasureRouterDeps {
   listEvents: (memberId: string) => Promise<ErasureEventRow[]>;
-  appendEvent: (row: ErasureEventRow) => Promise<void>;
+  /** ctxExtra opsional membawa memberId dan userId dari route context untuk emisi notifikasi IO. */
+  appendEvent: (row: ErasureEventRow, ctxExtra?: { memberId: string; userId: string }) => Promise<void>;
 }
 
 const ERASURE_PATH = '/api/v1/members/:memberId/erasure';
@@ -98,7 +99,7 @@ async function runCancel(ctx: ErasureRouteContext, deps: ErasureRouterDeps): Pro
   if (decision.kind === 'conflict') {
     return toConflict(decision.response);
   }
-  await deps.appendEvent(decision.event);
+  await deps.appendEvent(decision.event, { memberId: ctx.memberId, userId: ctx.userId });
   const after = await deps.listEvents(ctx.memberId);
   const outcome = erasureWriteOutcome(toRouteRows(after), 'cancel');
   return { status: outcome.status, code: 'write', payload: outcome };
@@ -107,7 +108,7 @@ async function runCancel(ctx: ErasureRouteContext, deps: ErasureRouterDeps): Pro
 /** Request flow: append the planned event, then replay for the outcome. */
 async function runRequest(ctx: ErasureRouteContext, deps: ErasureRouterDeps): Promise<ErasureRouteResult> {
   const planned = planErasureRequest(ctx.memberId, new Date().toISOString());
-  await deps.appendEvent(planned.event);
+  await deps.appendEvent(planned.event, { memberId: ctx.memberId, userId: ctx.userId });
   const after = await deps.listEvents(ctx.memberId);
   const outcome = erasureWriteOutcome(toRouteRows(after), 'request');
   return { status: outcome.status, code: 'write', payload: outcome };

@@ -3,6 +3,9 @@
  * Tugasnya satu: memetakan Express req/res ke ErasureRouteContext,
  * lalu mendelegasikan seluruh logika ke registerErasureRoutes.
  * Prisma di-inject lewat parameter, tidak ada koneksi baru di sini.
+ * GOAL v421 SLICE 2: setelah prisma.event.create sukses di appendEvent,
+ * emisi notifikasi owner dijalankan fire-and-log (kegagalan emisi tidak
+ * boleh menggagalkan appendEvent maupun respons route).
  */
 
 import type { Request, RequestHandler, Response } from 'express';
@@ -14,6 +17,11 @@ import {
   type ErasureRouterDeps,
 } from '../../lib/consent/erasure-router';
 import type { ErasureEventType } from '../../lib/consent/erasure-wiring';
+import {
+  emitErasureOwnerNotifications,
+  erasureMemberIdFromPayload,
+  type ErasureNotificationPrismaClient,
+} from './erasure-notify-wiring';
 
 /** Path erasure yang sama dengan yang dipakai erasure-router. */
 const ERASURE_PATH = '/api/v1/members/:memberId/erasure';
@@ -26,10 +34,10 @@ export interface ErasureExpressHost {
 }
 
 /**
- * Bentuk prisma minimal untuk ledger Event. Struktural, jadi client
- * prisma apa pun yang punya event.findMany dan event.create diterima.
+ * Bentuk prisma minimal untuk ledger Event dan emisi notifikasi.
+ * Struktural, jadi client prisma apa pun yang punya model-model ini diterima.
  */
-export interface ErasurePrismaClient {
+export interface ErasurePrismaClient extends ErasureNotificationPrismaClient {
   event: {
     findMany(args: {
       where: {
@@ -105,9 +113,24 @@ export function createErasureExpressAdapter(options: ErasureExpressAdapterOption
         payloadJson: row.payloadJson,
       }));
     },
-    appendEvent: async (row) => {
+    appendEvent: async (row, ctxExtra) => {
       await prisma.event.create({
         data: { type: row.type, payloadJson: row.payloadJson },
+      });
+
+      // Emisi notifikasi owner fire-and-log: seluruh kegagalan ditelan
+      // di dalam emitErasureOwnerNotifications, jadi respons route dan
+      // ledger tetap sukses meskipun emisi gagal.
+      const memberId = erasureMemberIdFromPayload(
+        row.payloadJson,
+        ctxExtra?.memberId ?? '',
+      );
+      await emitErasureOwnerNotifications({
+        prisma,
+        memberId,
+        eventType: row.type,
+        actorUserId: ctxExtra?.userId ?? '',
+        evidence: new Date().toISOString(),
       });
     },
   };
