@@ -441,7 +441,7 @@ export const SelfConsentPanel: React.FC<{ onClose: () => void }> = ({ onClose })
             >
               {t('erasureSelf.confirmTitle')}
             </h3>
-            <p className="text-sm text-gray-700">{t('erasureSelf.confirmBody')}</p>
+            <p className="text-sm text-gray-700" data-testid={`self-erasure-confirm-body-${erasureConfirmId}`}>{t('erasureSelf.confirmBody')}</p>
             <p className="text-xs text-gray-500">{t('erasureSelf.confirmNote')}</p>
             <div className="flex items-center justify-end gap-2 pt-1">
               <button

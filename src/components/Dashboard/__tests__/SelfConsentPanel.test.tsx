@@ -18,6 +18,9 @@ const mocks = vi.hoisted(() => ({
   getSelfConsent: vi.fn(async () => ({ records: [], granted: false })),
   getSelfConsentEvents: vi.fn(async () => ({ records: [] as Array<Record<string, unknown>> })),
   postSelfConsent: vi.fn(async () => ({ record: { action: 'grant' }, granted: true, privacyStatus: 'shared' })),
+  getErasure: vi.fn(async () => ({ status: 'none', requestedAt: null, completedAt: null })),
+  requestErasure: vi.fn(async () => ({ view: { status: 'pending', requestedAt: '2026-10-01', completedAt: null }, statusCode: 201 })),
+  cancelErasure: vi.fn(async () => ({ view: { status: 'none', requestedAt: null, completedAt: null }, statusCode: 200 })),
 }));
 
 function ambilTeks(kamus: unknown, key: string): string {
@@ -45,11 +48,16 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../../lib/i18n', () => ({ formatDate: () => '2026-10-01' }));
 
 vi.mock('../../../lib/adapters', () => ({
-  getConsentSelfApi: () => mocks.apiNull === true ? null : ({
+  getConsentSelfApi: () => state.apiNull === true ? null : ({
     listSelfConsent: mocks.listSelfConsent,
     getSelfConsent: mocks.getSelfConsent,
     getSelfConsentEvents: mocks.getSelfConsentEvents,
     postSelfConsent: mocks.postSelfConsent,
+  }),
+  getErasureApi: () => state.apiNull === true ? null : ({
+    getErasure: mocks.getErasure,
+    requestErasure: mocks.requestErasure,
+    cancelErasure: mocks.cancelErasure,
   }),
 }));
 
@@ -189,5 +197,78 @@ describe('SelfConsentPanel timeline riwayat (v411 AC3)', () => {
     await waitFor(() => expect(mocks.getSelfConsentEvents).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByTestId(`self-consent-history-${ENTRY.memberId}`).textContent).toContain('Belum ada catatan'));
     expect(screen.getByTestId(`self-consent-grant-${ENTRY.memberId}`)).toBeTruthy();
+  });
+});
+
+describe('SelfConsentPanel penghapusan data (v420 AC2/AC5)', () => {
+  it('kelola dibuka: getErasure dipanggil, status none menampilkan tombol ajukan', async () => {
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    await waitFor(() => expect(mocks.getErasure).toHaveBeenCalledWith('m-self'));
+    await waitFor(() => expect(screen.getByTestId(`self-erasure-request-${ENTRY.memberId}`)).toBeTruthy());
+    expect(screen.queryByTestId(`self-erasure-pending-${ENTRY.memberId}`)).toBeNull();
+  });
+
+  it('ajukan: dialog konfirmasi eksplisit tampil, Batal menutup tanpa memanggil adapter, konfirmasi memanggil requestErasure', async () => {
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-erasure-request-${ENTRY.memberId}`)));
+    const dialog = screen.getByTestId(`self-erasure-confirm-${ENTRY.memberId}`);
+    expect(dialog.getAttribute('role')).toBe('dialog');
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    expect(screen.getByTestId(`self-erasure-confirm-body-${ENTRY.memberId}`).textContent).toContain('permanen');
+    fireEvent.click(screen.getByTestId(`self-erasure-confirm-cancel-${ENTRY.memberId}`));
+    expect(screen.queryByTestId(`self-erasure-confirm-${ENTRY.memberId}`)).toBeNull();
+    expect(mocks.requestErasure).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId(`self-erasure-request-${ENTRY.memberId}`));
+    fireEvent.click(screen.getByTestId(`self-erasure-confirm-accept-${ENTRY.memberId}`));
+    await waitFor(() => expect(mocks.requestErasure).toHaveBeenCalledWith('m-self'));
+    await waitFor(() => expect(screen.getByTestId(`self-erasure-pending-${ENTRY.memberId}`)).toBeTruthy());
+  });
+
+  it('pending: tombol batalkan tampil dan memanggil cancelErasure, status kembali none', async () => {
+    mocks.getErasure.mockResolvedValueOnce({ status: 'pending', requestedAt: '2026-10-01T00:00:00.000Z', completedAt: null });
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    const cancelBtn = await waitFor(() => screen.getByTestId(`self-erasure-cancel-${ENTRY.memberId}`));
+    fireEvent.click(cancelBtn);
+    await waitFor(() => expect(mocks.cancelErasure).toHaveBeenCalledWith('m-self'));
+    await waitFor(() => expect(screen.getByTestId(`self-erasure-request-${ENTRY.memberId}`)).toBeTruthy());
+  });
+
+  it('requestErasure gagal: pesan error inline tampil tanpa menutup dialog', async () => {
+    mocks.requestErasure.mockRejectedValueOnce(new Error('ERASURE_CONFLICT'));
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-erasure-request-${ENTRY.memberId}`)));
+    fireEvent.click(screen.getByTestId(`self-erasure-confirm-accept-${ENTRY.memberId}`));
+    await waitFor(() => expect(screen.getByTestId(`self-erasure-error-${ENTRY.memberId}`).textContent).toBe('ERASURE_CONFLICT'));
+    expect(screen.getByTestId(`self-erasure-confirm-${ENTRY.memberId}`)).toBeTruthy();
+  });
+
+  it('Esc menutup dialog konfirmasi tanpa memanggil adapter', async () => {
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-erasure-request-${ENTRY.memberId}`)));
+    expect(screen.getByTestId(`self-erasure-confirm-${ENTRY.memberId}`)).toBeTruthy();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId(`self-erasure-confirm-${ENTRY.memberId}`)).toBeNull();
+    expect(mocks.requestErasure).not.toHaveBeenCalled();
+  });
+
+  it('getErasure gagal: pesan loadFailed tampil, section tetap hidup', async () => {
+    mocks.getErasure.mockRejectedValueOnce(new Error('boom'));
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    fireEvent.click(await waitFor(() => screen.getByTestId(`self-consent-manage-${ENTRY.memberId}`)));
+    await waitFor(() => expect(mocks.getErasure).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByTestId(`self-erasure-error-${ENTRY.memberId}`).textContent).toContain('Gagal memuat'));
+    expect(screen.getByTestId(`self-erasure-request-${ENTRY.memberId}`)).toBeTruthy();
+  });
+
+  it('adapter nihil: section erasure tidak tampil tanpa crash', () => {
+    state.apiNull = true;
+    render(<SelfConsentPanel onClose={() => undefined} />);
+    expect(screen.queryByTestId('self-consent-title')).toBeNull();
+    expect(screen.queryByTestId(`self-erasure-${ENTRY.memberId}`)).toBeNull();
   });
 });
