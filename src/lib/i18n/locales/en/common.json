@@ -717,6 +717,21 @@
     "historyTitle": "Consent History",
     "historyLoading": "Loading history..."
   },
+  "erasureSelf": {
+    "sectionTitle": "Data Erasure Request",
+    "loading": "Loading erasure status...",
+    "loadFailed": "Failed to load erasure status.",
+    "pendingSince": "Erasure request pending since {{date}}.",
+    "requestAction": "Request Data Erasure",
+    "cancelAction": "Cancel Request",
+    "requestFailed": "Request failed. Try again.",
+    "cancelFailed": "Cancellation failed. Try again.",
+    "confirmTitle": "Request permanent data erasure?",
+    "confirmBody": "All personal data (contact name, photo, location, notes) will be permanently anonymized. This action cannot be undone.",
+    "confirmNote": "Family structure (parent, partner, child relations) is preserved so the family tree stays intact.",
+    "confirmStay": "Go Back",
+    "confirmAccept": "Yes, Erase My Data"
+  },
   "sharePanel": {
     "open": "Manage share links",
     "title": "Share links: {{treeName}}",

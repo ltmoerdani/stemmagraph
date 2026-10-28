@@ -514,6 +514,35 @@ export interface ConsentSelfApi {
   postSelfConsent(memberId: string, action: ConsentRecordView['action'], scope: string, note?: string): Promise<ConsentMutationResult>;
 }
 
+/** Snapshot status penghapusan data (v420 AC1) untuk satu anggota self.
+ *  Status dinormalisasi adapter: REQUESTED jadi pending, COMPLETED jadi
+ *  completed, selain itu (termasuk 404) none. */
+export interface ErasureStatusView {
+  status: 'pending' | 'completed' | 'none';
+  requestedAt: string | null;
+  completedAt: string | null;
+}
+
+/** Hasil mutasi penghapusan data (v420 AC1): status terbaru plus kode HTTP
+ *  dari server agar UI bisa membedakan 201 dibuat vs 200 dibatalkan. */
+export interface ErasureMutationResult {
+  view: ErasureStatusView;
+  statusCode: number;
+}
+
+/** Permukaan penghapusan data mandiri (v420 AC1). Hanya adapter REST yang
+ *  mengimplementasikannya; adapter mock dan supabase mendapat null dari
+ *  getErasureApi sehingga section disembunyikan, pola sama dengan
+ *  getConsentSelfApi. */
+export interface ErasureSelfApi {
+  /** GET /members/:memberId/erasure: status penghapusan saat ini. */
+  getErasure(memberId: string): Promise<ErasureStatusView>;
+  /** POST /members/:memberId/erasure: ajukan anonymisasi permanen. */
+  requestErasure(memberId: string): Promise<ErasureMutationResult>;
+  /** DELETE /members/:memberId/erasure: batalkan pengajuan pending. */
+  cancelErasure(memberId: string): Promise<ErasureMutationResult>;
+}
+
 // ─── Error Types ──────────────────────────────────────────
 
 export class AdapterError extends Error {

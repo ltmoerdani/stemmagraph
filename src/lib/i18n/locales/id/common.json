@@ -717,6 +717,21 @@
     "historyTitle": "Riwayat Persetujuan",
     "historyLoading": "Memuat riwayat..."
   },
+  "erasureSelf": {
+    "sectionTitle": "Pengajuan Penghapusan Data",
+    "loading": "Memuat status penghapusan...",
+    "loadFailed": "Gagal memuat status penghapusan.",
+    "pendingSince": "Pengajuan penghapusan menunggu sejak {{date}}.",
+    "requestAction": "Ajukan Penghapusan Data",
+    "cancelAction": "Batalkan Pengajuan",
+    "requestFailed": "Pengajuan gagal. Coba lagi.",
+    "cancelFailed": "Pembatalan gagal. Coba lagi.",
+    "confirmTitle": "Ajukan penghapusan data permanen?",
+    "confirmBody": "Seluruh data pribadi (nama kontak, foto, lokasi, catatan) akan dianonymisasi secara permanen. Tindakan ini tidak dapat dibatalkan.",
+    "confirmNote": "Struktur keluarga (relasi orang tua, pasangan, anak) tetap dipertahankan agar pohon keluarga tetap utuh.",
+    "confirmStay": "Kembali",
+    "confirmAccept": "Ya, Hapus Data Saya"
+  },
   "sharePanel": {
     "open": "Kelola tautan bagikan",
     "title": "Tautan bagikan: {{treeName}}",
