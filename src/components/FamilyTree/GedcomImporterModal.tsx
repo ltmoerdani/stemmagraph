@@ -8,7 +8,7 @@ import { importFamilies } from '../../lib/gedcom/importFamilies';
 import { buildImportPlan } from '../../lib/gedcom/importPlan';
 import { applyImportPlan, type ImportApplyReport } from '../../lib/gedcom/applyImportPlan';
 import { extractGedcom } from '../../lib/gedcom/importPipeline';
-import { GEDCStruct, g7ConfGEDC } from '../../lib/gedcom/vendor/gedcstruct.js';
+
 
 interface GedcomImporterModalProps {
   isOpen: boolean;

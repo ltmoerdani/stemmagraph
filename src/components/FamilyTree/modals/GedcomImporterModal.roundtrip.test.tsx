@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { importIndividuals } from '../../../lib/gedcom/importIndividuals';
 import { importFamilies } from '../../../lib/gedcom/importFamilies';
-import { buildImportPlan } from '../../../lib/gedcom/importPlan';
+
 import { extractGedcom } from '../../../lib/gedcom/importPipeline';
 
 const FIXTURE_1 = [
