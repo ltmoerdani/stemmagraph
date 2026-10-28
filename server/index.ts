@@ -150,7 +150,7 @@ import { applyImportPlan } from '../src/lib/gedcom/applyImportPlan';
 import { createPrismaApplyAdapter } from '../src/lib/gedcom/applyAdapter';
 import Database from 'better-sqlite3';
 import { buildSnapshotPath, parseDatabaseUrl } from '../src/lib/gedcom/undoSnapshot';
-import { buildUndoPayload, parseRegistryFile } from '../src/lib/gedcom/undoRegistry';
+import { buildUndoPayload, parseRegistryFile, isExpired } from '../src/lib/gedcom/undoRegistry';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -5104,6 +5104,71 @@ app.post(
     } catch {
       // 500 tanpa stack trace ke klien: pesan generik stabil.
       res.status(500).json({ code: 'GEDCOM_APPLY_ERROR', message: 'Failed to apply GEDCOM import' });
+    }
+  },
+);
+
+// POST /api/v1/trees/:treeId/gedcom/undo
+//
+// v418 (AC3, AC4): pulihkan database dari snapshot yang dibuat route apply.
+// Registry tunggal per tree di data/gedcom-undo/<treeId>.json; undo bersifat
+// sekali pakai — restore sukses menghapus registry dan file snapshot.
+// Snapshot kedaluwarsa (melewati TTL 24 jam) ikut dibersihkan lalu 410.
+// Route ini TIDAK menulis apa pun selain restore snapshot dan pembersihan
+// file registry/snapshot.
+
+app.post(
+  '/api/v1/trees/:treeId/gedcom/undo',
+  requireAuth,
+  async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+    try {
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
+      if (!guard.ok) {
+        return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+      }
+
+      // Registry nihil = tidak ada undo tertunda.
+      const registryPath = `data/gedcom-undo/${req.params.treeId}.json`;
+      if (!fs.existsSync(registryPath)) {
+        return res.status(404).json({ code: 'NO_PENDING_UNDO', message: 'No pending undo for this tree' });
+      }
+      const raw = fs.readFileSync(registryPath, 'utf8');
+      const parsed = parseRegistryFile(raw);
+      if (parsed === null) {
+        // Isi korup tidak dapat dipercaya: diperlakukan tanpa undo tertunda.
+        return res.status(404).json({ code: 'NO_PENDING_UNDO', message: 'No pending undo for this tree' });
+      }
+
+      // TTL lewat: bersihkan registry + snapshot, lalu 410.
+      if (isExpired(parsed, Date.now())) {
+        fs.rmSync(registryPath, { force: true });
+        fs.rmSync(parsed.snapshotPath, { force: true });
+        return res.status(410).json({ code: 'UNDO_EXPIRED', message: 'Undo window has expired' });
+      }
+
+      // Token wajib cocok dengan yang diterima saat apply.
+      if (req.body?.token !== parsed.token) {
+        return res.status(403).json({ code: 'UNDO_TOKEN_MISMATCH', message: 'Undo token does not match' });
+      }
+
+      // Restore: timpa database dengan snapshot via better-sqlite3 backup.
+      const dbPath = parseDatabaseUrl(process.env['DATABASE_URL'] || 'file:./prisma/dev.db');
+      const src = new Database(parsed.snapshotPath, { readonly: true });
+      try {
+        await src.backup(dbPath);
+      } finally {
+        src.close();
+      }
+
+      // Sekali pakai: registry + snapshot dihapus setelah restore sukses.
+      fs.rmSync(registryPath, { force: true });
+      fs.rmSync(parsed.snapshotPath, { force: true });
+
+      res.json({ restored: true, summary: parsed.summary });
+    } catch {
+      // 500 tanpa stack trace: kegagalan restore tidak mengubah registry,
+      // sehingga undo masih bisa dicoba lagi.
+      res.status(500).json({ code: 'UNDO_RESTORE_FAILED', message: 'Failed to restore snapshot' });
     }
   },
 );
