@@ -3,7 +3,7 @@
 // Run: npx tsx server/index.ts
 
 import express from 'express';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import cors from 'cors';
@@ -146,6 +146,11 @@ import { gateEntriesFromGedcom } from '../src/lib/gedcom/previewGateEntries';
 import { incomingRecordsFromGedcom } from '../src/lib/gedcom/previewIncoming';
 import { looksLikeGedcom, parseGedcomUpload } from '../src/lib/gedcom/previewUpload';
 import { buildPreviewSummary } from '../src/lib/gedcom/previewSummary';
+import { applyImportPlan } from '../src/lib/gedcom/applyImportPlan';
+import { createPrismaApplyAdapter } from '../src/lib/gedcom/applyAdapter';
+import Database from 'better-sqlite3';
+import { buildSnapshotPath, parseDatabaseUrl } from '../src/lib/gedcom/undoSnapshot';
+import { buildUndoPayload, parseRegistryFile, isExpired } from '../src/lib/gedcom/undoRegistry';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -4977,6 +4982,193 @@ app.post(
     } catch {
       // 500 tanpa stack trace ke klien (AC3): pesan generik stabil.
       res.status(500).json({ code: 'GEDCOM_PREVIEW_ERROR', message: 'Failed to preview GEDCOM file' });
+    }
+  },
+);
+
+// POST /api/v1/trees/:treeId/gedcom/apply
+//
+// Fase apply v418 (AC1): seluruh pipeline import dijalankan ulang persis
+// seperti route preview (parse vendor g7, import-gate, importPlan,
+// importMergePlan), lalu rencana diterapkan ke database dalam SATU
+// transaksi atomik lewat createPrismaApplyAdapter (AC2): error apapun
+// membuat seluruh penulisan di-rollback prisma.$transaction.
+//
+// Guard pola persis preview v417: 401 requireAuth, 404 tree nihil,
+// 403 FORBIDDEN_TREE non-owner (manage_membership owner-only). Upload
+// multipart field `file`, ekstensi .ged/.gdz, batas 10 MB (413).
+// Validasi gagal 400 kode stabil INVALID_GEDCOM; error lain 500 tanpa
+// stack trace ke klien.
+
+/** Batas ukuran unggahan GEDCOM apply (sama dengan preview). */
+const GEDCOM_APPLY_MAX_BYTES = 10 * 1024 * 1024;
+
+app.post(
+  '/api/v1/trees/:treeId/gedcom/apply',
+  requireAuth,
+  express.raw({ type: () => true, limit: '12mb' }),
+  async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+    try {
+      // Guard dulu (404/403), parse file kemudian — pola preview.
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
+      if (!guard.ok) {
+        return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+      }
+
+      // Wajib multipart/form-data dengan file field `file`.
+      const contentType = req.headers['content-type'];
+      const isMultipart =
+        typeof contentType === 'string' && contentType.toLowerCase().includes('multipart/form-data');
+      if (!isMultipart || !Buffer.isBuffer(req.body)) {
+        return res.status(400).json({ code: 'INVALID_GEDCOM', message: 'Expected multipart/form-data with a file field named file' });
+      }
+      const upload = parseGedcomUpload(new Uint8Array(req.body), contentType);
+      if (!upload.ok || upload.bytes.length === 0) {
+        // Ekstensi selain .ged/.gdz, tanpa file, tanpa filename, atau
+        // buffer kosong: validasi gagal 400 kode stabil.
+        return res.status(400).json({ code: 'INVALID_GEDCOM', message: 'Upload must be a non-empty .ged or .gdz file in field file' });
+      }
+
+      // Batas 10 MB dari ukuran byte aktual (413).
+      if (upload.bytes.length > GEDCOM_APPLY_MAX_BYTES) {
+        return res.status(413).json({ code: 'GEDCOM_TOO_LARGE', message: 'File exceeds the 10 MB apply limit' });
+      }
+
+      // Ekstraksi teks GEDCOM (gedzip atau polos); arsip tidak sah 400.
+      let text: string;
+      try {
+        text = extractGedcom(upload.bytes).text;
+      } catch {
+        return res.status(400).json({ code: 'INVALID_GEDCOM', message: 'The uploaded archive is not a valid GEDZIP file' });
+      }
+
+      // File acak yang bukan dokumen GEDCOM ditolak 400 kode stabil.
+      if (!looksLikeGedcom(text)) {
+        return res.status(400).json({ code: 'INVALID_GEDCOM', message: 'The uploaded file is not a valid GEDCOM document' });
+      }
+
+      // Pipeline ulang persis urutan route preview.
+      const parseWarnings: string[] = [];
+      const individuals = importIndividuals(text, (msg) => parseWarnings.push(msg));
+      const families = importFamilies(text, (msg) => parseWarnings.push(msg));
+      const gateResult = runImportGate(gateEntriesFromGedcom(text));
+      const plan = buildImportPlan(individuals, families);
+      const mergePlan = buildMergePlan(
+        incomingRecordsFromGedcom(text),
+        await loadExistingIdentityIndex(req.params.treeId),
+      );
+      const livingAffected = plan.members.filter((m) => m.livingSuggested === true).length;
+      const summary = buildPreviewSummary(mergePlan, gateResult.rejects.length, livingAffected);
+
+      // AC3: snapshot database SEBELUM transaksi apply, via better-sqlite3
+      // langsung (bukan prisma). Snapshot gagal = 500 tanpa menulis apa pun
+      // (melempar ke catch luar, transaksi belum dimulai).
+      const snapshotDir = 'data/gedcom-snapshots';
+      fs.mkdirSync(snapshotDir, { recursive: true });
+      const snapshotPath = buildSnapshotPath(snapshotDir, req.params.treeId, Date.now());
+      const dbPath = parseDatabaseUrl(process.env['DATABASE_URL'] || 'file:./prisma/dev.db');
+      const snapDb = new Database(dbPath, { readonly: true });
+      try {
+        await snapDb.backup(snapshotPath);
+      } finally {
+        snapDb.close();
+      }
+
+      // Apply atomik: satu transaksi untuk seluruh member + relasi.
+      const report = await prisma.$transaction(async (tx) => {
+        const io = createPrismaApplyAdapter(tx, req.params.treeId);
+        return applyImportPlan(plan, io);
+      });
+
+      // AC4: registry undo satu file per tree; apply baru menimpa registry
+      // lama dan menghapus snapshot lamanya agar tidak menumpuk.
+      const undoDir = 'data/gedcom-undo';
+      fs.mkdirSync(undoDir, { recursive: true });
+      const registryPath = `${undoDir}/${req.params.treeId}.json`;
+      const oldRaw = fs.existsSync(registryPath)
+        ? fs.readFileSync(registryPath, 'utf8')
+        : null;
+      const oldEntry = oldRaw !== null ? parseRegistryFile(oldRaw) : null;
+      if (oldEntry !== null) {
+        fs.rmSync(oldEntry.snapshotPath, { force: true });
+      }
+      const token = randomBytes(24).toString('hex');
+      const entry = buildUndoPayload(token, snapshotPath, Date.now(), 24, summary);
+      fs.writeFileSync(registryPath, JSON.stringify(entry));
+
+      res.json({
+        summary,
+        applied: report,
+        undo: { token, expiresAt: entry.expiresAt },
+      });
+    } catch {
+      // 500 tanpa stack trace ke klien: pesan generik stabil.
+      res.status(500).json({ code: 'GEDCOM_APPLY_ERROR', message: 'Failed to apply GEDCOM import' });
+    }
+  },
+);
+
+// POST /api/v1/trees/:treeId/gedcom/undo
+//
+// v418 (AC3, AC4): pulihkan database dari snapshot yang dibuat route apply.
+// Registry tunggal per tree di data/gedcom-undo/<treeId>.json; undo bersifat
+// sekali pakai — restore sukses menghapus registry dan file snapshot.
+// Snapshot kedaluwarsa (melewati TTL 24 jam) ikut dibersihkan lalu 410.
+// Route ini TIDAK menulis apa pun selain restore snapshot dan pembersihan
+// file registry/snapshot.
+
+app.post(
+  '/api/v1/trees/:treeId/gedcom/undo',
+  requireAuth,
+  async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+    try {
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
+      if (!guard.ok) {
+        return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+      }
+
+      // Registry nihil = tidak ada undo tertunda.
+      const registryPath = `data/gedcom-undo/${req.params.treeId}.json`;
+      if (!fs.existsSync(registryPath)) {
+        return res.status(404).json({ code: 'NO_PENDING_UNDO', message: 'No pending undo for this tree' });
+      }
+      const raw = fs.readFileSync(registryPath, 'utf8');
+      const parsed = parseRegistryFile(raw);
+      if (parsed === null) {
+        // Isi korup tidak dapat dipercaya: diperlakukan tanpa undo tertunda.
+        return res.status(404).json({ code: 'NO_PENDING_UNDO', message: 'No pending undo for this tree' });
+      }
+
+      // TTL lewat: bersihkan registry + snapshot, lalu 410.
+      if (isExpired(parsed, Date.now())) {
+        fs.rmSync(registryPath, { force: true });
+        fs.rmSync(parsed.snapshotPath, { force: true });
+        return res.status(410).json({ code: 'UNDO_EXPIRED', message: 'Undo window has expired' });
+      }
+
+      // Token wajib cocok dengan yang diterima saat apply.
+      if (req.body?.token !== parsed.token) {
+        return res.status(403).json({ code: 'UNDO_TOKEN_MISMATCH', message: 'Undo token does not match' });
+      }
+
+      // Restore: timpa database dengan snapshot via better-sqlite3 backup.
+      const dbPath = parseDatabaseUrl(process.env['DATABASE_URL'] || 'file:./prisma/dev.db');
+      const src = new Database(parsed.snapshotPath, { readonly: true });
+      try {
+        await src.backup(dbPath);
+      } finally {
+        src.close();
+      }
+
+      // Sekali pakai: registry + snapshot dihapus setelah restore sukses.
+      fs.rmSync(registryPath, { force: true });
+      fs.rmSync(parsed.snapshotPath, { force: true });
+
+      res.json({ restored: true, summary: parsed.summary });
+    } catch {
+      // 500 tanpa stack trace: kegagalan restore tidak mengubah registry,
+      // sehingga undo masih bisa dicoba lagi.
+      res.status(500).json({ code: 'UNDO_RESTORE_FAILED', message: 'Failed to restore snapshot' });
     }
   },
 );
