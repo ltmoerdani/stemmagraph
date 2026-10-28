@@ -3,7 +3,7 @@
 // Run: npx tsx server/index.ts
 
 import express from 'express';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import cors from 'cors';
@@ -148,6 +148,9 @@ import { looksLikeGedcom, parseGedcomUpload } from '../src/lib/gedcom/previewUpl
 import { buildPreviewSummary } from '../src/lib/gedcom/previewSummary';
 import { applyImportPlan } from '../src/lib/gedcom/applyImportPlan';
 import { createPrismaApplyAdapter } from '../src/lib/gedcom/applyAdapter';
+import Database from 'better-sqlite3';
+import { buildSnapshotPath, parseDatabaseUrl } from '../src/lib/gedcom/undoSnapshot';
+import { buildUndoPayload, parseRegistryFile } from '../src/lib/gedcom/undoRegistry';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -5057,19 +5060,46 @@ app.post(
       const livingAffected = plan.members.filter((m) => m.livingSuggested === true).length;
       const summary = buildPreviewSummary(mergePlan, gateResult.rejects.length, livingAffected);
 
+      // AC3: snapshot database SEBELUM transaksi apply, via better-sqlite3
+      // langsung (bukan prisma). Snapshot gagal = 500 tanpa menulis apa pun
+      // (melempar ke catch luar, transaksi belum dimulai).
+      const snapshotDir = 'data/gedcom-snapshots';
+      fs.mkdirSync(snapshotDir, { recursive: true });
+      const snapshotPath = buildSnapshotPath(snapshotDir, req.params.treeId, Date.now());
+      const dbPath = parseDatabaseUrl(process.env['DATABASE_URL'] || 'file:./prisma/dev.db');
+      const snapDb = new Database(dbPath, { readonly: true });
+      try {
+        await snapDb.backup(snapshotPath);
+      } finally {
+        snapDb.close();
+      }
+
       // Apply atomik: satu transaksi untuk seluruh member + relasi.
       const report = await prisma.$transaction(async (tx) => {
         const io = createPrismaApplyAdapter(tx, req.params.treeId);
         return applyImportPlan(plan, io);
       });
 
+      // AC4: registry undo satu file per tree; apply baru menimpa registry
+      // lama dan menghapus snapshot lamanya agar tidak menumpuk.
+      const undoDir = 'data/gedcom-undo';
+      fs.mkdirSync(undoDir, { recursive: true });
+      const registryPath = `${undoDir}/${req.params.treeId}.json`;
+      const oldRaw = fs.existsSync(registryPath)
+        ? fs.readFileSync(registryPath, 'utf8')
+        : null;
+      const oldEntry = oldRaw !== null ? parseRegistryFile(oldRaw) : null;
+      if (oldEntry !== null) {
+        fs.rmSync(oldEntry.snapshotPath, { force: true });
+      }
+      const token = randomBytes(24).toString('hex');
+      const entry = buildUndoPayload(token, snapshotPath, Date.now(), 24, summary);
+      fs.writeFileSync(registryPath, JSON.stringify(entry));
+
       res.json({
-        ok: true,
-        dryRun: false,
-        uploadKind: detectUploadKind(upload.bytes),
         summary,
         applied: report,
-        parseWarningCount: parseWarnings.length,
+        undo: { token, expiresAt: entry.expiresAt },
       });
     } catch {
       // 500 tanpa stack trace ke klien: pesan generik stabil.
