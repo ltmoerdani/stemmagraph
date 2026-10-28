@@ -5009,7 +5009,7 @@ app.post(
   express.raw({ type: () => true, limit: '12mb' }),
   async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
     try {
-      // Guard dulu (404/403), parse file kemudian — pola preview.
+      // Guard dulu (404/403), parse file kemudian: pola preview.
       const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
       if (!guard.ok) {
         return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
@@ -5112,7 +5112,7 @@ app.post(
 //
 // v418 (AC3, AC4): pulihkan database dari snapshot yang dibuat route apply.
 // Registry tunggal per tree di data/gedcom-undo/<treeId>.json; undo bersifat
-// sekali pakai — restore sukses menghapus registry dan file snapshot.
+// sekali pakai: restore sukses menghapus registry dan file snapshot.
 // Snapshot kedaluwarsa (melewati TTL 24 jam) ikut dibersihkan lalu 410.
 // Route ini TIDAK menulis apa pun selain restore snapshot dan pembersihan
 // file registry/snapshot.

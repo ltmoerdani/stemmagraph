@@ -4,7 +4,7 @@
 // (src/lib/gedcom/applyImportPlan.ts) ke database lewat Prisma
 // TransactionClient. Setiap instance terikat pada satu transaksi dan
 // satu pohon: applyImportPlan menerima io ini sehingga seluruh penulisan
-// member + relasi terjadi ATOMIK — error apapun yang lolos dari adapter
+// member + relasi terjadi ATOMIK: error apapun yang lolos dari adapter
 // membuat prisma.$transaction mengembalikan (rollback) semuanya.
 //
 // KEPUTUSAN PM kolom NOT NULL (prisma/schema.prisma model FamilyMember:
