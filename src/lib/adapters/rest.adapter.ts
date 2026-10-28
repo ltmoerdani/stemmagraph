@@ -61,6 +61,9 @@ import {
   ConsentStateView,
   ConsentMutationResult,
   SelfConsentOverview,
+  ErasureSelfApi,
+  ErasureStatusView,
+  ErasureMutationResult,
   CitationApi,
   CitationSpec,
   CitationEventType,
@@ -99,7 +102,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, ConsentSelfApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi, CommentApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, ConsentSelfApi, ErasureSelfApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi, CommentApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -799,6 +802,59 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
       ...(note === undefined ? {} : { note }),
     });
     return body;
+  }
+
+  // ── Erasure self-service (v420) ────────────────────────
+  // Pure routing ke route /members/:id/erasure (S-09b-vi-ii). Bentuk
+  // respons server dipagari minimal valid: field status berisi kode HTTP
+  // dan field request memuat state replay ledger. Status server
+  // dinormalisasi ke view tiga nilai; 404 dianggap belum ada pengajuan
+  // (none), bukan error bagi pemanggil UI.
+
+  async getErasure(memberId: string): Promise<ErasureStatusView> {
+    try {
+      const body = await this.request<{
+        status?: number;
+        request?: { status?: string; requestedAt?: string; completedAt?: string };
+      }>('GET', `/members/${encodeURIComponent(memberId)}/erasure`);
+      return RestAdapter.toErasureView(body.request);
+    } catch (e) {
+      if (e instanceof AdapterError && e.statusCode === 404) {
+        return { status: 'none', requestedAt: null, completedAt: null };
+      }
+      throw e;
+    }
+  }
+
+  async requestErasure(memberId: string): Promise<ErasureMutationResult> {
+    const body = await this.request<{
+      status?: number;
+      request?: { status?: string; requestedAt?: string; completedAt?: string };
+    }>('POST', `/members/${encodeURIComponent(memberId)}/erasure`);
+    return { view: RestAdapter.toErasureView(body.request), statusCode: body.status ?? 200 };
+  }
+
+  async cancelErasure(memberId: string): Promise<ErasureMutationResult> {
+    const body = await this.request<{
+      status?: number;
+      request?: { status?: string; requestedAt?: string; completedAt?: string };
+    }>('DELETE', `/members/${encodeURIComponent(memberId)}/erasure`);
+    return { view: RestAdapter.toErasureView(body.request), statusCode: body.status ?? 200 };
+  }
+
+  /** Normalisasi state replay server ke view tiga nilai (v420 AC1). */
+  private static toErasureView(request?: {
+    status?: string;
+    requestedAt?: string;
+    completedAt?: string;
+  }): ErasureStatusView {
+    const raw = request?.status;
+    const status = raw === 'REQUESTED' ? 'pending' : raw === 'COMPLETED' ? 'completed' : 'none';
+    return {
+      status,
+      requestedAt: request?.requestedAt ?? null,
+      completedAt: request?.completedAt ?? null,
+    };
   }
 
   // ── Citation surface (v155-iii-a) ───────────────────────

@@ -234,6 +234,16 @@ export function getConsentSelfApi(): ConsentSelfApi | null {
 }
 
 /**
+ * Returns the self-service erasure surface (v420 AC1) of the active adapter, or
+ * null when the adapter has no server backend (mock, supabase): the erasure
+ * section hides for null instead of crashing (same shape as getConsentSelfApi).
+ */
+export function getErasureApi(): ErasureSelfApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+/**
  * Override adapter with a custom implementation (useful for testing).
  */
 export function setAdapter(adapter: DataAdapter): void {
@@ -311,6 +321,7 @@ export type {
   CreateChangeProposalInput,
   ConsentApi,
   ConsentSelfApi,
+  ErasureSelfApi,
   SelfConsentOverview,
   ConsentRecordView,
   ConsentStateView,
