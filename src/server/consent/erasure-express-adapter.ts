@@ -12,6 +12,7 @@ import type { Request, RequestHandler, Response } from 'express';
 import {
   encryptEventForWrite,
   listMemberEventRows,
+  resolveDekForKeyId,
   resolveDekOrNull,
   resolveTreeIdForMember,
 } from './erasure-crypto-wiring';
@@ -114,11 +115,15 @@ export function createErasureExpressAdapter(options: ErasureExpressAdapterOption
       });
       const treeId = await resolveTreeIdForMember(prisma, memberId);
       const key = treeId ? resolveDekOrNull(treeId) : null;
+      // Sejak v423 slice 3b2: resolver DEK per keyId diteruskan bila treeId
+      // tersedia sehingga baris keyId generasi lama tetap terbaca setelah
+      // rotasi kunci; bila treeId null, jalur lama dipertahankan.
       return listMemberEventRows(
         rawRows,
         key?.dek ?? null,
         key?.keyId ?? 'legacy',
         memberId,
+        treeId ? resolveDekForKeyId(treeId) : undefined,
       ).map((row) => ({
         type: row.type as ErasureEventType,
         payloadJson: row.payloadJson,

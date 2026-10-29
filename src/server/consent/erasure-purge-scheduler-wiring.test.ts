@@ -27,6 +27,8 @@ import {
 } from './erasure-purge-scheduler-wiring';
 import { scanErasurePurges } from './erasure-purge-scheduler';
 import { executeErasurePurge } from '../../lib/consent/erasure-purge-execute';
+import { rotateDek } from '../../lib/crypto/family-key-store';
+import { encryptEventForWrite } from './erasure-crypto-wiring';
 
 const mockScan = vi.mocked(scanErasurePurges);
 const mockExec = vi.mocked(executeErasurePurge);
@@ -360,6 +362,57 @@ describe('createErasurePurgeScheduler', () => {
         payloadJson: JSON.stringify({ memberId: 'm-1', at: '2026-10-29T00:00:00.000Z' }),
       });
       expect(withKeys.env.eventCreateCalls[0]?.payloadJson.startsWith('v1:')).toBe(true);
+    } finally {
+      if (originalMaster === undefined) {
+        delete process.env.STMG_MASTER_KEY;
+      } else {
+        process.env.STMG_MASTER_KEY = originalMaster;
+      }
+      delete process.env.STMG_KEY_DIR;
+      rmSync(keyDir, { recursive: true, force: true });
+    }
+  });
+
+  it('kasus 8c: setelah rotateDek, listEvents dan executePurge.listEvents tetap membaca baris keyId generasi lama lewat resolver', async () => {
+    const keyDir = mkdtempSync(join(tmpdir(), 'stmg-purge-rot-'));
+    const originalMaster = process.env.STMG_MASTER_KEY;
+    process.env.STMG_KEY_DIR = keyDir;
+    try {
+      process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+
+      // Baris ledger ditulis saat kunci aktif masih generasi pertama (k1).
+      const rowK1 = {
+        type: 'erasure.requested',
+        payloadJson: encryptEventForWrite('tree-purge-rot', {
+          memberId: 'm-1',
+          requestedAt: '2026-08-01T00:00:00.000Z',
+        }).stored,
+      };
+      expect(rowK1.payloadJson.startsWith('v1:k1:')).toBe(true);
+
+      // Rotasi kunci: k2 jadi aktif, baris lama masih envelope k1.
+      rotateDek('tree-purge-rot');
+
+      const { prisma } = makePrisma({
+        members: [makeMember('m-1')],
+        memberTreeIds: { 'm-1': 'tree-purge-rot' },
+        events: [rowK1],
+      });
+      const deps = buildDefaultErasurePurgeSchedulerDeps(prisma);
+
+      // Jalur listEvents scheduler: baris k1 terbaca meski dek aktif k2.
+      const rows = await deps.listEvents('m-1');
+      expect(rows.map((r) => r.type)).toEqual(['erasure.requested']);
+      const parsed = JSON.parse(rows[0]?.payloadJson ?? '{}') as { memberId?: string };
+      expect(parsed.memberId).toBe('m-1');
+
+      // Jalur executePurge.listEvents yang dipakai executeErasurePurge.
+      await deps.executePurge('m-1');
+      const executeDeps = mockExec.mock.calls[0][1];
+      const rowsPurge = await executeDeps.listEvents('m-1');
+      expect(rowsPurge.map((r) => r.type)).toEqual(['erasure.requested']);
+      const parsedPurge = JSON.parse(rowsPurge[0]?.payloadJson ?? '{}') as { memberId?: string };
+      expect(parsedPurge.memberId).toBe('m-1');
     } finally {
       if (originalMaster === undefined) {
         delete process.env.STMG_MASTER_KEY;

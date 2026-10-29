@@ -6,7 +6,7 @@
  */
 
 import type { Request, RequestHandler, Response } from 'express';
-import { resolveDekOrNull, resolveTreeIdForMember, listMemberEventRows, encryptEventForWrite } from './erasure-crypto-wiring';
+import { resolveDekForKeyId, resolveDekOrNull, resolveTreeIdForMember, listMemberEventRows, encryptEventForWrite, type ErasureCryptoPrismaClient } from './erasure-crypto-wiring';
 import {
   registerWithdrawalRoutes,
   type WithdrawalRouteHandler,
@@ -29,8 +29,10 @@ export interface WithdrawalExpressHost {
 /**
  * Bentuk prisma minimal untuk ledger Event. Struktural, jadi client
  * prisma apa pun yang punya event.findMany dan event.create diterima.
+ * familyMember opsional agar resolveTreeIdForMember bisa dipanggil.
  */
 export interface WithdrawalPrismaClient {
+  familyMember?: ErasureCryptoPrismaClient['familyMember'];
   event: {
     findMany(args: {
       where: {
@@ -124,11 +126,15 @@ export function createWithdrawalExpressAdapter(options: WithdrawalExpressAdapter
       });
       const treeId = await resolveTreeIdForMember(prisma, memberId);
       const key = treeId ? resolveDekOrNull(treeId) : null;
+      // Sejak v423 slice 3b2: resolver DEK per keyId diteruskan bila treeId
+      // tersedia sehingga baris keyId generasi lama tetap terbaca setelah
+      // rotasi kunci; bila treeId null, jalur lama dipertahankan.
       return listMemberEventRows(
         rawRows,
         key?.dek ?? null,
         key?.keyId ?? 'legacy',
         memberId,
+        treeId ? resolveDekForKeyId(treeId) : undefined,
       ).map((row) => parseLedgerEvent(row.type, row.payloadJson));
     },
     appendEvent: async (memberId, event) => {
