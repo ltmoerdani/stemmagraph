@@ -76,6 +76,70 @@ function isEventForMember(payload: unknown, memberId: string): boolean {
   return (payload as { memberId?: unknown }).memberId === memberId;
 }
 
+// Resolve DEK untuk treeId tanpa melempar: bungkus getOrCreateDek dengan
+// try/catch, null bila gagal (mis. STMG_MASTER_KEY kosong atau kunci rusak
+// di disk). Tidak pernah me-log isi kunci maupun materi turunannya.
+export function resolveDekOrNull(
+  treeId: string,
+): { dek: Buffer; keyId: string } | null {
+  try {
+    return getOrCreateDek(treeId);
+  } catch {
+    return null;
+  }
+}
+
+// Seleksi plus konversi baris event per member ke plaintext. Row terenkripsi
+// (prefix v1:) hanya bisa dibaca bila dek tersedia: bila dek null atau
+// dekripsi gagal, row di-skip dengan console.error tanpa membocorkan materi
+// kunci; bila berhasil dan payload milik member, kembalikan row dengan
+// payloadJson berupa JSON plaintext hasil dekripsi. Row legacy (tanpa
+// prefix) diparse langsung: bukan JSON valid di-skip dengan console.error,
+// milik member dikembalikan apa adanya dengan payloadJson asli.
+export function listMemberEventRows(
+  rows: Array<{ type: string; payloadJson: string }>,
+  dek: Buffer | null,
+  keyId: string,
+  memberId: string,
+): Array<{ type: string; payloadJson: string }> {
+  const result: Array<{ type: string; payloadJson: string }> = [];
+  for (const row of rows) {
+    if (row.payloadJson.startsWith('v1:')) {
+      if (dek === null) {
+        console.error(
+          `Row event terenkripsi dilewati, DEK tidak tersedia untuk keyId ${keyId}`,
+        );
+        continue;
+      }
+      let payload: unknown;
+      try {
+        payload = decryptEventPayload(dek, keyId, row.payloadJson).payload;
+      } catch (error) {
+        const reason =
+          error instanceof Error ? error.message : 'kesalahan tidak diketahui';
+        console.error(`Row event terenkripsi gagal dekripsi, dilewati: ${reason}`);
+        continue;
+      }
+      if (isEventForMember(payload, memberId)) {
+        result.push({ type: row.type, payloadJson: JSON.stringify(payload) });
+      }
+      continue;
+    }
+    // Legacy plaintext: JSON polos tanpa prefix, diparse tanpa DEK.
+    let legacyPayload: unknown;
+    try {
+      legacyPayload = JSON.parse(row.payloadJson) as unknown;
+    } catch {
+      console.error('Row event legacy bukan JSON valid, dilewati');
+      continue;
+    }
+    if (isEventForMember(legacyPayload, memberId)) {
+      result.push(row);
+    }
+  }
+  return result;
+}
+
 // Filter baris event per member. Row terenkripsi (prefix v1:) dilewati
 // bila dek null, dan baris yang gagal dekripsi (tampered, format rusak)
 // dilewati dengan console.error tanpa membocorkan materi kunci. Row legacy
