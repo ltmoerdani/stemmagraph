@@ -13,7 +13,6 @@ import { join } from 'node:path';
 
 const T0 = '2026-09-17T00:00:00.000Z';
 const ERASURE_PATH = '/api/v1/members/:memberId/erasure';
-const MEMBER = 'm-1';
 
 /** Req palsu: cukup params, user, dan body untuk mapping adapter. */
 interface FakeRequest {
