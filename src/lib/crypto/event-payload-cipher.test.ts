@@ -4,8 +4,10 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DEK_LENGTH_BYTES, FieldDecryptError } from './field-cipher';
 import {
+  buildEventAAD,
   decryptEventPayload,
   encryptEventPayload,
+  encryptEventPayloadV2,
 } from './event-payload-cipher';
 
 const KEY_ID = 'dek-2026-10';
@@ -94,5 +96,100 @@ describe('event-payload-cipher', () => {
     expect(isi).not.toContain("from 'node:fs'");
     expect(isi).not.toContain("from 'path'");
     expect(isi).not.toContain('process.env');
+  });
+});
+
+describe('v2 AAD', () => {
+  it('(a) roundtrip v2 dengan memberId sama, payload bertingkat utuh, version 2, envelope 5 segmen', () => {
+    const kunci = dek();
+    const payload = {
+      pohon: { id: 't-7', nama: 'Keluarga Öztürk' },
+      anggota: [{ id: 'p1', catatan: null }, { id: 'p2', nilai: [1, 2, { dalam: true }] }],
+      aktif: false,
+    };
+    const stored = encryptEventPayloadV2(kunci, KEY_ID, 'm-42', payload);
+    const hasil = decryptEventPayload(kunci, KEY_ID, stored, { memberId: 'm-42' });
+    expect(hasil.payload).toEqual(payload);
+    expect(hasil.legacy).toBe(false);
+    expect(hasil.version).toBe(2);
+    expect(stored.startsWith('v2:')).toBe(true);
+    expect(stored.split(':')).toHaveLength(5);
+  });
+
+  it('(b) decrypt v2 dengan memberId berbeda ditolak AAD_MISMATCH', () => {
+    const kunci = dek();
+    const stored = encryptEventPayloadV2(kunci, KEY_ID, 'm-42', { rahasia: 1 });
+    try {
+      decryptEventPayload(kunci, KEY_ID, stored, { memberId: 'm-43' });
+      expect.unreachable('harusnya throw');
+    } catch (e) {
+      expect(e).toBeInstanceOf(FieldDecryptError);
+      expect((e as FieldDecryptError).code).toBe('FIELD_CIPHER_AAD_MISMATCH');
+    }
+  });
+
+  it('(c) v2 tanpa memberId di options ditolak BAD_FORMAT', () => {
+    const kunci = dek();
+    const stored = encryptEventPayloadV2(kunci, KEY_ID, 'm-42', { rahasia: 1 });
+    try {
+      decryptEventPayload(kunci, KEY_ID, stored);
+      expect.unreachable('harusnya throw');
+    } catch (e) {
+      expect(e).toBeInstanceOf(FieldDecryptError);
+      expect((e as FieldDecryptError).code).toBe('FIELD_CIPHER_BAD_FORMAT');
+    }
+  });
+
+  it('(d) tamper byte pertama cipher b64 v2 ditolak FieldDecryptError', () => {
+    const kunci = dek();
+    const stored = encryptEventPayloadV2(kunci, KEY_ID, 'm-42', { rahasia: 1 });
+    const [v, kid, iv, tag, cipher] = stored.split(':');
+    const cipherTamper = (cipher[0] === 'A' ? 'B' : 'A') + cipher.slice(1);
+    const rusak = [v, kid, iv, tag, cipherTamper].join(':');
+    expect(() => decryptEventPayload(kunci, KEY_ID, rusak, { memberId: 'm-42' })).toThrow(
+      FieldDecryptError,
+    );
+  });
+
+  it('(e) baris v1 lama tetap terbaca tanpa memberId, version 1', () => {
+    const kunci = dek();
+    const stored = encryptEventPayload(kunci, KEY_ID, { jenis: 'node.updated' });
+    const hasil = decryptEventPayload(kunci, KEY_ID, stored);
+    expect(hasil.payload).toEqual({ jenis: 'node.updated' });
+    expect(hasil.legacy).toBe(false);
+    expect(hasil.version).toBe(1);
+  });
+
+  it('(f) legacy JSON polos tetap passthrough legacy true tanpa version', () => {
+    const kunci = dek();
+    const legacy = JSON.stringify({ jenis: 'node.created', id: 'n-9' });
+    const hasil = decryptEventPayload(kunci, KEY_ID, legacy);
+    expect(hasil.legacy).toBe(true);
+    expect(hasil.version).toBeUndefined();
+    expect(hasil.payload).toEqual({ jenis: 'node.created', id: 'n-9' });
+  });
+
+  it('(g) injectivity fixed-width: k1+m12 dan k1m+2 menghasilkan aad berbeda', () => {
+    const a = buildEventAAD('k1', 'm12');
+    const b = buildEventAAD('k1m', '2');
+    expect(a.toString('hex')).not.toBe(b.toString('hex'));
+  });
+
+  it('(h) pure core guard: kedua modul cipher tanpa fs, path, process.env', () => {
+    const isiField = readFileSync(
+      join(process.cwd(), 'src/lib/crypto/field-cipher.ts'),
+      'utf8',
+    );
+    const isiEvent = readFileSync(
+      join(process.cwd(), 'src/lib/crypto/event-payload-cipher.ts'),
+      'utf8',
+    );
+    for (const isi of [isiField, isiEvent]) {
+      expect(isi).not.toContain("from 'fs'");
+      expect(isi).not.toContain("from 'node:fs'");
+      expect(isi).not.toContain("from 'path'");
+      expect(isi).not.toContain("from 'node:path'");
+      expect(isi).not.toContain('process.env');
+    }
   });
 });

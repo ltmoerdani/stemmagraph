@@ -108,7 +108,41 @@ describe('field-cipher', () => {
     }
   });
 
-  it('(i) pure core guard: modul tanpa fs, path, process.env', () => {
+  it('(i) roundtrip dengan aad: encrypt dan decrypt pakai aad sama sukses', () => {
+    const kunci = dek();
+    const aad = Buffer.from('binding:member:42', 'utf8');
+    const stored = encryptField(KEY_ID, kunci, 'data terikat', { aad });
+    const hasil = decryptField(KEY_ID, kunci, stored, { aad });
+    expect(hasil.plaintext).toBe('data terikat');
+    expect(hasil.legacy).toBe(false);
+  });
+
+  it('(j) aad berbeda saat decrypt ditolak AAD_MISMATCH, tanpa aad tetap TAG_MISMATCH', () => {
+    const kunci = dek();
+    const aad = Buffer.from('binding:member:42', 'utf8');
+    const stored = encryptField(KEY_ID, kunci, 'data terikat', { aad });
+    const aadBeda = Buffer.from('binding:member:43', 'utf8');
+    try {
+      decryptField(KEY_ID, kunci, stored, { aad: aadBeda });
+      expect.unreachable('harusnya throw');
+    } catch (e) {
+      expect(e).toBeInstanceOf(FieldDecryptError);
+      expect((e as FieldDecryptError).code).toBe('FIELD_CIPHER_AAD_MISMATCH');
+    }
+    // Tanpa options.aad perilaku lama: tamper tag tetap TAG_MISMATCH.
+    const [v, kid, iv, tag, cipher] = stored.split(':');
+    const tagTamper = (tag[0] === 'A' ? 'B' : 'A') + tag.slice(1);
+    const rusak = [v, kid, iv, tagTamper, cipher].join(':');
+    try {
+      decryptField(KEY_ID, kunci, rusak);
+      expect.unreachable('harusnya throw');
+    } catch (e) {
+      expect(e).toBeInstanceOf(FieldDecryptError);
+      expect((e as FieldDecryptError).code).toBe('FIELD_CIPHER_TAG_MISMATCH');
+    }
+  });
+
+  it('(k) pure core guard: modul tanpa fs, path, process.env', () => {
     const isi = readFileSync(
       join(process.cwd(), 'src/lib/crypto/field-cipher.ts'),
       'utf8',

@@ -1,4 +1,4 @@
-import { decryptField, encryptField } from './field-cipher';
+import { FieldDecryptError, decryptField, encryptField } from './field-cipher';
 
 // Cipher payload event: modul pure, tanpa fs dan tanpa env, DEK lewat
 // parameter. Envelope mengikuti format field-cipher:
@@ -44,7 +44,10 @@ export function encryptEventPayloadV2(
   payload: unknown,
 ): string {
   const aad = buildEventAAD(keyId, memberId);
-  return encryptField(keyId, dek, JSON.stringify(payload), { aad });
+  const stored = encryptField(keyId, dek, JSON.stringify(payload), { aad });
+  // encryptField selalu mengeluarkan prefix v1 sesuai format field-cipher,
+  // marker v2 dipasang di lapisan event sebagai penanda wajib AAD.
+  return stored.replace(/^v1:/, 'v2:');
 }
 
 // Dekripsi stored event: prefix v1: atau v2: berarti envelope terenkripsi,
@@ -82,7 +85,10 @@ export function decryptEventPayload(
       );
     }
     const aad = buildEventAAD(keyId, memberId);
-    const { plaintext } = decryptField(keyId, dek, stored, { aad });
+    // decryptField hanya mengenal prefix v1, envelope v2 dinormalisasi dulu
+    // supaya jalur envelope terpakai, AAD tetap diikat lewat options.
+    const v1Stored = ['v1', ...segments.slice(1)].join(':');
+    const { plaintext } = decryptField(keyId, dek, v1Stored, { aad });
     return { payload: JSON.parse(plaintext) as unknown, legacy: false, version: 2 };
   }
   const { plaintext } = decryptField(keyId, dek, stored);
