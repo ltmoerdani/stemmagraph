@@ -48,3 +48,5 @@ tsconfig.node.tsbuildinfo
 # Local SQLite databases
 *.db
 *.db-journal
+
+.keys-data/

@@ -10,6 +10,12 @@
 
 import type { Request, RequestHandler, Response } from 'express';
 import {
+  encryptEventForWrite,
+  listMemberEventRows,
+  resolveDekOrNull,
+  resolveTreeIdForMember,
+} from './erasure-crypto-wiring';
+import {
   registerErasureRoutes,
   type ErasureRouteHandler,
   type ErasureRouteResult,
@@ -42,7 +48,6 @@ export interface ErasurePrismaClient extends ErasureNotificationPrismaClient {
     findMany(args: {
       where: {
         type: { in: string[] };
-        payloadJson: { contains: string };
       };
       orderBy: { createdAt: 'asc' };
     }): Promise<Array<{ type: string; payloadJson: string }>>;
@@ -99,35 +104,56 @@ export function createErasureExpressAdapter(options: ErasureExpressAdapterOption
 
   const deps: ErasureRouterDeps = {
     listEvents: async (memberId) => {
-      const rows = await prisma.event.findMany({
+      const rawRows = await prisma.event.findMany({
         where: {
           type: {
             in: ['erasure.requested', 'erasure.completed', 'erasure.cancelled'],
           },
-          payloadJson: { contains: `"memberId":"${memberId}"` },
         },
         orderBy: { createdAt: 'asc' },
       });
-      return rows.map((row) => ({
+      const treeId = await resolveTreeIdForMember(prisma, memberId);
+      const key = treeId ? resolveDekOrNull(treeId) : null;
+      return listMemberEventRows(
+        rawRows,
+        key?.dek ?? null,
+        key?.keyId ?? 'legacy',
+        memberId,
+      ).map((row) => ({
         type: row.type as ErasureEventType,
         payloadJson: row.payloadJson,
       }));
     },
     appendEvent: async (row, ctxExtra) => {
+      // Enkripsi fail-open terkontrol: bila treeId member tidak ada atau
+      // resolve DEK gagal (termasuk payload bukan JSON valid), payload
+      // diteruskan plaintext apa adanya; bila treeId tersedia, payloadJson
+      // disimpan sebagai envelope terenkripsi.
+      const payloadMemberId = erasureMemberIdFromPayload(
+        row.payloadJson,
+        ctxExtra?.memberId ?? '',
+      );
+      let payloadJson = row.payloadJson;
+      try {
+        const parsedPayload: unknown = JSON.parse(row.payloadJson);
+        const treeId = await resolveTreeIdForMember(prisma, payloadMemberId);
+        if (treeId !== null) {
+          payloadJson = encryptEventForWrite(treeId, parsedPayload).stored;
+        }
+      } catch {
+        payloadJson = row.payloadJson;
+      }
       await prisma.event.create({
-        data: { type: row.type, payloadJson: row.payloadJson },
+        data: { type: row.type, payloadJson },
       });
 
       // Emisi notifikasi owner fire-and-log: seluruh kegagalan ditelan
       // di dalam emitErasureOwnerNotifications, jadi respons route dan
-      // ledger tetap sukses meskipun emisi gagal.
-      const memberId = erasureMemberIdFromPayload(
-        row.payloadJson,
-        ctxExtra?.memberId ?? '',
-      );
+      // ledger tetap sukses meskipun emisi gagal. memberId dari payload
+      // asli dipakai apa adanya, terenkripsi atau tidak.
       await emitErasureOwnerNotifications({
         prisma,
-        memberId,
+        memberId: payloadMemberId,
         eventType: row.type,
         actorUserId: ctxExtra?.userId ?? '',
         evidence: new Date().toISOString(),

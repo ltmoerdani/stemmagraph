@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Request, RequestHandler, Response } from 'express';
 import { buildErasureRequestEvent } from '../../lib/consent/erasure-routes';
 import {
@@ -6,6 +6,10 @@ import {
   type ErasureExpressHost,
   type ErasurePrismaClient,
 } from './erasure-express-adapter';
+import { randomBytes } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const T0 = '2026-09-17T00:00:00.000Z';
 const ERASURE_PATH = '/api/v1/members/:memberId/erasure';
@@ -85,20 +89,27 @@ function createMockHost() {
 type FindManyArgs = Parameters<ErasurePrismaClient['event']['findMany']>[0];
 type LedgerRow = { type: string; payloadJson: string; createdAt: Date };
 
-/** Prisma in-memory: filter type in + payloadJson contains, urut createdAt. */
-function createMockPrisma(seed: LedgerRow[] = []) {
+/** Prisma in-memory: filter type in saja (tanpa contains), urut createdAt. */
+function createMockPrisma(seed: LedgerRow[] = [], treeId: string | null = null) {
   const rows: LedgerRow[] = [...seed];
   const findManyArgs: FindManyArgs[] = [];
+  const findUnique = vi.fn(async () => (treeId ? { treeId } : null));
   const prisma: ErasurePrismaClient = {
+    familyMember: {
+      findUnique,
+    },
+    treeMember: {
+      findMany: async () => [{ user: { id: 'u-owner', status: 'active' } }],
+    },
+    notification: {
+      findFirst: async () => null,
+      createMany: vi.fn(async () => ({ count: 0 })),
+    },
     event: {
       findMany: async (args) => {
         findManyArgs.push(args);
         return rows
-          .filter(
-            (row) =>
-              args.where.type.in.includes(row.type) &&
-              row.payloadJson.includes(args.where.payloadJson.contains),
-          )
+          .filter((row) => args.where.type.in.includes(row.type))
           .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
           .map((row) => ({ type: row.type, payloadJson: row.payloadJson }));
       },
@@ -108,7 +119,7 @@ function createMockPrisma(seed: LedgerRow[] = []) {
       },
     },
   };
-  return { prisma, rows, findManyArgs };
+  return { prisma, rows, findManyArgs, findUnique };
 }
 
 function seedRequest(memberId = 'm-1', iso = T0): LedgerRow {
@@ -116,9 +127,9 @@ function seedRequest(memberId = 'm-1', iso = T0): LedgerRow {
   return { type: base.type, payloadJson: base.payloadJson, createdAt: new Date(iso) };
 }
 
-function buildAdapter(seed: LedgerRow[] = []) {
+function buildAdapter(seed: LedgerRow[] = [], treeId: string | null = null) {
   const hostBox = createMockHost();
-  const prismaBox = createMockPrisma(seed);
+  const prismaBox = createMockPrisma(seed, treeId);
   createErasureExpressAdapter({ app: hostBox.host, prisma: prismaBox.prisma });
   return { ...hostBox, ...prismaBox };
 }
@@ -160,12 +171,20 @@ describe('createErasureExpressAdapter', () => {
     expect(bodyOf(res).request?.memberId).toBe('m-1');
   });
 
-  it('GET meneruskan filter memberId ke prisma findMany', async () => {
+  it('GET meneruskan query per-type tanpa payloadJson contains', async () => {
     const box = buildAdapter([seedRequest()]);
     await box.invoke('get', ERASURE_PATH, reqOf('m-1'));
     expect(box.findManyArgs).toHaveLength(1);
-    expect(box.findManyArgs[0].where.payloadJson.contains).toBe('"memberId":"m-1"');
-    expect(box.findManyArgs[0].where.type.in).toContain('erasure.requested');
+    expect(box.findManyArgs[0].where).not.toHaveProperty('payloadJson');
+    expect(box.findManyArgs[0].where.type.in).toEqual([
+      'erasure.requested',
+      'erasure.completed',
+      'erasure.cancelled',
+    ]);
+    expect(box.findUnique).toHaveBeenCalledWith({
+      where: { id: 'm-1' },
+      select: { treeId: true },
+    });
   });
 
   it('POST body tanpa action membuat event requested dan menjawab 201', async () => {
@@ -218,19 +237,22 @@ describe('createErasureExpressAdapter', () => {
     const box = buildAdapter([seedRequest()]);
     const res = await box.invoke('get', ERASURE_PATH, reqOf('', { params: {} }));
     expect(res.statusCode).toBe(404);
-    expect(box.findManyArgs[0].where.payloadJson.contains).toBe('"memberId":""');
+    expect(box.findManyArgs[0].where).not.toHaveProperty('payloadJson');
   });
 
   it('kegagalan prisma findMany pada GET dipetakan router jadi 400', async () => {
     const hostBox = createMockHost();
-    const failing: ErasurePrismaClient = {
+    const failing = {
+      familyMember: { findUnique: async () => null },
+      treeMember: { findMany: async () => [] },
+      notification: { findFirst: async () => null, createMany: async () => ({ count: 0 }) },
       event: {
         findMany: async () => {
           throw new Error('db down');
         },
         create: async () => undefined,
       },
-    };
+    } as unknown as ErasurePrismaClient;
     createErasureExpressAdapter({ app: hostBox.host, prisma: failing });
     const res = await hostBox.invoke('get', ERASURE_PATH, reqOf());
     expect(res.statusCode).toBe(400);
@@ -239,14 +261,17 @@ describe('createErasureExpressAdapter', () => {
 
   it('kegagalan prisma create pada POST dipetakan router jadi 400', async () => {
     const hostBox = createMockHost();
-    const failing: ErasurePrismaClient = {
+    const failing = {
+      familyMember: { findUnique: async () => null },
+      treeMember: { findMany: async () => [] },
+      notification: { findFirst: async () => null, createMany: async () => ({ count: 0 }) },
       event: {
         findMany: async () => [],
         create: async () => {
           throw new Error('db write gagal');
         },
       },
-    };
+    } as unknown as ErasurePrismaClient;
     createErasureExpressAdapter({ app: hostBox.host, prisma: failing });
     const res = await hostBox.invoke('post', ERASURE_PATH, reqOf('m-1', { body: {} }));
     expect(res.statusCode).toBe(400);
@@ -257,5 +282,59 @@ describe('createErasureExpressAdapter', () => {
     const box = buildAdapter();
     const res = await box.invoke('get', ERASURE_PATH, reqOf());
     expect(bodyOf(res).message).toBe('erasure request not found');
+  });
+});
+
+describe('createErasureExpressAdapter crypto wiring', () => {
+  let keyDir = '';
+  let originalMaster: string | undefined;
+
+  beforeEach(() => {
+    keyDir = mkdtempSync(join(tmpdir(), 'stmg-erasure-adapter-'));
+    originalMaster = process.env.STMG_MASTER_KEY;
+    process.env.STMG_KEY_DIR = keyDir;
+  });
+
+  afterEach(() => {
+    if (originalMaster === undefined) {
+      delete process.env.STMG_MASTER_KEY;
+    } else {
+      process.env.STMG_MASTER_KEY = originalMaster;
+    }
+    delete process.env.STMG_KEY_DIR;
+    rmSync(keyDir, { recursive: true, force: true });
+  });
+
+  it('POST saat kunci tersedia: payloadJson tersimpan envelope v1:, baca balik tetap mengembalikan event milik member', async () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const box = buildAdapter([], 'tree-adapter');
+    const res = await box.invoke('post', ERASURE_PATH, reqOf('m-1', { body: {} }));
+    expect(res.statusCode).toBe(201);
+    expect(box.rows).toHaveLength(1);
+    expect(box.rows[0]?.payloadJson.startsWith('v1:')).toBe(true);
+
+    const get = await box.invoke('get', ERASURE_PATH, reqOf('m-1'));
+    expect(get.statusCode).toBe(200);
+    expect(bodyOf(get).request?.status).toBe('REQUESTED');
+    expect(bodyOf(get).request?.memberId).toBe('m-1');
+  });
+
+  it('jalur legacy: treeId null, tulis tetap plaintext dan baca balik lolos apa adanya', async () => {
+    const box = buildAdapter([], null);
+    const res = await box.invoke('post', ERASURE_PATH, reqOf('m-1', { body: {} }));
+    expect(res.statusCode).toBe(201);
+    expect(box.rows[0]?.payloadJson.startsWith('v1:')).toBe(false);
+    expect(() => JSON.parse(box.rows[0]?.payloadJson ?? '')).not.toThrow();
+
+    const get = await box.invoke('get', ERASURE_PATH, reqOf('m-1'));
+    expect(get.statusCode).toBe(200);
+    expect(bodyOf(get).request?.memberId).toBe('m-1');
+  });
+
+  it('emisi notifikasi owner tetap berjalan dengan memberId dari payload saat payload terenkripsi', async () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const box = buildAdapter([], 'tree-adapter');
+    await box.invoke('post', ERASURE_PATH, reqOf('m-1', { body: {} }));
+    expect(box.prisma.notification.createMany).toHaveBeenCalled();
   });
 });

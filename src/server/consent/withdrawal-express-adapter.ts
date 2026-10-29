@@ -6,6 +6,7 @@
  */
 
 import type { Request, RequestHandler, Response } from 'express';
+import { resolveDekOrNull, resolveTreeIdForMember, listMemberEventRows, encryptEventForWrite } from './erasure-crypto-wiring';
 import {
   registerWithdrawalRoutes,
   type WithdrawalRouteHandler,
@@ -34,7 +35,6 @@ export interface WithdrawalPrismaClient {
     findMany(args: {
       where: {
         type: { in: string[] };
-        payloadJson: { contains: string };
       };
       orderBy: { createdAt: 'asc' };
     }): Promise<Array<{ type: string; payloadJson: string }>>;
@@ -116,21 +116,37 @@ export function createWithdrawalExpressAdapter(options: WithdrawalExpressAdapter
 
   const deps: WithdrawalRouterDeps = {
     listEvents: async (memberId) => {
-      const rows = await prisma.event.findMany({
+      const rawRows = await prisma.event.findMany({
         where: {
           type: { in: WITHDRAWAL_EVENT_TYPES },
-          payloadJson: { contains: `"memberId":"${memberId}"` },
         },
         orderBy: { createdAt: 'asc' },
       });
-      return rows.map((row) => parseLedgerEvent(row.type, row.payloadJson));
+      const treeId = await resolveTreeIdForMember(prisma, memberId);
+      const key = treeId ? resolveDekOrNull(treeId) : null;
+      return listMemberEventRows(
+        rawRows,
+        key?.dek ?? null,
+        key?.keyId ?? 'legacy',
+        memberId,
+      ).map((row) => parseLedgerEvent(row.type, row.payloadJson));
     },
     appendEvent: async (memberId, event) => {
+      // Enkripsi fail-open terkontrol: bila treeId member tidak ada atau
+      // resolve DEK gagal, payload diteruskan plaintext apa adanya; bila
+      // treeId tersedia, payloadJson disimpan sebagai envelope terenkripsi.
+      const payloadObject = { ...event, memberId };
+      let payloadJson = JSON.stringify(payloadObject);
+      try {
+        const treeId = await resolveTreeIdForMember(prisma, memberId);
+        if (treeId !== null) {
+          payloadJson = encryptEventForWrite(treeId, payloadObject).stored;
+        }
+      } catch {
+        payloadJson = JSON.stringify(payloadObject);
+      }
       await prisma.event.create({
-        data: {
-          type: event.type,
-          payloadJson: JSON.stringify({ ...event, memberId }),
-        },
+        data: { type: event.type, payloadJson },
       });
     },
     now: () => new Date().toISOString(),

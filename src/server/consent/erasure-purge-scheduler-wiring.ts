@@ -14,6 +14,12 @@ import {
 import { executeErasurePurge, type ErasurePurgeAuditRow, type MemberPurgeableData } from '../../lib/consent/erasure-purge-execute';
 import type { ErasureEventType } from '../../lib/consent/erasure-wiring';
 import {
+  resolveDekOrNull,
+  resolveTreeIdForMember,
+  listMemberEventRows,
+  encryptEventForWrite,
+} from './erasure-crypto-wiring';
+import {
   emitErasureOwnerNotifications,
   erasureMemberIdFromPayload,
 } from './erasure-notify-wiring';
@@ -30,7 +36,6 @@ export interface ErasurePurgeSchedulerPrismaClient {
     findMany(args: {
       where: {
         type: { in: string[] };
-        payloadJson: { contains: string };
       };
       orderBy: { createdAt: 'asc' };
     }): Promise<Array<{ type: string; payloadJson: string }>>;
@@ -72,16 +77,22 @@ export function buildDefaultErasurePurgeSchedulerDeps(
       return members.map((m) => m.id);
     },
     listEvents: async (memberId: string) => {
-      const rows = await prisma.event.findMany({
+      const rawRows = await prisma.event.findMany({
         where: {
           type: {
             in: ['erasure.requested', 'erasure.completed', 'erasure.cancelled'],
           },
-          payloadJson: { contains: `"memberId":"${memberId}"` },
         },
         orderBy: { createdAt: 'asc' },
       });
-      return rows.map((row) => ({
+      const treeId = await resolveTreeIdForMember(prisma, memberId);
+      const key = treeId ? resolveDekOrNull(treeId) : null;
+      return listMemberEventRows(
+        rawRows,
+        key?.dek ?? null,
+        key?.keyId ?? 'legacy',
+        memberId,
+      ).map((row) => ({
         type: row.type as ErasureEventType,
         payloadJson: row.payloadJson,
       }));
@@ -89,16 +100,22 @@ export function buildDefaultErasurePurgeSchedulerDeps(
     executePurge: async (memberId: string) => {
       const executeDeps = {
         listEvents: async (id: string) => {
-          const rows = await prisma.event.findMany({
+          const rawRows = await prisma.event.findMany({
             where: {
               type: {
                 in: ['erasure.requested', 'erasure.completed', 'erasure.cancelled'],
               },
-              payloadJson: { contains: `"memberId":"${id}"` },
             },
             orderBy: { createdAt: 'asc' },
           });
-          return rows.map((row) => ({
+          const treeId = await resolveTreeIdForMember(prisma, id);
+          const key = treeId ? resolveDekOrNull(treeId) : null;
+          return listMemberEventRows(
+            rawRows,
+            key?.dek ?? null,
+            key?.keyId ?? 'legacy',
+            id,
+          ).map((row) => ({
             type: row.type as ErasureEventType,
             payloadJson: row.payloadJson,
           }));
@@ -133,10 +150,24 @@ export function buildDefaultErasurePurgeSchedulerDeps(
           }
         },
         appendEvent: async (row: ErasurePurgeAuditRow) => {
+          // Enkripsi fail-open terkontrol: bila treeId member tidak ada
+          // atau resolve DEK gagal, payload diteruskan plaintext apa
+          // adanya; bila treeId tersedia, payloadJson disimpan sebagai
+          // envelope terenkripsi. memberId ada di scope closure executePurge.
+          let payloadJson = row.payloadJson;
+          try {
+            const parsedPayload: unknown = JSON.parse(row.payloadJson);
+            const treeId = await resolveTreeIdForMember(prisma, memberId);
+            if (treeId !== null) {
+              payloadJson = encryptEventForWrite(treeId, parsedPayload).stored;
+            }
+          } catch {
+            payloadJson = row.payloadJson;
+          }
           await prisma.event.create({
             data: {
               type: row.type,
-              payloadJson: row.payloadJson,
+              payloadJson,
             },
           });
 

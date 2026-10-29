@@ -10,6 +10,10 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { randomBytes } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 vi.mock('./erasure-purge-scheduler', () => ({
   scanErasurePurges: vi.fn(),
 }));
@@ -34,23 +38,27 @@ const RINGKASAN_KOSONG = { candidates: [] as string[], purged: [] as string[], s
 
 interface WiringEnv {
   familyMemberFindManyCalls: Array<Record<string, unknown> | undefined>;
+  familyMemberFindUniqueCalls: Array<{ where: { id: string } }>;
   memberUpdateCalls: Array<{ where: { id: string }; data: Record<string, unknown> }>;
-  eventFindManyCalls: Array<{ types: string[]; contains: string }>;
+  eventFindManyCalls: Array<{ types: string[] }>;
   eventCreateCalls: Array<{ type: string; payloadJson: string }>;
   members: Array<Record<string, unknown>>;
+  memberTreeIds: Record<string, string | null>;
   events: Array<{ type: string; payloadJson: string }>;
 }
 
-function makePrisma(overrides: Partial<Pick<WiringEnv, 'members' | 'events'>> = {}): {
+function makePrisma(overrides: Partial<Pick<WiringEnv, 'members' | 'events' | 'memberTreeIds'>> = {}): {
   prisma: ErasurePurgeSchedulerPrismaClient;
   env: WiringEnv;
 } {
   const env: WiringEnv = {
     familyMemberFindManyCalls: [],
+    familyMemberFindUniqueCalls: [],
     memberUpdateCalls: [],
     eventFindManyCalls: [],
     eventCreateCalls: [],
     members: overrides.members ?? [],
+    memberTreeIds: overrides.memberTreeIds ?? {},
     events: overrides.events ?? [],
   };
   const prisma = {
@@ -65,6 +73,11 @@ function makePrisma(overrides: Partial<Pick<WiringEnv, 'members' | 'events'>> = 
         }
         return env.members.map((m) => ({ ...m }));
       },
+      findUnique: async (args: { where: { id: string } }): Promise<{ treeId?: string } | null> => {
+        env.familyMemberFindUniqueCalls.push(args);
+        const treeId = env.memberTreeIds[args.where.id];
+        return treeId ? { treeId } : null;
+      },
       update: async (args: {
         where: { id: string };
         data: Record<string, unknown>;
@@ -75,20 +88,12 @@ function makePrisma(overrides: Partial<Pick<WiringEnv, 'members' | 'events'>> = 
     },
     event: {
       findMany: async (args: {
-        where: { type: { in: string[] }; payloadJson: { contains: string } };
+        where: { type: { in: string[] } };
         orderBy: { createdAt: 'asc' };
       }): Promise<Array<{ type: string; payloadJson: string }>> => {
-        env.eventFindManyCalls.push({
-          types: [...args.where.type.in],
-          contains: args.where.payloadJson.contains,
-        });
-        const memberId = args.where.payloadJson.contains.slice(
-          '"memberId":"'.length,
-          -1,
-        );
+        env.eventFindManyCalls.push({ types: [...args.where.type.in] });
         return env.events
-          .filter((e) => args.where.type.in.includes(e.type))
-          .filter((e) => e.payloadJson.includes(`"memberId":"${memberId}"`));
+          .filter((e) => args.where.type.in.includes(e.type));
       },
       create: async (args: {
         data: { type: string; payloadJson: string };
@@ -249,7 +254,7 @@ describe('createErasurePurgeScheduler', () => {
     expect(env.familyMemberFindManyCalls).toHaveLength(1);
   });
 
-  it('kasus 7: listEvents memfilter tipe replay erasure per memberId dari prisma.event.findMany', async () => {
+  it('kasus 7: listEvents query per-type tanpa contains, filter per member in-memory (legacy plaintext)', async () => {
     const { prisma, env } = makePrisma({
       events: [
         requestedRow('m-1'),
@@ -269,7 +274,9 @@ describe('createErasurePurgeScheduler', () => {
       'erasure.completed',
       'erasure.cancelled',
     ]);
-    expect(env.eventFindManyCalls[0].contains).toBe('"memberId":"m-1"');
+    expect(env.familyMemberFindUniqueCalls).toEqual([
+      { where: { id: 'm-1' }, select: { treeId: true } },
+    ]);
   });
 
   it('kasus 8: executePurge mendelegasikan executeErasurePurge dan updateMember hanya mengirim field PII terdaftar', async () => {
@@ -317,6 +324,51 @@ describe('createErasurePurgeScheduler', () => {
 
     const rows = await executeDeps.listEvents('m-1');
     expect(rows).toHaveLength(0);
+  });
+
+  it('kasus 8b: appendEvent menulis plaintext legacy saat treeId null dan saat kunci tersedia menulis envelope v1:', async () => {
+    const keyDir = mkdtempSync(join(tmpdir(), 'stmg-purge-wiring-'));
+    const originalMaster = process.env.STMG_MASTER_KEY;
+    process.env.STMG_KEY_DIR = keyDir;
+    try {
+      const { prisma, env } = makePrisma({
+        members: [makeMember('m-1')],
+      });
+      const deps = buildDefaultErasurePurgeSchedulerDeps(prisma);
+
+      await deps.executePurge('m-1');
+      const executeDeps = mockExec.mock.calls[0][1];
+
+      // Tanpa treeId terdaftar: plaintext apa adanya.
+      await executeDeps.appendEvent({
+        type: 'erasure.purged',
+        payloadJson: JSON.stringify({ memberId: 'm-1', at: '2026-10-29T00:00:00.000Z' }),
+      });
+      expect(env.eventCreateCalls[0]?.payloadJson.startsWith('v1:')).toBe(false);
+
+      // Dengan treeId terdaftar dan master key tersedia: envelope terenkripsi.
+      process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+      const withKeys = makePrisma({
+        members: [makeMember('m-1')],
+        memberTreeIds: { 'm-1': 'tree-purge' },
+      });
+      const depsEnc = buildDefaultErasurePurgeSchedulerDeps(withKeys.prisma);
+      await depsEnc.executePurge('m-1');
+      const executeDepsEnc = mockExec.mock.calls[1][1];
+      await executeDepsEnc.appendEvent({
+        type: 'erasure.purged',
+        payloadJson: JSON.stringify({ memberId: 'm-1', at: '2026-10-29T00:00:00.000Z' }),
+      });
+      expect(withKeys.env.eventCreateCalls[0]?.payloadJson.startsWith('v1:')).toBe(true);
+    } finally {
+      if (originalMaster === undefined) {
+        delete process.env.STMG_MASTER_KEY;
+      } else {
+        process.env.STMG_MASTER_KEY = originalMaster;
+      }
+      delete process.env.STMG_KEY_DIR;
+      rmSync(keyDir, { recursive: true, force: true });
+    }
   });
 
   it('kasus 9: runOnce mengembalikan ringkasan dari scanErasurePurges', async () => {
