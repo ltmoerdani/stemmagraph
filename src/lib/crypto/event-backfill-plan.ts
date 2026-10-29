@@ -108,11 +108,9 @@ export function planBackfillBatch(
           payload,
         ),
       });
-    } catch (err) {
-      if (!(err instanceof FieldDecryptError)) {
-        // Bukan FieldDecryptError berarti plaintext envelope gagal diparse,
-        // diperlakukan korup juga supaya tidak pernah crash.
-      }
+    } catch {
+      // Semua kegagalan di jalur v1 dipetakan ke envelope_corrupt: tag GCM
+      // tidak cocok, format rusak, maupun plaintext yang bukan JSON valid.
       ops.push({ kind: 'error', rowId: row.id, reason: 'envelope_corrupt' });
     }
   }
