@@ -3,6 +3,8 @@ import type { FamilyMember, FamilyStats, ViewMode, TreePosition } from '../types
 import { getAdapter } from '@/lib/adapters';
 import type { FamilyMemberRecord, MemberRelationship } from '@/lib/adapters';
 import { isNameOnlyMember } from '@/types/redacted';
+import { getTree } from '@/lib/offline/idb';
+import { deserializeTree } from '@/lib/offline/familyStoreAdapter';
 
 // ─── Adapter ⟷ Legacy Type Bridge ──────────────────────────
 
@@ -87,6 +89,8 @@ interface FamilyStore {
   hasUnsavedChanges: boolean;
   currentFamilyTreeId: string | null;
   isLoading: boolean;
+  /** GOAL v109 slice 2: true saat members terisi dari snapshot offline karena fetch adapter gagal. */
+  offlineLoaded: boolean;
 
   // Actions
   fetchMembers: (treeId: string) => Promise<void>;
@@ -155,6 +159,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   hasUnsavedChanges: false,
   currentFamilyTreeId: null,
   isLoading: false,
+  offlineLoaded: false,
   stats: {
     totalMembers: 0,
     totalGenerations: 0,
@@ -183,6 +188,19 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       set({ members, records, relationships, isLoading: false });
       get().updateStats();
     } catch {
+      // GOAL v109 slice 2: fetch adapter gagal (mis. koneksi putus), coba
+      // muat snapshot terakhir dari IndexedDB sebagai fallback offline.
+      // Snapshot tidak ada atau tidak valid dibiarkan senyap; alur sukses
+      // fetchMembers tidak tersentuh.
+      try {
+        const raw = await getTree(treeId);
+        if (raw !== null) {
+          const tree = deserializeTree(raw);
+          set({ members: tree.members as unknown as FamilyMember[], offlineLoaded: true });
+        }
+      } catch {
+        // silent no-op: offline fallback tidak tersedia
+      }
       set({ isLoading: false });
     }
   },
