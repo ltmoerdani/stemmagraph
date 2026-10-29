@@ -9,7 +9,12 @@
  */
 
 import type { Request, RequestHandler, Response } from 'express';
-import { resolveDekOrNull, resolveTreeIdForMember, listMemberEventRows } from './erasure-crypto-wiring';
+import {
+  encryptEventForWrite,
+  listMemberEventRows,
+  resolveDekOrNull,
+  resolveTreeIdForMember,
+} from './erasure-crypto-wiring';
 import {
   registerErasureRoutes,
   type ErasureRouteHandler,
@@ -23,12 +28,6 @@ import {
   erasureMemberIdFromPayload,
   type ErasureNotificationPrismaClient,
 } from './erasure-notify-wiring';
-import {
-  encryptEventForWrite,
-  resolveDekOrNull,
-  resolveTreeIdForMember,
-  listMemberEventRows,
-} from './erasure-crypto-wiring';
 
 /** Path erasure yang sama dengan yang dipakai erasure-router. */
 const ERASURE_PATH = '/api/v1/members/:memberId/erasure';
