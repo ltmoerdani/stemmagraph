@@ -10,6 +10,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { rotateDek } from '../../lib/crypto/family-key-store';
 
 const T0 = '2026-09-17T00:00:00.000Z';
 const ERASURE_PATH = '/api/v1/members/:memberId/erasure';
@@ -336,5 +337,29 @@ describe('createErasureExpressAdapter crypto wiring', () => {
     const box = buildAdapter([], 'tree-adapter');
     await box.invoke('post', ERASURE_PATH, reqOf('m-1', { body: {} }));
     expect(box.prisma.notification.createMany).toHaveBeenCalled();
+  });
+
+  it('setelah rotateDek: baris keyId generasi lama tetap terbaca lewat resolver DEK per keyId', async () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const box = buildAdapter([], 'tree-rot');
+
+    // Tulis event saat kunci aktif masih generasi pertama (k1).
+    const post = await box.invoke('post', ERASURE_PATH, reqOf('m-1', { body: {} }));
+    expect(post.statusCode).toBe(201);
+    expect(box.rows[0]?.payloadJson.startsWith('v1:k1:')).toBe(true);
+
+    // Rotasi kunci: k2 jadi aktif, baris ledger lama masih envelope k1.
+    rotateDek('tree-rot');
+
+    // Baca balik tanpa menulis ulang: resolver meneruskan DEK k1 dari
+    // envelope sehingga row generasi lama tetap terbaca, bukan 404.
+    const get = await box.invoke('get', ERASURE_PATH, reqOf('m-1'));
+    expect(get.statusCode).toBe(200);
+    expect(bodyOf(get).request?.status).toBe('REQUESTED');
+    expect(bodyOf(get).request?.memberId).toBe('m-1');
+
+    // GET hanya membaca: ledger tidak bertambah dan row lama tidak diubah.
+    expect(box.rows).toHaveLength(1);
+    expect(box.rows[0]?.payloadJson.startsWith('v1:k1:')).toBe(true);
   });
 });
