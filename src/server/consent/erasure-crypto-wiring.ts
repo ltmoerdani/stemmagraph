@@ -1,4 +1,4 @@
-import { getOrCreateDek } from '../../lib/crypto/family-key-store';
+import { getOrCreateDek, getDekByKeyId } from '../../lib/crypto/family-key-store';
 import {
   decryptEventPayload,
   encryptEventPayload,
@@ -11,7 +11,8 @@ import {
  * enkripsi event fail-open terkontrol saat env belum siap, serta filter
  * baris event per member dengan dekripsi aman (baris rusak dilewati, tidak
  * pernah melempar). Prisma di-inject sebagai tipe struktural, tanpa import
- * client konkret. Bebas em dash.
+ * client konkret. Sejak v423 slice 3b1, baris event dengan keyId generasi
+ * lama tetap terbaca lewat resolver DEK per keyId opsional. Bebas em dash.
  */
 
 /** Bentuk prisma minimal untuk resolve treeId member. Struktural, di-inject. */
@@ -21,6 +22,23 @@ export interface ErasureCryptoPrismaClient {
       where: { id: string };
       select?: { treeId?: boolean };
     }): Promise<{ treeId?: string } | null>;
+  };
+}
+
+// Resolver DEK berdasar keyId: mengembalikan Buffer kunci atau null bila
+// keyId tidak dikenal atau kunci tidak bisa dibaca. Tidak pernah melempar.
+export type DekForKeyIdResolver = (keyId: string) => Buffer | null;
+
+// Closure resolver DEK per keyId untuk satu treeId: membungkus getDekByKeyId
+// dengan try/catch sehingga selalu null bila gagal, tanpa pernah membuat
+// kunci baru. Tidak pernah me-log materi kunci.
+export function resolveDekForKeyId(treeId: string): DekForKeyIdResolver {
+  return (keyId: string): Buffer | null => {
+    try {
+      return getDekByKeyId(treeId, keyId);
+    } catch {
+      return null;
+    }
   };
 }
 
@@ -89,10 +107,53 @@ export function resolveDekOrNull(
   }
 }
 
+// Pilih DEK dan keyId untuk satu row terenkripsi (prefix v1: atau v2:).
+// Bila resolver diset, keyId dibaca dari envelope row itu dan DEK dicari
+// lewat resolver; null dari resolver berarti fallback ke pasangan dek dan
+// keyId parameter seperti jalur lama. Tanpa resolver, perilaku existing
+// 100 persen dipertahankan. Mengembalikan null bila keduanya nihil.
+function pilihDekForRow(
+  payloadJson: string,
+  dek: Buffer | null,
+  keyId: string,
+  resolveDekForKeyId?: DekForKeyIdResolver,
+): { dek: Buffer; keyId: string } | null {
+  if (resolveDekForKeyId === undefined) {
+    return dek === null ? null : { dek, keyId };
+  }
+  const segments = payloadJson.split(':');
+  if (segments.length !== 5) {
+    return null;
+  }
+  const keyIdEnvelope = segments[1];
+  const dekEnvelope = resolveDekForKeyId(keyIdEnvelope);
+  if (dekEnvelope !== null) {
+    return { dek: dekEnvelope, keyId: keyIdEnvelope };
+  }
+  return dek === null ? null : { dek, keyId };
+}
+
+// Dekripsi satu row terenkripsi v1 atau v2 dengan pasangan dek dan keyId
+// yang sudah dipilih. v2 memakai AAD binding memberId, v1 tanpa memberId.
+// Melempar bila gagal, penanganan skip ada di pemanggil.
+function dekripsiRowTerenkripsi(
+  dek: Buffer,
+  keyId: string,
+  stored: string,
+  memberId: string,
+): unknown {
+  if (stored.startsWith('v2:')) {
+    return decryptEventPayload(dek, keyId, stored, { memberId }).payload;
+  }
+  return decryptEventPayload(dek, keyId, stored).payload;
+}
+
 // Seleksi plus konversi baris event per member ke plaintext. Row terenkripsi
-// (prefix v1:) hanya bisa dibaca bila dek tersedia: bila dek null atau
-// dekripsi gagal, row di-skip dengan console.error tanpa membocorkan materi
-// kunci; bila berhasil dan payload milik member, kembalikan row dengan
+// (prefix v1: atau v2:) hanya bisa dibaca bila dek tersedia: dengan resolver
+// opsional, keyId diambil dari envelope row itu sehingga generasi kunci lama
+// tetap terbaca; tanpa resolver, jalur lama dipakai apa adanya. Bila dek null
+// atau dekripsi gagal, row di-skip dengan console.error tanpa membocorkan
+// materi kunci; bila berhasil dan payload milik member, kembalikan row dengan
 // payloadJson berupa JSON plaintext hasil dekripsi. Row legacy (tanpa
 // prefix) diparse langsung: bukan JSON valid di-skip dengan console.error,
 // milik member dikembalikan apa adanya dengan payloadJson asli.
@@ -101,11 +162,16 @@ export function listMemberEventRows(
   dek: Buffer | null,
   keyId: string,
   memberId: string,
+  resolveDekForKeyId?: DekForKeyIdResolver,
 ): Array<{ type: string; payloadJson: string }> {
   const result: Array<{ type: string; payloadJson: string }> = [];
   for (const row of rows) {
-    if (row.payloadJson.startsWith('v1:')) {
-      if (dek === null) {
+    if (
+      row.payloadJson.startsWith('v1:') ||
+      row.payloadJson.startsWith('v2:')
+    ) {
+      const terpilih = pilihDekForRow(row.payloadJson, dek, keyId, resolveDekForKeyId);
+      if (terpilih === null) {
         console.error(
           `Row event terenkripsi dilewati, DEK tidak tersedia untuk keyId ${keyId}`,
         );
@@ -113,7 +179,12 @@ export function listMemberEventRows(
       }
       let payload: unknown;
       try {
-        payload = decryptEventPayload(dek, keyId, row.payloadJson).payload;
+        payload = dekripsiRowTerenkripsi(
+          terpilih.dek,
+          terpilih.keyId,
+          row.payloadJson,
+          memberId,
+        );
       } catch (error) {
         const reason =
           error instanceof Error ? error.message : 'kesalahan tidak diketahui';
@@ -140,8 +211,11 @@ export function listMemberEventRows(
   return result;
 }
 
-// Filter baris event per member. Row terenkripsi (prefix v1:) dilewati
-// bila dek null, dan baris yang gagal dekripsi (tampered, format rusak)
+// Filter baris event per member. Row terenkripsi (prefix v1: atau v2:)
+// didukung multi-key lewat resolver DEK per keyId opsional: keyId dibaca
+// dari envelope row, generasi lama tetap terbaca, fallback ke dek param
+// bila resolver nihil. Row terenkripsi tanpa dek yang cocok dilewati, dan
+// baris yang gagal dekripsi (tampered, AAD mismatch, format rusak)
 // dilewati dengan console.error tanpa membocorkan materi kunci. Row legacy
 // plaintext diparse langsung tanpa DEK. Baris yang lolos disertakan apa
 // adanya dengan payloadJson asli, tidak pernah menulis ulang isi row.
@@ -150,11 +224,16 @@ export function filterEventsByMember(
   dek: Buffer | null,
   keyId: string,
   memberId: string,
+  resolveDekForKeyId?: DekForKeyIdResolver,
 ): Array<{ type: string; payloadJson: string }> {
   const result: Array<{ type: string; payloadJson: string }> = [];
   for (const row of rows) {
-    if (row.payloadJson.startsWith('v1:')) {
-      if (dek === null) {
+    if (
+      row.payloadJson.startsWith('v1:') ||
+      row.payloadJson.startsWith('v2:')
+    ) {
+      const terpilih = pilihDekForRow(row.payloadJson, dek, keyId, resolveDekForKeyId);
+      if (terpilih === null) {
         console.error(
           `Row event terenkripsi dilewati, DEK tidak tersedia untuk keyId ${keyId}`,
         );
@@ -162,7 +241,12 @@ export function filterEventsByMember(
       }
       let payload: unknown;
       try {
-        payload = decryptEventPayload(dek, keyId, row.payloadJson).payload;
+        payload = dekripsiRowTerenkripsi(
+          terpilih.dek,
+          terpilih.keyId,
+          row.payloadJson,
+          memberId,
+        );
       } catch (error) {
         const reason =
           error instanceof Error ? error.message : 'kesalahan tidak diketahui';

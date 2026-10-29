@@ -8,13 +8,15 @@ import {
   filterEventsByMember,
   resolveTreeIdForMember,
   resolveDekOrNull,
+  resolveDekForKeyId,
   listMemberEventRows,
   type ErasureCryptoPrismaClient,
 } from './erasure-crypto-wiring';
-import { getOrCreateDek } from '../../lib/crypto/family-key-store';
+import { getOrCreateDek, rotateDek } from '../../lib/crypto/family-key-store';
 import {
   decryptEventPayload,
   encryptEventPayload,
+  encryptEventPayloadV2,
 } from '../../lib/crypto/event-payload-cipher';
 
 /**
@@ -289,6 +291,213 @@ describe('listMemberEventRows', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(rowGood);
       expect(errorSpy).toHaveBeenCalledOnce();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+});
+
+// Kasus multi-key read v423 slice 3b1: keyId dibaca dari envelope row
+// sehingga event generasi kunci lama tetap terbaca lewat resolver DEK per
+// keyId, dengan fallback ke pasangan dek dan keyId parameter.
+describe('multi-key read dengan resolver DEK per keyId', () => {
+  let keyDir = '';
+  let originalMaster: string | undefined;
+  let originalKeyDir: string | undefined;
+
+  beforeEach(() => {
+    keyDir = mkdtempSync(join(tmpdir(), 'stmg-erasure-crypto-multikey-'));
+    originalMaster = process.env.STMG_MASTER_KEY;
+    originalKeyDir = process.env.STMG_KEY_DIR;
+    process.env.STMG_KEY_DIR = keyDir;
+  });
+
+  afterEach(() => {
+    if (originalMaster === undefined) {
+      delete process.env.STMG_MASTER_KEY;
+    } else {
+      process.env.STMG_MASTER_KEY = originalMaster;
+    }
+    if (originalKeyDir === undefined) {
+      delete process.env.STMG_KEY_DIR;
+    } else {
+      process.env.STMG_KEY_DIR = originalKeyDir;
+    }
+    rmSync(keyDir, { recursive: true, force: true });
+  });
+
+  it('(a) dua row keyId beda hasil rotasi terbaca satu pemanggilan listMemberEventRows', () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const lama = getOrCreateDek(TREE_ID);
+    expect(lama.keyId).toBe('k1');
+    const baru = rotateDek(TREE_ID);
+    expect(baru.keyId).toBe('k2');
+    const rowLama = {
+      type: 'erasure.requested',
+      payloadJson: encryptEventPayload(lama.dek, lama.keyId, {
+        memberId: MEMBER_ID,
+        gen: 1,
+      }),
+    };
+    const rowBaru = {
+      type: 'erasure.requested',
+      payloadJson: encryptEventPayload(baru.dek, baru.keyId, {
+        memberId: MEMBER_ID,
+        gen: 2,
+      }),
+    };
+    const resolver = resolveDekForKeyId(TREE_ID);
+    const result = listMemberEventRows(
+      [rowLama, rowBaru],
+      baru.dek,
+      baru.keyId,
+      MEMBER_ID,
+      resolver,
+    );
+    expect(result).toHaveLength(2);
+    expect(JSON.parse(result[0].payloadJson)).toEqual({
+      memberId: MEMBER_ID,
+      gen: 1,
+    });
+    expect(JSON.parse(result[1].payloadJson)).toEqual({
+      memberId: MEMBER_ID,
+      gen: 2,
+    });
+  });
+
+  it('(b) resolver null untuk keyId tak dikenal: skip tanpa crash, fallback lama tetap membaca', () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    // Pastikan k1 ada di disk, k99 sengaja tidak pernah dibuat.
+    getOrCreateDek(TREE_ID);
+    const dekLiar = randomBytes(32);
+    const rowMisterius = {
+      type: 'erasure.requested',
+      payloadJson: encryptEventPayload(dekLiar, 'k99', {
+        memberId: MEMBER_ID,
+        n: 7,
+      }),
+    };
+    const resolver = resolveDekForKeyId(TREE_ID);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      // Tanpa dek param: row di-skip dengan console.error, tidak melempar.
+      const skipped = listMemberEventRows(
+        [rowMisterius],
+        null,
+        'k1',
+        MEMBER_ID,
+        resolver,
+      );
+      expect(skipped).toHaveLength(0);
+      expect(errorSpy).toHaveBeenCalled();
+      // Dengan dek param dan keyId param yang cocok: fallback jalur lama.
+      errorSpy.mockClear();
+      const fallback = listMemberEventRows(
+        [rowMisterius],
+        dekLiar,
+        'k99',
+        MEMBER_ID,
+        resolver,
+      );
+      expect(fallback).toHaveLength(1);
+      expect(JSON.parse(fallback[0].payloadJson)).toEqual({
+        memberId: MEMBER_ID,
+        n: 7,
+      });
+      expect(errorSpy).not.toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('(c) filterEventsByMember dengan resolver membaca dua generasi kunci sekaligus', () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const lama = getOrCreateDek(TREE_ID);
+    const baru = rotateDek(TREE_ID);
+    const rowLama = {
+      type: 'consent.granted',
+      payloadJson: encryptEventPayload(lama.dek, lama.keyId, {
+        memberId: MEMBER_ID,
+        gen: 1,
+      }),
+    };
+    const rowBaru = {
+      type: 'consent.granted',
+      payloadJson: encryptEventPayload(baru.dek, baru.keyId, {
+        memberId: MEMBER_ID,
+        gen: 2,
+      }),
+    };
+    const resolver = resolveDekForKeyId(TREE_ID);
+    const result = filterEventsByMember(
+      [rowLama, rowBaru],
+      baru.dek,
+      baru.keyId,
+      MEMBER_ID,
+      resolver,
+    );
+    expect(result).toHaveLength(2);
+    expect(result[0]).toBe(rowLama);
+    expect(result[1]).toBe(rowBaru);
+    expect(result[0].payloadJson.startsWith('v1:')).toBe(true);
+    expect(result[1].payloadJson.startsWith('v1:')).toBe(true);
+  });
+
+  it('row v2 dengan resolver dan memberId cocok terbaca sebagai JSON plaintext', () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const { dek, keyId } = getOrCreateDek(TREE_ID);
+    const rowV2 = {
+      type: 'erasure.requested',
+      payloadJson: encryptEventPayloadV2(dek, keyId, MEMBER_ID, {
+        memberId: MEMBER_ID,
+        aad: true,
+      }),
+    };
+    expect(rowV2.payloadJson.startsWith('v2:')).toBe(true);
+    const resolver = resolveDekForKeyId(TREE_ID);
+    const result = listMemberEventRows(
+      [rowV2],
+      dek,
+      keyId,
+      MEMBER_ID,
+      resolver,
+    );
+    expect(result).toHaveLength(1);
+    expect(JSON.parse(result[0].payloadJson)).toEqual({
+      memberId: MEMBER_ID,
+      aad: true,
+    });
+  });
+
+  it('(d) row v2 dengan memberId salah di-skip tanpa crash, row lain tetap lolos', () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const { dek, keyId } = getOrCreateDek(TREE_ID);
+    const rowV2Salah = {
+      type: 'erasure.requested',
+      payloadJson: encryptEventPayloadV2(dek, keyId, MEMBER_ID, {
+        memberId: MEMBER_ID,
+        rahasia: 1,
+      }),
+    };
+    const rowAman = {
+      type: 'erasure.requested',
+      payloadJson: JSON.stringify({ memberId: 'm9', aman: 2 }),
+    };
+    const resolver = resolveDekForKeyId(TREE_ID);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      // memberId pemanggil m9 berbeda dari MEMBER_ID saat enkripsi, AAD
+      // GCM pasti gagal: row di-skip, bukan crash, row aman tetap lolos.
+      const result = listMemberEventRows(
+        [rowV2Salah, rowAman],
+        dek,
+        keyId,
+        'm9',
+        resolver,
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBe(rowAman);
+      expect(errorSpy).toHaveBeenCalled();
     } finally {
       errorSpy.mockRestore();
     }
