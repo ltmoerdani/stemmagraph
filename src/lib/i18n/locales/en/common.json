@@ -2,6 +2,9 @@
   "app": {
     "brand": "FamilyTree"
   },
+  "offline": {
+    "banner": "Loaded from this device because the connection is offline"
+  },
   "stats": {
     "ageGroups": {
       "title": "Age Groups PBB",

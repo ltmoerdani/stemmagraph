@@ -2,6 +2,9 @@
   "app": {
     "brand": "FamilyTree"
   },
+  "offline": {
+    "banner": "Data dimuat dari perangkat karena koneksi terputus"
+  },
   "stats": {
     "ageGroups": {
       "title": "Kelompok Umur PBB",
