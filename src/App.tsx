@@ -12,6 +12,7 @@ import { useFamilyStore } from './store/familyStore';
 import { useDashboardStore } from './store/dashboardStore';
 import { useAuthStore } from './store/authStore';
 import { currentRoute, pushRoute } from './utils/routing';
+import { subscribeAutoSave } from './lib/offline/autoSave';
 
 function App() {
   const { selectedMember, fetchMembers } = useFamilyStore();
@@ -26,6 +27,12 @@ function App() {
     initialize();
     fetchTrees();
   }, [initialize, fetchTrees]);
+
+  // v109: autosave offline, satu langganan untuk seluruh siklus aplikasi.
+  useEffect(() => {
+    const unsub = subscribeAutoSave();
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     // Wait for trees to load before determining view
