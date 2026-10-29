@@ -7,6 +7,8 @@ import {
   encryptEventForWrite,
   filterEventsByMember,
   resolveTreeIdForMember,
+  resolveDekOrNull,
+  listMemberEventRows,
   type ErasureCryptoPrismaClient,
 } from './erasure-crypto-wiring';
 import { getOrCreateDek } from '../../lib/crypto/family-key-store';
@@ -172,6 +174,120 @@ describe('filterEventsByMember', () => {
     try {
       const result = filterEventsByMember([rowEnc], null, keyId, MEMBER_ID);
       expect(result).toHaveLength(0);
+      expect(errorSpy).toHaveBeenCalledOnce();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+});
+
+describe('resolveDekOrNull', () => {
+  let keyDir = '';
+  let originalMaster: string | undefined;
+
+  beforeEach(() => {
+    keyDir = mkdtempSync(join(tmpdir(), 'stmg-erasure-crypto-'));
+    originalMaster = process.env.STMG_MASTER_KEY;
+    process.env.STMG_KEY_DIR = keyDir;
+  });
+
+  afterEach(() => {
+    if (originalMaster === undefined) {
+      delete process.env.STMG_MASTER_KEY;
+    } else {
+      process.env.STMG_MASTER_KEY = originalMaster;
+    }
+    delete process.env.STMG_KEY_DIR;
+    rmSync(keyDir, { recursive: true, force: true });
+  });
+
+  it('sukses: mengembalikan dek dan keyId saat master key tersedia', () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const resolved = resolveDekOrNull(TREE_ID);
+    expect(resolved).not.toBeNull();
+    expect(resolved?.dek.length).toBe(32);
+    expect(resolved?.keyId).toBe('k1');
+    // Konsisten dengan getOrCreateDek untuk treeId yang sama.
+    const direct = getOrCreateDek(TREE_ID);
+    expect(resolved?.dek.equals(direct.dek)).toBe(true);
+    expect(resolved?.keyId).toBe(direct.keyId);
+  });
+
+  it('null saat gagal: master key kosong tidak melempar', () => {
+    delete process.env.STMG_MASTER_KEY;
+    expect(resolveDekOrNull(TREE_ID)).toBeNull();
+  });
+
+  it('null saat treeId tidak valid pola', () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    expect(resolveDekOrNull('tree invalid!')).toBeNull();
+  });
+});
+
+describe('listMemberEventRows', () => {
+  const dek = randomBytes(32);
+  const keyId = 'k1';
+
+  const encRow = (payload: unknown) => ({
+    type: 'erasure.requested',
+    payloadJson: encryptEventPayload(dek, keyId, payload),
+  });
+  const legacyRow = (payload: unknown) => ({
+    type: 'erasure.requested',
+    payloadJson: JSON.stringify(payload),
+  });
+
+  it('row terenkripsi milik member dikembalikan sebagai JSON plaintext', () => {
+    const rowM1 = encRow({ memberId: MEMBER_ID, note: 'rahasia' });
+    const result = listMemberEventRows([rowM1], dek, keyId, MEMBER_ID);
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe('erasure.requested');
+    expect(result[0].payloadJson.startsWith('v1:')).toBe(false);
+    expect(JSON.parse(result[0].payloadJson)).toEqual({
+      memberId: MEMBER_ID,
+      note: 'rahasia',
+    });
+  });
+
+  it('row terenkripsi bukan milik member di-skip', () => {
+    const rowM2 = encRow({ memberId: 'm2', note: 'orang lain' });
+    const result = listMemberEventRows([rowM2], dek, keyId, MEMBER_ID);
+    expect(result).toHaveLength(0);
+  });
+
+  it('row v1 dengan dek null di-skip dengan console.error', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const rowEnc = encRow({ memberId: MEMBER_ID, a: 1 });
+    try {
+      const result = listMemberEventRows([rowEnc], null, keyId, MEMBER_ID);
+      expect(result).toHaveLength(0);
+      expect(errorSpy).toHaveBeenCalledOnce();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('row legacy milik member lolos apa adanya dengan payloadJson asli', () => {
+    const rowLegacy = legacyRow({ memberId: MEMBER_ID, a: 1 });
+    const result = listMemberEventRows([rowLegacy], dek, keyId, MEMBER_ID);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(rowLegacy);
+    expect(result[0].payloadJson).toBe(rowLegacy.payloadJson);
+  });
+
+  it('row legacy bukan JSON valid di-skip dengan console.error', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const rowBroken = { type: 'erasure.requested', payloadJson: 'bukan json' };
+    const rowGood = legacyRow({ memberId: MEMBER_ID, a: 2 });
+    try {
+      const result = listMemberEventRows(
+        [rowBroken, rowGood],
+        dek,
+        keyId,
+        MEMBER_ID,
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBe(rowGood);
       expect(errorSpy).toHaveBeenCalledOnce();
     } finally {
       errorSpy.mockRestore();

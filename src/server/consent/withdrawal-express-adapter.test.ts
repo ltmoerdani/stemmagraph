@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { randomBytes } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { Request, RequestHandler, Response } from 'express';
 import {
   extendWithdrawalWindow,
@@ -93,20 +97,19 @@ function createMockHost() {
 type FindManyArgs = Parameters<WithdrawalPrismaClient['event']['findMany']>[0];
 type LedgerRow = { type: string; payloadJson: string; createdAt: Date };
 
-/** Prisma in-memory: filter type in + payloadJson contains, urut createdAt. */
-function createMockPrisma(seed: LedgerRow[] = []) {
+/** Prisma in-memory: filter type in saja (tanpa contains), urut createdAt. */
+function createMockPrisma(seed: LedgerRow[] = [], treeId: string | null = null) {
   const rows: LedgerRow[] = [...seed];
   const findManyArgs: FindManyArgs[] = [];
   const prisma: WithdrawalPrismaClient = {
+    familyMember: {
+      findUnique: vi.fn(async () => (treeId ? { treeId } : null)),
+    },
     event: {
       findMany: async (args) => {
         findManyArgs.push(args);
         return rows
-          .filter(
-            (row) =>
-              args.where.type.in.includes(row.type) &&
-              row.payloadJson.includes(args.where.payloadJson.contains),
-          )
+          .filter((row) => args.where.type.in.includes(row.type))
           .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
           .map((row) => ({ type: row.type, payloadJson: row.payloadJson }));
       },
@@ -133,9 +136,9 @@ function seedPending(memberId = 'm-1'): LedgerRow[] {
   return [mkRow(memberId, request, T0)];
 }
 
-function buildAdapter(seed: LedgerRow[] = []) {
+function buildAdapter(seed: LedgerRow[] = [], treeId: string | null = null) {
   const hostBox = createMockHost();
-  const prismaBox = createMockPrisma(seed);
+  const prismaBox = createMockPrisma(seed, treeId);
   createWithdrawalExpressAdapter({ app: hostBox.host, prisma: prismaBox.prisma });
   return { ...hostBox, ...prismaBox };
 }
@@ -283,5 +286,62 @@ describe('createWithdrawalExpressAdapter', () => {
     expect(WITHDRAWAL_DUE_DAYS).toBe(30);
     expect(resolveWithdrawal(T1).type).toBe('resolve');
     expect(recordWithdrawalRefusal('alasan', 'info').complaintInfo).toBe('info');
+  });
+});
+
+describe('createWithdrawalExpressAdapter crypto wiring', () => {
+  let keyDir = '';
+  let originalMaster: string | undefined;
+
+  beforeEach(() => {
+    keyDir = mkdtempSync(join(tmpdir(), 'stmg-withdrawal-adapter-'));
+    originalMaster = process.env.STMG_MASTER_KEY;
+    process.env.STMG_KEY_DIR = keyDir;
+  });
+
+  afterEach(() => {
+    if (originalMaster === undefined) {
+      delete process.env.STMG_MASTER_KEY;
+    } else {
+      process.env.STMG_MASTER_KEY = originalMaster;
+    }
+    delete process.env.STMG_KEY_DIR;
+    rmSync(keyDir, { recursive: true, force: true });
+  });
+
+  it('POST request saat kunci tersedia: payloadJson tersimpan envelope v1: dan baca balik stage pending', async () => {
+    process.env.STMG_MASTER_KEY = randomBytes(32).toString('hex');
+    const box = buildAdapter([], 'tree-wd');
+    const res = await box.invoke('post', WITHDRAWAL_PATH, reqOf('m-2', { body: { action: 'request' } }));
+    expect(res.statusCode).toBe(201);
+    expect(bodyOf(res).stage).toBe('pending');
+    expect(box.rows).toHaveLength(1);
+    expect(box.rows[0]?.payloadJson.startsWith('v1:')).toBe(true);
+
+    const get = await box.invoke('get', WITHDRAWAL_PATH, reqOf('m-2'));
+    expect(get.statusCode).toBe(200);
+    expect(bodyOf(get).stage).toBe('pending');
+    expect(get.body).toHaveProperty('dueAt');
+  });
+
+  it('jalur legacy treeId null: tulis plaintext dan baca balik tetap bekerja', async () => {
+    const box = buildAdapter([], null);
+    const res = await box.invoke('post', WITHDRAWAL_PATH, reqOf('m-2', { body: { action: 'request' } }));
+    expect(res.statusCode).toBe(201);
+    expect(box.rows[0]?.payloadJson.startsWith('v1:')).toBe(false);
+    const parsed = JSON.parse(box.rows[0]?.payloadJson ?? '{}') as { memberId?: string };
+    expect(parsed.memberId).toBe('m-2');
+
+    const get = await box.invoke('get', WITHDRAWAL_PATH, reqOf('m-2'));
+    expect(get.statusCode).toBe(200);
+    expect(bodyOf(get).stage).toBe('pending');
+  });
+
+  it('GET query per-type tanpa payloadJson contains', async () => {
+    const box = buildAdapter(seedPending());
+    await box.invoke('get', WITHDRAWAL_PATH, reqOf('m-1'));
+    expect(box.findManyArgs).toHaveLength(1);
+    expect(box.findManyArgs[0]?.where).not.toHaveProperty('payloadJson');
+    expect(box.findManyArgs[0]?.orderBy).toEqual({ createdAt: 'asc' });
   });
 });
