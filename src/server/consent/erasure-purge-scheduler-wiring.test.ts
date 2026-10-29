@@ -27,6 +27,8 @@ import {
 } from './erasure-purge-scheduler-wiring';
 import { scanErasurePurges } from './erasure-purge-scheduler';
 import { executeErasurePurge } from '../../lib/consent/erasure-purge-execute';
+import { rotateDek } from '../../lib/crypto/family-key-store';
+import { encryptEventForWrite } from './erasure-crypto-wiring';
 
 const mockScan = vi.mocked(scanErasurePurges);
 const mockExec = vi.mocked(executeErasurePurge);

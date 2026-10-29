@@ -14,6 +14,7 @@ import {
 import { executeErasurePurge, type ErasurePurgeAuditRow, type MemberPurgeableData } from '../../lib/consent/erasure-purge-execute';
 import type { ErasureEventType } from '../../lib/consent/erasure-wiring';
 import {
+  resolveDekForKeyId,
   resolveDekOrNull,
   resolveTreeIdForMember,
   listMemberEventRows,

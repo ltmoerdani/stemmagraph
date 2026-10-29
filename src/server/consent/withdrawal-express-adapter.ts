@@ -6,7 +6,7 @@
  */
 
 import type { Request, RequestHandler, Response } from 'express';
-import { resolveDekOrNull, resolveTreeIdForMember, listMemberEventRows, encryptEventForWrite } from './erasure-crypto-wiring';
+import { resolveDekForKeyId, resolveDekOrNull, resolveTreeIdForMember, listMemberEventRows, encryptEventForWrite, type ErasureCryptoPrismaClient } from './erasure-crypto-wiring';
 import {
   registerWithdrawalRoutes,
   type WithdrawalRouteHandler,
@@ -29,8 +29,10 @@ export interface WithdrawalExpressHost {
 /**
  * Bentuk prisma minimal untuk ledger Event. Struktural, jadi client
  * prisma apa pun yang punya event.findMany dan event.create diterima.
+ * familyMember opsional agar resolveTreeIdForMember bisa dipanggil.
  */
 export interface WithdrawalPrismaClient {
+  familyMember?: ErasureCryptoPrismaClient['familyMember'];
   event: {
     findMany(args: {
       where: {
