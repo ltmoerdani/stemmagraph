@@ -2,10 +2,20 @@ import { mkdtempSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { getOrCreateDek, listKeyIds } from './family-key-store';
+import {
+  decryptEventPayload,
+  encryptEventPayload,
+} from './event-payload-cipher';
+import {
+  getDekByKeyId,
+  getOrCreateDek,
+  listKeyIds,
+  rotateDek,
+} from './family-key-store';
 
 let keyDir: string;
 let kel1DekHex: string;
+let kel3DekLamaHex: string;
 
 beforeAll(() => {
   process.env.STMG_MASTER_KEY = 'test-master-key-v422';
@@ -78,5 +88,54 @@ describe('family-key-store', () => {
 
   it('(9) listKeyIds kel2 terurut generasi naik benar', () => {
     expect(listKeyIds('kel2')).toEqual(['k9', 'k10']);
+  });
+
+  it('(10) rotateDek kel3 menghasilkan generasi baru k2 dan dek berbeda dari dek aktif sebelumnya', () => {
+    const lama = getOrCreateDek('kel3');
+    kel3DekLamaHex = lama.dek.toString('hex');
+    const hasil = rotateDek('kel3');
+    expect(hasil.keyId).toBe('k2');
+    expect(hasil.dek).toHaveLength(32);
+    expect(hasil.dek.toString('hex')).not.toBe(kel3DekLamaHex);
+  });
+
+  it('(11) getOrCreateDek kel3 setelah rotateDek mengembalikan generasi baru k2 tanpa gap', () => {
+    const hasil = getOrCreateDek('kel3');
+    expect(hasil.keyId).toBe('k2');
+    expect(hasil.dek.toString('hex')).not.toBe(kel3DekLamaHex);
+  });
+
+  it('(12) getDekByKeyId kel3 generasi lama k1 masih mengembalikan dek lama yang sama', () => {
+    const lama = getDekByKeyId('kel3', 'k1');
+    expect(lama).not.toBeNull();
+    if (lama === null) return;
+    expect(lama.toString('hex')).toBe(kel3DekLamaHex);
+  });
+
+  it('(13) getDekByKeyId kel3 keyId tidak dikenal k99 mengembalikan null tanpa throw', () => {
+    expect(getDekByKeyId('kel3', 'k99')).toBeNull();
+  });
+
+  it('(14) getDekByKeyId dengan STMG_MASTER_KEY kosong mengembalikan null tanpa throw', () => {
+    const simpan = process.env.STMG_MASTER_KEY;
+    delete process.env.STMG_MASTER_KEY;
+    try {
+      expect(getDekByKeyId('kel1', 'k1')).toBeNull();
+    } finally {
+      process.env.STMG_MASTER_KEY = simpan;
+    }
+  });
+
+  it('(15) roundtrip event dek generasi lama tetap terbaca setelah rotate', () => {
+    const lama = getOrCreateDek('kel4');
+    const stored = encryptEventPayload(lama.dek, lama.keyId, { isi: 'peserta' });
+    const baru = rotateDek('kel4');
+    expect(baru.keyId).toBe('k2');
+    const dekLama = getDekByKeyId('kel4', lama.keyId);
+    expect(dekLama).not.toBeNull();
+    if (dekLama === null) return;
+    const terbaca = decryptEventPayload(dekLama, lama.keyId, stored);
+    expect(terbaca.legacy).toBe(false);
+    expect(terbaca.payload).toEqual({ isi: 'peserta' });
   });
 });
