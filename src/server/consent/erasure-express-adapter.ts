@@ -12,6 +12,7 @@ import type { Request, RequestHandler, Response } from 'express';
 import {
   encryptEventForWrite,
   listMemberEventRows,
+  resolveDekForKeyId,
   resolveDekOrNull,
   resolveTreeIdForMember,
 } from './erasure-crypto-wiring';
