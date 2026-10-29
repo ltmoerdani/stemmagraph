@@ -9,6 +9,7 @@ export class FieldDecryptError extends Error {
   code:
     | 'FIELD_CIPHER_BAD_FORMAT'
     | 'FIELD_CIPHER_TAG_MISMATCH'
+    | 'FIELD_CIPHER_AAD_MISMATCH'
     | 'FIELD_CIPHER_KEY_ID_MISMATCH'
     | 'FIELD_CIPHER_WRONG_DEK_LENGTH';
 
@@ -29,6 +30,7 @@ export function encryptField(
   keyId: string,
   dek: Uint8Array,
   plaintext: string,
+  options?: { aad?: Uint8Array },
 ): string {
   if (dek.length !== DEK_LENGTH_BYTES) {
     throw new FieldDecryptError(
@@ -38,6 +40,11 @@ export function encryptField(
   }
   const iv = randomBytes(FIELD_CIPHER_IV_BYTES);
   const cipher = createCipheriv('aes-256-gcm', Buffer.from(dek), iv);
+  // AAD opsional dipasang sebelum update, tidak ikut masuk envelope, binding
+  // implisit: pemanggil decrypt wajib membangun AAD yang identik.
+  if (options?.aad) {
+    cipher.setAAD(Buffer.from(options.aad));
+  }
   const cipherText = Buffer.concat([
     cipher.update(plaintext, 'utf8'),
     cipher.final(),
@@ -56,7 +63,7 @@ export function decryptField(
   keyId: string,
   dek: Uint8Array,
   stored: string,
-  options?: { onLegacy?: (p: string) => void },
+  options?: { onLegacy?: (p: string) => void; aad?: Uint8Array },
 ): { plaintext: string; legacy: boolean } {
   const segments = stored.split(':');
   // Nilai sebelum migrasi disimpan polos, lewatkan ke callback bila disediakan.
@@ -112,6 +119,9 @@ export function decryptField(
   }
   const decipher = createDecipheriv('aes-256-gcm', Buffer.from(dek), iv);
   decipher.setAuthTag(tag);
+  if (options?.aad) {
+    decipher.setAAD(Buffer.from(options.aad));
+  }
   try {
     const plaintext = Buffer.concat([
       decipher.update(cipherText),
@@ -119,6 +129,16 @@ export function decryptField(
     ]);
     return { plaintext: plaintext.toString('utf8'), legacy: false };
   } catch {
+    // Dengan AAD terpasang, kegagalan final() berarti verifikasi integritas
+    // GCM gagal. GCM tidak bisa memisahkan penyebabnya: AAD dan ciphertext
+    // sama-sama tercakup satu auth tag, jadi keduanya sama-sama dicurigai.
+    // Tanpa AAD, perilaku lama dipertahankan sebagai TAG_MISMATCH.
+    if (options?.aad) {
+      throw new FieldDecryptError(
+        'FIELD_CIPHER_AAD_MISMATCH',
+        'Integritas GCM gagal: AAD atau ciphertext kemungkinan berubah',
+      );
+    }
     throw new FieldDecryptError(
       'FIELD_CIPHER_TAG_MISMATCH',
       'Verifikasi auth tag gagal',
