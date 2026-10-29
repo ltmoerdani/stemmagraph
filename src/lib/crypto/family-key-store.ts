@@ -192,6 +192,69 @@ export function getOrCreateDek(treeId: string): { dek: Buffer; keyId: string } {
   return { dek, keyId: `k${nextGeneration}` };
 }
 
+// Rotasi DEK untuk treeId: tulis generasi baru findHighestGeneration + 1
+// tanpa menghapus generasi lama, sehingga event lama tetap terbaca lewat
+// getDekByKeyId. Rotasi berarti generasi baru; penggantian STMG_MASTER_KEY
+// (re-wrap KEK) cukup membungkus ulang file kunci tanpa menyentuh data.
+// Batas operasi enkripsi per kunci menurut NIST SP 800-38D adalah 2^32,
+// rotasi rutin menjaga pemakaian tetap di bawah batas itu.
+export function rotateDek(treeId: string): { dek: Buffer; keyId: string } {
+  if (!TREE_ID_PATTERN.test(treeId)) {
+    throw new Error(
+      `treeId tidak valid, hanya huruf angka underscore strip, panjang 1 sampai 64: ${treeId}`,
+    );
+  }
+  const masterKey = process.env.STMG_MASTER_KEY;
+  if (!masterKey || masterKey.trim() === '') {
+    throw new Error('STMG_MASTER_KEY wajib diset');
+  }
+  const keyDir = resolveKeyDir();
+  mkdirSync(keyDir, { recursive: true, mode: KEY_DIR_MODE });
+  const salt = loadOrCreateSalt(keyDir);
+  const kek = deriveKek(masterKey, salt);
+  const dek = randomBytes(DEK_LENGTH_BYTES);
+  const nextGeneration = findHighestGeneration(keyDir, treeId) + 1;
+  writeWrappedDek(keyDir, treeId, nextGeneration, dek, kek);
+  return { dek, keyId: `k${nextGeneration}` };
+}
+
+// Ambil DEK spesifik berdasar keyId berformat k<n>, n integer positif.
+// Membaca file generasi n lalu unwrap dengan KEK. Mengembalikan null tanpa
+// throw bila STMG_MASTER_KEY kosong, treeId tidak valid, keyId salah format,
+// file generasi tidak ada, atau unwrap gagal (kunci rusak atau KEK beda).
+export function getDekByKeyId(treeId: string, keyId: string): Buffer | null {
+  if (!TREE_ID_PATTERN.test(treeId)) {
+    return null;
+  }
+  if (!/^k\d+$/.test(keyId)) {
+    return null;
+  }
+  const generation = Number.parseInt(keyId.slice(1), 10);
+  if (!Number.isSafeInteger(generation) || generation <= 0) {
+    return null;
+  }
+  const masterKey = process.env.STMG_MASTER_KEY;
+  if (!masterKey || masterKey.trim() === '') {
+    return null;
+  }
+  const keyDir = resolveKeyDir();
+  const saltPath = join(keyDir, SALT_FILE_NAME);
+  if (!existsSync(saltPath)) {
+    return null;
+  }
+  let kek: Buffer;
+  try {
+    kek = deriveKek(masterKey, readFileSync(saltPath));
+  } catch {
+    return null;
+  }
+  try {
+    return readWrappedDek(keyDir, treeId, generation, kek);
+  } catch {
+    return null;
+  }
+}
+
 // Daftar keyId untuk treeId, terurut generasi naik.
 export function listKeyIds(treeId: string): string[] {
   if (!TREE_ID_PATTERN.test(treeId)) {
