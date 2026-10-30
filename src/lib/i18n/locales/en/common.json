@@ -775,7 +775,22 @@
     "confirmBody": "Link {{token}} will stop working immediately on every public surface. This cannot be undone.",
     "confirmAction": "Yes, revoke link",
     "cancel": "Cancel",
-    "unavailable": "Share link management needs the server connection and is unavailable on this adapter."
+    "unavailable": "Share link management needs the server connection and is unavailable on this adapter.",
+    "createTitle": "Create a share link",
+    "createModeLabel": "Link mode",
+    "createModePublic": "Public: anyone with the link can view",
+    "createModePassword": "Password: visitors must enter the password",
+    "createPasswordLabel": "Password",
+    "createPasswordHint": "At least 8 characters.",
+    "createPasswordPlaceholder": "Link password",
+    "createAction": "Create link",
+    "creating": "Creating link...",
+    "createFailed": "Failed to create the share link.",
+    "createdTitle": "Share link created",
+    "createdTokenLabel": "Copy this token now. The full token will not be shown again.",
+    "copyToken": "Copy token",
+    "copied": "Copied",
+    "done": "Done"
   },
   "form": {
     "margaLabel": "Clan name",

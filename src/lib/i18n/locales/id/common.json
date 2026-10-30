@@ -775,7 +775,22 @@
     "confirmBody": "Tautan {{token}} langsung berhenti bekerja di semua permukaan publik. Tindakan ini tidak bisa dibatalkan.",
     "confirmAction": "Ya, cabut tautan",
     "cancel": "Batal",
-    "unavailable": "Kelola tautan bagikan butuh koneksi server dan tidak tersedia di adapter ini."
+    "unavailable": "Kelola tautan bagikan butuh koneksi server dan tidak tersedia di adapter ini.",
+    "createTitle": "Buat tautan bagikan",
+    "createModeLabel": "Mode tautan",
+    "createModePublic": "Publik: siapa pun dengan tautan bisa melihat",
+    "createModePassword": "Kata sandi: pengunjung harus memasukkan kata sandi",
+    "createPasswordLabel": "Kata sandi",
+    "createPasswordHint": "Minimal 8 karakter.",
+    "createPasswordPlaceholder": "Kata sandi tautan",
+    "createAction": "Buat tautan",
+    "creating": "Membuat tautan...",
+    "createFailed": "Gagal membuat tautan bagikan.",
+    "createdTitle": "Tautan bagikan dibuat",
+    "createdTokenLabel": "Salin token ini sekarang. Token penuh tidak akan ditampilkan lagi.",
+    "copyToken": "Salin token",
+    "copied": "Tersalin",
+    "done": "Selesai"
   },
   "form": {
     "margaLabel": "Marga",
