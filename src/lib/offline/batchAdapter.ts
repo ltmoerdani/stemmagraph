@@ -6,6 +6,9 @@
 // - Respons 2xx: resolve, batch dianggap sukses.
 // - Respons 400/422/409: throw Error berlabel kontrak, jawaban final dari
 //   server, tidak boleh di-retry pemanggil.
+// - Respons 5xx dan status lain: juga jawaban final, error diberi nama
+//   ContractError (konstanta CONTRACT_ERROR_NAME dari flush.ts) sehingga
+//   isContractError di flushOutbox tidak menganggapnya kegagalan transport.
 // - Kegagalan transport (fetch reject): throw Error biasa, pemanggil boleh
 //   retry di siklus berikutnya.
 // Tidak ada retry internal di modul ini; retry adalah keputusan pemanggil
@@ -14,6 +17,7 @@
 import { BATCH_OPS_CONTRACT } from './contract';
 import type { BatchOpPayload, BatchOpsRequestBody } from './contract';
 import type { OutboxEntry } from './outbox';
+import { CONTRACT_ERROR_NAME } from './flush';
 import { useFamilyStore } from '../../store/familyStore';
 
 export interface BatchAdapterDeps {
@@ -75,10 +79,17 @@ export function createBatchSender(
       response.status === 409
     ) {
       // Jawaban final server (missing key, key reuse, concurrent outstanding).
-      throw new Error(`${BATCH_CONTRACT_ERROR_LABEL}: status ${response.status}`);
+      // Nama ContractError (konstanta flush.CONTRACT_ERROR_NAME) membuat
+      // isContractError di flush.ts mengenali jawaban final sehingga tidak
+      // di-retry sebagai kegagalan transport (AC2 GOAL v113).
+      const error = new Error(`${BATCH_CONTRACT_ERROR_LABEL}: status ${response.status}`);
+      error.name = CONTRACT_ERROR_NAME;
+      throw error;
     }
 
     // 5xx dan status lain: juga jawaban final menurut kontrak, tidak di-retry internal.
-    throw new Error(`batch sender: respons gagal status ${response.status}`);
+    const error = new Error(`batch sender: respons gagal status ${response.status}`);
+    error.name = CONTRACT_ERROR_NAME;
+    throw error;
   };
 }

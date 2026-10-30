@@ -98,4 +98,50 @@ describe('createBatchSender', () => {
     await expect(send([makeEntry()], 'b1')).rejects.not.toThrow(BATCH_CONTRACT_ERROR_LABEL);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  // v113 QA fix: jawaban server diberi nama ContractError agar isContractError
+  // di flushOutbox mengenainya sebagai jawaban final (tidak di-retry transport).
+  it('(6) 400: error punya name ContractError', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(400));
+    const send = createBatchSender({ fetchImpl: fetchMock as unknown as typeof fetch });
+
+    let caught: Error | undefined;
+    try {
+      await send([makeEntry()], 'b1');
+    } catch (error) {
+      caught = error as Error;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught?.name).toBe('ContractError');
+    expect(caught?.message).toContain(BATCH_CONTRACT_ERROR_LABEL);
+  });
+
+  it('(7) 500: error juga punya name ContractError (jawaban final, tidak di-retry)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(500));
+    const send = createBatchSender({ fetchImpl: fetchMock as unknown as typeof fetch });
+
+    let caught: Error | undefined;
+    try {
+      await send([makeEntry()], 'b1');
+    } catch (error) {
+      caught = error as Error;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught?.name).toBe('ContractError');
+    expect(caught?.message).toContain('status 500');
+  });
+
+  it('(8) kegagalan jaringan: error TIDAK punya name ContractError', async () => {
+    fetchMock.mockRejectedValue(new TypeError('network down'));
+    const send = createBatchSender({ fetchImpl: fetchMock as unknown as typeof fetch });
+
+    let caught: Error | undefined;
+    try {
+      await send([makeEntry()], 'b1');
+    } catch (error) {
+      caught = error as Error;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught?.name).not.toBe('ContractError');
+  });
 });

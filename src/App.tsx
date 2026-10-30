@@ -14,7 +14,7 @@ import { useAuthStore } from './store/authStore';
 import { currentRoute, pushRoute } from './utils/routing';
 import { subscribeAutoSave } from './lib/offline/autoSave';
 import { subscribeReconnectRefresh } from './lib/offline/reconnect';
-import { countOutbox, listOutbox, clearBatch } from './lib/offline/outbox';
+import { countOutbox, listOutbox, clearBatch, deleteEntriesByIds, setEntryStatus } from './lib/offline/outbox';
 import { flushOutbox } from './lib/offline/flush';
 import { createBatchSender } from './lib/offline/batchAdapter';
 import { getTree, listTreeIds } from './lib/offline/idb';
@@ -115,6 +115,10 @@ function App() {
       listEntries: listOutbox,
       sendBatch: createBatchSender(),
       clearBatch,
+      deleteEntries: deleteEntriesByIds,
+      persistEntry: async (entry) => {
+        await setEntryStatus(entry.id, entry.status ?? 'pending', entry.lastError);
+      },
       onStatus: (status, remaining) => {
         const s = useFamilyStore.getState();
         if (status === 'flushed') {
