@@ -8,9 +8,10 @@ export class IndexedDbUnavailableError extends Error {
 const DB_NAME = 'stemmagraph-offline';
 // v110: naik ke 2 karena onupgradeneeded kini juga membuat store backup.
 // Upgrade dari DB v1 existing hanya menambah store, data trees utuh.
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_TREES = 'trees';
 const STORE_BACKUP = 'tree-backup';
+const STORE_OUTBOX = 'outbox';
 
 export type LwwStatus = 'written' | 'skipped_stale' | 'written_with_backup';
 
@@ -37,7 +38,7 @@ function requireIndexedDb(): IDBFactory {
   return indexedDB;
 }
 
-function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
+export function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     request.onsuccess = () => {
       resolve(request.result);
@@ -48,7 +49,7 @@ function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
-function transactionDone(tx: IDBTransaction): Promise<void> {
+export function transactionDone(tx: IDBTransaction): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     tx.oncomplete = () => {
       resolve();
@@ -77,6 +78,18 @@ export function openOfflineDb(): Promise<TreesDb> {
       }
       if (!db.objectStoreNames.contains(STORE_BACKUP)) {
         db.createObjectStore(STORE_BACKUP, { keyPath: 'treeId' });
+      }
+      if (!db.objectStoreNames.contains(STORE_OUTBOX)) {
+        const outboxStore = db.createObjectStore(STORE_OUTBOX, { keyPath: 'id' });
+        // Guard: beberapa mock createObjectStore-nya no-op (return void),
+        // cek dulu sebelum bikin index agar upgrade path tetap aman.
+        if (
+          outboxStore &&
+          typeof outboxStore.createIndex === 'function' &&
+          !outboxStore.indexNames.contains('batchKey')
+        ) {
+          outboxStore.createIndex('batchKey', 'batchKey', { unique: false });
+        }
       }
     };
     request.onsuccess = () => {
