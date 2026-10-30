@@ -7,6 +7,15 @@
     "reconnect": {
       "refreshed": "Tree data reloaded from server, connection is back",
       "kept": "Local data is newer, not overwritten by server"
+    },
+    "outbox": {
+      "pending": "Changes pending: {{count}}",
+      "send": "Send to server",
+      "confirm": "Send {{count}} local changes to the server?",
+      "flushed": "Local changes sent to server",
+      "failed": "Sending local changes failed, will retry later",
+      "cancel": "Cancel",
+      "confirm_desc": "Local changes will be sent to the server and removed from this device once succeeded."
     }
   },
   "stats": {
