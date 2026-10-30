@@ -134,6 +134,14 @@ describe('common.json key parity (en vs id)', () => {
     );
     expect(mismatched).toEqual([]);
   });
+
+  // GOAL v111 slice 2b: semua leaf value harus non-empty di kedua locale.
+  it('no locale carries an empty string value on any leaf key', () => {
+    const emptyEn = [...en.entries()].filter(([, value]) => value === '');
+    const emptyId = [...id.entries()].filter(([, value]) => value === '');
+    expect(emptyEn).toEqual([]);
+    expect(emptyId).toEqual([]);
+  });
 });
 
 describe('digest namespace (P2-7 U5)', () => {

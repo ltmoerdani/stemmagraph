@@ -5,6 +5,11 @@ import type { FamilyMemberRecord, MemberRelationship } from '@/lib/adapters';
 import { isNameOnlyMember } from '@/types/redacted';
 import { getTree } from '@/lib/offline/idb';
 import { deserializeTree } from '@/lib/offline/familyStoreAdapter';
+import type { ReconnectStatus } from '@/lib/offline/reconnect';
+
+// v111 slice 2: status hasil refresh reconnect untuk pohon aktif.
+// 'idle' berarti belum ada hasil yang perlu ditampilkan banner.
+export type ReconnectState = 'idle' | ReconnectStatus;
 
 // ─── Adapter ⟷ Legacy Type Bridge ──────────────────────────
 
@@ -91,6 +96,8 @@ interface FamilyStore {
   isLoading: boolean;
   /** GOAL v109 slice 2: true saat members terisi dari snapshot offline karena fetch adapter gagal. */
   offlineLoaded: boolean;
+  /** GOAL v111 slice 2: hasil refresh reconnect terakhir untuk pohon aktif. */
+  reconnectStatus: ReconnectState;
 
   // Actions
   fetchMembers: (treeId: string) => Promise<void>;
@@ -108,6 +115,8 @@ interface FamilyStore {
   deleteMember: (id: string) => Promise<void>;
   /** S-14 fix: balikan id record dari adapter (bukan id lokal caller). */
   addMemberWithRelationship: (member: FamilyMember, relationshipType: string, targetMemberId: string) => Promise<string>;
+  /** GOAL v111 slice 2: catat hasil refresh reconnect dari wiring App. */
+  setReconnectStatus: (status: ReconnectState) => void;
 }
 
 function mapRelationshipType(uiType: string): MemberRelationship['type'] | null {
@@ -160,6 +169,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   currentFamilyTreeId: null,
   isLoading: false,
   offlineLoaded: false,
+  reconnectStatus: 'idle',
   stats: {
     totalMembers: 0,
     totalGenerations: 0,
@@ -185,7 +195,10 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       const members = hydrateMembers(records, relationships);
       // records/relationships are kept unmerged so exports read the
       // canonical adapter layer instead of the legacy UI shape.
-      set({ members, records, relationships, isLoading: false });
+      // v111 slice 2: data server segar berarti fallback offline v109
+      // sudah tidak relevan, banner offline turun dan status reconnect
+      // kembali netral.
+      set({ members, records, relationships, isLoading: false, offlineLoaded: false, reconnectStatus: 'idle' });
       get().updateStats();
     } catch {
       // GOAL v109 slice 2: fetch adapter gagal (mis. koneksi putus), coba
@@ -400,4 +413,6 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     // member payload. Rantai reveal modal bergantung pada nilai ini.
     return record.id;
   },
+
+  setReconnectStatus: (status) => set({ reconnectStatus: status }),
 }));

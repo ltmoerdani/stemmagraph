@@ -12,10 +12,14 @@ import { render, screen, cleanup, act } from '@testing-library/react';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) =>
-      key === 'offline.banner'
-        ? 'Data dimuat dari perangkat karena koneksi terputus'
-        : key,
+    t: (key: string) => {
+      const dict: Record<string, string> = {
+        'offline.banner': 'Data dimuat dari perangkat karena koneksi terputus',
+        'offline.reconnect.refreshed': 'Data pohon dimuat ulang dari server, koneksi kembali',
+        'offline.reconnect.kept': 'Data lokal lebih baru, tidak ditimpa server',
+      };
+      return dict[key] ?? key;
+    },
   }),
 }));
 
@@ -47,7 +51,7 @@ const validPayload = {
 describe('fetchMembers fallback offline (GOAL v109 slice 2)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useFamilyStore.setState({ offlineLoaded: false, members: [], isLoading: false });
+    useFamilyStore.setState({ offlineLoaded: false, members: [], isLoading: false, reconnectStatus: 'idle' });
   });
 
   afterEach(() => {
@@ -99,4 +103,46 @@ describe('fetchMembers fallback offline (GOAL v109 slice 2)', () => {
       screen.getByText('Data dimuat dari perangkat karena koneksi terputus'),
     ).toBeTruthy();
   });
+});
+
+describe('OfflineBanner status reconnect (GOAL v111 slice 2b)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useFamilyStore.setState({ offlineLoaded: true, reconnectStatus: 'idle' });
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("status 'refreshed': tampil baris teks refreshed", () => {
+    useFamilyStore.setState({ reconnectStatus: 'refreshed' });
+    render(<OfflineBanner />);
+
+    expect(screen.getByTestId('offline-banner')).toBeTruthy();
+    expect(screen.getByTestId('offline-reconnect-status').textContent).toBe(
+      'Data pohon dimuat ulang dari server, koneksi kembali',
+    );
+  });
+
+  it("status 'kept': tampil baris teks kept", () => {
+    useFamilyStore.setState({ reconnectStatus: 'kept' });
+    render(<OfflineBanner />);
+
+    expect(screen.getByTestId('offline-banner')).toBeTruthy();
+    expect(screen.getByTestId('offline-reconnect-status').textContent).toBe(
+      'Data lokal lebih baru, tidak ditimpa server',
+    );
+  });
+
+  it.each(['idle', 'offline_still'] as const)(
+    "status '%s': tanpa baris teks tambahan",
+    (status) => {
+      useFamilyStore.setState({ reconnectStatus: status });
+      render(<OfflineBanner />);
+
+      expect(screen.getByTestId('offline-banner')).toBeTruthy();
+      expect(screen.queryByTestId('offline-reconnect-status')).toBeNull();
+    },
+  );
 });
