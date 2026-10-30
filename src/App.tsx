@@ -13,6 +13,9 @@ import { useDashboardStore } from './store/dashboardStore';
 import { useAuthStore } from './store/authStore';
 import { currentRoute, pushRoute } from './utils/routing';
 import { subscribeAutoSave } from './lib/offline/autoSave';
+import { subscribeReconnectRefresh } from './lib/offline/reconnect';
+import { getTree, listTreeIds } from './lib/offline/idb';
+import { getAdapter } from './lib/adapters';
 
 function App() {
   const { selectedMember, fetchMembers } = useFamilyStore();
@@ -31,6 +34,56 @@ function App() {
   // v109: autosave offline, satu langganan untuk seluruh siklus aplikasi.
   useEffect(() => {
     const unsub = subscribeAutoSave();
+    return () => unsub();
+  }, []);
+
+  // v111 slice 2: refresh reconnect, satu langganan untuk seluruh siklus
+  // aplikasi, pola sama dengan autosave di atasnya. Sumber data disuntik
+  // lewat deps supaya modul reconnect tetap bisa diuji terpisah.
+  useEffect(() => {
+    const getLocalTree = async (treeId: string) => {
+      const raw = await getTree(treeId);
+      if (raw === null) return null;
+      const savedAt = Date.parse(String((raw as { savedAt?: unknown }).savedAt ?? ''));
+      if (Number.isNaN(savedAt)) return null;
+      return { savedAt };
+    };
+
+    const getServerTree = async (treeId: string) => {
+      const record = await getAdapter().getTree(treeId);
+      if (record === null) return null;
+      const savedAt = Date.parse(record.lastUpdated);
+      if (Number.isNaN(savedAt)) return null;
+      return { savedAt };
+    };
+
+    const refreshMembers = async (treeId: string) => {
+      const state = useFamilyStore.getState();
+      // Hanya pohon aktif yang boleh memuat ulang; pohon lain dilempar
+      // agar reconnect menandai 'kept', data lokal dipertahankan.
+      if (state.currentFamilyTreeId !== treeId) {
+        throw new Error('reconnect_refresh_inactive_tree');
+      }
+      await state.fetchMembers(treeId);
+      // fetchMembers menelan error adapter ke fallback offline v109;
+      // fallback itulah tanda server belum benar-benar terjangkau.
+      if (useFamilyStore.getState().offlineLoaded) {
+        throw new Error('reconnect_refresh_offline_fallback');
+      }
+    };
+
+    const unsub = subscribeReconnectRefresh({
+      getLocalTree,
+      getServerTree,
+      refreshMembers,
+      listTreeNames: listTreeIds,
+      onStatus: (status, treeId) => {
+        const state = useFamilyStore.getState();
+        if (state.currentFamilyTreeId === treeId) {
+          state.setReconnectStatus(status);
+        }
+      },
+    });
     return () => unsub();
   }, []);
 
