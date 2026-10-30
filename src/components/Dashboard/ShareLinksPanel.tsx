@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Ban, Check, Copy, Link2, LinkPlus, RefreshCw, X, AlertCircle } from 'lucide-react';
+import { Ban, Check, Copy, Link2, Plus, RefreshCw, X, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getShareLinkAdminApi } from '../../lib/adapters';
 import type { ShareLinkRecord } from '../../lib/adapters';
@@ -242,7 +242,7 @@ export const ShareLinksPanel: React.FC<{ treeId: string; treeName: string; onClo
                 data-testid="share-create-button"
                 className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                <LinkPlus className="h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 {isCreating ? t('sharePanel.creating') : t('sharePanel.createAction')}
               </button>
             </div>
