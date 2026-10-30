@@ -3,6 +3,7 @@ import {
   beginBatch,
   clearBatch,
   countOutbox,
+  deleteEntriesByIds,
   enqueueOp,
   listOutbox,
   purgeExpiredOutbox,
@@ -304,5 +305,27 @@ describe('outbox v113: createdAt inject, setEntryStatus, purgeExpiredOutbox', ()
     const purged = await purgeExpiredOutbox(24 * HOUR, NOW);
     expect(purged).toBe(0);
     expect(await countOutbox()).toBe(1);
+  });
+
+  it('deleteEntriesByIds: hapus 2 id dari 3, sisanya tetap utuh', async () => {
+    const e1 = await enqueueOp({ kind: 'member.add', memberId: 'm1' }, beginBatch());
+    const e2 = await enqueueOp({ kind: 'member.add', memberId: 'm2' }, beginBatch());
+    const e3 = await enqueueOp({ kind: 'member.add', memberId: 'm3' }, beginBatch());
+
+    await deleteEntriesByIds([e1.id, e3.id]);
+
+    const remaining = await listOutbox();
+    expect(remaining.map((e) => e.id)).toEqual([e2.id]);
+    expect(remaining[0].memberId).toBe('m2');
+  });
+
+  it('deleteEntriesByIds: id tidak ada di store adalah no-op aman', async () => {
+    const entry = await enqueueOp({ kind: 'member.add', memberId: 'm1' }, beginBatch());
+
+    await expect(deleteEntriesByIds(['id-palsu-1', 'id-palsu-2'])).resolves.toBeUndefined();
+
+    const remaining = await listOutbox();
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].id).toBe(entry.id);
   });
 });
