@@ -32,6 +32,7 @@ function flushDepsOver(entries: OutboxEntry[], now: () => number = () => 0) {
   const clearedCalls: string[][] = [];
   const delays: number[] = [];
   const deletedIds: string[][] = [];
+  const persistedEntries: OutboxEntry[] = [];
   const failedKeys = new Set<string>();
   const contractKeys = new Set<string>();
 
@@ -73,6 +74,9 @@ function flushDepsOver(entries: OutboxEntry[], now: () => number = () => 0) {
         }
       }
     },
+    persistEntry: async (entry) => {
+      persistedEntries.push({ ...entry });
+    },
   };
 
   return {
@@ -83,6 +87,7 @@ function flushDepsOver(entries: OutboxEntry[], now: () => number = () => 0) {
     clearedCalls,
     delays,
     deletedIds,
+    persistedEntries,
     failBatch(batchKey: string) {
       failedKeys.add(batchKey);
     },
@@ -284,6 +289,53 @@ describe('flushOutbox retry transport v113', () => {
 
     expect(h.delays).toEqual([1000, 2000, 4000]);
     expect(h.statusLog).toEqual([{ status: 'flushed', remaining: 0 }]);
+  });
+
+  it('persistEntry terpanggil per entry dengan status failed dan lastError berisi batchKey saat MAX_ATTEMPTS habis', async () => {
+    const entries = [
+      makeEntry('e1', 'b1', 1),
+      makeEntry('e2', 'b1', 2),
+    ];
+    const h = flushDepsOver(entries);
+    h.failBatch('b1');
+
+    await flushOutbox(h.deps);
+
+    expect(h.attempts).toHaveLength(MAX_ATTEMPTS);
+    expect(h.statusLog).toEqual([{ status: 'failed', remaining: 2 }]);
+    expect(h.persistedEntries).toHaveLength(2);
+    expect(h.persistedEntries.map((e) => e.id).sort()).toEqual(['e1', 'e2']);
+    for (const persisted of h.persistedEntries) {
+      expect(persisted.status).toBe('failed');
+      expect(persisted.lastError).toContain('b1');
+    }
+  });
+
+  it('persistEntry gagal throw: siklus tetap jalan, penandaan in-memory tetap terisi, tidak menghentikan flush', async () => {
+    const entries = [makeEntry('e1', 'b1', 1)];
+    const h = flushDepsOver(entries);
+    h.failBatch('b1');
+    h.deps.persistEntry = async () => {
+      throw new Error('idb error');
+    };
+
+    await expect(flushOutbox(h.deps)).resolves.toBeUndefined();
+
+    expect(h.statusLog).toEqual([{ status: 'failed', remaining: 1 }]);
+    expect(entries[0].status).toBe('failed');
+    expect(entries[0].lastError).toContain('b1');
+  });
+
+  it('persistEntry tidak diberikan: penandaan failed tetap jalan tanpa error (opsional)', async () => {
+    const entries = [makeEntry('e1', 'b1', 1)];
+    const h = flushDepsOver(entries);
+    h.failBatch('b1');
+    delete h.deps.persistEntry;
+
+    await expect(flushOutbox(h.deps)).resolves.toBeUndefined();
+
+    expect(h.statusLog).toEqual([{ status: 'failed', remaining: 1 }]);
+    expect(entries[0].status).toBe('failed');
   });
 });
 
