@@ -96,6 +96,12 @@ class MockIndexedDb {
     return new MockTransaction(this.store);
   }
 
+  // v110: onupgradeneeded membuat store tree-backup; mock ini tak memakai
+  // store kedua, cukup no-op agar upgrade path tidak melempar.
+  createObjectStore(): void {
+    // no-op in mock
+  }
+
   close(): void {
     // no-op in mock
   }
