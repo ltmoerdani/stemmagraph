@@ -1,6 +1,6 @@
 import type { FamilyMember } from '../../types/family';
 import type { MemberRelationship } from '../adapters';
-import { putTree } from './idb';
+import { putTreeLww, type LwwStatus } from './idb';
 
 export interface SerializedMember {
   id: string;
@@ -180,12 +180,18 @@ export function deserializeTree(raw: unknown): SerializedTree {
   };
 }
 
+/**
+ * v110: simpan pohon lewat jalur LWW. Status hasil:
+ * 'written' tulis pertama tanpa backup; 'skipped_stale' existing lebih baru,
+ * tulisan diabaikan; 'written_with_backup' incoming lebih baru atau sama,
+ * record lama pindah ke slot backup satu generasi.
+ */
 export async function serializeAndStore(
   treeId: string,
   name: string,
   members: readonly FamilyMember[],
   relationships: readonly MemberRelationship[]
-): Promise<void> {
+): Promise<LwwStatus> {
   const serialized = serializeTree(treeId, name, members, relationships);
-  await putTree(treeId, serialized);
+  return putTreeLww(treeId, serialized, serialized.savedAt);
 }
