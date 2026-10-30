@@ -14,13 +14,19 @@ import { useAuthStore } from './store/authStore';
 import { currentRoute, pushRoute } from './utils/routing';
 import { subscribeAutoSave } from './lib/offline/autoSave';
 import { subscribeReconnectRefresh } from './lib/offline/reconnect';
+import { countOutbox, listOutbox, clearBatch } from './lib/offline/outbox';
+import { flushOutbox } from './lib/offline/flush';
+import { createBatchSender } from './lib/offline/batchAdapter';
 import { getTree, listTreeIds } from './lib/offline/idb';
 import { getAdapter } from './lib/adapters';
+import { OutboxConfirmDialog } from './components/FamilyTree/OutboxConfirmDialog';
 
 function App() {
   const { selectedMember, fetchMembers } = useFamilyStore();
   const { familyTrees, fetchTrees } = useDashboardStore();
   const { isInitialized, initialize } = useAuthStore();
+  const outboxConfirmOpen = useFamilyStore((s) => s.outboxConfirmOpen);
+  const outboxPendingCount = useFamilyStore((s) => s.outboxPendingCount);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'family-tree'>('dashboard');
   const [currentFamilyTreeName, setCurrentFamilyTreeName] = useState<string>('');
@@ -83,9 +89,49 @@ function App() {
           state.setReconnectStatus(status);
         }
       },
+      // v112 slice 3: saat server terkonfirmasi reachable, tawarkan kirim
+      // outbox lewat dialog konfirmasi. Tanpa entry, alur berhenti diam.
+      onServerReachable: async () => {
+        const count = await countOutbox();
+        if (count === 0) {
+          return;
+        }
+        const s = useFamilyStore.getState();
+        s.setOutboxPendingCount(count);
+        s.setOutboxConfirmOpen(true);
+      },
     });
     return () => unsub();
   }, []);
+
+  // v112 slice 3: alur konfirmasi kirim outbox dari dialog.
+  // Dialog hanya membuka jalan; pemanggilan flush terjadi di sini agar
+  // modul dialog tetap presentational. Status dan sisa count diperbarui
+  // lewat onStatus flushOutbox.
+  const handleOutboxConfirm = async () => {
+    const state = useFamilyStore.getState();
+    state.setOutboxConfirmOpen(false);
+    await flushOutbox({
+      listEntries: listOutbox,
+      sendBatch: createBatchSender(),
+      clearBatch,
+      onStatus: (status, remaining) => {
+        const s = useFamilyStore.getState();
+        if (status === 'flushed') {
+          s.setOutboxStatus('flushed');
+          s.setOutboxPendingCount(0);
+        } else if (status === 'failed') {
+          s.setOutboxStatus('failed');
+          s.setOutboxPendingCount(remaining);
+        }
+      },
+    });
+  };
+
+  const handleOutboxCancel = () => {
+    // Batal: dialog tutup, outbox tidak disentuh.
+    useFamilyStore.getState().setOutboxConfirmOpen(false);
+  };
 
   useEffect(() => {
     // Wait for trees to load before determining view
@@ -144,6 +190,14 @@ function App() {
 
   return (
     <ProtectedRoute>
+      <OutboxConfirmDialog
+        open={outboxConfirmOpen}
+        count={outboxPendingCount}
+        onCancel={handleOutboxCancel}
+        onConfirm={() => {
+          void handleOutboxConfirm();
+        }}
+      />
       {currentView === 'dashboard' && <Dashboard />}
       {currentView === 'family-tree' && (
         <div className="h-screen flex flex-col bg-gray-50">

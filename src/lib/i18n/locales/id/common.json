@@ -7,6 +7,15 @@
     "reconnect": {
       "refreshed": "Data pohon dimuat ulang dari server, koneksi kembali",
       "kept": "Data lokal lebih baru, tidak ditimpa server"
+    },
+    "outbox": {
+      "pending": "Perubahan lokal menunggu: {{count}}",
+      "send": "Kirim ke server",
+      "confirm": "Kirim {{count}} perubahan lokal ke server?",
+      "flushed": "Perubahan lokal terkirim ke server",
+      "failed": "Pengiriman perubahan lokal gagal, dicoba lagi nanti",
+      "cancel": "Batal",
+      "confirm_desc": "Perubahan lokal akan dikirim ke server dan dihapus dari perangkat setelah berhasil."
     }
   },
   "stats": {
