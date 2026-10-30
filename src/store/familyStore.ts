@@ -98,6 +98,12 @@ interface FamilyStore {
   offlineLoaded: boolean;
   /** GOAL v111 slice 2: hasil refresh reconnect terakhir untuk pohon aktif. */
   reconnectStatus: ReconnectState;
+  /** GOAL v112 slice 3: jumlah entry outbox menunggu kirim, 0 berarti kosong. */
+  outboxPendingCount: number;
+  /** GOAL v112 slice 3: dialog konfirmasi kirim outbox terbuka. */
+  outboxConfirmOpen: boolean;
+  /** GOAL v112 slice 3: hasil pengiriman outbox terakhir untuk baris status banner. */
+  outboxStatus: 'idle' | 'flushed' | 'failed';
 
   // Actions
   fetchMembers: (treeId: string) => Promise<void>;
@@ -117,6 +123,10 @@ interface FamilyStore {
   addMemberWithRelationship: (member: FamilyMember, relationshipType: string, targetMemberId: string) => Promise<string>;
   /** GOAL v111 slice 2: catat hasil refresh reconnect dari wiring App. */
   setReconnectStatus: (status: ReconnectState) => void;
+  /** GOAL v112 slice 3: setter state outbox untuk banner dan dialog. */
+  setOutboxPendingCount: (count: number) => void;
+  setOutboxConfirmOpen: (open: boolean) => void;
+  setOutboxStatus: (status: 'idle' | 'flushed' | 'failed') => void;
 }
 
 function mapRelationshipType(uiType: string): MemberRelationship['type'] | null {
@@ -170,6 +180,9 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   isLoading: false,
   offlineLoaded: false,
   reconnectStatus: 'idle',
+  outboxPendingCount: 0,
+  outboxConfirmOpen: false,
+  outboxStatus: 'idle',
   stats: {
     totalMembers: 0,
     totalGenerations: 0,
@@ -415,4 +428,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   },
 
   setReconnectStatus: (status) => set({ reconnectStatus: status }),
+  setOutboxPendingCount: (count) => set({ outboxPendingCount: count }),
+  setOutboxConfirmOpen: (open) => set({ outboxConfirmOpen: open }),
+  setOutboxStatus: (status) => set({ outboxStatus: status }),
 }));
