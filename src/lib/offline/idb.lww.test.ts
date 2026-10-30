@@ -12,8 +12,6 @@ import {
 // oncomplete transaksi lewat macrotask setTimeout(0) sehingga handler
 // selalu sudah terpasang sebelum callback dijalankan.
 
-type MockKey = IDBValidKey;
-
 class MockRequest<T> {
   result: T;
   error: DOMException | null = null;
