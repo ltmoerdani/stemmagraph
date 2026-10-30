@@ -397,6 +397,18 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
     return body.shareLink;
   }
 
+  async createShareLink(
+    treeId: string,
+    body: { mode: 'public' | 'password'; password?: string },
+  ): Promise<ShareLinkRecord & { token: string }> {
+    const created = await this.request<ShareLinkRecord & { token: string }>(
+      'POST',
+      `/trees/${treeId}/share-links`,
+      body,
+    );
+    return created;
+  }
+
   async listTreeMembership(treeId: string): Promise<TreeMembershipRecord[]> {
     const body = await this.request<{ members: TreeMembershipRecord[] }>(
       'GET',

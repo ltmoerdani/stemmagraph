@@ -4524,13 +4524,21 @@ app.delete('/api/v1/comments/:commentId', requireAuth, async (req: Authenticated
 
 import { FixedWindowRateLimiter } from '../src/lib/share/rate-limit';
 import { buildPublicTreePayload } from '../src/lib/share/public-tree';
-import { verifySharePassword } from '../src/lib/share/password';
+import {
+  SHARE_PASSWORD_MAX_LENGTH,
+  SHARE_PASSWORD_MIN_LENGTH,
+  hashSharePassword,
+  isValidSharePassword,
+  verifySharePassword,
+} from '../src/lib/share/password';
+import { generateShareToken } from '../src/lib/share/token';
 import { buildShareOgImageSvg, escapeXmlText } from '../src/lib/share/og-image';
 import { buildOgImageResponse, resolveOgFormat } from '../src/lib/share/og-raster';
 import {
   SHARE_ACCESS_HTTP,
   buildShareLinkList,
   formatShareLinkSummary,
+  maskShareToken,
   resolveShareAccess,
   type ShareAccessError,
 } from '../src/lib/share/manage';
@@ -4778,6 +4786,54 @@ app.post('/api/v1/share-links/:id/revoke', requireAuth, async (req: Authenticate
       data: { revokedAt: new Date() },
     });
     res.json({ shareLink: formatShareLinkSummary(updated) });
+  } catch (e) {
+    res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
+  }
+});
+
+// Creation (S-05b): the one endpoint that answers with the full token,
+// exactly once, same discipline as invitations (ADR 0004). Every later
+// surface (list, revoke) reads the masked form through manage.ts.
+app.post('/api/v1/trees/:treeId/share-links', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_share_links');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const body = (req.body ?? {}) as { mode?: unknown; password?: unknown };
+    if (body.mode !== 'public' && body.mode !== 'password') {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', message: "mode must be 'public' or 'password'" });
+    }
+    let passwordHash: string | null = null;
+    if (body.mode === 'password') {
+      // Public links ignore any stray password field entirely; password
+      // links refuse anything outside the validated bounds pre-hash.
+      if (!isValidSharePassword(body.password)) {
+        return res.status(400).json({
+          code: 'VALIDATION_ERROR',
+          message: `password is required and must be ${SHARE_PASSWORD_MIN_LENGTH}-${SHARE_PASSWORD_MAX_LENGTH} characters`,
+        });
+      }
+      passwordHash = await hashSharePassword(body.password);
+    }
+    const token = generateShareToken();
+    const created = await prisma.treeShareLink.create({
+      data: {
+        treeId: req.params.treeId,
+        token,
+        mode: body.mode,
+        passwordHash,
+      },
+    });
+    // The full token leaves the server exactly once, here. Everything the
+    // client keeps afterwards is the masked form below.
+    res.status(201).json({
+      id: created.id,
+      treeId: created.treeId,
+      mode: created.mode,
+      token,
+      state: 'active' as const,
+      tokenMasked: maskShareToken(token),
+      createdAt: created.createdAt.toISOString(),
+    });
   } catch (e) {
     res.status(500).json({ code: 'SHARE_ERROR', message: (e as Error).message });
   }

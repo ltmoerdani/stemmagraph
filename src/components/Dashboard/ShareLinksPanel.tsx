@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Ban, Link2, RefreshCw, X, AlertCircle } from 'lucide-react';
+import { Ban, Check, Copy, Link2, Plus, RefreshCw, X, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getShareLinkAdminApi } from '../../lib/adapters';
 import type { ShareLinkRecord } from '../../lib/adapters';
@@ -29,6 +29,15 @@ export const ShareLinksPanel: React.FC<{ treeId: string; treeName: string; onClo
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingRevoke, setPendingRevoke] = useState<ShareLinkRecord | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
+
+  // Create form state: mode toggles the password field, and the created
+  // link's full token lives here only until the dialog is dismissed; the
+  // server never hands it out a second time (ADR 0004 discipline).
+  const [createMode, setCreateMode] = useState<'public' | 'password'>('public');
+  const [createPassword, setCreatePassword] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [createdToken, setCreatedToken] = useState<{ token: string; masked: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     if (!shareApi) return;
@@ -75,6 +84,42 @@ export const ShareLinksPanel: React.FC<{ treeId: string; treeName: string; onClo
       setActionError(err instanceof Error ? err.message : t('sharePanel.revokeFailed'));
     } finally {
       setIsRevoking(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!shareApi || isCreating) return;
+    // Local guard mirrors the server floor so the button does not fire a
+    // request that can only come back 400.
+    if (createMode === 'password' && createPassword.length < 8) return;
+    setIsCreating(true);
+    setActionError(null);
+    try {
+      const created = await shareApi.createShareLink(treeId, {
+        mode: createMode,
+        ...(createMode === 'password' ? { password: createPassword } : {}),
+      });
+      // Full token captured once; the list only ever holds masked rows.
+      setCreatedToken({ token: created.token, masked: created.tokenMasked });
+      setCreatePassword('');
+      setCreateMode('public');
+      setCopied(false);
+      setLinks(await shareApi.listShareLinks(treeId));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : t('sharePanel.createFailed'));
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!createdToken) return;
+    try {
+      await navigator.clipboard.writeText(createdToken.token);
+      setCopied(true);
+    } catch {
+      // Clipboard can be denied; the input keeps the token selectable.
+      setCopied(false);
     }
   };
 
@@ -142,6 +187,66 @@ export const ShareLinksPanel: React.FC<{ treeId: string; treeName: string; onClo
               <p className="text-sm text-red-800">{actionError}</p>
             </div>
           )}
+
+          {/* Create form: sits above the list so a new link is one glance away. */}
+          <section data-testid="share-create-form">
+            <h3 className="mb-2 text-sm font-semibold text-gray-900">{t('sharePanel.createTitle')}</h3>
+            <div className="space-y-3 rounded-lg border border-gray-200 p-4">
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-gray-700">{t('sharePanel.createModeLabel')}</p>
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-2 text-sm text-gray-800">
+                    <input
+                      type="radio"
+                      name="share-create-mode"
+                      checked={createMode === 'public'}
+                      onChange={() => setCreateMode('public')}
+                      data-testid="share-create-mode-public"
+                    />
+                    {t('sharePanel.createModePublic')}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-800">
+                    <input
+                      type="radio"
+                      name="share-create-mode"
+                      checked={createMode === 'password'}
+                      onChange={() => setCreateMode('password')}
+                      data-testid="share-create-mode-password"
+                    />
+                    {t('sharePanel.createModePassword')}
+                  </label>
+                </div>
+              </div>
+              {createMode === 'password' && (
+                <div>
+                  <label htmlFor="share-create-password" className="mb-1 block text-xs font-medium text-gray-700">
+                    {t('sharePanel.createPasswordLabel')}
+                  </label>
+                  <input
+                    id="share-create-password"
+                    type="password"
+                    value={createPassword}
+                    onChange={(e) => setCreatePassword(e.target.value)}
+                    placeholder={t('sharePanel.createPasswordPlaceholder')}
+                    minLength={8}
+                    data-testid="share-create-password"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">{t('sharePanel.createPasswordHint')}</p>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={handleCreate}
+                disabled={isCreating || (createMode === 'password' && createPassword.length < 8)}
+                data-testid="share-create-button"
+                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                {isCreating ? t('sharePanel.creating') : t('sharePanel.createAction')}
+              </button>
+            </div>
+          </section>
 
           {/* Link list */}
           <section>
@@ -228,6 +333,46 @@ export const ShareLinksPanel: React.FC<{ treeId: string; treeName: string; onClo
                   {t('sharePanel.cancel')}
                 </button>
               </div>
+            </section>
+          )}
+
+          {/* One-time full token dialog: closes for good, the server keeps
+              the token and never repeats it; only the masked row remains. */}
+          {createdToken && (
+            <section className="rounded-lg border border-green-200 bg-green-50 p-4" data-testid="share-created-dialog">
+              <div className="flex items-start space-x-2">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-green-900">{t('sharePanel.createdTitle')}</p>
+                  <p className="mt-1 text-xs text-green-800">{t('sharePanel.createdTokenLabel')}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={createdToken.token}
+                      data-testid="share-created-token"
+                      className="w-full rounded border border-green-300 bg-white px-2 py-1.5 font-mono text-xs text-gray-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      data-testid="share-created-copy"
+                      className="flex shrink-0 items-center gap-1 rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-medium text-green-800 hover:bg-green-100"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {copied ? t('sharePanel.copied') : t('sharePanel.copyToken')}
+                    </button>
+                  </div>
+                  <p className="mt-1.5 font-mono text-xs text-gray-500">{createdToken.masked}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCreatedToken(null)}
+                data-testid="share-created-done"
+                className="mt-3 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+              >
+                {t('sharePanel.done')}
+              </button>
             </section>
           )}
         </div>

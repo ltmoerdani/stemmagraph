@@ -301,6 +301,15 @@ export interface ShareLinkRecord {
 export interface ShareLinkAdminApi {
   listShareLinks(treeId: string): Promise<ShareLinkRecord[]>;
   revokeShareLink(linkId: string): Promise<ShareLinkRecord>;
+  /**
+   * Creates one share link and answers the full token exactly once,
+   * the invitation discipline (ADR 0004): later surfaces show only
+   * the masked form, so the caller must capture it here.
+   */
+  createShareLink(
+    treeId: string,
+    body: { mode: 'public' | 'password'; password?: string },
+  ): Promise<ShareLinkRecord & { token: string }>;
 }
 
 // ─── Activity feed (P2-6, ADR 0006) ──────────────────────
