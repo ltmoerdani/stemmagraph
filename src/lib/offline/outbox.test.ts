@@ -2,8 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { beginBatch, clearBatch, countOutbox, enqueueOp, listOutbox } from './outbox';
 import { closeOfflineDb, openOfflineDb } from './idb';
 
-type MockKey = IDBValidKey;
-
 class MockRequest<T> {
   result: T;
   error: DOMException | null = null;
