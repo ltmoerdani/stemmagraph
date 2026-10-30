@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { beginBatch, clearBatch, countOutbox, enqueueOp, listOutbox } from './outbox';
+import {
+  beginBatch,
+  clearBatch,
+  countOutbox,
+  enqueueOp,
+  listOutbox,
+  purgeExpiredOutbox,
+  setEntryStatus,
+} from './outbox';
 import { closeOfflineDb, openOfflineDb } from './idb';
 
 class MockRequest<T> {
@@ -224,5 +232,77 @@ describe('offline outbox wrapper', () => {
     expect(dbFull.objectStoreNames.contains('trees')).toBe(true);
     expect(dbFull.objectStoreNames.contains('tree-backup')).toBe(true);
     expect(dbFull.objectStoreNames.contains('outbox')).toBe(true);
+  });
+});
+
+describe('outbox v113: createdAt inject, setEntryStatus, purgeExpiredOutbox', () => {
+  beforeEach(() => {
+    installMockIndexedDb(['trees', 'tree-backup', 'outbox']);
+  });
+
+  afterEach(() => {
+    closeOfflineDb();
+    vi.unstubAllGlobals();
+  });
+
+  it('enqueueOp menerima createdAt inject, tanpa argumen ketiga tetap backward compatible', async () => {
+    const batchKey = beginBatch();
+    const injected = 1_000_000;
+    const entry = await enqueueOp({ kind: 'member.add', memberId: 'm1' }, batchKey, injected);
+    expect(entry.createdAt).toBe(injected);
+
+    const batchKey2 = beginBatch();
+    const entryDefault = await enqueueOp({ kind: 'member.add', memberId: 'm2' }, batchKey2);
+    expect(entryDefault.createdAt).toBeTypeOf('number');
+    expect(Math.abs(entryDefault.createdAt - Date.now())).toBeLessThan(1000);
+  });
+
+  it('setEntryStatus menulis status failed plus lastError, lalu balik pending', async () => {
+    const batchKey = beginBatch();
+    const entry = await enqueueOp({ kind: 'member.add', memberId: 'm1' }, batchKey);
+
+    await setEntryStatus(entry.id, 'failed', 'gagal 5x transport: b1');
+    const list = await listOutbox();
+    expect(list).toHaveLength(1);
+    expect(list[0].status).toBe('failed');
+    expect(list[0].lastError).toBe('gagal 5x transport: b1');
+
+    await setEntryStatus(entry.id, 'pending');
+    const list2 = await listOutbox();
+    expect(list2[0].status).toBe('pending');
+  });
+
+  it('purgeExpiredOutbox: failed 25 jam dibuang, failed 23 jam dan pending 25 jam aman', async () => {
+    const NOW = 100 * 60 * 60 * 1000;
+    const HOUR = 60 * 60 * 1000;
+    const oldFailed = await enqueueOp(
+      { kind: 'member.add', memberId: 'm1' },
+      beginBatch(),
+      NOW - 25 * HOUR
+    );
+    await setEntryStatus(oldFailed.id, 'failed', 'stuck');
+    const youngFailed = await enqueueOp(
+      { kind: 'member.add', memberId: 'm2' },
+      beginBatch(),
+      NOW - 23 * HOUR
+    );
+    await setEntryStatus(youngFailed.id, 'failed', 'recent');
+    await enqueueOp({ kind: 'member.add', memberId: 'm3' }, beginBatch(), NOW - 25 * HOUR);
+
+    const purged = await purgeExpiredOutbox(24 * HOUR, NOW);
+    expect(purged).toBe(1);
+
+    const remaining = await listOutbox();
+    expect(remaining.map((e) => e.memberId).sort()).toEqual(['m2', 'm3']);
+  });
+
+  it('purgeExpiredOutbox: entry tanpa status lebih tua 25 jam dianggap pending dan aman', async () => {
+    const NOW = 100 * 60 * 60 * 1000;
+    const HOUR = 60 * 60 * 1000;
+    await enqueueOp({ kind: 'member.add', memberId: 'legacy' }, beginBatch(), NOW - 25 * HOUR);
+
+    const purged = await purgeExpiredOutbox(24 * HOUR, NOW);
+    expect(purged).toBe(0);
+    expect(await countOutbox()).toBe(1);
   });
 });
