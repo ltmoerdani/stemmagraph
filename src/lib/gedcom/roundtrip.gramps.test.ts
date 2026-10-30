@@ -23,7 +23,7 @@ const IMP_CUSTOM = readFileSync(join(FIXTURE_DIR, 'gramps-imp-custom-tags.ged'),
 
 // Daftar pengecualian sah (tidak dianggap kehilangan data material saat
 // round-trip; didokumentasikan di docs/gedcom/roundtrip-compat.md, AC2).
-const PENGECUALIAN_SAHIH = [
+const _PENGECUALIAN_SAHIH = [
   '_UID',
   'CHAN/CHANGE_DATE',
   'custom tag berawalan underscore',

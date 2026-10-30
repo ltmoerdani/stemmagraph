@@ -3,7 +3,6 @@ import { randomBytes } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { rotateDek } from '../../lib/crypto/family-key-store';
 import type { Request, RequestHandler, Response } from 'express';
 import {
   extendWithdrawalWindow,
