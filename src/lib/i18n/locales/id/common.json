@@ -3,7 +3,11 @@
     "brand": "FamilyTree"
   },
   "offline": {
-    "banner": "Data dimuat dari perangkat karena koneksi terputus"
+    "banner": "Data dimuat dari perangkat karena koneksi terputus",
+    "reconnect": {
+      "refreshed": "Data pohon dimuat ulang dari server, koneksi kembali",
+      "kept": "Data lokal lebih baru, tidak ditimpa server"
+    }
   },
   "stats": {
     "ageGroups": {

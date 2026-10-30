@@ -3,7 +3,11 @@
     "brand": "FamilyTree"
   },
   "offline": {
-    "banner": "Loaded from this device because the connection is offline"
+    "banner": "Loaded from this device because the connection is offline",
+    "reconnect": {
+      "refreshed": "Tree data reloaded from server, connection is back",
+      "kept": "Local data is newer, not overwritten by server"
+    }
   },
   "stats": {
     "ageGroups": {
