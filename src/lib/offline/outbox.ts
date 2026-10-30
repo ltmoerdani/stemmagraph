@@ -106,6 +106,22 @@ export async function clearBatch(batchKeys: string[]): Promise<void> {
   await transactionDone(tx);
 }
 
+// Hapus entry outbox per id (v113: dipakai flushOutbox sebagai deps.deleteEntries
+// untuk purge retensi entry failed expired dan pembersihan antrean produksi).
+// Id yang tidak ditemukan diabaikan (no-op aman).
+export async function deleteEntriesByIds(ids: string[]): Promise<void> {
+  if (ids.length === 0) {
+    return;
+  }
+  const db = await openOfflineDb();
+  const tx = db.transaction(STORE_OUTBOX, 'readwrite');
+  const store = tx.objectStore(STORE_OUTBOX);
+  for (const id of ids) {
+    store.delete(id);
+  }
+  await transactionDone(tx);
+}
+
 // Retensi v113: buang entry berstatus failed berumur lebih dari maxAgeMs
 // (dibanding nowMs agar test bisa menginjeksi waktu). Entry pending, failed
 // muda, dan entry tanpa status dianggap pending (guard defensif) tetap aman.
