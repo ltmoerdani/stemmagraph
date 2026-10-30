@@ -33,10 +33,12 @@ export interface ReconnectRefreshDeps {
   refreshMembers: (name: string) => Promise<void>;
   onStatus?: (status: ReconnectStatus, treeName: string) => void;
   listTreeNames?: () => Promise<string[]>;
+  /** v112 slice 3: dipanggil sekali per siklus refreshAll bila minimal satu pohon terkonfirmasi reachable. */
+  onServerReachable?: () => Promise<void>;
 }
 
 export function subscribeReconnectRefresh(deps: ReconnectRefreshDeps): () => void {
-  const { getLocalTree, getServerTree, refreshMembers, onStatus, listTreeNames } = deps;
+  const { getLocalTree, getServerTree, refreshMembers, onStatus, listTreeNames, onServerReachable } = deps;
 
   let disposed = false;
   let inFlight = false;
@@ -48,6 +50,11 @@ export function subscribeReconnectRefresh(deps: ReconnectRefreshDeps): () => voi
     inFlight = true;
     try {
       const names = listTreeNames ? await listTreeNames() : ['active'];
+
+      // v112 slice 3: true bila minimal satu pohon terkonfirmasi server
+      // reachable pada siklus ini (jalur refreshed atau kept, bukan
+      // offline_still). Dipanggil sekali di akhir siklus, bukan per pohon.
+      let serverReachable = false;
 
       for (const name of names) {
         if (disposed) {
@@ -84,6 +91,7 @@ export function subscribeReconnectRefresh(deps: ReconnectRefreshDeps): () => voi
         // Server tak punya record untuk pohon ini: anggap tidak lebih
         // baru, data lokal dipertahankan.
         if (server === null) {
+          serverReachable = true;
           onStatus?.('kept', name);
           continue;
         }
@@ -94,16 +102,27 @@ export function subscribeReconnectRefresh(deps: ReconnectRefreshDeps): () => voi
             if (disposed) {
               return;
             }
+            serverReachable = true;
             onStatus?.('refreshed', name);
           } catch {
             if (disposed) {
               return;
             }
+            // Server menjawab, hanya refresh members yang gagal.
+            serverReachable = true;
             onStatus?.('kept', name);
           }
         } else {
+          serverReachable = true;
           onStatus?.('kept', name);
         }
+      }
+
+      // v112 slice 3: sekali per siklus, hanya bila minimal satu pohon
+      // terkonfirmasi reachable (refreshed atau kept). Disposed dicek
+      // sebelum panggil agar hasil in-flight tak diproses setelah unsub.
+      if (onServerReachable && serverReachable && !disposed) {
+        await onServerReachable();
       }
     } finally {
       inFlight = false;
