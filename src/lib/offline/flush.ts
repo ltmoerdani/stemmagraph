@@ -29,6 +29,8 @@ export interface FlushDeps {
   rng?: () => number;
   /** Hapus entry per id dari penyimpanan (purge retensi; opsional untuk test in-memory). */
   deleteEntries?: (ids: string[]) => Promise<void>;
+  /** Persist hasil penandaan satu entry (status failed + lastError) ke penyimpanan; opsional. */
+  persistEntry?: (entry: OutboxEntry) => Promise<void>;
 }
 
 /** Penanda error kontrak: batchAdapter melempar jawaban final server sehingga tidak boleh di-retry. */
@@ -146,6 +148,14 @@ export async function flushOutbox(deps: FlushDeps): Promise<void> {
       for (const entry of group.entries) {
         entry.status = 'failed';
         entry.lastError = lastError;
+        // Persist hasil penandaan ke penyimpanan (v113): tanpa ini status failed
+        // hanya in-memory dan purge retensi tidak pernah melihat entry tersebut.
+        // Gagal persist satu entry tidak menghentikan siklus penandaan.
+        try {
+          await deps.persistEntry?.(entry);
+        } catch {
+          // Abaikan: penandaan in-memory tetap berlaku untuk siklus ini.
+        }
       }
       deps.onStatus?.('failed', entries.length - clearedCount);
       return;
