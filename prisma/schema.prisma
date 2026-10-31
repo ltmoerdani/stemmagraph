@@ -362,6 +362,7 @@ model TreeShareLink {
   revokedAt    DateTime?
   lastUsedAt   DateTime?
   createdAt    DateTime  @default(now())
+  expiresAt    DateTime?
 
   tree FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
 
