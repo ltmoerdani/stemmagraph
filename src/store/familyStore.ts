@@ -28,13 +28,15 @@ export function hydrateMembers(
     // pertama, agar anggota berpasangan ganda tidak memegang pasangan lama
     // saja. spouseId legacy tetap diisi pasangan pertama demi kompatibilitas.
     // Seed mock menyimpan rel spouse dua arah, jadi dedup sambil jaga urutan.
-    const spouseIds = [
+    const allSpouseIds = [
       ...new Set(
         rels
           .filter((rel) => rel.type === 'spouse')
           .map((rel) => (rel.memberId === r.id ? rel.relatedId : rel.memberId)),
       ),
     ];
+    const spouseIds = allSpouseIds.length > 0 ? allSpouseIds : undefined;
+    const spouseId = allSpouseIds.length > 0 ? allSpouseIds[0] : undefined;
 
     const parentIds = rels
       .filter((rel) => rel.type === 'parent' && rel.relatedId === r.id)
@@ -61,10 +63,10 @@ export function hydrateMembers(
       currentLocation: redacted ? undefined : r.currentLocation,
       profession: redacted ? undefined : r.profession,
       education: redacted ? undefined : r.education,
-      gender: (redacted ? 'other' : r.gender) as 'male' | 'female',
+      gender: (redacted ? 'other' : r.gender) as 'male' | 'female' | 'unknown',
       photoUrl: redacted ? undefined : r.photoUrl,
-      spouseId: spouseIds[0],
-      spouseIds: spouseIds.length ? spouseIds : undefined,
+      spouseId: spouseId,
+      spouseIds: spouseIds,
       parentIds: parentIds.length ? parentIds : undefined,
       childrenIds: childrenIds.length ? childrenIds : undefined,
       siblingIds: siblingIds.length ? siblingIds : undefined,
@@ -306,7 +308,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     const record = await adapter.createMember(treeId, {
       name: newMember.name,
       nickname: newMember.nickname,
-      gender: (newMember.gender as 'male' | 'female' | 'other') || 'male',
+      gender: (newMember.gender as 'male' | 'female' | 'unknown' | 'other') || 'male',
       birthDate: newMember.birthDate,
       birthPlace: newMember.birthPlace,
       isAlive: newMember.isAlive ?? true,
@@ -331,7 +333,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       currentLocation: updates.currentLocation,
       profession: updates.profession,
       education: updates.education,
-      gender: updates.gender as 'male' | 'female' | 'other',
+      gender: updates.gender as 'male' | 'female' | 'unknown' | 'other',
       photoUrl: updates.photoUrl,
       email: updates.email,
       phone: updates.phone,

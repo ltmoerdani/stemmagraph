@@ -1,4 +1,4 @@
-import type { GenealogicalDate } from './genealogical-date'
+import type { CalendarDate, CalendarSystem } from './calendar-system'
 
 /**
  * Tipe event genealogis inti, mengikuti kode GEDCOM 5.5.1/7:
@@ -8,16 +8,19 @@ export const EVENT_TYPES = ['BIRT', 'DEAT', 'MARR'] as const
 
 export type EventType = (typeof EVENT_TYPES)[number]
 
-/** Event genealogis tunggal: tanggal boleh absen (null), place verbatim. */
+/** Event genealogis tunggal dengan full calendar support GEDCOM 7. */
 export interface GenealogicalEvent {
   type: EventType
-  date: GenealogicalDate | null
-  /**
-   * Tempat kejadian apa adanya, TIDAK dipecah kota/provinsi/negara.
-   * Keputusan fase 1: parsing place ditunda; simpan verbatim agar
-   * round-trip tidak kehilangan data.
+  /** Tanggal dengan sistem kalender yang diasosiasikan. */
+  date: CalendarDate | null
+  /** Tempat kejadian apa adanya, TIDAK dipecah kota/provinsi/negara.
+   * Simpan verbatim untuk round-trip GEDCOM yang tidak kehilangan data.
    */
   place: string | null
+  /** Sistem kalender yang digunakan (GREGORIAN, JULIAN, FRENCH_R, HEBREW, DUAL). */
+  calendar: CalendarSystem
+  /** Tanggal ganda untuk dating ganda (seperti Julian/Gregori dual). */
+  dualDate?: CalendarDate | null
 }
 
 export function isEventType(value: unknown): value is EventType {
