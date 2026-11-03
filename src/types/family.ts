@@ -11,7 +11,7 @@ export interface FamilyMember {
   currentLocation?: string;
   profession?: string;
   education?: string;
-  gender: 'male' | 'female';
+  gender: 'male' | 'female' | 'unknown';
   photoUrl?: string;
   spouseId?: string;
   /** QA put-1 Temuan-3: semua pasangan dari rel spouse adapter; spouseId legacy = elemen pertama. */

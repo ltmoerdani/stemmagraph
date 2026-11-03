@@ -5,8 +5,8 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '1',
     name: 'Budi Wijaya',
-    birthDate: '1945-03-15',
-    deathDate: '2018-08-20',
+    birthDate: '1945-03-15T00:00:00Z',
+    deathDate: '2018-08-20T00:00:00Z',
     birthPlace: 'Yogyakarta',
     currentLocation: 'Jakarta',
     profession: 'Retired Teacher',
@@ -22,8 +22,8 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '2',
     name: 'Siti Wijaya',
-    birthDate: '1948-07-22',
-    deathDate: '2020-12-10',
+    birthDate: '1948-07-22T00:00:00Z',
+    deathDate: '2020-12-10T00:00:00Z',
     birthPlace: 'Yogyakarta',
     currentLocation: 'Jakarta',
     profession: 'Homemaker',
@@ -41,7 +41,7 @@ export const mockFamilyData: FamilyMember[] = [
     id: '3',
     name: 'Andi Wijaya',
     nickname: 'Mr. Andi',
-    birthDate: '1970-05-15',
+    birthDate: '1970-05-15T00:00:00Z',
     birthPlace: 'Jakarta',
     currentLocation: 'South Jakarta',
     profession: 'Entrepreneur',
@@ -60,7 +60,7 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '5',
     name: 'Dedi Wijaya',
-    birthDate: '1968-11-30',
+    birthDate: '1968-11-30T00:00:00Z',
     birthPlace: 'Jakarta',
     currentLocation: 'Surabaya',
     profession: 'Engineer',
@@ -80,7 +80,7 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '4',
     name: 'Sari Handayani', // Consistent naming with a different family of origin
-    birthDate: '1975-09-08',
+    birthDate: '1975-09-08T00:00:00Z',
     birthPlace: 'Bandung',
     currentLocation: 'Surabaya', // Consistent with family location
     profession: 'Doctor',
@@ -101,7 +101,7 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '6',
     name: 'Rudi Wijaya',
-    birthDate: '1998-03-12',
+    birthDate: '1998-03-12T00:00:00Z',
     birthPlace: 'Jakarta',
     currentLocation: 'Jakarta',
     profession: 'Software Engineer',
@@ -119,7 +119,7 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '7',
     name: 'Maya Wijaya',
-    birthDate: '2000-07-18',
+    birthDate: '2000-07-18T00:00:00Z',
     birthPlace: 'Jakarta',
     currentLocation: 'Jakarta',
     profession: 'University Student',
@@ -139,7 +139,7 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '8',
     name: 'Arif Wijaya',
-    birthDate: '1992-01-25',
+    birthDate: '1992-01-25T00:00:00Z',
     birthPlace: 'Surabaya',
     currentLocation: 'Surabaya',
     profession: 'Dentist',
@@ -155,7 +155,7 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '9',
     name: 'Lia Wijaya',
-    birthDate: '1995-06-14',
+    birthDate: '1995-06-14T00:00:00Z',
     birthPlace: 'Surabaya',
     currentLocation: 'Bandung',
     profession: 'Designer',
@@ -171,7 +171,7 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '10',
     name: 'Kenzo Wijaya',
-    birthDate: '1997-09-03',
+    birthDate: '1997-09-03T00:00:00Z',
     birthPlace: 'Surabaya',
     currentLocation: 'Surabaya',
     profession: 'Photographer',
@@ -187,7 +187,7 @@ export const mockFamilyData: FamilyMember[] = [
   {
     id: '11',
     name: 'Aira Wijaya',
-    birthDate: '1999-12-20',
+    birthDate: '1999-12-20T00:00:00Z',
     birthPlace: 'Surabaya',
     currentLocation: 'Jakarta',
     profession: 'Content Creator',

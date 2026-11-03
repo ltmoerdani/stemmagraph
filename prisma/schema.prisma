@@ -125,7 +125,7 @@ model FamilyMember {
   name            String
   nickname        String?
   marga           String?
-  birthDate       String
+  birthDate       DateTime   @default(now())
   deathDate       String?
   // v393 Override Tanggal Haul Manual fase 2 reminder, additive only.
   // Tanggal haul (peringatan wafat tahunan) yang ditetapkan keluarga;
@@ -140,7 +140,7 @@ model FamilyMember {
   currentLocation String?
   profession      String?
   education       String?
-  gender          String   @default("U")
+  gender          String   @enum(['male', 'female', 'unknown'])
   // GEDCOM 7 SEX verbatim M/F/X/U atau nilai non-enum, v262
   sexGed          String?
   // v405 ASSO asosiasi antar individu fase 1, additive only. JSON array
