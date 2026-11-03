@@ -29,8 +29,7 @@ export interface PosterThemePalette {
   trimFrame: string;
 }
 
-/** Theme kinds exposed to the export dropdown. */
-export type PosterThemeKind = 'default' | 'batik' | 'songket';
+export type PosterThemeKind = 'default' | 'batik' | 'songket' | 'javanese' | 'batak';
 
 /** Default theme: the S-10 soft ivory, byte-identical to palette.ts. */
 export const DEFAULT_POSTER_PALETTE: PosterThemePalette = {
@@ -43,8 +42,7 @@ export const DEFAULT_POSTER_PALETTE: PosterThemePalette = {
   trimFrame: '#D8D2C8',
 };
 
-/**
- * Batik theme: classic sogan court palette, aged cotton ground with
+/** Batik theme: classic sogan court palette, aged cotton ground with
  * soga browns and a deep indigo ink for text.
  */
 export const BATIK_POSTER_PALETTE: PosterThemePalette = {
@@ -57,8 +55,7 @@ export const BATIK_POSTER_PALETTE: PosterThemePalette = {
   trimFrame: '#C9AE7E',
 };
 
-/**
- * Songket theme: Palembang loom palette, warm ivory ground with
+/** Songket theme: Palembang loom palette, warm ivory ground with
  * maroon frames and old-gold threads.
  */
 export const SONGKET_POSTER_PALETTE: PosterThemePalette = {
@@ -71,11 +68,35 @@ export const SONGKET_POSTER_PALETTE: PosterThemePalette = {
   trimFrame: '#D9B96A',
 };
 
+/** Javanese poster theme: Nusantara Jawa motifs with kawung and truntum */
+export const JAVA_POSTER_PALETTE: PosterThemePalette = {
+  pageBg: '#FAF0E6',
+  nodeFill: '#FFFFFF',
+  nodeBorder: '#6B4F38',
+  nameText: '#2D1B10',
+  connector: '#A0522D',
+  titleText: '#1F1F1F',
+  trimFrame: '#D2B48C',
+};
+
+/** Batak poster theme: Nusantara Batak motifs with gorga and Simataniari */
+export const BATAK_POSTER_PALETTE: PosterThemePalette = {
+  pageBg: '#FFF5E6',
+  nodeFill: '#FFFFFF',
+  nodeBorder: '#B7410E',
+  nameText: '#4A2C1A',
+  connector: '#CD5C5C',
+  titleText: '#2D1B10',
+  trimFrame: '#F0E68C',
+};
+
 /** Lookup used by the renderer; unknown kinds are a programming error. */
 const POSTER_PALETTES: Record<PosterThemeKind, PosterThemePalette> = {
   default: DEFAULT_POSTER_PALETTE,
   batik: BATIK_POSTER_PALETTE,
   songket: SONGKET_POSTER_PALETTE,
+  javanese: JAVA_POSTER_PALETTE,
+  batak: BATAK_POSTER_PALETTE,
 };
 
 /** Default theme id for the dropdown and the renderer fallback. */

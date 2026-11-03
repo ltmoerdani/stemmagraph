@@ -3,15 +3,18 @@ export interface FamilyMember {
   name: string;
   nickname?: string;
   marga?: string;
-  birthDate: string;
-  deathDate?: string;
+  birthDate?: GenealogicalEvent;
+  deathDate?: GenealogicalEvent;
   /** v393: tanggal haul keluarga (override), NULL atau kosong = fallback deathDate. */
   haulOverrideDate?: string | null;
-  birthPlace?: string;
-  currentLocation?: string;
+  /** Gap 0.6: birth place as entity reference (Place ID). */
+  birthPlaceId?: string;
+  /** Gap 0.6: current location as entity reference (Place ID). */
+  currentLocationId?: string;
   profession?: string;
   education?: string;
-  gender: 'male' | 'female' | 'unknown';
+  /** Gap 0.6: gender with unknown option (U). */
+  gender: 'M' | 'F' | 'X' | 'U';
   photoUrl?: string;
   spouseId?: string;
   /** QA put-1 Temuan-3: semua pasangan dari rel spouse adapter; spouseId legacy = elemen pertama. */
