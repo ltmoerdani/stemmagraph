@@ -27,6 +27,17 @@ export interface FamilyMember {
   isAlive: boolean;
   generation: number;
   maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
+  /** Gap 0.6: source references for this member (for citations, sourcing). */
+  sourceIds?: string[];
+  /** Gap 0.6: calendar event entities for birth/death/marriage events. */
+  birthEvent?: GenealogicalEvent;
+  deathEvent?: GenealogicalEvent;
+  marriageEvent?: GenealogicalEvent;
+  /** Gap 0.6: place entity references. */
+  placeIds?: string[];
+  /** Gap 0.6: calendar system for the family (optional, non-breaking). */
+  calendarSystem?: CalendarSystem;
+  /** Gap 0.6: privacy status inheritance from events. */
   privacyStatus?: 'shared' | 'private';
   created_at?: string;
   updated_at?: string;
