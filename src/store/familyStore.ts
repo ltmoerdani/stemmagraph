@@ -5,6 +5,7 @@ import type { FamilyMemberRecord, MemberRelationship } from '@/lib/adapters';
 import { isNameOnlyMember } from '@/types/redacted';
 import { getTree } from '@/lib/offline/idb';
 import { deserializeTree } from '@/lib/offline/familyStoreAdapter';
+import { deriveSpouseFields, normalizeSpouseIds } from '@/lib/genealogy/spouse-normalize';
 import type { ReconnectStatus } from '@/lib/offline/reconnect';
 
 // v111 slice 2: status hasil refresh reconnect untuk pohon aktif.
@@ -28,15 +29,12 @@ export function hydrateMembers(
     // pertama, agar anggota berpasangan ganda tidak memegang pasangan lama
     // saja. spouseId legacy tetap diisi pasangan pertama demi kompatibilitas.
     // Seed mock menyimpan rel spouse dua arah, jadi dedup sambil jaga urutan.
-    const allSpouseIds = [
-      ...new Set(
-        rels
-          .filter((rel) => rel.type === 'spouse')
-          .map((rel) => (rel.memberId === r.id ? rel.relatedId : rel.memberId)),
-      ),
-    ];
-    const spouseIds = allSpouseIds.length > 0 ? allSpouseIds : undefined;
-    const spouseId = allSpouseIds.length > 0 ? allSpouseIds[0] : undefined;
+    // GOAL v419 AC3: penerjemahan id pasangan lewat helper normalisasi
+    // (spouseIds sumber kebenaran, spouseId legacy = elemen pertama).
+    const allSpouseIds = rels
+      .filter((rel) => rel.type === 'spouse')
+      .map((rel) => (rel.memberId === r.id ? rel.relatedId : rel.memberId));
+    const { spouseIds, spouseId } = deriveSpouseFields(allSpouseIds);
 
     const parentIds = rels
       .filter((rel) => rel.type === 'parent' && rel.relatedId === r.id)
@@ -224,7 +222,11 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
         const raw = await getTree(treeId);
         if (raw !== null) {
           const tree = deserializeTree(raw);
-          set({ members: tree.members as unknown as FamilyMember[], offlineLoaded: true });
+          // GOAL v419 AC3: snapshot offline lama (pra spouseIds) tetap
+          // terbaca; normalisasi on-read membentuk spouseIds dari spouseId
+          // legacy tanpa mengubah snapshot tersimpan.
+          const members = (tree.members as unknown as FamilyMember[]).map(normalizeSpouseIds);
+          set({ members, offlineLoaded: true });
         }
       } catch {
         // silent no-op: offline fallback tidak tersedia
