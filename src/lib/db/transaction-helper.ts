@@ -1,67 +1,46 @@
 import Database from 'better-sqlite3';
 
-export function withAtomicTransaction(db: Database.Database, fn: (tx: Database.Transaction) => void): void {
-  const tx = db.transaction((error?: Error) => {
-    if (error) {
-      tx.rollback();
-    } else {
-      tx.commit();
-    }
-  });
+/**
+ * AC4 GOAL v419 fase 2: helper transaksi atomik better-sqlite3 untuk penulisan
+ * multi-entitas (member + event + source). Pola resmi better-sqlite3:
+ * db.transaction(fn) mengembalikan fungsi; memanggilnya menjalankan BEGIN,
+ * COMMIT saat fn selesai, dan ROLLBACK otomatis saat fn melempar error.
+ * Nested call di dalam transaksi lain otomatis menjadi SAVEPOINT.
+ * Sinkron penuh: callback async dilarang (komit prematur).
+ */
+export function withAtomicTransaction<T>(
+  db: Database.Database,
+  fn: () => T
+): T {
+  const run = db.transaction(fn);
+  return run();
+}
+
+/**
+ * Varian immediate: kunci tulis sejak BEGIN IMMEDIATE sehingga deadlock
+ * upgrade deferred tidak mungkin; dipakai untuk tulis multi-entitas.
+ * Guard db.inTransaction saat catch mencegah rollback paksa ganda
+ * (SQLITE_BUSY/SQLITE_FULL dihubungkan ke pesan error asli).
+ */
+export function withAtomicTransactionImmediate<T>(
+  db: Database.Database,
+  fn: () => T
+): T {
+  const run = db.transaction(fn).immediate();
   try {
-    fn(tx);
-    tx.commit();
+    return run();
   } catch (e) {
-    tx.rollback();
+    if (db.inTransaction) {
+      try {
+        db.exec('ROLLBACK');
+      } catch (rollbackErr) {
+        const original = e as Error;
+        const rbMessage = (rollbackErr as Error).message;
+        throw new Error(
+          `${original.message} (rollback forced failed: ${rbMessage})`
+        );
+      }
+    }
     throw e;
   }
-}
-
-export function createMemberAtomic(
-  db: Database.Database,
-  data: { familyTreeId: string; userId: string; [key: string]: any }
-): any {
-  const stmt = db.prepare(
-    `INSERT INTO family_member (family_tree_id, user_id, is_alive, generation, marital_status, 
-     photo_url, birth_place_id, death_place_id, birth_event_id, death_event_id, marriage_event_id, 
-     source_ids, calendar_system, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-  );
-  return stmt.run(
-    data.familyTreeId,
-    data.userId,
-    data.isAlive ?? true,
-    data.generation || 1,
-    data.maritalStatus || 'SINGLE',
-    data.photoUrl || null,
-    data.birthPlaceId || null,
-    data.deathPlaceId || null,
-    data.birthEventId || null,
-    data.deathEventId || null,
-    data.marriageEventId || null,
-    JSON.stringify(data.sourceIds || []),
-    data.calendarSystem || 'GREGORIAN'
-  );
-}
-
-export function createEventAtomic(
-  db: Database.Database,
-  data: { familyTreeId: string; userId: string; eventType: string; date: string; place?: string; sourceIds?: string[]; calendarSystem?: string }
-): any {
-  if (!data.eventType || !data.date) {
-    throw new Error('Event type and date are required');
-  }
-  const stmt = db.prepare(
-    `INSERT INTO life_event (family_tree_id, user_id, event_type, date, place, source_ids, calendar_system, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-  );
-  return stmt.run(
-    data.familyTreeId,
-    data.userId,
-    data.eventType,
-    data.date,
-    data.place || null,
-    JSON.stringify(data.sourceIds || []),
-    data.calendarSystem || 'GREGORIAN'
-  );
 }
