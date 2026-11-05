@@ -73,3 +73,45 @@ export function resnToPrivacyStatus(
       return null
   }
 }
+
+/**
+ * Komposit resolver RESN multi nilai (GOAL v423 AC1).
+ *
+ * Input kumpulan nilai RESN hasil List of Enum GEDCOM 7, dipisah koma
+ * atau spasi, sudah diurai memakai parseResnList (resn-list.ts v130).
+ * Output komposit paling membatasi dengan merge OR per axis:
+ *   hidden: true bila ada CONFIDENTIAL atau lebih ketat (LOCKED);
+ *   locked: true bila ada LOCKED.
+ * Kontrak evidence Gramps:
+ *   LOCKED OR PRIVACY      = LOCKED (axis locked naik, hidden ikut
+ *     karena LOCKED sendiri sudah hidden)
+ *   kosong OR PRIVACY      = PRIVACY (hidden false, locked false)
+ *   LOCKED OR CONFIDENTIAL = LOCKED untuk axis mutasi, sementara
+ *     CONFIDENTIAL tetap hidden untuk axis baca: dua axis independen,
+ *     merge OR menghasilkan { hidden: true, locked: true }.
+ *
+ * Pure: tanpa I/O, tanpa dependensi, tidak pernah memutasi input.
+ * Item string kosong di daftar ditolak dengan error jelas; duplikat
+ * dedupe idempoten; PRIVACY tidak menambah logika di luar gerbang
+ * existing (ikon kebijakan).
+ */
+export interface ResnComposite {
+  hidden: boolean
+  locked: boolean
+}
+
+export function resolveResnComposite(levels: ResnLevel[]): ResnComposite {
+  const seen = new Set<ResnLevel>()
+  for (const level of levels) {
+    if (level == null || (typeof level === 'string' && level.trim() === '')) {
+      throw new Error(
+        'RESN item kosong ditolak: setiap item harus berupa nilai enumset CONFIDENTIAL, PRIVACY, atau LOCKED',
+      )
+    }
+    seen.add(level)
+  }
+  return {
+    hidden: seen.has('CONFIDENTIAL') || seen.has('LOCKED'),
+    locked: seen.has('LOCKED'),
+  }
+}
