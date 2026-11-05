@@ -43,3 +43,52 @@ export function isEventKind(value: unknown): value is EventKind {
     (EVENT_KINDS as readonly string[]).includes(value)
   )
 }
+
+/** Masukan builder makeEvent; calendarSystem ikut default GREGORIAN bila kosong. */
+export interface MakeEventInput {
+  id: string
+  kind: string
+  date: string
+  place?: string
+  calendarSystem?: CalendarSystem
+  dualDate?: string
+}
+
+/**
+ * Builder GenealogicalEvent dengan validasi fail-fast (AC3).
+ *
+ * Keputusan penanganan error: melempar Error dengan pesan jelas bila id,
+ * kind, atau date tidak memenuhi syarat. Data event yang rusak sebaiknya
+ * gagal di titik pembuatan, bukan dibiarkan mengalir ke penyimpanan.
+ *
+ * @throws Error bila id kosong/whitespace, kind kosong atau di luar
+ * EVENT_KINDS (case-sensitive), atau date kosong/whitespace.
+ */
+export function makeEvent(input: MakeEventInput): GenealogicalEvent {
+  const id = input.id?.trim() ?? ''
+  if (id === '') {
+    throw new Error('id event wajib diisi dan tidak boleh kosong.')
+  }
+
+  const kind = input.kind?.trim() ?? ''
+  if (kind === '') {
+    throw new Error('kind event wajib diisi. Gunakan salah satu dari: ' + EVENT_KINDS.join(', ') + '.')
+  }
+  if (!isEventKind(kind)) {
+    throw new Error('kind event tidak dikenal: "' + input.kind + '". Gunakan salah satu dari: ' + EVENT_KINDS.join(', ') + '.')
+  }
+
+  const date = input.date?.trim() ?? ''
+  if (date === '') {
+    throw new Error('date event wajib diisi (string verbatim, tidak boleh kosong).')
+  }
+
+  return {
+    id,
+    kind,
+    date,
+    place: input.place,
+    calendarSystem: input.calendarSystem ?? 'GREGORIAN',
+    dualDate: input.dualDate,
+  }
+}
