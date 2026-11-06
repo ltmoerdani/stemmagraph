@@ -61,6 +61,7 @@ import {
 import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
 import { resolveSelfConsentAccess } from '../src/lib/consent/self-consent';
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
+import { isResnHidden, isResnLocked } from '../src/lib/privacy/resn-enforcement';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import {
   filterRelationshipsForViewer,
@@ -1905,6 +1906,9 @@ app.get('/api/v1/trees/:treeId/members', requireAuth, async (req: AuthenticatedR
     };
     const visible = members
       .map((m) => {
+        // v423-ac2a: RESN read enforcement fail-closed (CONFIDENTIAL dan
+        // LOCKED serta token tak dikenal tidak muncul di list).
+        if (isResnHidden({ resnVerbatim: m.resnVerbatim })) return null;
         const relation = resolveViewerRelation({ ...viewerRelationInput, targetMemberId: m.id });
         const minimal = {
           id: m.id,
@@ -3793,6 +3797,13 @@ app.get('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
   try {
     const m = await prisma.familyMember.findUnique({ where: { id: req.params.id } });
     if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    // v423-ac2a: RESN read enforcement fail-closed. CONFIDENTIAL (dan
+    // LOCKED yang meliputi axis hidden) serta token verbatim tak dikenal
+    // disembunyikan dengan 404 bentuk identik member nihil (anti-enumerasi),
+    // konsisten pola privacy read wiring v261-i di bawah.
+    if (isResnHidden({ resnVerbatim: m.resnVerbatim })) {
+      return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    }
     const guard = await guardTreeAction(req.userId!, m.treeId, 'view_tree');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
     // Privacy read wiring v261-i: hidden direspons 404 bentuk identik
@@ -3945,6 +3956,11 @@ app.put('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
   try {
     const existing = await prisma.familyMember.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    // v423-ac2b: RESN mutation lock fail-closed. LOCKED (dan token
+    // verbatim tak dikenal) menolak edit.
+    if (isResnLocked({ resnVerbatim: existing.resnVerbatim })) {
+      return res.status(403).json({ code: 'MEMBER_LOCKED', message: 'Member is locked by privacy restriction (RESN LOCKED)' });
+    }
     const guard = await guardTreeAction(req.userId!, existing.treeId, 'edit_member');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
     // v393: validasi haulOverrideDate bila ada di body. String kosong =
@@ -3982,6 +3998,11 @@ app.delete('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<
   try {
     const existing = await prisma.familyMember.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    // v423-ac2b: RESN mutation lock fail-closed. LOCKED (dan token
+    // verbatim tak dikenal) menolak delete.
+    if (isResnLocked({ resnVerbatim: existing.resnVerbatim })) {
+      return res.status(403).json({ code: 'MEMBER_LOCKED', message: 'Member is locked by privacy restriction (RESN LOCKED)' });
+    }
     const guard = await guardTreeAction(req.userId!, existing.treeId, 'delete_member');
     if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
     const photoPath = photoFilePath(existing);

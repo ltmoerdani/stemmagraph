@@ -168,6 +168,11 @@ model FamilyMember {
   // values: "shared" | "private". NULL means not yet recorded; the
   // export privacy gate treats NULL living members as redact.
   privacyStatus   String?
+  // GOAL v423 AC2: payload RESN verbatim dari import GEDCOM (bisa multi
+  // nilai, mis. "CONFIDENTIAL, LOCKED"). NULL berarti tidak ada RESN
+  // tercatat. Enforcement baca/mutasi membaca kolom ini lewat modul pure
+  // src/lib/privacy/resn-enforcement; ekspor tetap lewat gerbang existing.
+  resnVerbatim    String?
   generation      Int      @default(1)
   maritalStatus   String   @default("single")
   notes           String?
