@@ -61,6 +61,20 @@ export function targetPrivacyStatus(action: ConsentAction): 'shared' | 'private'
   return action === 'revoke' ? 'private' : 'shared';
 }
 
+/**
+ * v424 fase 2a (ADR 0015): deteksi no-op revoke idempoten.
+ * Bila action revoke datang untuk state yang TIDAK punya grant aktif
+ * (belum ada grant sama sekali ATAU sudah revoked sebelumnya), server
+ * adapter TIDAK boleh memetakan ConsentLedgerError ke 409. Penarikan
+ * consent semudah pemberiannya (GDPR Art 7) dan idempoten semantik
+ * (RFC 9110 9.2.2): revoke ulang atas state yang sama harus menghasilkan
+ * respons semantik identik. Fungsi ini pure: hanya membaca state, tidak
+ * pernah melempar, tidak pernah memutasi.
+ */
+export function isIdempotentNoOpRevoke(action: ConsentAction, state: ConsentState): boolean {
+  return action === 'revoke' && !state.granted;
+}
+
 /** Bentuk baris ConsentRecord dari database (chronological ascending). */
 export interface ConsentRowInput {
   id: string;
