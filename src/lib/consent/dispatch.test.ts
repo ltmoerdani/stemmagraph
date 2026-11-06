@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isIdempotentNoOpRevoke,
   parseConsentBody,
   replayConsentState,
   targetPrivacyStatus,
@@ -57,6 +58,46 @@ describe('targetPrivacyStatus', () => {
   it('grant dan regrant memetakan ke shared', () => {
     expect(targetPrivacyStatus('grant')).toBe('shared');
     expect(targetPrivacyStatus('regrant')).toBe('shared');
+  });
+});
+
+describe('isIdempotentNoOpRevoke (v424 fase 2a)', () => {
+  it('revoke atas ledger tanpa riwayat apa pun = no-op idempoten', () => {
+    expect(isIdempotentNoOpRevoke('revoke', initState())).toBe(true);
+  });
+
+  it('revoke atas sudah-revoked = no-op idempoten', () => {
+    const revoked = applyRecord(
+      applyRecord(initState(), createRecord('m1', 'grant', 'research', T0)),
+      createRecord('m1', 'revoke', 'research', T1),
+    );
+    expect(revoked.granted).toBe(false);
+    expect(isIdempotentNoOpRevoke('revoke', revoked)).toBe(true);
+  });
+
+  it('revoke atas grant aktif BUKAN no-op (harus menulis baris ledger)', () => {
+    const granted = applyRecord(initState(), createRecord('m1', 'grant', 'research', T0));
+    expect(isIdempotentNoOpRevoke('revoke', granted)).toBe(false);
+  });
+
+  it('regrant atas revoked BUKAN no-op', () => {
+    const revoked = applyRecord(
+      applyRecord(initState(), createRecord('m1', 'grant', 'research', T0)),
+      createRecord('m1', 'revoke', 'research', T1),
+    );
+    expect(isIdempotentNoOpRevoke('regrant', revoked)).toBe(false);
+  });
+
+  it('revoke setelah regrant (granted true lagi) BUKAN no-op', () => {
+    const regranted = applyRecord(
+      applyRecord(
+        applyRecord(initState(), createRecord('m1', 'grant', 'research', T0)),
+        createRecord('m1', 'revoke', 'research', T1),
+      ),
+      createRecord('m1', 'regrant', 'research', T2),
+    );
+    expect(regranted.granted).toBe(true);
+    expect(isIdempotentNoOpRevoke('revoke', regranted)).toBe(false);
   });
 });
 

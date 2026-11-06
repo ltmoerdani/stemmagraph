@@ -54,6 +54,7 @@ import {
 } from '../src/lib/invitations';
 import { generateInvitationToken } from '../src/lib/invitations/token';
 import {
+  isIdempotentNoOpRevoke,
   parseConsentBody,
   replayConsentState,
   targetPrivacyStatus,
@@ -4063,6 +4064,29 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
     } catch (e) {
       return res.status(400).json({ code: 'VALIDATION_ERROR', message: (e as Error).message });
     }
+    // v424 fase 2a (ADR 0015): penarikan consent idempoten semantik.
+    // POST revoke atas state tanpa grant aktif (belum pernah grant ATAU
+    // sudah revoked) = no-op sukses: 200 dengan bentuk respons utuh
+    // (record, granted, privacyStatus), TANPA baris ledger baru dan TANPA
+    // perubahan privacyStatus. `record` berisi record ledger terakhir yang
+    // membentuk state sekarang (stabil antar pemanggilan ulang, bukan record
+    // semu ber-timestamp baru), null bila ledger kosong. Cek berdiri setelah
+    // validasi createRecord supaya body invalid tetap 400; replay penuh
+    // tetap dijalankan sehingga ledger korup tetap 409 (S-06e
+    // dipertahankan); reducer pure record.ts tidak berubah.
+    const noopRows = await prisma.consentRecord.findMany({
+      where: { memberId: req.params.memberId },
+      orderBy: { at: 'asc' },
+    });
+    const noopState = replayConsentState(noopRows);
+    if (isIdempotentNoOpRevoke(parsed.action, noopState)) {
+      const last = noopState.records[noopState.records.length - 1] ?? null;
+      return res.status(200).json({
+        record: last,
+        granted: noopState.granted,
+        privacyStatus: m.privacyStatus,
+      });
+    }
     // S-06e: ledger read, replay, and reducer validation happen INSIDE the
     // transaction, so validating state and writing the record commit or
     // roll back as one unit. This closes the race window where two
@@ -4163,6 +4187,22 @@ app.post('/api/v1/members/:memberId/consent/self', requireAuth, async (req: Auth
       record = createRecord(req.params.memberId, parsed.action, parsed.scope, at, parsed.note);
     } catch (e) {
       return res.status(400).json({ code: 'VALIDATION_ERROR', message: (e as Error).message });
+    }
+    // v424 fase 2a (ADR 0015): no-op revoke idempoten, semantik persis POST
+    // owner; jalur self tidak boleh lebih keras dari jalur owner supaya
+    // penarikan consent subjek data sama mudahnya (GDPR Art 7).
+    const noopRows = await prisma.consentRecord.findMany({
+      where: { memberId: req.params.memberId },
+      orderBy: { at: 'asc' },
+    });
+    const noopState = replayConsentState(noopRows);
+    if (isIdempotentNoOpRevoke(parsed.action, noopState)) {
+      const last = noopState.records[noopState.records.length - 1] ?? null;
+      return res.status(200).json({
+        record: last,
+        granted: noopState.granted,
+        privacyStatus: m.privacyStatus,
+      });
     }
     // Transaksi ledger identik POST owner (S-06e): replay, applyRecord,
     // create ledger row, dan update privacyStatus satu unit komit.
