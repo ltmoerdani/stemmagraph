@@ -140,7 +140,12 @@ model FamilyMember {
   currentLocation String?
   profession      String?
   education       String?
-  gender          String   @enum(['male', 'female', 'unknown'])
+  // gender bebas nilai: klien menulis null (server/index.ts) dan GEDCOM
+  // membawa nilai di luar tiga nilai lazim. Bentuk @enum([...]) di sini
+  // tidak valid untuk Prisma 7 dan membuat prisma generate gagal sejak
+  // 3b589cd; perbaikan v431 mengembalikan bentuk nullable tanpa mengubah
+  // tipe yang dihasilkan client (string | null, sesuai client existing).
+  gender          String?
   // GEDCOM 7 SEX verbatim M/F/X/U atau nilai non-enum, v262
   sexGed          String?
   // v405 ASSO asosiasi antar individu fase 1, additive only. JSON array
@@ -183,6 +188,9 @@ model FamilyMember {
   relationshipsFrom FamilyRelationship[] @relation("MemberFrom")
   relationshipsTo   FamilyRelationship[] @relation("MemberTo")
   consentRecords    ConsentRecord[]
+  // v431 Consent Fase 2c audit trail, additive only: jejak append-only
+  // semua keputusan consent member ini (lihat model ConsentAuditEvent).
+  consentAuditEvents ConsentAuditEvent[]
   // v116-iii-b, additive only: event genealogis dan tautan anak-parent
   // yang menempel pada member ini.
   events            GenealogyEvent[]
@@ -539,6 +547,33 @@ model ConsentRecord {
   note      String?
   at        DateTime
   createdAt DateTime @default(now())
+
+  member FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+}
+
+// v431 Consent Fase 2c audit trail, additive only. Satu baris = satu
+// keputusan consent pada satu member: aksi (grant | revoke | regrant |
+// scope_change), scope, versi policy yang berlaku saat keputusan, sumber
+// tulis (ui | api), flag noop untuk revoke tanpa efek ledger (ADR 0015),
+// dan waktu keputusan UTC. Append-only di domain aplikasi: tulis hanya
+// lewat appendAuditEvent di server/events.ts (single write gate, pola
+// P2-2 AC-3), TANPA helper update atau delete. Status efektif consent
+// direkonstruksi dari log saja lewat pure function
+// reconstructEffectiveConsent di src/lib/consent/audit.ts, tanpa kolom
+// mutable. Dasar: GDPR Art 7(1) bukti persetujuan, Art 5(2)
+// akuntabilitas, Art 15(3) hak salinan.
+model ConsentAuditEvent {
+  id            String   @id @default(cuid())
+  memberId      String
+  actorUserId   String
+  aksi          String
+  scope         String
+  policyVersion String
+  sumber        String
+  noop          Boolean  @default(false)
+  at            DateTime
 
   member FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
