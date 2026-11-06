@@ -115,7 +115,7 @@ import { createErasureExpressAdapter } from '../src/server/consent/erasure-expre
 import { createWithdrawalExpressAdapter } from '../src/server/consent/withdrawal-express-adapter';
 import { createErasurePurgeScheduler } from '../src/server/consent/erasure-purge-scheduler-wiring';
 import { createConsentNotificationScheduler } from '../src/server/consent/consent-notification-scheduler-wiring';
-import { appendEvent } from './events';
+import { appendAuditEvent, appendEvent, CONSENT_AUDIT_POLICY_VERSION } from './events';
 import {
   ACCOUNT_EVENT_TYPES,
   encodeFeedCursor,
@@ -4023,6 +4023,39 @@ app.delete('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<
 
 // ─── Consent ledger (per-member, S-06b-B, reducer pure di src/lib/consent) ───────────
 
+// v431 AC2: audit trail consent (tabel ConsentAuditEvent, pola v424a).
+// appendAuditEvent adalah satu-satunya penulis tabel tersebut (gate di
+// server/events.ts). Pemanggilan fire-and-forget: kegagalan validasi
+// maupun infrastruktur ditangkap di sini, dicatat ke log operasional,
+// dan TIDAK PERNAH menggagalkan operasi consent utama; baris ledger
+// ConsentRecord adalah sumber kebenaran begitu transaksi commit (pola
+// safeEmitConsentEvent di bawah).
+type ConsentAuditCaller = 'owner' | 'self';
+
+function recordConsentAudit(params: {
+  memberId: string;
+  actorId: string;
+  aksi: 'grant' | 'revoke' | 'regrant' | 'scope_change';
+  scope: string;
+  noop?: boolean;
+  caller: ConsentAuditCaller;
+}): void {
+  void appendAuditEvent({
+    memberId: params.memberId,
+    actorUserId: params.actorId,
+    aksi: params.aksi,
+    scope: params.scope,
+    policyVersion: CONSENT_AUDIT_POLICY_VERSION,
+    // Kedua jalur consent saat ini adalah endpoint REST, jadi sumbernya
+    // 'api'; pemanggil UI tidak diberi jalur tulis langsung ke audit.
+    sumber: 'api',
+    noop: params.noop,
+  }).catch((e: unknown) => {
+    console.error('consent audit emission failed (ledger row kept):', e);
+  });
+}
+
+
 app.get('/api/v1/members/:memberId/consent', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
   try {
     const m = await prisma.familyMember.findUnique({ where: { id: req.params.memberId } });
@@ -4081,6 +4114,17 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
     const noopState = replayConsentState(noopRows);
     if (isIdempotentNoOpRevoke(parsed.action, noopState)) {
       const last = noopState.records[noopState.records.length - 1] ?? null;
+      // v431 AC2: no-op revoke tetap masuk audit trail (noop true) supaya
+      // percobaan penarikan berulang tetap terlihat tanpa baris ledger
+      // baru; fire-and-forget, tidak menyentuh bentuk respons 200.
+      recordConsentAudit({
+        memberId: req.params.memberId,
+        actorId: req.userId!,
+        aksi: 'revoke',
+        scope: parsed.scope,
+        noop: true,
+        caller: 'owner',
+      });
       return res.status(200).json({
         record: last,
         granted: noopState.granted,
@@ -4116,6 +4160,16 @@ app.post('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentic
         data: { privacyStatus: targetPrivacyStatus(parsed.action) },
       });
       return { member, granted: next.granted, last: next.records[next.records.length - 1] };
+    });
+    // v431 AC2: audit trail append-only via single gate, fire-and-forget;
+    // kegagalan audit tidak boleh menggagalkan 201 yang dibangun di atas
+    // baris ledger yang sudah commit (pola safeEmitConsentEvent).
+    recordConsentAudit({
+      memberId: req.params.memberId,
+      actorId: req.userId!,
+      aksi: parsed.action,
+      scope: parsed.scope,
+      caller: 'owner',
     });
     // S-09a-ii: the ledger row is committed, so the audit fact and the
     // owner notifications are emitted here. Emission failures are
@@ -4198,6 +4252,16 @@ app.post('/api/v1/members/:memberId/consent/self', requireAuth, async (req: Auth
     const noopState = replayConsentState(noopRows);
     if (isIdempotentNoOpRevoke(parsed.action, noopState)) {
       const last = noopState.records[noopState.records.length - 1] ?? null;
+      // v431 AC2: audit no-op revoke jalur self, semantik persis jalur
+      // owner (ADR 0015); actorUserId tetap subjek data pemanggil.
+      recordConsentAudit({
+        memberId: req.params.memberId,
+        actorId: req.userId!,
+        aksi: 'revoke',
+        scope: parsed.scope,
+        noop: true,
+        caller: 'self',
+      });
       return res.status(200).json({
         record: last,
         granted: noopState.granted,
@@ -4228,6 +4292,15 @@ app.post('/api/v1/members/:memberId/consent/self', requireAuth, async (req: Auth
         data: { privacyStatus: targetPrivacyStatus(parsed.action) },
       });
       return { member, granted: next.granted, last: next.records[next.records.length - 1] };
+    });
+    // v431 AC2: audit trail jalur self, semantik identik jalur owner;
+    // actorUserId = subjek data pemanggil, fire-and-forget.
+    recordConsentAudit({
+      memberId: req.params.memberId,
+      actorId: req.userId!,
+      aksi: parsed.action,
+      scope: parsed.scope,
+      caller: 'self',
     });
     // Emit audit ke owners dengan actorId = subjek data sendiri (jujur,
     // tanpa spoof owner). Kegagalan emit tidak gagalkan POST: ledger row

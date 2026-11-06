@@ -25,6 +25,15 @@ export type ConsentAuditAction = (typeof CONSENT_AUDIT_ACTIONS)[number];
 export const CONSENT_AUDIT_SOURCES = ['ui', 'api'] as const;
 export type ConsentAuditSource = (typeof CONSENT_AUDIT_SOURCES)[number];
 
+/**
+ * v431 AC2: versi kebijakan consent yang berlaku saat wiring ini lahir.
+ * Nilai dinaikkan bila teks kebijakan consent produk berubah, supaya
+ * tiap baris audit bisa dihubungkan dengan dokumen kebijakan yang
+ * membentuk keputusan tersebut. Konstanta hidup di satu tempat dekat
+ * gate agar vocab, validasi, dan versi kebijakan dibaca dari satu file.
+ */
+export const CONSENT_AUDIT_POLICY_VERSION = '1';
+
 /** Input satu keputusan consent yang dicatat ke audit trail. */
 export interface ConsentAuditEventInput {
   memberId: string;
