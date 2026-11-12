@@ -1,3 +1,7 @@
+import { zipSync } from 'fflate';
+import { describe, it, expect } from 'vitest';
+import { detectUploadKind, extractGedcom } from './importPipeline';
+
 // Round-trip validation for GOAL v119 GEDCOM 7.0 + GEDZIP
 //
 // Validates parser GEDCOM 7 + GEDZIP round-trip using research fixtures.
@@ -9,7 +13,7 @@
 // verification. Payloads are byte-exact for comparison.
 
 // Base header for GEDCOM 7.0 documents
-const HEAD = '0 HEAD\n1 GEDC\n2 VERS 7.0\n2 FORM LINEAGE-LINKED\n1 CHAR UTF-8\'
+const HEAD = '0 HEAD\n1 GEDC\n2 VERS 7.0\n2 FORM LINEAGE-LINKED\n1 CHAR UTF-8\n'
 // Trailer marker
 const TRLR = '0 TRLR\n'
 
@@ -95,10 +99,10 @@ export const ROUND_TRIP_FIXTURES: readonly RoundTripFixture[] = [
     kelas: 'SEX M/F/X/U',
     gedcom:
       HEAD +
-      '0 @I1@ INDI\n1 NAME Alpha /Kasis/\n1 SEX M\' +
-      '0 @I2@ INDI\n1 NAME Beta /Kasis/\n1 SEX F\' +
-      '0 @I3@ INDI\n1 NAME Gamma /Kasis/\n1 SEX X\' +
-      '0 @I4@ INDI\n1 NAME Delta /Kasis/\n1 SEX U\' +
+      '0 @I1@ INDI\n1 NAME Alpha /Kasis/\n1 SEX M\n' +
+      '0 @I2@ INDI\n1 NAME Beta /Kasis/\n1 SEX F\n' +
+      '0 @I3@ INDI\n1 NAME Gamma /Kasis/\n1 SEX X\n' +
+      '0 @I4@ INDI\n1 NAME Delta /Kasis/\n1 SEX U\n' +
       TRLR,
     invariant: ['1 SEX M', '1 SEX F', '1 SEX X', '1 SEX U'],
   },
@@ -152,7 +156,7 @@ export const GEDZIP_FIXTURES: readonly RoundTripFixture[] = [
     gedcom:
       HEAD +
       '0 @I1@ INDI\n1 NAME GEDZIP Test /Kasis/\n1 SEX M\n1 BIRT\n2 DATE 1 MAY 1900\n0 TRLR\n',
-    invariant: ['2 DATE 1 MAY 1900', 'gedcom.ged'],
+    invariant: ['2 DATE 1 MAY 1900'],
   },
   {
     id: 'full-suite',
@@ -184,50 +188,13 @@ export const JUMLAH_KELAS_KASUS = 11
 /** Total jumlah fixture termasuk GEDZIP. */
 export const JUMLAH_TOTAL_FIXTURES = ROUND_TRIP_FIXTURES.length + GEDZIP_FIXTURES.length
 
-// Pure validator: verifikasi invariants tetap ada setelah extractGedcom.
-function validateRoundTripPure(gedcomText: string): { valid: boolean; invariants: string[]; missing: string[] } {
-  const missing: string[] = [];
-  const foundInvariants: string[] = [];
-   
-  // Try extracting again (simulate round-trip) and check invariants
-  const extracted = extractGedcom(new TextEncoder().encode(gedcomText));
-   
-  for (const fixture of ROUND_TRIP_FIXTURES) {
-    const allFound = fixture.invariant.every((inv) => 
-      extracted.text.includes(inv)
-    );
-    if (!allFound) {
-      fixture.invariant.forEach((inv) => {
-        if (!extracted.text.includes(inv) && !missing.includes(inv)) {
-          missing.push(inv);
-        }
-      });
-    } else {
-      foundInvariants.push(fixture.id);
-    }
-  }
-   
-  // Check GEDZIP fixtures too
-  for (const fixture of GEDZIP_FIXTURES) {
-    const allFound = fixture.invariant.every((inv) => 
-      extracted.text.includes(inv)
-    );
-    if (!allFound) {
-      fixture.invariant.forEach((inv) => {
-        if (!extracted.text.includes(inv) && !missing.includes(inv)) {
-          missing.push(inv);
-        }
-      });
-    } else {
-      foundInvariants.push(fixture.id);
-    }
-  }
-   
-  return {
-    valid: missing.length === 0,
-    invariants: foundInvariants,
-    missing,
-  };
+// Pure validator per fixture: verifikasi invariants tetap ada setelah extractGedcom.
+function validateFixtureRoundTrip(fixture: RoundTripFixture): { valid: boolean; missing: string[] } {
+  const payload = new TextEncoder().encode(fixture.gedcom);
+  const bytes = fixture.id === 'gedzip-minimal' || fixture.id === 'full-suite' ? zipSync({ [GEDZIP_ENTRY_NAME]: payload }) : payload;
+  const extracted = extractGedcom(bytes);
+  const missing = fixture.invariant.filter((inv) => !extracted.text.includes(inv));
+  return { valid: missing.length === 0, missing };
 }
 
 describe('GOAL v119: Round-trip GEDCOM 7.0 + GEDZIP Validation', () => {
@@ -235,7 +202,7 @@ describe('GOAL v119: Round-trip GEDCOM 7.0 + GEDZIP Validation', () => {
   it('11 kelas kasus research evidence lulus validasi', () => {
     let passed = 0;
     for (const fixture of ROUND_TRIP_FIXTURES) {
-      const result = validateRoundTripPure(fixture.gedcom);
+      const result = validateFixtureRoundTrip(fixture);
       if (result.valid) {
         passed += 1;
       } else {
@@ -251,7 +218,7 @@ describe('GOAL v119: Round-trip GEDCOM 7.0 + GEDZIP Validation', () => {
     const allFixtures = [...ROUND_TRIP_FIXTURES, ...GEDZIP_FIXTURES];
      
     for (const fixture of allFixtures) {
-      const result = validateRoundTripPure(fixture.gedcom);
+      const result = validateFixtureRoundTrip(fixture);
       if (result.valid) {
         passed += 1;
       } else {
@@ -273,9 +240,10 @@ describe('GOAL v119: Round-trip GEDCOM 7.0 + GEDZIP Validation', () => {
     const gedcomText = '0 HEAD\n1 GEDC\n2 VERS 7.0\n2 FORM LINEAGE-LINKED\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Test /Kasis/\n1 SEX M\n1 BIRT\n2 DATE 3 FEB 1920\n0 TRLR\n';
 
     // Test via the function
-    const kind = detectUploadKind(new TextEncoder().encode(gedcomText));
-    // Document: deteksi only through magic bytes on raw input
-    expect(typeof detectUploadKind).toBe('function');
+    expect(detectUploadKind(new TextEncoder().encode(gedcomText))).toBe('gedcom');
+    expect(detectUploadKind(zipSync({ [GEDZIP_ENTRY_NAME]: new TextEncoder().encode(gedcomText) }))).toBe('gedzip');
+    // Jalur unpack GEDZIP teruji eksplisit: extractGedcom mengembalikan teks asli dari arsip ZIP.
+    expect(extractGedcom(zipSync({ [GEDZIP_ENTRY_NAME]: new TextEncoder().encode(gedcomText) })).text).toBe(gedcomText);
   });
 
   /** Validasi bahwa parse round-trip tidak kehilangan data material inti. */
@@ -284,7 +252,7 @@ describe('GOAL v119: Round-trip GEDCOM 7.0 + GEDZIP Validation', () => {
     const fixture = ROUND_TRIP_FIXTURES.find((f) => f.id === 'date-eksak');
     expect(fixture).toBeDefined();
      
-    const result = validateRoundTripPure(fixture!.gedcom);
+    const result = validateFixtureRoundTrip(fixture!);
     // Invariant '2 DATE 2 OCT 1889' harus tetap ada
     expect(result.missing).not.toContain('2 DATE 2 OCT 1889');
     expect(result.valid).toBe(true);
