@@ -53,6 +53,60 @@ export const openBenchHost = async (
   return page.evaluate(() => (window as unknown as { __perfLoadMs?: number }).__perfLoadMs ?? 0);
 };
 
+/**
+ * Sampel usedJSHeapSize pasca GC manual via CDP HeapProfiler (AC3).
+ * Mengembalikan daftar byte sebanyak `samples`; 0 berarti metric
+ * tidak tersedia (non-chromium). Session CDP di-detach setelah selesai.
+ */
+export const sampleHeapAfterGc = async (page: Page, samples = 3): Promise<number[]> => {
+  const values: number[] = [];
+  let cdp: { send: (m: string) => Promise<unknown>; detach: () => Promise<void> } | null = null;
+  try {
+    cdp = await page.context().newCDPSession(page);
+  } catch {
+    return values;
+  }
+  for (let i = 0; i < samples; i += 1) {
+    try {
+      await cdp.send('HeapProfiler.collectGarbage');
+    } catch {
+      break;
+    }
+    await page.waitForTimeout(250);
+    const bytes = await page.evaluate(
+      () =>
+        (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize ??
+        0,
+    );
+    values.push(bytes);
+  }
+  await cdp.detach().catch(() => undefined);
+  return values;
+};
+
+/**
+ * Probe beginFrame CDP (HeadlessExperimental) sekali di awal (AC3).
+ * Mengembalikan true bila domain tersedia; false berarti mode headless
+ * yang dipakai tidak mendukung beginFrame dan pengukuran tetap via rAF.
+ */
+export const probeBeginFrame = async (page: Page): Promise<boolean> => {
+  let cdp: { send: (m: string) => Promise<unknown>; detach: () => Promise<void> };
+  try {
+    cdp = await page.context().newCDPSession(page);
+  } catch {
+    return false;
+  }
+  let ok = false;
+  try {
+    await cdp.send('HeadlessExperimental.beginFrame', { noDisplayUpdates: true });
+    ok = true;
+  } catch {
+    ok = false;
+  }
+  await cdp.detach().catch(() => undefined);
+  return ok;
+};
+
 /** Titik awal drag: node target bila ketemu, cadangan node pertama, pane terakhir. */
 export const grabPoint = async (
   page: Page,
