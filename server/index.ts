@@ -60,6 +60,7 @@ import {
   targetPrivacyStatus,
 } from '../src/lib/consent/dispatch';
 import { applyRecord, createRecord, ConsentLedgerError, type ConsentRecord } from '../src/lib/consent/record';
+import { exportAuditCsv, reconstructAuditLedger } from '../src/lib/consent/audit-export';
 import { resolveSelfConsentAccess } from '../src/lib/consent/self-consent';
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { isResnHidden, isResnLocked } from '../src/lib/privacy/resn-enforcement';
@@ -4075,6 +4076,29 @@ app.get('/api/v1/members/:memberId/consent', requireAuth, async (req: Authentica
       return res.status(409).json({ code: 'CONSENT_INVALID_TRANSITION', message: e.message });
     }
     res.status(500).json({ code: 'CONSENT_ERROR', message: (e as Error).message });
+  }
+});
+
+// v431 AC6: ekspor CSV audit trail consent (Art 15(3)). Pola persis route
+// GET consent di atas: 404 member nihil, guardTreeAction manage_invitations
+// owner-only. Reconstruct pure dijalankan dulu (baris noop dibuang) lalu
+// modul ekspor di src/lib/consent menghasilkan CSV ter-sanitasi CRLF.
+app.get('/api/v1/members/:memberId/consent/audit-export', requireAuth, async (req: AuthenticatedRequest<{ memberId: string }>, res) => {
+  try {
+    const m = await prisma.familyMember.findUnique({ where: { id: req.params.memberId } });
+    if (!m) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
+    const guard = await guardTreeAction(req.userId!, m.treeId, 'manage_invitations');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const rows = await prisma.consentAuditEvent.findMany({
+      where: { memberId: req.params.memberId },
+      orderBy: { at: 'asc' },
+    });
+    const csv = exportAuditCsv(reconstructAuditLedger(rows));
+    res.set('Content-Type', 'text/csv; charset=utf-8');
+    res.set('Content-Disposition', 'attachment; filename=consent-audit-' + m.id + '.csv');
+    res.send(csv);
+  } catch (e) {
+    res.status(500).json({ code: 'AUDIT_EXPORT_ERROR', message: (e as Error).message });
   }
 });
 
