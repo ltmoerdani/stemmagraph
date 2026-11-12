@@ -56,4 +56,21 @@ describe('Stemmagraph Consent Audit Trail (v431)', () => {
     const csv = exportAuditCsv(frozen);
     expect(csv).toBeDefined();
   });
+
+  it('AC4 OWASP: field sumber dengan newline tidak memecah baris CSV (log injection)', () => {
+    const injected = [{
+      id: 'evt-evil',
+      memberId: 'mem-123',
+      actorUserId: 'usr-456',
+      aksi: 'grant',
+      scope: 'public-profile',
+      policyVersion: '1.0',
+      sumber: 'ui\nfake-log-line\r\nfake-log-line-2',
+      noop: false,
+      at: '2026-11-06T00:00:00.000Z',
+    }];
+    const csv = exportAuditCsv(injected);
+    // Satu header + satu baris event: injeksi CRLF tidak menambah baris fisik.
+    expect(csv.split('\n')).toHaveLength(injected.length + 1);
+  });
 });
