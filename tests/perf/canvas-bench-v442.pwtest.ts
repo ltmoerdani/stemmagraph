@@ -13,7 +13,6 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  BENCH_HOST_URL,
   collectFrameStats,
   dragNodeContinuous,
   grabPoint,
