@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback } from 'react';
 import { render, cleanup } from '@testing-library/react';
 
 const DIR = join(__dirname, '..');

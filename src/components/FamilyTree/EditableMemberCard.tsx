@@ -1,5 +1,6 @@
 // Fix React import for TypeScript
-import * as React, { memo, useState, useCallback } from 'react';
+import * as React from 'react';
+import { memo, useState, useCallback } from 'react';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { 
