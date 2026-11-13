@@ -13,7 +13,7 @@ interface NewFamilyTreeCanvasProps {
   onBackToDashboard: () => void;
 }
 
-export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
+const NewFamilyTreeCanvasImpl: React.FC<NewFamilyTreeCanvasProps> = ({
   familyTreeName,
   onBackToDashboard
 }) => {

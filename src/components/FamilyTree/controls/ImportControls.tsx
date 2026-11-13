@@ -43,7 +43,7 @@ import { XlsxReadError } from '../../../lib/importxlsx/openXlsx';
  * silently. The success summary reports created members, created
  * relations, and skipped/failed counts as reported by applyImportPlan.
  */
-export const ImportControls: React.FC = () => {
+const ImportControlsImpl: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);

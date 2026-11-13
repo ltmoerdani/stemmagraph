@@ -275,9 +275,6 @@ const processParentChildConnectionsForMember = (
   return connections;
 };
 
-export const FamilyTreeConnections = React.memo(FamilyTreeConnectionsImpl);
-FamilyTreeConnections.displayName = 'FamilyTreeConnections';
-
 const FamilyTreeConnectionsImpl: React.FC<FamilyTreeConnectionsProps> = ({
   members,
   positions,

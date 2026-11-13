@@ -54,9 +54,6 @@ const DirectionalPlusButton: React.FC<DirectionalPlusButtonProps> = ({
   </button>
 );
 
-export const EditableMemberCard = React.memo(EditableMemberCardImpl);
-EditableMemberCard.displayName = 'EditableMemberCard';
-
 const EditableMemberCardImpl = ({ 
   member, 
   position 

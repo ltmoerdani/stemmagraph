@@ -84,7 +84,7 @@ function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export const ExportControls: React.FC = () => {
+const ExportControlsImpl: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   // Privacy mode for the GEDCOM/GEDZIP paths (S-06 Wave 1). Default is
