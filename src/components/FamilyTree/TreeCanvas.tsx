@@ -58,7 +58,28 @@ const sortMembersByFamilyGroups = (members: FamilyMember[]): FamilyMember[] => {
 
 export const TreeCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const { members, viewMode, editMode, setEditMode, setViewMode, selectedMember, setSelectedMember } = useFamilyStore();
+  // v446 T-01: selector granular per field plus useShallow, menggantikan
+  // destructuring penuh useFamilyStore() yang membuat komponen subscribe
+  // ke seluruh store dan re-render total saat slice mana pun berubah.
+  const {
+    members,
+    viewMode,
+    editMode,
+    setEditMode,
+    setViewMode,
+    selectedMember,
+    setSelectedMember,
+  } = useFamilyStore(
+    useShallow((s) => ({
+      members: s.members,
+      viewMode: s.viewMode,
+      editMode: s.editMode,
+      setEditMode: s.setEditMode,
+      setViewMode: s.setViewMode,
+      selectedMember: s.selectedMember,
+      setSelectedMember: s.setSelectedMember,
+    }))
+  );
   
   // Pan/drag state for canvas navigation
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });

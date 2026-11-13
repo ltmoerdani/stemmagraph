@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import {
   Download,
   FileArchive,
@@ -84,7 +84,7 @@ function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export const ExportControls: React.FC = () => {
+const ExportControlsImpl: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   // Privacy mode for the GEDCOM/GEDZIP paths (S-06 Wave 1). Default is
@@ -720,3 +720,8 @@ export const ExportControls: React.FC = () => {
     </div>
   );
 };
+
+// v446 P-05: panel ekspor dibungkus memo agar tidak ikut re-render tiap
+// frame drag pada komponen pemilik state.
+export const ExportControls = memo(ExportControlsImpl);
+ExportControls.displayName = 'ExportControls';

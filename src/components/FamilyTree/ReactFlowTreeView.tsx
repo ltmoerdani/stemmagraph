@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useCallback } from 'react';
 import { ReactFlowFamilyTree } from './ReactFlowFamilyTree';
 import { UnifiedMemberModal } from '../Forms/UnifiedMemberModal';
 import { useFamilyStore } from '../../store/familyStore';
@@ -9,7 +9,9 @@ interface AddMemberContext {
   targetMemberId: string;
 }
 
-export const ReactFlowTreeView: React.FC = () => {
+ReactFlowTreeView.displayName = 'ReactFlowTreeView';
+
+const ReactFlowTreeViewImpl: React.FC = () => {
   const { members, updateMember, deleteMember } = useFamilyStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [addContext, setAddContext] = useState<AddMemberContext | undefined>(undefined);
@@ -40,9 +42,9 @@ export const ReactFlowTreeView: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const handleMemberDelete = (memberId: string) => {
+  const handleMemberDelete = useCallback((memberId: string) => {
     deleteMember(memberId);
-  };
+  }, [deleteMember]);
 
   return (
     <div className="w-full h-full">
@@ -66,3 +68,8 @@ export const ReactFlowTreeView: React.FC = () => {
     </div>
   );
 };
+// v446 R-01: wrapper memo agar re-render parent tidak menjalankan render
+// penuh bila props stabil.
+const ReactFlowTreeViewMemo = memo(ReactFlowTreeViewImpl);
+ReactFlowTreeViewMemo.displayName = 'ReactFlowTreeView';
+export const ReactFlowTreeView = ReactFlowTreeViewMemo;

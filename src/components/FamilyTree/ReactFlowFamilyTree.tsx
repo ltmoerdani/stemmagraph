@@ -418,6 +418,10 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   // luar jendela generasi, buka cabang leluhurnya; begitu nodenya sudah
   // ada di canvas, pusatkan viewport ke node itu (delay 220ms agar
   // mengalahkan fitView generik pasca-layout).
+  // v446 P-01: effect tidak lagi bergantung array nodes penuh (useNodesState
+  // mengganti referensi tiap frame drag). Node dibaca via getNodes() di
+  // dalam callback timer, jadi effect hanya jalan saat revealMemberId atau
+  // jendela generasi berubah.
   useEffect(() => {
     if (!revealMemberId) return;
     if (!membersRef.current.has(revealMemberId)) return;
@@ -430,16 +434,16 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
       );
       return;
     }
-    const node = nodes.find((n) => n.id === revealMemberId);
-    if (node) {
-      const targetId = revealMemberId;
-      const timer = setTimeout(() => {
+    const targetId = revealMemberId;
+    const timer = setTimeout(() => {
+      const node = getNodes().find((n) => n.id === targetId);
+      if (node) {
         fitView({ nodes: [{ id: targetId }], padding: 0.35, duration: 400, maxZoom: 1.25 });
         onMemberRevealed?.();
-      }, 220);
-      return () => clearTimeout(timer);
-    }
-  }, [revealMemberId, visibleMembers, nodes, fitView, onMemberRevealed]);
+      }
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [revealMemberId, visibleMembers, getNodes, fitView, onMemberRevealed]);
 
   // Custom node change handler to constrain movement
   const handleNodesChange = useCallback((changes: NodeChange<FamilyMemberFlowNode>[]) => {

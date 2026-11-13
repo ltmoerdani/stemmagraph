@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo } from 'react';
 import { User, Plus } from 'lucide-react';
 import { Header } from '../Header/Header';
 import { Toolbar } from '../Toolbar/Toolbar';
@@ -13,11 +13,12 @@ interface NewFamilyTreeCanvasProps {
   onBackToDashboard: () => void;
 }
 
-export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
+const NewFamilyTreeCanvasImpl: React.FC<NewFamilyTreeCanvasProps> = ({
   familyTreeName,
   onBackToDashboard
 }) => {
-  const { members } = useFamilyStore();
+  // v446 NF-01: selector count granular, tidak subscribe seluruh store.
+  const membersCount = useFamilyStore((s) => s.members.length);
   const [showAddFirstMemberModal, setShowAddFirstMemberModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -30,7 +31,7 @@ export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
   };
 
   // Check if we have any members to show
-  const hasMembers = members.length > 0;
+  const hasMembers = membersCount > 0;
 
   return (
     <div className="h-screen flex flex-col bg-gray-50" data-testid="new-family-tree-canvas">
@@ -135,3 +136,7 @@ export const NewFamilyTreeCanvas: React.FC<NewFamilyTreeCanvasProps> = ({
     </div>
   );
 };
+// v446 NF-01: wrapper memo, props primitif stabil.
+const NewFamilyTreeCanvasMemo = memo(NewFamilyTreeCanvasImpl);
+NewFamilyTreeCanvasMemo.displayName = 'NewFamilyTreeCanvas';
+export const NewFamilyTreeCanvas = NewFamilyTreeCanvasMemo;

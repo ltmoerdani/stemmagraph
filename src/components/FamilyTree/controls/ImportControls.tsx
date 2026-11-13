@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { memo, useRef, useState } from 'react';
 import { Upload, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFamilyStore } from '../../../store/familyStore';
@@ -43,7 +43,7 @@ import { XlsxReadError } from '../../../lib/importxlsx/openXlsx';
  * silently. The success summary reports created members, created
  * relations, and skipped/failed counts as reported by applyImportPlan.
  */
-export const ImportControls: React.FC = () => {
+const ImportControlsImpl: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
@@ -652,3 +652,8 @@ export const ImportControls: React.FC = () => {
     </div>
   );
 };
+
+// v446 P-05: panel impor dibungkus memo agar tidak ikut re-render tiap
+// frame drag pada komponen pemilik state.
+export const ImportControls = memo(ImportControlsImpl);
+ImportControls.displayName = 'ImportControls';

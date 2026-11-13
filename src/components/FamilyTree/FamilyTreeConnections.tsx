@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { JSX } from 'react';
 import type { FamilyMember } from '../../types/family';
 
@@ -275,7 +275,7 @@ const processParentChildConnectionsForMember = (
   return connections;
 };
 
-export const FamilyTreeConnections: React.FC<FamilyTreeConnectionsProps> = ({
+const FamilyTreeConnectionsImpl: React.FC<FamilyTreeConnectionsProps> = ({
   members,
   positions,
   canvasWidth,
@@ -568,3 +568,8 @@ export const FamilyTreeConnections: React.FC<FamilyTreeConnectionsProps> = ({
     </svg>
   );
 };
+// v446 C-01: koneksi dibungkus memo agar perhitungan 569 baris path SVG
+// tidak dijalankan ulang saat parent re-render tanpa perubahan props.
+const FamilyTreeConnectionsMemo = memo(FamilyTreeConnectionsImpl);
+FamilyTreeConnectionsMemo.displayName = 'FamilyTreeConnections';
+export const FamilyTreeConnections = FamilyTreeConnectionsMemo;

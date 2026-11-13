@@ -1,6 +1,6 @@
 // Fix React import for TypeScript
 import * as React from 'react';
-import { useState } from 'react';
+import { memo, useState, useCallback } from 'react';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 import { 
@@ -55,7 +55,7 @@ const DirectionalPlusButton: React.FC<DirectionalPlusButtonProps> = ({
   </button>
 );
 
-export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({ 
+const EditableMemberCardImpl = ({ 
   member, 
   position 
 }: EditableMemberCardProps) => {
@@ -67,26 +67,26 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (editMode) {
       setShowEditModal(true);
     } else {
       setSelectedMember(member);
     }
-  };
+  }, [editMode, setSelectedMember, member]);
 
-  const handleContextMenu = (e: React.MouseEvent) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
     if (!editMode) return;
-    
+
     e.preventDefault();
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setShowContextMenu(true);
-  };
+  }, [editMode]);
 
-  const handleDirectionalAdd = (direction: Direction) => {
+  const handleDirectionalAdd = useCallback((direction: Direction) => {
     setSelectedDirection(direction);
     setShowRelationshipModal(true);
-  };
+  }, []);
 
   const handleRelationshipSelect = () => {
     setShowRelationshipModal(false);
@@ -394,3 +394,8 @@ export const EditableMemberCard: React.FC<EditableMemberCardProps> = ({
     </>
   );
 };
+// v446 M-01: kartu edit dibungkus memo agar perubahan satu kartu tidak
+// memicu re-render seluruh kartu di canvas.
+const EditableMemberCardMemo = memo(EditableMemberCardImpl);
+EditableMemberCardMemo.displayName = 'EditableMemberCard';
+export const EditableMemberCard = EditableMemberCardMemo;
