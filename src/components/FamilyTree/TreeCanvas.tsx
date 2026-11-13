@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { memo, useRef, useState, useCallback, useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import { EditableMemberCard } from './EditableMemberCard';
 import { MemberCard } from './MemberCard';
@@ -56,7 +56,7 @@ const sortMembersByFamilyGroups = (members: FamilyMember[]): FamilyMember[] => {
   return sorted;
 };
 
-export const TreeCanvas: React.FC = () => {
+const TreeCanvasImpl: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
   // v446 T-01: selector granular per field plus useShallow, menggantikan
   // destructuring penuh useFamilyStore() yang membuat komponen subscribe
@@ -601,3 +601,6 @@ export const TreeCanvas: React.FC = () => {
     </section>
   );
 };
+
+const TreeCanvasMemo = memo(TreeCanvasImpl);
+export const TreeCanvas = TreeCanvasMemo;
