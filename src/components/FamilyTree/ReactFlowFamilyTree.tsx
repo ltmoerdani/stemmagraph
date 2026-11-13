@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   Edge,
@@ -659,10 +659,13 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   );
 };
 
-export const ReactFlowFamilyTree: React.FC<ReactFlowFamilyTreeProps> = (props) => {
+const ReactFlowFamilyTreeImpl: React.FC<ReactFlowFamilyTreeProps> = (props) => {
   return (
     <ReactFlowProvider>
       <ReactFlowFamilyTreeInner {...props} />
     </ReactFlowProvider>
   );
 };
+
+const ReactFlowFamilyTreeMemo = memo(ReactFlowFamilyTreeImpl);
+export const ReactFlowFamilyTree = ReactFlowFamilyTreeMemo;
