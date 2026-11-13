@@ -6,8 +6,8 @@
  * (react.dev memo Object.is, useCallback stability, xyflow testing).
  *
  * Tiga kelompok guard:
- * 1. Struktural: 8 komponen fase 1 dibungkus React.memo (gagal bila memo dihapus).
- *    ReactFlowFamilyTree + TreeCanvas fase 1 hanya fix effect-deps, bukan memo.
+ * 1. Struktural: 10 komponen dibungkus React.memo (8 fase 1 v446 +
+ *    ReactFlowFamilyTree + TreeCanvas fase 2 v450). Gagal bila memo dihapus.
  * 2. Perilaku: komponen memo skip re-render saat props identik (Object.is).
  * 3. Callback stability: handler useCallback referensi stabil antar render.
  */
@@ -28,11 +28,13 @@ const MEMOIZED_FILES = [
   'controls/ExportControls.tsx',
   'controls/FamilyTreeControls.tsx',
   'controls/ImportControls.tsx',
+  'ReactFlowFamilyTree.tsx',
+  'TreeCanvas.tsx',
 ];
 
-// Catatan fase 1 v446: ReactFlowFamilyTree.tsx dan TreeCanvas.tsx hanya
-// mendapat perbaikan dependency effect/handler (bukan wrap memo). Wrap memo
-// keduanya adalah ladder item 2, target fase berikutnya, jadi nihil di guard memo.
+// Catatan fase 2 v450: ReactFlowFamilyTree.tsx dan TreeCanvas.tsx sudah masuk
+// daftar guard (total 10 file). Wrap memo keduanya selesai di fase 2, test
+// struktural akan gagal bila memo dihapus kembali.
 
 afterEach(cleanup);
 
