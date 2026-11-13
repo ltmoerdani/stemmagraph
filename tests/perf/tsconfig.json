@@ -1,0 +1,16 @@
+{
+  // Konfigurasi TS khusus benchmark perf v447 (test-only).
+  // Opsi compiler mewarisi aplikasi supaya strict sama, kecuali
+  // paths alias yang dikosongkan: import @/ diarahkan ke stub tipe
+  // ambient perf-fixtures.d.ts, bukan ke src/ (ratusan error type
+  // pra-eksisting di luar cakupan baseline, dilarang disentuh).
+  // Saat runtime vitest alias @ tetap hidup lewat vitest.perf.config.ts
+  // sehingga fixture asli yang dipakai benchmark. Artefak v442
+  // pra-eksisting (harness Playwright + host) dikecualikan.
+  "extends": "../../tsconfig.app.json",
+  "compilerOptions": {
+    "paths": {}
+  },
+  "include": ["."],
+  "exclude": ["host", "harness-v442.ts", "canvas-ab.pwtest.ts", "canvas-ab-v442.pwtest.ts", "canvas-bench-v442.pwtest.ts", "canvas-drag.pwtest.ts", "perf-graph-sizes.test.ts"]
+}
