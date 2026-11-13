@@ -104,6 +104,8 @@ model FamilyTree {
   // v392 approval workflow merge berisiko (relation side only, FK di
   // baris MergeApproval). Additive only.
   mergeApprovals  MergeApproval[]
+  // v445 fase 2: pengaturan relasi-privasi per keluarga (1:1, additive only).
+  privacySettings FamilyPrivacySettings?
   // v394 ICS feed kalender keluarga (fase 1): token subscribe pribadi tree.
   // Null = feed mati (belum dibuat atau sudah di-revoke). Diisi token acak
   // base64url dari CSPRNG, di-rotate dan di-revoke lewat route khusus.
@@ -618,4 +620,26 @@ model FamilyLink {
 
   @@index([childId])
   @@index([parentId])
+}
+
+// ─── Relationship Privacy Settings (v445 fase 2, additive only) ───
+// Satu baris per keluarga (1:1 FamilyTree). Menyimpan pengaturan
+// relasi-privasi per keluarga: N langkah jarak kekerabatan (1..12,
+// default 2) dan mode redaksi ("redact-full" = sembunyikan seluruh
+// detail di luar jangkauan, ATAU "name-only" = nama saja), plus N tahun
+// pasca-kematian (0..100, default 30) yang memisahkan anggota meninggal
+// dari aturan living-rule setelah lewat batas tahun sejak deathDate.
+// Tidak ada baris = semua default berlaku (getFamilyPrivacySettings
+// mengembalikan default tanpa perlu baris). Kolom teks pola resn:
+// tanpa enum DB, validasi di application layer (family-privacy-settings.ts).
+model FamilyPrivacySettings {
+  id                    String     @id @default(uuid())
+  treeId                String     @unique
+  relationshipSteps     Int        @default(2)
+  relationshipMode      String     @default("redact-full")
+  posthumousYears       Int        @default(30)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  tree FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
 }

@@ -64,11 +64,18 @@ import { exportAuditCsv, reconstructAuditLedger } from '../src/lib/consent/audit
 import { resolveSelfConsentAccess } from '../src/lib/consent/self-consent';
 import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { isResnHidden, isResnLocked } from '../src/lib/privacy/resn-enforcement';
-import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
+import { applyMemberVisibility, redactMember } from '../src/lib/privacy/member-redaction';
+import { resolveVisibilityWithSettings } from '../src/lib/privacy/relationship-visibility-settings';
 import {
   calculateRelationshipDistance,
   DEFAULT_RELATIONSHIP_DISTANCE_LIMIT,
 } from '../src/lib/privacy/relationship-privacy';
+import {
+  defaultFamilyPrivacySettings,
+  isPosthumouslyPublic,
+  normalizeFamilyPrivacySettings,
+  type FamilyPrivacySettingsValue,
+} from '../src/lib/privacy/family-privacy-settings';
 import {
   filterRelationshipsForViewer,
   type MemberVisibilityDecision,
@@ -294,6 +301,28 @@ async function requireAuth(req: AuthenticatedRequest, res: express.Response, nex
   } catch {
     res.status(401).json({ code: 'UNAUTHORIZED', message: 'Token expired or invalid' });
   }
+}
+
+// ─── v445 fase 2: pengaturan relasi-privasi per keluarga ─────────
+// Baca pengaturan aktif keluarga. Tanpa baris = default (fungsi pure).
+// Selalu query langsung per request: TIDAK ada cache tingkat aplikasi,
+// perubahan N atau mode berlaku pada request berikutnya tanpa deploy.
+async function getActiveFamilyPrivacySettings(treeId: string): Promise<FamilyPrivacySettingsValue> {
+  const row = await prisma.familyPrivacySettings.findUnique({ where: { treeId } });
+  if (!row) return defaultFamilyPrivacySettings();
+  const norm = normalizeFamilyPrivacySettings({
+    relationshipSteps: row.relationshipSteps,
+    relationshipMode: row.relationshipMode,
+    posthumousYears: row.posthumousYears,
+  });
+  // Baris DB rusak (nilai di luar rentang, mis. dari import manual):
+  // field invalid jatuh ke default per field, sisanya tetap dipakai.
+  const def = defaultFamilyPrivacySettings();
+  return {
+    relationshipSteps: norm.value.relationshipSteps ?? def.relationshipSteps,
+    relationshipMode: norm.value.relationshipMode ?? def.relationshipMode,
+    posthumousYears: norm.value.posthumousYears ?? def.posthumousYears,
+  };
 }
 
 /**
@@ -3815,9 +3844,10 @@ app.get('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
     // Privacy read wiring v261-i: hidden direspons 404 bentuk identik
     // dengan member nihil (anti-enumerasi); self dan deceased lolos penuh
     // lewat urutan aturan v260-i.
-    const [viewer, relationships] = await Promise.all([
+    const [viewer, relationships, settings] = await Promise.all([
       prisma.user.findUnique({ where: { id: req.userId! }, select: { email: true } }),
       prisma.familyRelationship.findMany({ where: { treeId: m.treeId } }),
+      getActiveFamilyPrivacySettings(m.treeId),
     ]);
     const treeMembers = await prisma.familyMember.findMany({
       where: { treeId: m.treeId },
@@ -3847,12 +3877,31 @@ app.get('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
       relationships.map((r) => ({ memberId: r.memberId, relatedId: r.relatedId, type: r.type })),
       viewerMemberId,
       m.id,
+      settings.relationshipSteps,
     );
-    if (kinshipDistance === null || kinshipDistance > DEFAULT_RELATIONSHIP_DISTANCE_LIMIT) {
+    // v445 fase 2: pasca-kematian. Meninggal lewat N tahun sejak deathDate
+    // terbaca penuh apa pun jarak relasi (privacyStatus tidak menahan).
+    if (isPosthumouslyPublic(m.deathDate, settings.posthumousYears, new Date())) {
+      return res.json(formatMember(m));
+    }
+    if (kinshipDistance === null || kinshipDistance > settings.relationshipSteps) {
+      // Mode keluarga menentukan payload di luar jangkauan: name-only
+      // membuang detail, redact-full membuang semuanya kecuali bentuk
+      // minimal fase 1 (nama tetap terlihat di situ).
+      if (settings.relationshipMode === 'name-only') {
+        return res.json({
+          id: m.id,
+          treeId: m.treeId,
+          name: m.name,
+          isAlive: m.isAlive,
+          generation: m.generation ?? null,
+          gender: m.gender ?? null,
+        });
+      }
       return res.json({
         id: m.id,
         treeId: m.treeId,
-        name: m.name,
+        name: '',
         isAlive: m.isAlive,
         generation: m.generation ?? null,
         gender: m.gender ?? null,
@@ -3867,13 +3916,74 @@ app.get('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
       generation: m.generation,
       gender: m.gender,
     };
-    const decision = applyMemberVisibility(minimal, relation);
+    // v445 fase 2: keputusan visibilitas membaca pengaturan keluarga
+    // (pasca-kematian; N langkah dan mode ditangani di atas).
+    const visibilityDecision = resolveVisibilityWithSettings(
+      {
+        viewerRelation: relation,
+        privacyStatus: (m.privacyStatus as 'shared' | 'private' | null | undefined) ?? null,
+        isAlive: m.isAlive,
+        deathDate: m.deathDate,
+      },
+      settings,
+      new Date(),
+    );
+    const decision = redactMember(minimal, visibilityDecision);
     if (decision === null) return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found' });
     // 'full' mengembalikan objek input apa adanya (referensi sama):
     // respons utuh memakai formatMember penuh sesuai kontrak.
     res.json(decision === minimal ? formatMember(m) : decision);
   } catch (e) {
     res.status(500).json({ code: 'MEMBER_ERROR', message: (e as Error).message });
+  }
+});
+
+// ─── v445 fase 2: pengaturan relasi-privasi per keluarga (API) ───
+
+// GET: seluruh anggota keluarga boleh membaca pengaturan efektif
+// (transparan; nilai sama yang diterapkan pada respons mereka sendiri).
+app.get('/api/v1/trees/:treeId/privacy-settings', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'view_tree');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const settings = await getActiveFamilyPrivacySettings(req.params.treeId);
+    res.json(settings);
+  } catch (e) {
+    res.status(500).json({ code: 'PRIVACY_SETTINGS_ERROR', message: (e as Error).message });
+  }
+});
+
+// PUT: hanya pemilik/admin keluarga (owner/editor, pola role check
+// relationships v412). Validasi di modul pure; nilai di luar rentang
+// ditolak 422 dengan kode error yang dipetakan i18n di UI. Upsert 1:1.
+// Tanpa cache: PUT berikutnya langsung terlihat oleh GET dan enforcement.
+app.put('/api/v1/trees/:treeId/privacy-settings', requireAuth, async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+  try {
+    const guard = await guardTreeAction(req.userId!, req.params.treeId, 'edit_member');
+    if (!guard.ok) return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+    const { value, errors } = normalizeFamilyPrivacySettings(req.body);
+    if (errors.length > 0) {
+      return res.status(422).json({ code: 'INVALID_PRIVACY_SETTINGS', errors });
+    }
+    if (Object.keys(value).length === 0) {
+      return res.status(422).json({ code: 'INVALID_PRIVACY_SETTINGS', errors: ['relationshipPrivacy.error.emptyBody'] });
+    }
+    const existing = await prisma.familyPrivacySettings.findUnique({ where: { treeId: req.params.treeId } });
+    const data = {
+      relationshipSteps: value.relationshipSteps,
+      relationshipMode: value.relationshipMode,
+      posthumousYears: value.posthumousYears,
+    };
+    const row = existing
+      ? await prisma.familyPrivacySettings.update({ where: { treeId: req.params.treeId }, data })
+      : await prisma.familyPrivacySettings.create({ data: { treeId: req.params.treeId, ...data } });
+    res.json({
+      relationshipSteps: row.relationshipSteps,
+      relationshipMode: row.relationshipMode,
+      posthumousYears: row.posthumousYears,
+    });
+  } catch (e) {
+    res.status(500).json({ code: 'PRIVACY_SETTINGS_ERROR', message: (e as Error).message });
   }
 });
 
