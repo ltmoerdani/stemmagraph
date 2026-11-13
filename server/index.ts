@@ -66,6 +66,10 @@ import { resolveViewerRelation } from '../src/lib/privacy/viewer-relation';
 import { isResnHidden, isResnLocked } from '../src/lib/privacy/resn-enforcement';
 import { applyMemberVisibility } from '../src/lib/privacy/member-redaction';
 import {
+  calculateRelationshipDistance,
+  DEFAULT_RELATIONSHIP_DISTANCE_LIMIT,
+} from '../src/lib/privacy/relationship-privacy';
+import {
   filterRelationshipsForViewer,
   type MemberVisibilityDecision,
 } from '../src/lib/privacy/relationshipVisibility';
@@ -3825,6 +3829,35 @@ app.get('/api/v1/members/:id', requireAuth, async (req: AuthenticatedRequest<{ i
       relationships: relationships.map((r) => ({ memberId: r.memberId, relatedId: r.relatedId, type: r.type })),
       targetMemberId: m.id,
     });
+    // v441 fase 1: jarak kekerabatan viewer terhadap member target.
+    // Viewer dicocokkan lewat email (pola viewer-relation): tepat satu
+    // anggota dengan email sama = viewerId; selain itu dianggap tak
+    // terhubung. Di luar N (termasuk non-connected) respons 200 body
+    // minimal nama-saja, struktur identik untuk semua kasus di luar
+    // batas (anti-enumerasi, tanpa faktor diskriminasi OWASP).
+    const viewerEmailNorm = (viewer?.email ?? '').trim().toLowerCase();
+    let viewerMemberId: string | null = null;
+    if (viewerEmailNorm) {
+      const matches = treeMembers.filter(
+        (tm) => (tm.email ?? '').trim().toLowerCase() === viewerEmailNorm,
+      );
+      if (matches.length === 1) viewerMemberId = matches[0].id;
+    }
+    const kinshipDistance = calculateRelationshipDistance(
+      relationships.map((r) => ({ memberId: r.memberId, relatedId: r.relatedId, type: r.type })),
+      viewerMemberId,
+      m.id,
+    );
+    if (kinshipDistance === null || kinshipDistance > DEFAULT_RELATIONSHIP_DISTANCE_LIMIT) {
+      return res.json({
+        id: m.id,
+        treeId: m.treeId,
+        name: m.name,
+        isAlive: m.isAlive,
+        generation: m.generation ?? null,
+        gender: m.gender ?? null,
+      });
+    }
     const minimal = {
       id: m.id,
       treeId: m.treeId,
