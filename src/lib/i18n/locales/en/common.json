@@ -818,5 +818,32 @@
     "deleteConfirm": "Delete",
     "deleting": "Deleting",
     "deleteSukses": "Comment deleted."
+  },
+  "relationshipPrivacy": {
+    "title": "Relationship privacy",
+    "description": "Control how far family relationship privacy reaches and how members are redacted outside that reach.",
+    "unavailable": "Settings need a server connection and are not available here.",
+    "loading": "Loading settings...",
+    "loadFailed": "Settings could not be loaded.",
+    "retry": "Retry",
+    "stepsLabel": "Relationship distance steps ({{min}}-{{max}})",
+    "stepsHelper": "Family members within this many relationship steps can see limited details of each other. Default: 2.",
+    "modeLabel": "Redaction outside the reach",
+    "modeRedactFull": "Hide all details",
+    "modeNameOnly": "Show name only",
+    "modeHelper": "Applies to members beyond the steps limit above. Default: hide all details.",
+    "posthumousLabel": "Years after death before full visibility ({{min}}-{{max}})",
+    "posthumousHelper": "A deceased member becomes fully visible this many years after the recorded death date. Empty death date keeps living rules. Default: 30.",
+    "save": "Save settings",
+    "saving": "Saving...",
+    "saved": "Settings saved.",
+    "error": {
+      "stepsOutOfRange": "Relationship distance steps must be a whole number between 1 and 12.",
+      "posthumousOutOfRange": "Years after death must be a whole number between 0 and 100.",
+      "invalidMode": "Choose a valid redaction mode.",
+      "invalidNumber": "Enter a whole number.",
+      "emptyBody": "No changes to save.",
+      "saveFailed": "Settings could not be saved. Try again."
+    }
   }
 }

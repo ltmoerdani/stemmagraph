@@ -13,6 +13,7 @@ import { DedupReviewMount } from '../FamilyTree/DedupReviewMount';
 import { TemplatePicker } from '../Onboarding/TemplatePicker';
 import type { SeedTemplate } from '../../lib/onboarding/seedTemplates';
 import { DigestSettingsPanel } from '../DigestSettingsPanel';
+import { RelationshipPrivacyPanel } from './RelationshipPrivacyPanel';
 import { useAuthStore } from '../../store/authStore';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { navigate } from '../../utils/routing';
@@ -510,6 +511,15 @@ export const Dashboard: React.FC = () => {
 
           {/* Weekly digest settings: opt-in switch plus last week preview (P2-7). */}
           <DigestSettingsPanel />
+
+          {/* v445 fase 2: pengaturan relasi-privasi per keluarga, hanya
+              render untuk tree dengan role owner/editor (guard juga di
+              dalam panel, test UI non-admin menguji bentuk ini). */}
+          {familyTrees
+            .filter((tree) => tree.role === 'owner' || tree.role === 'editor')
+            .map((tree) => (
+              <RelationshipPrivacyPanel key={tree.id} treeId={tree.id} treeRole={tree.role} />
+            ))}
         </div>
       </main>
 

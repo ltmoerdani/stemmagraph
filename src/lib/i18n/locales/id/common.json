@@ -818,5 +818,32 @@
     "deleteConfirm": "Hapus",
     "deleting": "Menghapus",
     "deleteSukses": "Komentar telah dihapus."
+  },
+  "relationshipPrivacy": {
+    "title": "Privasi relasi keluarga",
+    "description": "Atur seberapa jauh privasi relasi keluarga berlaku dan bagaimana anggota di luar jangkauan disajikan.",
+    "unavailable": "Pengaturan butuh koneksi server dan tidak tersedia di sini.",
+    "loading": "Memuat pengaturan...",
+    "loadFailed": "Pengaturan gagal dimuat.",
+    "retry": "Coba lagi",
+    "stepsLabel": "Jarak relasi dalam langkah ({{min}}-{{max}})",
+    "stepsHelper": "Anggota dalam rentang langkah ini dapat melihat detail terbatas satu sama lain. Bawaan: 2.",
+    "modeLabel": "Redaksi di luar jangkauan",
+    "modeRedactFull": "Sembunyikan semua detail",
+    "modeNameOnly": "Tampilkan nama saja",
+    "modeHelper": "Berlaku untuk anggota di luar batas langkah di atas. Bawaan: sembunyikan semua detail.",
+    "posthumousLabel": "Tahun pasca-kematian sebelum terbaca penuh ({{min}}-{{max}})",
+    "posthumousHelper": "Anggota meninggal terbaca penuh setelah sekian tahun sejak tanggal kematian tercatat. Tanggal kematian kosong mengikuti aturan living-rule. Bawaan: 30.",
+    "save": "Simpan pengaturan",
+    "saving": "Menyimpan...",
+    "saved": "Pengaturan tersimpan.",
+    "error": {
+      "stepsOutOfRange": "Jarak relasi harus bilangan bulat 1 sampai 12.",
+      "posthumousOutOfRange": "Tahun pasca-kematian harus bilangan bulat 0 sampai 100.",
+      "invalidMode": "Pilih mode redaksi yang valid.",
+      "invalidNumber": "Isi bilangan bulat.",
+      "emptyBody": "Tidak ada perubahan untuk disimpan.",
+      "saveFailed": "Pengaturan gagal disimpan. Coba lagi."
+    }
   }
 }
