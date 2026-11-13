@@ -10,7 +10,7 @@ interface MemberCardProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-export const MemberCard: React.FC<MemberCardProps> = ({ 
+const MemberCardImpl: React.FC<MemberCardProps> = ({ 
   member, 
   position, 
   isSelected = false,
@@ -70,7 +70,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
 
   const getBorderColor = () => {
     if (!member.isAlive) return 'border-gray-400';
-    if (isSelected || selectedMember?.id === member.id) {
+    if (isSelected || selectedMemberId === member.id) {
       return member.gender === 'male' ? 'border-blue-500' : 'border-pink-500';
     }
     return member.gender === 'male' ? 'border-blue-200' : 'border-pink-200';
@@ -78,7 +78,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
 
   const getBackgroundColor = () => {
     if (!member.isAlive) return 'bg-gray-50';
-    if (isSelected || selectedMember?.id === member.id) {
+    if (isSelected || selectedMemberId === member.id) {
       return member.gender === 'male' ? 'bg-blue-50' : 'bg-pink-50';
     }
     return 'bg-white';
@@ -98,7 +98,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
     return `Family member ${member.name}, ${calculateAge()} years, ${statusText}, generation ${member.generation}${professionText}`;
   };
 
-  const currentlySelected = selectedMember?.id === member.id;
+  const currentlySelected = selectedMemberId === member.id;
 
   return (
     <div
@@ -221,3 +221,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
     </div>
   );
 };
+// v446 M-01: kartu dibungkus memo agar perubahan satu kartu tidak
+// memicu re-render seluruh kartu di canvas.
+export const MemberCard = memo(MemberCardImpl);
+MemberCard.displayName = 'MemberCard';

@@ -23,7 +23,9 @@ interface FamilyTreeControlsProps {
   onGridToggle?: (show: boolean) => void;
 }
 
-export const FamilyTreeControls: React.FC<FamilyTreeControlsProps> = ({
+// v446 P-05: panel kontrol dibungkus memo agar tidak ikut re-render tiap
+// frame drag pada komponen pemilik state.
+const FamilyTreeControlsImpl: React.FC<FamilyTreeControlsProps> = ({
   onLayoutChange,
   onAutoLayout,
   onFitView,
@@ -169,3 +171,6 @@ export const FamilyTreeControls: React.FC<FamilyTreeControlsProps> = ({
     </div>
   );
 };
+
+export const FamilyTreeControls = memo(FamilyTreeControlsImpl);
+FamilyTreeControls.displayName = 'FamilyTreeControls';

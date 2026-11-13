@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import {
   Download,
   FileArchive,
@@ -720,3 +720,8 @@ export const ExportControls: React.FC = () => {
     </div>
   );
 };
+
+// v446 P-05: panel ekspor dibungkus memo agar tidak ikut re-render tiap
+// frame drag pada komponen pemilik state.
+export const ExportControls = memo(ExportControlsImpl);
+ExportControls.displayName = 'ExportControls';
