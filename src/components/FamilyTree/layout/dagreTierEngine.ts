@@ -1,6 +1,20 @@
+/**
+ * DagreTierEngine (S-09 AC1, refactor v458 fase 1).
+ *
+ * Isi asli file ini adalah PINDAHAN logika layout dari
+ * ReactFlowFamilyTree.tsx. v458 fase 1 memindahkan inti perhitungan ke
+ * modul murni (tierPlan.ts dan dagrePlan.ts) yang dipakai bersama jalur
+ * Web Worker (layoutService.ts). Konstanta, angka spacing, dan urutan
+ * langkah dipertahankan apa adanya supaya hasil render identik dengan
+ * sebelum refactor.
+ *
+ * Engine ini tetap sinkron (kontrak LayoutEngine, dipakai test dan
+ * pemanggil non-komponen); komponen memakai jalur async computeLayoutAsync
+ * (layoutApply.ts) yang menjalankan compute yang sama via worker.
+ */
 import { Position, type Edge } from '@xyflow/react';
-import dagre from 'dagre';
 import type { FamilyMemberFlowNode } from '../nodes/FamilyMemberNode';
+import { computeDagrePlan } from './dagrePlan';
 import { calculateTierLayout, type TierLayout } from './tierLayout';
 import type {
   LayoutDirection,
@@ -11,86 +25,40 @@ import type {
 } from './types';
 
 /**
- * DagreTierEngine (S-09 AC1).
- *
- * Isi file ini adalah PINDAHAN logika layout dari ReactFlowFamilyTree.tsx
- * (algoritma dagre + konfigurasi snap grid generasi) dan bukan tulis-ulang:
- * konstanta, angka spacing, dan urutan langkah dipertahankan apa adanya
- * supaya hasil render identik dengan sebelum abstraksi.
- */
-
-// Dagre layout configuration (dipindah dari ReactFlowFamilyTree.tsx)
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-const nodeWidth = 200;
-const nodeHeight = 140; // Increased for better bracket spacing
-
-/**
  * Snap grid generasi: TB rata pada grid agar kartu sejajar baris generasi,
- * LR bebas. Dipindah dari prop ReactFlow di ReactFlowFamilyTree.tsx.
+ * LR bebas. Dipertahankan dari kontrak lama.
  */
-const getSnapGrid = (direction: LayoutDirection): LayoutSnapGrid =>
-  direction === 'TB' ? { snapToGrid: true, snapGrid: [25, 50] } : { snapToGrid: false, snapGrid: [25, 50] };
+export const getSnapGrid = (direction: LayoutDirection): LayoutSnapGrid =>
+  direction === 'TB'
+    ? { snapToGrid: true, snapGrid: [25, 50] }
+    : { snapToGrid: false, snapGrid: [25, 50] };
 
 /**
- * Converts family members to React Flow nodes with proper positioning
- * (dipindah apa adanya dari ReactFlowFamilyTree.tsx).
+ * Layout dagre murni (LR): posisi terpusat dan arah handle kiri/kanan.
+ * Dipindah apa adanya dari getLayoutedElements lama; inti compute ada
+ * di dagrePlan.ts (modul murni worker-safe).
  */
 const getLayoutedElements = (
   nodes: FamilyMemberFlowNode[],
-  edges: Edge[],
-  direction = 'TB'
+  edges: Edge[]
 ): { nodes: FamilyMemberFlowNode[]; edges: Edge[] } => {
-  const isHorizontal = direction === 'LR';
-
-  // Configure dagre for bracket-style layout with professional spacing
-  dagreGraph.setGraph({
-    rankdir: direction,
-    nodesep: 150, // Enhanced professional spacing between nodes
-    ranksep: 280, // Optimal spacing between generations for brackets
-    marginx: 80,
-    marginy: 80,
-  });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
+  const plan = computeDagrePlan(
+    nodes.map((node) => ({ id: node.id })),
+    edges.map((edge) => ({ source: edge.source, target: edge.target })),
+    'LR'
+  );
 
   const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    const newNode = {
+    const placed = plan.positions[node.id];
+    return {
       ...node,
-      targetPosition: isHorizontal ? Position.Left : Position.Top,
-      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
-      position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      },
+      targetPosition: Position.Left,
+      sourcePosition: Position.Right,
+      position: placed ? { x: placed.x, y: placed.y } : node.position,
     };
-
-    return newNode;
   });
 
   return { nodes: layoutedNodes, edges };
-};
-
-/**
- * Converts family members to React Flow nodes with tier-based positioning
- * (dipindah apa adanya dari ReactFlowFamilyTree.tsx; isi fungsi tetap di
- * layout/tierLayout.ts hasil pemindahan dari utils/tierLayoutManager.ts).
- */
-const getTierLayoutedElements = (
-  nodes: FamilyMemberFlowNode[]
-): { nodes: FamilyMemberFlowNode[]; edges: Edge[]; tiers: TierLayout[] } => {
-  const { layoutedNodes, tiers } = calculateTierLayout(nodes);
-  return { nodes: layoutedNodes, edges: [], tiers };
 };
 
 const nowMs = (): number =>
@@ -100,7 +68,6 @@ const nowMs = (): number =>
 
 /**
  * Engine gabungan: TB memakai tier layout generasi, LR memakai dagre.
- * Satu-satunya tempat di aplikasi yang boleh mengimpor dagre.
  */
 export class DagreTierEngine implements LayoutEngine {
   readonly name = 'dagre-tier';
@@ -117,19 +84,22 @@ export class DagreTierEngine implements LayoutEngine {
     let layoutedEdges: Edge[];
     let tiers: TierLayout[];
     if (direction === 'TB') {
-      const tiered = getTierLayoutedElements(nodes);
-      layoutedNodes = tiered.nodes;
-      layoutedEdges = tiered.edges;
+      const tiered = calculateTierLayout(nodes);
+      layoutedNodes = tiered.layoutedNodes;
+      layoutedEdges = edges;
       tiers = tiered.tiers;
     } else {
-      const dagred = getLayoutedElements(nodes, edges, direction);
+      const dagred = getLayoutedElements(nodes, edges);
       layoutedNodes = dagred.nodes;
       layoutedEdges = dagred.edges;
       tiers = [];
     }
 
-    const positions = new Map<string, { x: number; y: number }>(
-      layoutedNodes.map((node) => [node.id, { x: node.position.x, y: node.position.y }])
+    const positions = new Map(
+      layoutedNodes.map((node) => [
+        node.id,
+        { x: node.position.x, y: node.position.y },
+      ])
     );
 
     return {
@@ -152,5 +122,3 @@ export class DagreTierEngine implements LayoutEngine {
 
 /** Instance tunggal, dipakai komponen via interface LayoutEngine. */
 export const dagreTierEngine: LayoutEngine = new DagreTierEngine();
-
-export { getSnapGrid };

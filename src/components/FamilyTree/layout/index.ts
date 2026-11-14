@@ -18,3 +18,8 @@ export {
   constrainNodeMovement,
   type TierLayout,
 } from './tierLayout';
+export {
+  computeLayoutAsync,
+  type AsyncLayoutResult,
+} from './layoutApply';
+export { layoutService } from './layoutService';

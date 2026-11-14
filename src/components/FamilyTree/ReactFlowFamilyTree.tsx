@@ -30,7 +30,7 @@ import { ImportControls } from './controls/ImportControls';
 import { FamilyTreeControls } from './controls/FamilyTreeControls';
 import { MemberEditModal } from './modals/MemberEditModal';
 import { constrainNodeMovement } from './layout/tierLayout';
-import { dagreTierEngine, getSnapGrid, type TierLayout } from './layout';
+import { computeLayoutAsync, getSnapGrid, type TierLayout } from './layout';
 import {
   DEFAULT_GENERATION_LIMIT_STATE,
   applyGenerationLimit,
@@ -58,9 +58,9 @@ const edgeTypes: EdgeTypes = {
   sibling: SiblingEdge,
 };
 
-// Layout engine diinjeksi via interface (S-09 AC1): komponen tidak
-// mengimpor dagre langsung, semua compute ada di ./layout.
-const layoutEngine = dagreTierEngine;
+// Layout diinjeksi via interface (S-09 AC1): komponen tidak mengimpor
+// dagre langsung. v458 fase 1: compute berjalan via computeLayoutAsync
+// (Web Worker dengan fallback main-thread otomatis, lihat layout/).
 
 interface ReactFlowFamilyTreeProps {
   members: FamilyMember[];
@@ -398,20 +398,27 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
     };
   }, [visibleMembers, generationLimit, buildMemberNode]);
 
-  // Apply tier layout when members change
+  // Apply layout when members change.
+  // v458 fase 1: layout async via computeLayoutAsync (Web Worker dengan
+  // fallback main-thread otomatis). Guard cancelled mencegah setNodes
+  // setelah unmount atau saat effect berikutnya sudah berjalan.
   useEffect(() => {
+    let cancelled = false;
     // Semua algoritma layout (tier TB / dagre LR) berada di engine.
-    const result = layoutEngine.layout(initialNodes, initialEdges, {
+    computeLayoutAsync(initialNodes, initialEdges, {
       direction: layoutDirection,
+    }).then((result) => {
+      if (cancelled) return;
+      setNodes(result.nodes);
+      setEdges(layoutDirection === 'TB' ? initialEdges : result.edges);
+      setTiers(result.tiers);
+      setTimeout(() => {
+        fitView({ padding: 0.2 });
+      }, 100);
     });
-
-    setNodes(result.nodes);
-    setEdges(layoutDirection === 'TB' ? initialEdges : result.edges);
-    setTiers(result.tiers);
-
-    setTimeout(() => {
-      fitView({ padding: 0.2 });
-    }, 100);
+    return () => {
+      cancelled = true;
+    };
   }, [initialNodes, initialEdges, layoutDirection, setNodes, setEdges, fitView]);
 
   // S-14 U3: anggota baru wajib terlihat pasca simpan. Bila id berada di
@@ -478,17 +485,17 @@ const ReactFlowFamilyTreeInner: React.FC<ReactFlowFamilyTreeProps> = ({
   }, []);
 
   const handleAutoLayout = useCallback(() => {
-    const result = layoutEngine.layout(getNodes(), getEdges(), {
+    // v458 fase 1: layout async via computeLayoutAsync (worker + fallback).
+    void computeLayoutAsync(getNodes(), getEdges(), {
       direction: layoutDirection,
+    }).then((result) => {
+      setNodes(result.nodes);
+      setEdges(layoutDirection === 'TB' ? getEdges() : result.edges);
+      setTiers(result.tiers);
+      setTimeout(() => {
+        fitView({ padding: 0.2 });
+      }, 100);
     });
-
-    setNodes(result.nodes);
-    setEdges(layoutDirection === 'TB' ? getEdges() : result.edges);
-    setTiers(result.tiers);
-
-    setTimeout(() => {
-      fitView({ padding: 0.2 });
-    }, 100);
   }, [getNodes, getEdges, layoutDirection, setNodes, setEdges, fitView]);
 
   const handleFitView = useCallback(() => {

@@ -29,8 +29,15 @@ createRoot(mount).render(<App />);
 window.setTimeout(() => {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const w = window as unknown as { __perfReady?: boolean; __perfLoadMs?: number };
+      const w = window as unknown as {
+        __perfReady?: boolean;
+        __perfLoadMs?: number;
+        __layoutWorkerActive?: boolean;
+      };
       w.__perfLoadMs = performance.now() - t0;
+      // v458: probe jalur compute; true berarti worker hidup, false
+      // berarti fallback main-thread (worker tidak tersedia atau gagal).
+      w.__layoutWorkerActive = layoutService.respondedViaWorker;
       w.__perfReady = true;
     });
   });
