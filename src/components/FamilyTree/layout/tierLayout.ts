@@ -1,6 +1,6 @@
 import type { FamilyMemberFlowNode } from '../nodes/FamilyMemberNode';
-import type { FamilyMember } from '../../../types/family';
-import { compareNames } from '../../../utils/collator';
+import { computeTierPlan } from './tierPlan';
+import { applyTierPlan, extractTierInput } from './layoutApply';
 
 export interface TierLayout {
   generation: number;
@@ -9,120 +9,23 @@ export interface TierLayout {
 }
 
 /**
- * Calculate tier-based layout for family tree
- * Each generation has fixed Y position, nodes can only move horizontally
+ * Calculate tier-based layout for family tree.
+ * Each generation has fixed Y position, nodes can only move horizontally.
+ *
+ * v458 fase 1: inti perhitungan dipindah ke tierPlan.computeTierPlan
+ * (modul murni yang dipakai bersama jalur Web Worker), fungsi ini tinggal
+ * adaptasi antara node React Flow penuh dan payload plain. Konstanta
+ * spacing dan urutan sortir hidup di tierPlan.ts (satu sumber kebenaran).
+ *
  * @param nodes - Array of family member nodes to layout
  * @returns Object containing layouted nodes and tier information
  */
 export const calculateTierLayout = (
   nodes: FamilyMemberFlowNode[]
 ): { layoutedNodes: FamilyMemberFlowNode[]; tiers: TierLayout[] } => {
-  const TIER_HEIGHT = 350; // Increased for better bracket spacing
-  const NODE_WIDTH = 280; // Wider spacing for cleaner look
-  const HORIZONTAL_SPACING = 120; // More space between nodes
-  const START_Y = 200; // Better starting position
-
-  // Group nodes by generation
-  const generationMap = new Map<number, FamilyMemberFlowNode[]>();
-  
-  nodes.forEach(node => {
-    const member = node.data.member;
-    const generation = member?.generation ?? 0;
-    
-    if (!generationMap.has(generation)) {
-      generationMap.set(generation, []);
-    }
-    generationMap.get(generation)!.push(node);
-  });
-
-  // Sort generations
-  const sortedGenerations = Array.from(generationMap.keys()).sort((a, b) => a - b);
-  
-  const tiers: TierLayout[] = [];
-  const layoutedNodes: FamilyMemberFlowNode[] = [];
-
-  sortedGenerations.forEach((generation, tierIndex) => {
-    const nodesInGeneration = generationMap.get(generation)!;
-    const y = START_Y + (tierIndex * TIER_HEIGHT);
-    
-    // Enhanced sorting: place spouses directly adjacent and group families
-    const sortedNodes = [...nodesInGeneration].sort((a, b) => {
-      const memberA = a.data.member;
-      const memberB = b.data.member;
-      
-      // Group family units together
-      const familyGroupA = getFamilyGroupId(memberA);
-      const familyGroupB = getFamilyGroupId(memberB);
-      
-      if (familyGroupA !== familyGroupB) {
-        return compareNames(familyGroupA, familyGroupB);
-      }
-      
-      // Within same family group, spouses should be adjacent
-      if (memberA.spouseId === memberB.id) return -1;
-      if (memberB.spouseId === memberA.id) return 1;
-      
-      return compareNames(memberA.name, memberB.name);
-    });
-    
-    // Calculate optimal spacing for family groups
-    const totalWidth = sortedNodes.length * NODE_WIDTH + 
-                     (sortedNodes.length - 1) * HORIZONTAL_SPACING;
-    const startX = -totalWidth / 2;
-
-    // Position nodes with enhanced family grouping
-    sortedNodes.forEach((node, index) => {
-      const x = startX + (index * (NODE_WIDTH + HORIZONTAL_SPACING));
-
-      // S-09 AC4: objek data lama dipakai ulang bila stamp tier tidak
-      // berubah, supaya referensi node stabil untuk bagian tak berubah.
-      const familyGroup = getFamilyGroupId(node.data.member);
-      const dataUnchanged =
-        node.data.tier === tierIndex &&
-        node.data.generationY === y &&
-        node.data.familyGroup === familyGroup;
-
-      layoutedNodes.push({
-        ...node,
-        position: { x, y },
-        data: dataUnchanged
-      ? node.data
-      : {
-          ...node.data,
-          tier: tierIndex,
-          generationY: y,
-          familyGroup,
-        }
-      });
-    });
-
-    tiers.push({
-      generation,
-      y,
-      members: sortedNodes.map(n => n.id)
-    });
-  });
-
-  return { layoutedNodes, tiers };
-};
-
-// Helper function to determine family group for better organization
-const getFamilyGroupId = (member: FamilyMember | null): string => {
-  if (!member) return 'unknown';
-  
-  // Use parent IDs to group siblings together
-  if (member.parentIds && member.parentIds.length > 0) {
-    const sortedParentIds = [...member.parentIds].sort((a: string, b: string) => a.localeCompare(b));
-    return sortedParentIds.join('-');
-  }
-  
-  // Use spouse relationship for married couples
-  if (member.spouseId) {
-    const spouseGroup = [member.id, member.spouseId].sort((a: string, b: string) => a.localeCompare(b));
-    return spouseGroup.join('-spouse');
-  }
-  
-  return member.id;
+  const plan = computeTierPlan(extractTierInput(nodes));
+  const layoutedNodes = applyTierPlan(nodes, plan);
+  return { layoutedNodes, tiers: plan.tiers };
 };
 
 /**
