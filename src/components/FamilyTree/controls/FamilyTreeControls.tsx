@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { BackgroundVariant } from '@xyflow/react';
 import { 
   Maximize, 

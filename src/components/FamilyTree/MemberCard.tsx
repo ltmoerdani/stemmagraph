@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { FamilyMember } from '../../types/family';
 import { useFamilyStore } from '../../store/familyStore';
 
