@@ -78,7 +78,7 @@ export const FamilyMemberNode = memo(({ data, selected }: NodeProps<FamilyMember
 
   // Helper function to get card border class
   const getCardBorderClass = () => {
-    const baseClasses = 'w-48 bg-white rounded-lg shadow-lg border-2 transition-all duration-200 cursor-pointer group transform hover:-translate-y-1';
+    const baseClasses = 'w-48 bg-white rounded-lg shadow-lg border-2 transition-[border-color,box-shadow,transform] duration-200 cursor-pointer group transform hover:-translate-y-1';
     const selectedClass = selected ? 'border-blue-500 shadow-xl' : 'border-gray-200 hover:border-gray-300';
     const genderClass = member.gender === 'male' ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-pink-500';
     const aliveClass = !member.isAlive ? 'opacity-75 bg-gray-50' : '';
