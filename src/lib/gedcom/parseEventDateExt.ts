@@ -55,6 +55,8 @@ export interface ParsedEventDateCal {
   originalDateString: string
   /** Tag kalender terkapitalisasi: resmi atau extTag tanpa @#D..@. */
   calendar: string
+  /** Bentuk prefix verbatim untuk tulis balik identik (mis. "@#DJULIAN@"). */
+  prefixVerbatim: string
   /** true bila kalender bukan anggota daftar resmi spec (extTag). */
   unknownCalendar: boolean
   /** Epoch verbatim bila dinyatakan (mis. "BCE"), undefined bila tidak. */
@@ -204,10 +206,12 @@ function matchCalendarPrefix(
   }
 
   const inner = rest === '' ? null : parseSide(rest)
+  const prefixVerbatim = atForm !== null ? `@#D${tag}@` : (tag ?? upper)
   const result: ParsedEventDateCal = {
     dateKind: 'CALENDAR',
     originalDateString: original,
     calendar: normalizedTag,
+    prefixVerbatim,
     unknownCalendar: issues.length > 0,
     body: rest,
     ...(epoch !== undefined ? { epoch } : {}),
