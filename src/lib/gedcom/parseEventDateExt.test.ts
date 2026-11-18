@@ -2,7 +2,17 @@
 // dan jaminan delegasi bahwa bentuk yang sudah ditangani parseEventDate
 // tidak berubah perilaku.
 import { describe, it, expect } from 'vitest'
-import { parseEventDateExt } from './parseEventDateExt'
+import {
+  parseEventDateExt,
+  dateSubstructureViolation,
+  type ParsedEventDateCal,
+} from './parseEventDateExt'
+import type { ParsedEventDateExt as Ext } from './parseEventDateExt'
+
+/** Type guard kecil untuk test CALENDAR. */
+function dateKindIsCal(r: Ext): r is ParsedEventDateCal {
+  return r.dateKind === 'CALENDAR'
+}
 
 describe('parseEventDateExt: periode FROM/TO', () => {
   it('FROM x TO y sah menghasilkan PERIOD kedua sisi', () => {
@@ -112,5 +122,85 @@ describe('parseEventDateExt: delegasi ke parseEventDate', () => {
   it('input sampah jatuh ABOUT tanpa lempar', () => {
     const r = parseEventDateExt('tidak jelas')
     expect(r.dateKind).toBe('ABOUT')
+  })
+})
+
+describe('parseEventDateExt: kalender, epoch, extTag (v459b AC3)', () => {
+  it('JULIAN dengan escape @#D@ terdeteksi, badan verbatim', () => {
+    const r = parseEventDateExt('@#DJULIAN@ 12 JAN 1900')
+    expect(r.dateKind).toBe('CALENDAR')
+    if (r.dateKind === 'CALENDAR') {
+      expect(r.calendar).toBe('JULIAN')
+      expect(r.unknownCalendar).toBe(false)
+      expect(r.epoch).toBeUndefined()
+      expect(r.body).toBe('12 JAN 1900')
+      expect(r.components).toEqual({ year: 1900, month: 1, day: 12 })
+    }
+  })
+
+  it('HEBREW bentuk polos, badan dipertahankan tanpa pemetaan bulan', () => {
+    const r = parseEventDateExt('HEBREW TSH 5690')
+    expect(r.dateKind).toBe('CALENDAR')
+    if (dateKindIsCal(r)) {
+      expect(r.calendar).toBe('HEBREW')
+      expect(r.body).toBe('TSH 5690')
+      expect(r.components).toBeUndefined()
+      expect(r.issues).toBeUndefined()
+    }
+  })
+
+  it('epoch BCE dipisahkan dari badan', () => {
+    const r = parseEventDateExt('@#DJULIAN@ 12 JAN 100 BCE')
+    expect(r.dateKind).toBe('CALENDAR')
+    if (r.dateKind === 'CALENDAR') {
+      expect(r.calendar).toBe('JULIAN')
+      expect(r.epoch).toBe('BCE')
+      expect(r.body).toBe('12 JAN 100')
+      expect(r.components).toEqual({ year: 100, month: 1, day: 12 })
+    }
+  })
+
+  it('kalender extTag underscore ditandai UNKNOWN_CALENDAR tanpa lempar', () => {
+    const r = parseEventDateExt('_MYCAL 1900')
+    expect(r.dateKind).toBe('CALENDAR')
+    if (dateKindIsCal(r)) {
+      expect(r.calendar).toBe('_MYCAL')
+      expect(r.unknownCalendar).toBe(true)
+      expect(r.issues).toContain('UNKNOWN_CALENDAR')
+    }
+  })
+
+  it('escape kalender tak resmi @#DXTAG@ juga UNKNOWN_CALENDAR', () => {
+    const r = parseEventDateExt('@#DXTAG@ 1900')
+    expect(r.dateKind).toBe('CALENDAR')
+    if (dateKindIsCal(r)) {
+      expect(r.calendar).toBe('XTAG')
+      expect(r.unknownCalendar).toBe(true)
+    }
+  })
+
+  it('kata kunci lain tidak dianggap kalender (regresi FROM/TO/INT)', () => {
+    expect(parseEventDateExt('FROM 1900 TO 1910').dateKind).toBe('PERIOD')
+    expect(parseEventDateExt('FROM 1900').dateKind).toBe('PERIOD')
+    expect(parseEventDateExt('TO 1910').dateKind).toBe('PERIOD')
+    expect(parseEventDateExt('INT suatu saat').dateKind).toBe('PHRASE')
+    expect(parseEventDateExt('12 JAN 1900').dateKind).toBe('EXACT')
+  })
+})
+
+describe('dateSubstructureViolation: TIME pada DatePeriod ditolak (v459b AC4)', () => {
+  it('TIME pada PERIOD menghasilkan pelanggaran terstruktur', () => {
+    const parsed = parseEventDateExt('FROM 1900 TO 1910')
+    expect(dateSubstructureViolation(parsed, true)).toBe('TIME_ON_PERIOD')
+  })
+
+  it('TIME pada EXACT sah (DateExact boleh TIME)', () => {
+    const parsed = parseEventDateExt('12 JAN 1900')
+    expect(dateSubstructureViolation(parsed, true)).toBeNull()
+  })
+
+  it('tanpa TIME tidak ada pelanggaran apa pun', () => {
+    const parsed = parseEventDateExt('FROM 1900 TO 1910')
+    expect(dateSubstructureViolation(parsed, false)).toBeNull()
   })
 })
