@@ -28,9 +28,9 @@
 // (ADR 0011): yang berubah hanya perwakilan, bukan makna.
 
 import type { ImportPlan, PlannedMember, PlannedRelationship } from './importPlan'
-import { formatGedcomDateValue } from './formatGedcomDate'
+import { formatGedcomDateValueExt } from './formatGedcomDate'
 import { resolveInitialPrivacyStatus } from './living-privacy'
-import type { ParsedEventDate } from './parseEventDate'
+import type { ParsedEventDateExt } from './parseEventDateExt'
 
 /** Masukan createMember sesuai kontrak io (S1F6-B). */
 export interface CreateMemberInput {
@@ -69,10 +69,10 @@ export interface ImportApplyIO {
   ) => Promise<string | void>
 }
 
-/** Format ParsedEventDate ke string; fallback teks asli bila formatter null. */
-function dateString(parsed: ParsedEventDate | undefined): string | undefined {
+/** Format ParsedEventDateExt ke string; fallback teks asli bila formatter null. */
+function dateString(parsed: ParsedEventDateExt | undefined): string | undefined {
   if (parsed === undefined) return undefined
-  const formatted = formatGedcomDateValue(parsed)
+  const formatted = formatGedcomDateValueExt(parsed)
   return formatted !== null ? formatted : parsed.originalDateString
 }
 

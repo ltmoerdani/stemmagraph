@@ -26,6 +26,7 @@ import type {
   EventDateComponents,
   ParsedEventDate,
 } from './parseEventDate'
+import type { ParsedEventDateExt } from './parseEventDateExt'
 
 /**
  * Nama bulan singkat DateExact GEDCOM 7 (tiga huruf kapital Inggris),
@@ -101,5 +102,50 @@ export function formatGedcomDateValue(parsed: ParsedEventDate): string | null {
 
     default:
       return null
+  }
+}
+
+/**
+ * Format satu sisi periode (FROM/TO) dari komponen. Sisi null berarti
+ * sisi itu tidak ada dan kembali undefined, bukan string kosong.
+ */
+function formatPeriodSide(c: EventDateComponents | null): string | undefined {
+  if (c === null) return undefined
+  return formatComponents(c)
+}
+
+/**
+ * Format hasil urai diperluas (ParsedEventDateExt) ke payload DateValue
+ * GEDCOM 7 (v459b). Prinsip sama dengan formatGedcomDateValue: presisi
+ * sumber dipertahankan, formatter tidak pernah menambah komponen.
+ * Pemetaan tambahan:
+ *   PERIOD   : "FROM x [TO y]" | "TO y" (sisi kosong tak ditulis)
+ *   PHRASE   : null di level ini (substructure PHRASE tugas pemanggil)
+ *   CALENDAR : prefix + epoch + badan verbatim, bentuk semula.
+ * Hasil parseEventDate lama didelegasikan ke formatGedcomDateValue.
+ * Tidak pernah melempar; bentuk tak sah kembali null.
+ */
+export function formatGedcomDateValueExt(parsed: ParsedEventDateExt): string | null {
+  if (parsed === null || typeof parsed !== 'object') return null
+
+  switch (parsed.dateKind) {
+    case 'PERIOD': {
+      const from = formatPeriodSide(parsed.from)
+      const to = formatPeriodSide(parsed.to)
+      if (from !== undefined && to !== undefined) return `FROM ${from} TO ${to}`
+      if (from !== undefined) return `FROM ${from}`
+      if (to !== undefined) return `TO ${to}`
+      return null
+    }
+
+    case 'CALENDAR': {
+      // Badan dan prefix dipertahankan verbatim (termasuk bulan HEBREW
+      // yang tidak dipetakan di fase ini) agar round-trip identik.
+      const epoch = parsed.epoch !== undefined ? ` ${parsed.epoch}` : ''
+      return `${parsed.prefixVerbatim} ${parsed.body}${epoch}`
+    }
+
+    default:
+      return formatGedcomDateValue(parsed)
   }
 }

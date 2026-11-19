@@ -30,8 +30,8 @@
 //     undefined; dates go through parseEventDate which also never throws.
 
 import { GEDCStruct, g7ConfGEDC } from './vendor/gedcstruct.js'
-import { parseEventDate } from './parseEventDate'
-import type { ParsedEventDate } from './parseEventDate'
+import { parseEventDateExt, dateSubstructureViolation } from './parseEventDateExt'
+import type { ParsedEventDateExt } from './parseEventDateExt'
 import { placePayload } from './placePayload'
 import { parseNoLines } from './no-assertion'
 import type { ParsedNoAssertion } from './no-assertion'
@@ -51,11 +51,11 @@ export interface ImportedFamily {
   /** CHIL pointer payloads in file order, no dedup, no fabrication. */
   children: string[]
   /** MARR.DATE through parseEventDate, or undefined when absent/empty. */
-  marriageDate: ParsedEventDate | undefined
+  marriageDate: ParsedEventDateExt | undefined
   /** MARR.PLAC through placePayload, or undefined when absent/empty. */
   marriagePlace: string | undefined
   /** DIV.DATE through parseEventDate, or undefined when absent/empty. */
-  divorceDate: ParsedEventDate | undefined
+  divorceDate: ParsedEventDateExt | undefined
   /** RESN verbatim utuh apa adanya (bisa multi-nilai seperti 'CONFIDENTIAL, LOCKED'), undefined bila FAM nihil RESN. */
   resn?: string
   /** NO assertions level record FAM via parseNoLines (payload mentah diteruskan, tanpa normalisasi), kosong bila record nihil NO. */
@@ -108,10 +108,22 @@ function pointerOf(struct: GEDCStruct | undefined): string | undefined {
   return p instanceof GEDCStruct ? (p.xref_id ?? undefined) : undefined
 }
 
-/** Event date of an MARR/DIV structure through parseEventDate (never throws). */
-function dateOf(event: GEDCStruct | undefined): ParsedEventDate | undefined {
-  const raw = payloadOf(subWithTag(event, 'DATE'))
-  return raw === undefined ? undefined : parseEventDate(raw)
+/**
+ * Event date of an MARR/DIV structure (v459b): through parseEventDateExt
+ * (never throws), menangkap periode FROM/TO, phrase INT, dan kalender.
+ * Substructure TIME pada DatePeriod ditolak fail-closed sesuai spec
+ * type-Date: hasil dateOf menjadi undefined, tanpa crash.
+ */
+function dateOf(event: GEDCStruct | undefined): ParsedEventDateExt | undefined {
+  const dateStruct = subWithTag(event, 'DATE')
+  const raw = payloadOf(dateStruct)
+  if (raw === undefined) return undefined
+  const hasTime = dateStruct.sub.some((s) => s.tag === 'TIME')
+  const parsed = parseEventDateExt(raw)
+  if (dateSubstructureViolation(parsed, hasTime) !== null) {
+    return undefined
+  }
+  return parsed
 }
 
 /** Place payload of an MARR structure through placePayload (sanitized). */
