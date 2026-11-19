@@ -2,7 +2,18 @@ import React, { memo, useRef, useState } from 'react';
 import { Upload, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFamilyStore } from '../../../store/familyStore';
-import { getAdapter, getCitationApi } from '../../../lib/adapters';
+import {
+  getAdapter,
+  getCitationApi,
+  getGedcomImportApi,
+  AdapterError,
+} from '../../../lib/adapters';
+import type {
+  GedcomImportApi,
+  GedcomPreviewResult,
+  GedcomApplyResult,
+  GedcomUndoResult,
+} from '../../../lib/adapters/types';
 import { importIndividuals } from '../../../lib/gedcom/importIndividuals';
 import { importFamilies } from '../../../lib/gedcom/importFamilies';
 import { buildImportPlan } from '../../../lib/gedcom/importPlan';
@@ -61,6 +72,18 @@ const ImportControlsImpl: React.FC = () => {
   } | null>(null);
   const [isCsvImporting, setIsCsvImporting] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  // v461 unit 3 blok A: state alur import GEDCOM server-side.
+  const gedcomApiRef = useRef<GedcomImportApi | null>(null);
+  const serverFileRef = useRef<File | null>(null);
+  const [isServerPreviewing, setIsServerPreviewing] = useState(false);
+  const [isServerApplying, setIsServerApplying] = useState(false);
+  const [serverPreview, setServerPreview] = useState<GedcomPreviewResult | null>(null);
+  const [serverPreviewFileName, setServerPreviewFileName] = useState<string | null>(null);
+  const [serverApplyResult, setServerApplyResult] = useState<GedcomApplyResult | null>(null);
+  const [serverUndoResult, setServerUndoResult] = useState<GedcomUndoResult | null>(null);
+  const [serverErrorKey, setServerErrorKey] = useState<string | null>(null);
+  const [serverStatusKey, setServerStatusKey] = useState<string | null>(null);
+  const [isServerUndoing, setIsServerUndoing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation('common');
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
@@ -76,6 +99,8 @@ const ImportControlsImpl: React.FC = () => {
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
+      // v461: jangan tutup panel saat alur server GEDCOM berjalan.
+      if (isServerPreviewing || isServerApplying || isServerUndoing) return;
       setShowPanel(false);
     }
   };
@@ -242,7 +267,14 @@ const ImportControlsImpl: React.FC = () => {
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    void importFile(file);
+    // v461: adapter dengan server GEDCOM lewat alur server
+    // handleServerGedcomFile; selain itu alur import lokal lama
+    // persis seperti sebelumnya.
+    if (getGedcomImportApi() === null) {
+      void importFile(file);
+      return;
+    }
+    void handleServerGedcomFile(file);
   };
 
   // v386 CSV: baca file, validasi murni, tampilkan preview. Import
@@ -366,6 +398,113 @@ const ImportControlsImpl: React.FC = () => {
       setErrorKey('import.errors.generic');
     } finally {
       setIsUndoing(false);
+    }
+  };
+
+  // v461 unit 3 blok A: alur import GEDCOM server-side. Adapter
+  // tanpa server memberi null dari getGedcomImportApi sehingga alur
+  // ini tak pernah aktif di mock/supabase (pola getMergeApi).
+  const serverGedcomErrorKey = (error: unknown): string => {
+    if (error instanceof AdapterError) {
+      return `import.gedcom.server.errors.${error.code}`;
+    }
+    return 'import.gedcom.server.errors.unknown';
+  };
+
+  const resetServerGedcom = () => {
+    serverFileRef.current = null;
+    setIsServerPreviewing(false);
+    setIsServerApplying(false);
+    setIsServerUndoing(false);
+    setServerPreview(null);
+    setServerPreviewFileName(null);
+    setServerApplyResult(null);
+    setServerUndoResult(null);
+    setServerErrorKey(null);
+    setServerStatusKey(null);
+  };
+
+  const handleServerGedcomFile = async (file: File) => {
+    if (isServerPreviewing || isServerApplying || isServerUndoing) return;
+    setIsServerPreviewing(true);
+    setServerErrorKey(null);
+    setServerStatusKey('import.gedcom.server.previewing');
+    try {
+      if (!currentFamilyTreeId) {
+        setServerErrorKey('import.errors.noTree');
+        setServerStatusKey(null);
+        return;
+      }
+      const api = getGedcomImportApi();
+      if (!api) {
+        setServerErrorKey('import.gedcom.server.errors.unavailable');
+        setServerStatusKey(null);
+        return;
+      }
+      gedcomApiRef.current = api;
+      serverFileRef.current = file;
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const preview = await api.gedcomPreview(
+        currentFamilyTreeId,
+        bytes,
+        file.name,
+      );
+      setServerPreview(preview);
+      setServerPreviewFileName(file.name);
+      setServerStatusKey('import.gedcom.server.previewDone');
+    } catch (error) {
+      console.error('Server GEDCOM preview failed:', error);
+      setServerErrorKey(serverGedcomErrorKey(error));
+      setServerStatusKey(null);
+    } finally {
+      setIsServerPreviewing(false);
+    }
+  };
+
+  const handleServerApply = async () => {
+    if (isServerPreviewing || isServerApplying || isServerUndoing) return;
+    const file = serverFileRef.current;
+    if (!file) return;
+    const api = getGedcomImportApi();
+    const treeId = currentFamilyTreeId;
+    if (!api || !treeId) return;
+    setIsServerApplying(true);
+    setServerErrorKey(null);
+    setServerStatusKey(null);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const result = await api.gedcomApply(treeId, bytes, file.name);
+      setServerApplyResult(result);
+      await fetchMembers(treeId);
+    } catch (error) {
+      console.error('Server GEDCOM apply failed:', error);
+      setServerErrorKey(serverGedcomErrorKey(error));
+    } finally {
+      setIsServerApplying(false);
+    }
+  };
+
+  const handleServerUndo = async () => {
+    if (isServerPreviewing || isServerApplying || isServerUndoing) return;
+    const token = serverApplyResult?.undo.token;
+    if (!token) return;
+    if (!window.confirm(t('import.gedcom.server.undoConfirm'))) return;
+    const api = getGedcomImportApi();
+    const treeId = currentFamilyTreeId;
+    if (!api || !treeId) return;
+    setIsServerUndoing(true);
+    setServerErrorKey(null);
+    setServerStatusKey(null);
+    try {
+      const result = await api.gedcomUndo(treeId, token);
+      setServerUndoResult(result);
+      setServerApplyResult(null);
+      await fetchMembers(treeId);
+    } catch (error) {
+      console.error('Server GEDCOM undo failed:', error);
+      setServerErrorKey(serverGedcomErrorKey(error));
+    } finally {
+      setIsServerUndoing(false);
     }
   };
 
