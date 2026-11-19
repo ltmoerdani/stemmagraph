@@ -198,6 +198,47 @@
         "generic": "Impor CSV gagal. Periksa file lalu coba lagi.",
         "xlsxUnreadable": "File Excel tidak dapat dibaca sebagai .xlsx yang sah."
       }
+    },
+    "gedcom": {
+      "server": {
+        "apply": "Terapkan impor ke server",
+        "applySummary": "{{members}} anggota dan {{relations}} relasi dibuat, {{skipped}} relasi dilewati, {{failed}} anggota gagal.",
+        "applyTitle": "Impor server selesai",
+        "applying": "Menerapkan impor...",
+        "errors": {
+          "unknown": "Terjadi kesalahan yang tidak diketahui saat impor server.",
+          "unavailable": "Layanan impor GEDCOM tidak tersedia di mode ini.",
+          "GEDCOM_BAD_REQUEST": "Permintaan impor tidak sah. Muat ulang halaman lalu coba lagi.",
+          "GEDCOM_NO_FILE": "File GEDCOM tidak ditemukan pada permintaan.",
+          "GEDCOM_NO_FILENAME": "Berkas unggahan tidak membawa nama file.",
+          "GEDCOM_BAD_EXTENSION": "Ekstensi file harus .ged atau .gdz.",
+          "GEDCOM_TOO_LARGE": "Ukuran file melebihi batas 10 MB.",
+          "GEDCOM_INVALID_ARCHIVE": "Arsip bukan file GEDZIP yang sah.",
+          "GEDCOM_MALFORMED": "File bukan dokumen GEDCOM yang valid.",
+          "GEDCOM_PREVIEW_ERROR": "Server gagal menyiapkan pratinjau. Coba lagi.",
+          "INVALID_GEDCOM": "File bukan dokumen GEDCOM yang valid.",
+          "GEDCOM_APPLY_ERROR": "Server gagal menerapkan impor. Coba lagi.",
+          "NO_PENDING_UNDO": "Tidak ada impor yang bisa dibatalkan.",
+          "UNDO_EXPIRED": "Jangka waktu pembatalan sudah lewat.",
+          "UNDO_TOKEN_MISMATCH": "Token pembatalan tidak cocok.",
+          "UNDO_RESTORE_FAILED": "Server gagal memulihkan snapshot."
+        },
+        "gateRejectItem": "Baris {{line}}: {{reason}}",
+        "gateRejects": "{{count}} baris ditolak gate skema:",
+        "parseWarnings": "{{count}} peringatan parse ditemukan.",
+        "planInfo": "Menampilkan {{shown}} dari {{total}} rencana perubahan.",
+        "planTruncated": "Rencana perubahan dipotong, sebagian entri tidak ditampilkan.",
+        "previewDone": "Pratinjau server selesai.",
+        "previewTitle": "Pratinjau impor server: {{file}}",
+        "previewing": "Memeriksa file di server...",
+        "summary": "Total {{total}} entri: {{newCount}} baru, {{matches}} kandidat cocok, {{skipped}} dilewati, {{living}} menyentuh data hidup.",
+        "undo": "Batalkan impor ini",
+        "undoConfirm": "Batalkan impor ini dan kembalikan pohon seperti semula?",
+        "undoDoneTitle": "Pembatalan impor selesai",
+        "undoSummary": "{{restored}} anggota dikembalikan dari snapshot.",
+        "undoUntil": "Impor dapat dibatalkan sampai {{until}}.",
+        "undoing": "Membatalkan impor..."
+      }
     }
   },
   "toolbar": {
