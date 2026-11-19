@@ -317,4 +317,54 @@ describe('ImportControls wiring server gedcom v461', () => {
     // server lewat adapter yang di-mock.
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
+
+  it('kasus b: null path tidak memanggil fetch sama sekali, alur lokal lama jalan', async () => {
+    // Adapter tanpa server: getGedcomImportApi memberi null sehingga
+    // file dirutekan ke importFile alur lokal lama.
+    mocks.gedcomApi = null;
+    render(<ImportControls />);
+    fireEvent.click(screen.getByTestId('import-button'));
+    chooseFile();
+    await waitFor(() => {
+      expect(mocks.applyImportPlan).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(mocks.fetchMembers).toHaveBeenCalledWith('tree-1');
+    });
+    // Server path tidak disentuh, jaringan global juga tidak.
+    expect(mocks.restApi.gedcomPreview).not.toHaveBeenCalled();
+    expect(mocks.restApi.gedcomApply).not.toHaveBeenCalled();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it('kasus d: progress server menampilkan elemen status aria-live polite', async () => {
+    // Status (aria-live) dirender bersama isi section server; setelah
+    // preview selesai, statusKey previewDone tampil di elemen aria-live.
+    render(<ImportControls />);
+    fireEvent.click(screen.getByTestId('import-button'));
+    chooseFile();
+    await waitFor(() => {
+      expect(screen.getByTestId('import-server-preview')).toBeTruthy();
+    });
+    const status = screen.getByTestId('import-server-status');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    expect(status.getAttribute('role')).toBe('status');
+    expect(status.textContent).toBe('import.gedcom.server.previewDone');
+    // Status yang sama terpakai saat apply berjalan (progress).
+    let resolveApply!: (v: unknown) => void;
+    mocks.restApi.gedcomApply.mockImplementationOnce(
+      () =>
+        new Promise((res) => {
+          resolveApply = res;
+        }),
+    );
+    fireEvent.click(screen.getByTestId('import-server-apply'));
+    await waitFor(() => {
+      expect((screen.getByTestId('import-server-apply') as HTMLButtonElement).disabled).toBe(true);
+    });
+    resolveApply(okApply());
+    await waitFor(() => {
+      expect(screen.getByTestId('import-server-apply-result')).toBeTruthy();
+    });
+  });
 });
