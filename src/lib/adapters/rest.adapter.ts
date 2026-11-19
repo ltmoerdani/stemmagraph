@@ -85,6 +85,10 @@ import {
   MemberPhotoUploadResult,
   CommentApi,
   CommentItem,
+  GedcomImportApi,
+  GedcomPreviewResult,
+  GedcomApplyResult,
+  GedcomUndoResult,
 } from './types';
 import type { DuplicateCandidateDto } from './types';
 import type { FeedItem } from '../feed';
@@ -102,7 +106,7 @@ interface RestAdapterOptions {
   onTokenRefresh?: () => Promise<string | null>;
 }
 
-export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, ConsentSelfApi, ErasureSelfApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi, CommentApi {
+export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, ConsentSelfApi, ErasureSelfApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, MemberPhotoApi, CommentApi, GedcomImportApi {
   readonly name = 'rest';
   readonly version = '1.0.0';
   readonly description = 'Generic REST API adapter (MySQL / PostgreSQL / etc.)';
@@ -931,5 +935,64 @@ export class RestAdapter implements DataAdapter, AccountAdminApi, InvitationAdmi
 
   async deleteComment(commentId: string): Promise<void> {
     await this.request<void>('DELETE', `/comments/${commentId}`);
+  }
+
+  // -- GEDCOM import server (v461) --------------------------
+  // Pure routing ke route /trees/:treeId/gedcom/{preview,apply,undo}.
+  // Upload multipart FormData field `file` (pola uploadMemberPhoto):
+  // Content-Type tidak diset manual supaya boundary FormData terpasang.
+  // Kode error stabil dari body diteruskan verbatim ke AdapterError
+  // bersama status HTTP (INVALID_GEDCOM, GEDCOM_TOO_LARGE,
+  // GEDCOM_INVALID_ARCHIVE, GEDCOM_MALFORMED, UNDO_EXPIRED,
+  // NO_PENDING_UNDO, UNDO_TOKEN_MISMATCH).
+
+  /** Bentuk FormData satu file GEDCOM (.ged/.gdz) field `file`. */
+  private gedcomForm(bytes: Uint8Array, fileName: string): FormData {
+    const form = new FormData();
+    form.append('file', new Blob([bytes as BlobPart]), fileName);
+    return form;
+  }
+
+  /** POST multipart sekali coba plus retry 401, pola uploadMemberPhoto. */
+  private async sendGedcomMultipart<T>(path: string, form: FormData): Promise<T> {
+    const url = `${this.options.baseUrl}${path}`;
+    const headers: Record<string, string> = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    let res = await fetch(url, { method: 'POST', headers, body: form });
+    if (res.status === 401 && this.options.onTokenRefresh) {
+      const newToken = await this.options.onTokenRefresh();
+      if (newToken) {
+        this.token = newToken;
+        headers['Authorization'] = `Bearer ${newToken}`;
+        res = await fetch(url, { method: 'POST', headers, body: form });
+      }
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new AdapterError(err.message || res.statusText, err.code || 'API_ERROR', res.status);
+    }
+    return res.json();
+  }
+
+  async gedcomPreview(treeId: string, bytes: Uint8Array, fileName: string): Promise<GedcomPreviewResult> {
+    return this.sendGedcomMultipart<GedcomPreviewResult>(
+      `/trees/${encodeURIComponent(treeId)}/gedcom/preview`,
+      this.gedcomForm(bytes, fileName),
+    );
+  }
+
+  async gedcomApply(treeId: string, bytes: Uint8Array, fileName: string): Promise<GedcomApplyResult> {
+    return this.sendGedcomMultipart<GedcomApplyResult>(
+      `/trees/${encodeURIComponent(treeId)}/gedcom/apply`,
+      this.gedcomForm(bytes, fileName),
+    );
+  }
+
+  async gedcomUndo(treeId: string, token: string): Promise<GedcomUndoResult> {
+    return this.request<GedcomUndoResult>(
+      'POST',
+      `/trees/${encodeURIComponent(treeId)}/gedcom/undo`,
+      { token },
+    );
   }
 }

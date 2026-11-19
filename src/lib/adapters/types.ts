@@ -883,3 +883,92 @@ export interface CommentApi {
   /** DELETE /comments/:commentId: remove one comment. */
   deleteComment(commentId: string): Promise<void>;
 }
+// --- GEDCOM import surface (v461) --------------------------
+// Client wiring untuk route server /trees/:treeId/gedcom/preview,
+// /apply, dan /undo (v417-v418). Hanya adapter REST yang bicara ke
+// server; mock dan supabase dapat null dari getGedcomImportApi dan
+// UI menyembunyikan alur import server, pola getMergeApi.
+
+/** Ringkasan dry-run yang server hitung dari pipeline import. */
+export interface GedcomPreviewSummary {
+  total: number;
+  new: number;
+  matchCandidate: number;
+  skipped: number;
+  /** Jumlah baris tertolak import-gate. */
+  gateRejectCount: number;
+  /** Anggota rencana import yang tersarankan living. */
+  livingAffected: number;
+}
+
+/** Satu entri merge plan pada respons preview (maks 200 entri). */
+export interface GedcomPreviewPlanItem {
+  source: 'INDI' | 'FAM';
+  incomingXref?: string;
+  newInternalId?: string;
+  status: 'NEW' | 'MATCH_CANDIDATE' | 'SKIPPED';
+  matchType?: 'EXID' | 'UID' | 'REFN';
+  matchedExistingId?: string;
+  skipReason?: string;
+}
+
+/** Satu baris tertolak import-gate yang diteruskan server. */
+export interface GedcomGateRejectView {
+  line: number;
+  structureUri: string;
+  reason: 'unknown_structure' | 'cardinality_violated';
+}
+
+/** Respons POST /trees/:treeId/gedcom/preview (dry-run murni). */
+export interface GedcomPreviewResult {
+  ok: boolean;
+  dryRun: boolean;
+  uploadKind: 'gedcom' | 'gedzip';
+  summary: GedcomPreviewSummary;
+  plan: GedcomPreviewPlanItem[];
+  planTruncated: boolean;
+  planTotal: number;
+  gateRejects: GedcomGateRejectView[];
+  parseWarningCount: number;
+}
+
+/** Laporan apply atomik dari server (mirror ImportApplyReport). */
+export interface GedcomApplyReport {
+  createdMembers: { xref?: string; id: string }[];
+  duplicateXrefs: (string | undefined)[];
+  failedMembers: { xref?: string; error: string }[];
+  createdRelations: number;
+  skippedRelations: { memberXref: string; relatedXref: string; reason: string }[];
+  failedRelations: { memberXref: string; relatedXref: string; error: string }[];
+  /** Peringatan per member ('duplicate-xref', 'no-xref'); bukan kegagalan. */
+  memberWarnings: { xref?: string; warning: string }[];
+}
+
+/** Respons POST /trees/:treeId/gedcom/apply. */
+export interface GedcomApplyResult {
+  summary: GedcomPreviewSummary;
+  applied: GedcomApplyReport;
+  /** Token undo sekali pakai, TTL 24 jam di server. */
+  undo: { token: string; expiresAt: string };
+}
+
+/** Respons POST /trees/:treeId/gedcom/undo (sekali pakai). */
+export interface GedcomUndoResult {
+  restored: boolean;
+  summary: GedcomPreviewSummary;
+}
+
+/**
+ * Permukaan import GEDCOM server-side (v461): preview dry-run, apply
+ * atomik dengan token undo, dan undo sekali pakai. Adapter tanpa
+ * server (mock, supabase) lewat getGedcomImportApi mendapat null dan
+ * UI menyembunyikan alur import server, pola getMergeApi.
+ */
+export interface GedcomImportApi {
+  /** Dry-run tanpa tulis DB; bytes file .ged/.gdz maks 10 MB. */
+  gedcomPreview(treeId: string, bytes: Uint8Array, fileName: string): Promise<GedcomPreviewResult>;
+  /** Apply atomik; respons memuat token undo ber-TTL 24 jam. */
+  gedcomApply(treeId: string, bytes: Uint8Array, fileName: string): Promise<GedcomApplyResult>;
+  /** Undo sekali pakai dari snapshot apply terakhir. */
+  gedcomUndo(treeId: string, token: string): Promise<GedcomUndoResult>;
+}
