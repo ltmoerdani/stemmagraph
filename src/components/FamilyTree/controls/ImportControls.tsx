@@ -550,6 +550,9 @@ const ImportControlsImpl: React.FC = () => {
             className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2 px-3"
             role="dialog"
             aria-label={t('import.button')}
+            aria-busy={
+              isServerPreviewing || isServerApplying || isServerUndoing
+            }
           >
             <p className="text-xs text-gray-500 mt-1">
               {t('import.hint')}
@@ -785,6 +788,183 @@ const ImportControlsImpl: React.FC = () => {
                 )}
               </div>
             )}
+
+
+            {/* v461 blok B: UI alur import GEDCOM server-side. Section
+                muncul hanya saat ada state server (preview, hasil apply,
+                hasil undo, atau error); adapter tanpa server tidak pernah
+                mengisi state ini sehingga UI lama tetap dipakai (pola
+                getMergeApi). Key label import.gedcom.server.* diisi di
+                locale pada blok C. */}
+            {(serverPreview ||
+              serverApplyResult ||
+              serverUndoResult ||
+              serverErrorKey) && (
+              <section
+                className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-700 space-y-1"
+                data-testid="import-server-section"
+              >
+                {serverStatusKey && (
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    data-testid="import-server-status"
+                  >
+                    {t(serverStatusKey)}
+                  </p>
+                )}
+
+                {serverErrorKey && (
+                  <p
+                    role="alert"
+                    className="text-red-600"
+                    data-testid="import-server-error"
+                  >
+                    {t(serverErrorKey)}
+                  </p>
+                )}
+
+                {serverPreview && (
+                  <div
+                    className="space-y-1"
+                    data-testid="import-server-preview"
+                  >
+                    <p className="font-semibold text-gray-800">
+                      {t('import.gedcom.server.previewTitle', {
+                        file: serverPreviewFileName ?? '',
+                      })}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.summary', {
+                        total: serverPreview.summary.total,
+                        newCount: serverPreview.summary.new,
+                        matches: serverPreview.summary.matchCandidate,
+                        skipped: serverPreview.summary.skipped,
+                        living: serverPreview.summary.livingAffected,
+                      })}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.planInfo', {
+                        shown: serverPreview.plan.length,
+                        total: serverPreview.planTotal,
+                      })}
+                    </p>
+                    {serverPreview.planTruncated && (
+                      <p className="text-amber-700">
+                        {t('import.gedcom.server.planTruncated')}
+                      </p>
+                    )}
+                    {serverPreview.parseWarningCount > 0 && (
+                      <p className="text-amber-700">
+                        {t('import.gedcom.server.parseWarnings', {
+                          count: serverPreview.parseWarningCount,
+                        })}
+                      </p>
+                    )}
+                    {serverPreview.gateRejects.length > 0 && (
+                      <div data-testid="import-server-gate-rejects">
+                        <p className="text-amber-700">
+                          {t('import.gedcom.server.gateRejects', {
+                            count: serverPreview.gateRejects.length,
+                          })}
+                        </p>
+                        <ul className="mt-1 max-h-32 overflow-y-auto">
+                          {serverPreview.gateRejects
+                            .slice(0, 20)
+                            .map((rej) => (
+                              <li
+                                key={rej.line + ':' + rej.structureUri}
+                                className="text-amber-700"
+                              >
+                                {t('import.gedcom.server.gateRejectItem', {
+                                  line: rej.line,
+                                  reason: rej.reason,
+                                })}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        void handleServerApply();
+                      }}
+                      disabled={
+                        isServerApplying ||
+                        isServerPreviewing ||
+                        isServerUndoing
+                      }
+                      className="mt-1 px-3 py-1.5 text-sm rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid="import-server-apply"
+                    >
+                      {isServerApplying
+                        ? t('import.gedcom.server.applying')
+                        : t('import.gedcom.server.apply')}
+                    </button>
+                  </div>
+                )}
+
+                {serverApplyResult && (
+                  <div
+                    className="space-y-1"
+                    data-testid="import-server-apply-result"
+                  >
+                    <p className="font-semibold text-gray-800">
+                      {t('import.gedcom.server.applyTitle')}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.applySummary', {
+                        members:
+                          serverApplyResult.applied.createdMembers.length,
+                        relations: serverApplyResult.applied.createdRelations,
+                        skipped:
+                          serverApplyResult.applied.skippedRelations.length,
+                        failed:
+                          serverApplyResult.applied.failedMembers.length,
+                      })}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.undoUntil', {
+                        until: serverApplyResult.undo.expiresAt,
+                      })}
+                    </p>
+                    <button
+                      onClick={() => {
+                        void handleServerUndo();
+                      }}
+                      disabled={
+                        isServerUndoing ||
+                        isServerApplying ||
+                        isServerPreviewing
+                      }
+                      className="mt-1 px-3 py-1.5 text-sm rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid="import-server-undo"
+                    >
+                      {isServerUndoing
+                        ? t('import.gedcom.server.undoing')
+                        : t('import.gedcom.server.undo')}
+                    </button>
+                  </div>
+                )}
+
+                {serverUndoResult && (
+                  <div
+                    className="space-y-1"
+                    data-testid="import-server-undo-result"
+                  >
+                    <p className="font-semibold text-gray-800">
+                      {t('import.gedcom.server.undoDoneTitle')}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.undoSummary', {
+                        restored: serverUndoResult.restored,
+                      })}
+                    </p>
+                  </div>
+                )}
+              </section>
+            )}
+
           </div>
         </>
       )}
