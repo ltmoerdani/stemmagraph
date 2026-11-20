@@ -198,6 +198,47 @@
         "generic": "CSV import failed. Check the file and try again.",
         "xlsxUnreadable": "The Excel file could not be read as a valid .xlsx."
       }
+    },
+    "gedcom": {
+      "server": {
+        "apply": "Apply import to server",
+        "applySummary": "{{members}} members and {{relations}} relations created, {{skipped}} relations skipped, {{failed}} members failed.",
+        "applyTitle": "Server import finished",
+        "applying": "Applying import...",
+        "errors": {
+          "unknown": "An unknown error occurred during the server import.",
+          "unavailable": "The GEDCOM import service is unavailable in this mode.",
+          "GEDCOM_BAD_REQUEST": "The import request was invalid. Reload the page and try again.",
+          "GEDCOM_NO_FILE": "No GEDCOM file was found in the request.",
+          "GEDCOM_NO_FILENAME": "The uploaded part does not carry a filename.",
+          "GEDCOM_BAD_EXTENSION": "The file extension must be .ged or .gdz.",
+          "GEDCOM_TOO_LARGE": "The file exceeds the 10 MB limit.",
+          "GEDCOM_INVALID_ARCHIVE": "The archive is not a valid GEDZIP file.",
+          "GEDCOM_MALFORMED": "The file is not a valid GEDCOM document.",
+          "GEDCOM_PREVIEW_ERROR": "The server failed to prepare the preview. Try again.",
+          "INVALID_GEDCOM": "The file is not a valid GEDCOM document.",
+          "GEDCOM_APPLY_ERROR": "The server failed to apply the import. Try again.",
+          "NO_PENDING_UNDO": "There is no import to undo.",
+          "UNDO_EXPIRED": "The undo window has expired.",
+          "UNDO_TOKEN_MISMATCH": "The undo token does not match.",
+          "UNDO_RESTORE_FAILED": "The server failed to restore the snapshot."
+        },
+        "gateRejectItem": "Line {{line}}: {{reason}}",
+        "gateRejects": "{{count}} lines rejected by the schema gate:",
+        "parseWarnings": "{{count}} parse warnings found.",
+        "planInfo": "Showing {{shown}} of {{total}} plan entries.",
+        "planTruncated": "The plan was truncated, some entries are not shown.",
+        "previewDone": "Server preview finished.",
+        "previewTitle": "Server import preview: {{file}}",
+        "previewing": "Checking the file on the server...",
+        "summary": "{{total}} entries total: {{newCount}} new, {{matches}} match candidates, {{skipped}} skipped, {{living}} touching living data.",
+        "undo": "Undo this import",
+        "undoConfirm": "Undo this import and restore the tree to its previous state?",
+        "undoDoneTitle": "Import undo finished",
+        "undoSummary": "{{restored}} members restored from the snapshot.",
+        "undoUntil": "You can undo this import until {{until}}.",
+        "undoing": "Undoing import..."
+      }
     }
   },
   "toolbar": {

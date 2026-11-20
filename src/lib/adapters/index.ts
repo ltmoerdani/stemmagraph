@@ -13,7 +13,7 @@
 //   VITE_SUPABASE_URL=https://xxx.supabase.co
 //   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
-import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi } from './types';
+import { DataAdapter, AccountAdminApi, InvitationAdminApi, ShareLinkAdminApi, ActivityFeedApi, GrowthMetricsApi, DigestApi, ChangeReviewApi, ConsentApi, CitationApi, StatsApi, DuplicateCheckApi, MergeApi, CalendarFeedApi, GedcomImportApi } from './types';
 import { MockAdapter } from './mock.adapter';
 import { RestAdapter } from './rest.adapter';
 import { SupabaseAdapter } from './supabase.adapter';
@@ -65,6 +65,17 @@ export function getMemberPhotoApi(): MemberPhotoApi | null {
  * null instead of crashing (same shape as getConsentSelfApi).
  */
 export function getCommentApi(): CommentApi | null {
+  const adapter = getAdapter();
+  return adapter instanceof RestAdapter ? adapter : null;
+}
+
+/**
+ * GEDCOM import server surface (v461): only the REST adapter can talk
+ * to the /trees/:treeId/gedcom routes; mock/supabase adapters return
+ * null and the import wizard hides the server flow, mirroring
+ * getMergeApi.
+ */
+export function getGedcomImportApi(): GedcomImportApi | null {
   const adapter = getAdapter();
   return adapter instanceof RestAdapter ? adapter : null;
 }

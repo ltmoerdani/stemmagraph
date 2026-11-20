@@ -2,7 +2,18 @@ import React, { memo, useRef, useState } from 'react';
 import { Upload, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFamilyStore } from '../../../store/familyStore';
-import { getAdapter, getCitationApi } from '../../../lib/adapters';
+import {
+  getAdapter,
+  getCitationApi,
+  getGedcomImportApi,
+  AdapterError,
+} from '../../../lib/adapters';
+import type {
+  GedcomImportApi,
+  GedcomPreviewResult,
+  GedcomApplyResult,
+  GedcomUndoResult,
+} from '../../../lib/adapters/types';
 import { importIndividuals } from '../../../lib/gedcom/importIndividuals';
 import { importFamilies } from '../../../lib/gedcom/importFamilies';
 import { buildImportPlan } from '../../../lib/gedcom/importPlan';
@@ -61,6 +72,18 @@ const ImportControlsImpl: React.FC = () => {
   } | null>(null);
   const [isCsvImporting, setIsCsvImporting] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  // v461 unit 3 blok A: state alur import GEDCOM server-side.
+  const gedcomApiRef = useRef<GedcomImportApi | null>(null);
+  const serverFileRef = useRef<File | null>(null);
+  const [isServerPreviewing, setIsServerPreviewing] = useState(false);
+  const [isServerApplying, setIsServerApplying] = useState(false);
+  const [serverPreview, setServerPreview] = useState<GedcomPreviewResult | null>(null);
+  const [serverPreviewFileName, setServerPreviewFileName] = useState<string | null>(null);
+  const [serverApplyResult, setServerApplyResult] = useState<GedcomApplyResult | null>(null);
+  const [serverUndoResult, setServerUndoResult] = useState<GedcomUndoResult | null>(null);
+  const [serverErrorKey, setServerErrorKey] = useState<string | null>(null);
+  const [serverStatusKey, setServerStatusKey] = useState<string | null>(null);
+  const [isServerUndoing, setIsServerUndoing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation('common');
   const currentFamilyTreeId = useFamilyStore((s) => s.currentFamilyTreeId);
@@ -76,6 +99,8 @@ const ImportControlsImpl: React.FC = () => {
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
+      // v461: jangan tutup panel saat alur server GEDCOM berjalan.
+      if (isServerPreviewing || isServerApplying || isServerUndoing) return;
       setShowPanel(false);
     }
   };
@@ -242,7 +267,14 @@ const ImportControlsImpl: React.FC = () => {
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    void importFile(file);
+    // v461: adapter dengan server GEDCOM lewat alur server
+    // handleServerGedcomFile; selain itu alur import lokal lama
+    // persis seperti sebelumnya.
+    if (getGedcomImportApi() === null) {
+      void importFile(file);
+      return;
+    }
+    void handleServerGedcomFile(file);
   };
 
   // v386 CSV: baca file, validasi murni, tampilkan preview. Import
@@ -369,6 +401,100 @@ const ImportControlsImpl: React.FC = () => {
     }
   };
 
+  // v461 unit 3 blok A: alur import GEDCOM server-side. Adapter
+  // tanpa server memberi null dari getGedcomImportApi sehingga alur
+  // ini tak pernah aktif di mock/supabase (pola getMergeApi).
+  const serverGedcomErrorKey = (error: unknown): string => {
+    if (error instanceof AdapterError) {
+      return `import.gedcom.server.errors.${error.code}`;
+    }
+    return 'import.gedcom.server.errors.unknown';
+  };
+
+  const handleServerGedcomFile = async (file: File) => {
+    if (isServerPreviewing || isServerApplying || isServerUndoing) return;
+    setIsServerPreviewing(true);
+    setServerErrorKey(null);
+    setServerStatusKey('import.gedcom.server.previewing');
+    try {
+      if (!currentFamilyTreeId) {
+        setServerErrorKey('import.errors.noTree');
+        setServerStatusKey(null);
+        return;
+      }
+      const api = getGedcomImportApi();
+      if (!api) {
+        setServerErrorKey('import.gedcom.server.errors.unavailable');
+        setServerStatusKey(null);
+        return;
+      }
+      gedcomApiRef.current = api;
+      serverFileRef.current = file;
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const preview = await api.gedcomPreview(
+        currentFamilyTreeId,
+        bytes,
+        file.name,
+      );
+      setServerPreview(preview);
+      setServerPreviewFileName(file.name);
+      setServerStatusKey('import.gedcom.server.previewDone');
+    } catch (error) {
+      console.error('Server GEDCOM preview failed:', error);
+      setServerErrorKey(serverGedcomErrorKey(error));
+      setServerStatusKey(null);
+    } finally {
+      setIsServerPreviewing(false);
+    }
+  };
+
+  const handleServerApply = async () => {
+    if (isServerPreviewing || isServerApplying || isServerUndoing) return;
+    const file = serverFileRef.current;
+    if (!file) return;
+    const api = getGedcomImportApi();
+    const treeId = currentFamilyTreeId;
+    if (!api || !treeId) return;
+    setIsServerApplying(true);
+    setServerErrorKey(null);
+    setServerStatusKey(null);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const result = await api.gedcomApply(treeId, bytes, file.name);
+      setServerApplyResult(result);
+      await fetchMembers(treeId);
+    } catch (error) {
+      console.error('Server GEDCOM apply failed:', error);
+      setServerErrorKey(serverGedcomErrorKey(error));
+    } finally {
+      setIsServerApplying(false);
+    }
+  };
+
+  const handleServerUndo = async () => {
+    if (isServerPreviewing || isServerApplying || isServerUndoing) return;
+    const token = serverApplyResult?.undo.token;
+    if (!token) return;
+    if (!window.confirm(t('import.gedcom.server.undoConfirm'))) return;
+    const api = getGedcomImportApi();
+    const treeId = currentFamilyTreeId;
+    if (!api || !treeId) return;
+    setIsServerUndoing(true);
+    setServerErrorKey(null);
+    setServerStatusKey(null);
+    try {
+      const result = await api.gedcomUndo(treeId, token);
+      setServerUndoResult(result);
+      setServerApplyResult(null);
+      await fetchMembers(treeId);
+    } catch (error) {
+      console.error('Server GEDCOM undo failed:', error);
+      setServerErrorKey(serverGedcomErrorKey(error));
+    } finally {
+      setIsServerUndoing(false);
+    }
+  };
+
   return (
     <div className="relative">
       <button
@@ -411,6 +537,9 @@ const ImportControlsImpl: React.FC = () => {
             className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2 px-3"
             role="dialog"
             aria-label={t('import.button')}
+            aria-busy={
+              isServerPreviewing || isServerApplying || isServerUndoing
+            }
           >
             <p className="text-xs text-gray-500 mt-1">
               {t('import.hint')}
@@ -646,6 +775,183 @@ const ImportControlsImpl: React.FC = () => {
                 )}
               </div>
             )}
+
+
+            {/* v461 blok B: UI alur import GEDCOM server-side. Section
+                muncul hanya saat ada state server (preview, hasil apply,
+                hasil undo, atau error); adapter tanpa server tidak pernah
+                mengisi state ini sehingga UI lama tetap dipakai (pola
+                getMergeApi). Key label import.gedcom.server.* diisi di
+                locale pada blok C. */}
+            {(serverPreview ||
+              serverApplyResult ||
+              serverUndoResult ||
+              serverErrorKey) && (
+              <section
+                className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-700 space-y-1"
+                data-testid="import-server-section"
+              >
+                {serverStatusKey && (
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    data-testid="import-server-status"
+                  >
+                    {t(serverStatusKey)}
+                  </p>
+                )}
+
+                {serverErrorKey && (
+                  <p
+                    role="alert"
+                    className="text-red-600"
+                    data-testid="import-server-error"
+                  >
+                    {t(serverErrorKey)}
+                  </p>
+                )}
+
+                {serverPreview && (
+                  <div
+                    className="space-y-1"
+                    data-testid="import-server-preview"
+                  >
+                    <p className="font-semibold text-gray-800">
+                      {t('import.gedcom.server.previewTitle', {
+                        file: serverPreviewFileName ?? '',
+                      })}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.summary', {
+                        total: serverPreview.summary.total,
+                        newCount: serverPreview.summary.new,
+                        matches: serverPreview.summary.matchCandidate,
+                        skipped: serverPreview.summary.skipped,
+                        living: serverPreview.summary.livingAffected,
+                      })}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.planInfo', {
+                        shown: serverPreview.plan.length,
+                        total: serverPreview.planTotal,
+                      })}
+                    </p>
+                    {serverPreview.planTruncated && (
+                      <p className="text-amber-700">
+                        {t('import.gedcom.server.planTruncated')}
+                      </p>
+                    )}
+                    {serverPreview.parseWarningCount > 0 && (
+                      <p className="text-amber-700">
+                        {t('import.gedcom.server.parseWarnings', {
+                          count: serverPreview.parseWarningCount,
+                        })}
+                      </p>
+                    )}
+                    {serverPreview.gateRejects.length > 0 && (
+                      <div data-testid="import-server-gate-rejects">
+                        <p className="text-amber-700">
+                          {t('import.gedcom.server.gateRejects', {
+                            count: serverPreview.gateRejects.length,
+                          })}
+                        </p>
+                        <ul className="mt-1 max-h-32 overflow-y-auto">
+                          {serverPreview.gateRejects
+                            .slice(0, 20)
+                            .map((rej) => (
+                              <li
+                                key={rej.line + ':' + rej.structureUri}
+                                className="text-amber-700"
+                              >
+                                {t('import.gedcom.server.gateRejectItem', {
+                                  line: rej.line,
+                                  reason: rej.reason,
+                                })}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        void handleServerApply();
+                      }}
+                      disabled={
+                        isServerApplying ||
+                        isServerPreviewing ||
+                        isServerUndoing
+                      }
+                      className="mt-1 px-3 py-1.5 text-sm rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid="import-server-apply"
+                    >
+                      {isServerApplying
+                        ? t('import.gedcom.server.applying')
+                        : t('import.gedcom.server.apply')}
+                    </button>
+                  </div>
+                )}
+
+                {serverApplyResult && (
+                  <div
+                    className="space-y-1"
+                    data-testid="import-server-apply-result"
+                  >
+                    <p className="font-semibold text-gray-800">
+                      {t('import.gedcom.server.applyTitle')}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.applySummary', {
+                        members:
+                          serverApplyResult.applied.createdMembers.length,
+                        relations: serverApplyResult.applied.createdRelations,
+                        skipped:
+                          serverApplyResult.applied.skippedRelations.length,
+                        failed:
+                          serverApplyResult.applied.failedMembers.length,
+                      })}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.undoUntil', {
+                        until: serverApplyResult.undo.expiresAt,
+                      })}
+                    </p>
+                    <button
+                      onClick={() => {
+                        void handleServerUndo();
+                      }}
+                      disabled={
+                        isServerUndoing ||
+                        isServerApplying ||
+                        isServerPreviewing
+                      }
+                      className="mt-1 px-3 py-1.5 text-sm rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid="import-server-undo"
+                    >
+                      {isServerUndoing
+                        ? t('import.gedcom.server.undoing')
+                        : t('import.gedcom.server.undo')}
+                    </button>
+                  </div>
+                )}
+
+                {serverUndoResult && (
+                  <div
+                    className="space-y-1"
+                    data-testid="import-server-undo-result"
+                  >
+                    <p className="font-semibold text-gray-800">
+                      {t('import.gedcom.server.undoDoneTitle')}
+                    </p>
+                    <p>
+                      {t('import.gedcom.server.undoSummary', {
+                        restored: serverUndoResult.restored,
+                      })}
+                    </p>
+                  </div>
+                )}
+              </section>
+            )}
+
           </div>
         </>
       )}
