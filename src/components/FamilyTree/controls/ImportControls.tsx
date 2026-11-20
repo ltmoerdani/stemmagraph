@@ -411,19 +411,6 @@ const ImportControlsImpl: React.FC = () => {
     return 'import.gedcom.server.errors.unknown';
   };
 
-  const resetServerGedcom = () => {
-    serverFileRef.current = null;
-    setIsServerPreviewing(false);
-    setIsServerApplying(false);
-    setIsServerUndoing(false);
-    setServerPreview(null);
-    setServerPreviewFileName(null);
-    setServerApplyResult(null);
-    setServerUndoResult(null);
-    setServerErrorKey(null);
-    setServerStatusKey(null);
-  };
-
   const handleServerGedcomFile = async (file: File) => {
     if (isServerPreviewing || isServerApplying || isServerUndoing) return;
     setIsServerPreviewing(true);
