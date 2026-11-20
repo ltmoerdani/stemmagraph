@@ -367,4 +367,22 @@ describe('ImportControls wiring server gedcom v461', () => {
       expect(screen.getByTestId('import-server-apply-result')).toBeTruthy();
     });
   });
+
+  it('kasus c: undo 410 UNDO_EXPIRED menampilkan pesan i18n spesifik', async () => {
+    await serverImportUntilUndoOffered();
+    mocks.restApi.gedcomUndo.mockImplementationOnce(async () => {
+      throw new mocks.AdapterError('undo window passed', 'UNDO_EXPIRED', 410);
+    });
+    fireEvent.click(screen.getByTestId('import-server-undo'));
+    await waitFor(() => {
+      expect(screen.getByTestId('import-server-error')).toBeTruthy();
+    });
+    const err = screen.getByTestId('import-server-error');
+    // Komponen memetakan code AdapterError langsung ke kunci locale.
+    expect(err.textContent).toBe('import.gedcom.server.errors.UNDO_EXPIRED');
+    expect(err.getAttribute('role')).toBe('alert');
+    // Panel hasil apply tetap tampil: undo gagal, token masih layak
+    // dipertahankan di UI untuk percobaan berikutnya.
+    expect(screen.getByTestId('import-server-apply-result')).toBeTruthy();
+  });
 });
