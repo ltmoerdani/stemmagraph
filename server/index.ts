@@ -155,6 +155,7 @@ import { importIndividuals } from '../src/lib/gedcom/importIndividuals';
 import { importFamilies } from '../src/lib/gedcom/importFamilies';
 import { buildImportPlan } from '../src/lib/gedcom/importPlan';
 import { runImportGate } from '../src/lib/gedcom/import-gate';
+import { resolveAfterCharsetGate } from '../src/lib/gedcom/lineContinuation';
 import { buildMergePlan, type ExistingIdentityIndex } from '../src/lib/gedcom/importMergePlan';
 import { gateEntriesFromGedcom } from '../src/lib/gedcom/previewGateEntries';
 import { incomingRecordsFromGedcom } from '../src/lib/gedcom/previewIncoming';
@@ -5296,6 +5297,21 @@ app.post(
         return res.status(400).json({ code: 'GEDCOM_MALFORMED', message: 'The uploaded file is not a valid GEDCOM document' });
       }
 
+      // STG v464 unit 1c: gate charset byte-level spec GEDCOM 7 sebelum
+      // parse vendor. BOM U+FEFF opsional di-strip saat pemeriksaan;
+      // pelanggaran byte (C0 di luar 09/0A/0D, DEL, C1, noncharacter,
+      // non-ASCII) ditolak fail-closed 400 dengan offset byte pelanggaran
+      // pertama. Lolos: pipeline di bawah berjalan persis seperti sebelumnya.
+      const charsetChecked = resolveAfterCharsetGate(text);
+      if (!charsetChecked.ok) {
+        const firstCharsetError = charsetChecked.errors[0];
+        return res.status(400).json({
+          code: 'GEDCOM_INVALID_CHARSET',
+          message: firstCharsetError.message,
+          offset: firstCharsetError.byteOffset,
+        });
+      }
+
       // Parse vendor g7 + import-gate laporan reject per baris (AC2).
       const parseWarnings: string[] = [];
       const individuals = importIndividuals(text, (msg) => parseWarnings.push(msg));
@@ -5402,6 +5418,19 @@ app.post(
       // File acak yang bukan dokumen GEDCOM ditolak 400 kode stabil.
       if (!looksLikeGedcom(text)) {
         return res.status(400).json({ code: 'INVALID_GEDCOM', message: 'The uploaded file is not a valid GEDCOM document' });
+      }
+
+      // STG v464 unit 1c: gate charset byte-level spec GEDCOM 7, urutan
+      // dan gaya respons sama dengan route preview. Lolos gate: pipeline
+      // di bawah berjalan persis seperti sebelumnya.
+      const charsetChecked = resolveAfterCharsetGate(text);
+      if (!charsetChecked.ok) {
+        const firstCharsetError = charsetChecked.errors[0];
+        return res.status(400).json({
+          code: 'GEDCOM_INVALID_CHARSET',
+          message: firstCharsetError.message,
+          offset: firstCharsetError.byteOffset,
+        });
       }
 
       // Pipeline ulang persis urutan route preview.
