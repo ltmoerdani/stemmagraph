@@ -12,8 +12,13 @@
 //   - name undefined  → fallback '(tanpa nama)'
 //   - birthDate undefined → string kosong ''
 //
-// TODO(v418): wiring ASSO (associations) menyusul; nilai diabaikan
-// terlebih dahulu, kolom associations tetap NULL.
+// KEPUTUSAN v466 kolom associations (prisma/schema.prisma model
+// FamilyMember: associations Json?, NULL = tanpa asosiasi):
+//   - associations undefined: kolom NULL (INDI tanpa ASSO sah).
+//   - associations array: ditulis verbatim (ParsedAssociation hasil
+//     capture import: xref null untuk @VOID@, role verbatim
+//     case-sensitive, phrase bila ada). Pola cast dari
+//     src/lib/adapters/prisma.adapter.ts (as never).
 
 import type { Prisma } from '../../generated/prisma/client';
 import type {
@@ -43,6 +48,8 @@ export function createPrismaApplyAdapter(
           deathDate: input.deathDate ?? null,
           birthPlace: input.birthPlace ?? null,
           privacyStatus: input.privacyStatus ?? 'private',
+          // v466 ASSO wiring: verbatim dari plan, undefined tetap NULL.
+          associations: input.associations as never,
         },
       });
       return created.id;
