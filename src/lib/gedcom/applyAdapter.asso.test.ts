@@ -177,7 +177,11 @@ describe('applyAdapter ASSO wiring (v466)', () => {
     expect(lines).toContain('2 ROLE OTHER')
     expect(lines).toContain('3 PHRASE Mr Stockdale')
     const reparsed = importIndividuals(exported)
-    expect(reparsed.find((p) => p.xref === 'I1')?.associations).toEqual(
+    // Eksporter hanya mencetak xref untuk record yang ditunjuk pointer
+    // (kardinalitas xref GEDCOM 7 {0:1}); kedua record di sini tak ditunjuk
+    // sehingga keduanya tanpa xref. Urutan dokumen tetap dipertahankan
+    // importIndividuals, jadi record pertama adalah m1.
+    expect(reparsed[0]?.associations).toEqual(
       captured[0].associations,
     )
   })
@@ -250,7 +254,10 @@ describe('applyAdapter ASSO wiring (v466)', () => {
     expect(lines).toContain('2 ROLE WITN')
     expect(lines).toContain('2 ROLE GODP')
     const reparsed = importIndividuals(exported)
-    expect(reparsed.find((p) => p.xref === 'I1')?.associations).toEqual(asso)
+    // I1 tidak ditunjuk pointer mana pun sehingga eksporter sah
+    // menghilangkan @I1@ (xref GEDCOM 7 {0:1}); urutan dokumen
+    // dipertahankan, record pertama tetap m1.
+    expect(reparsed[0]?.associations).toEqual(asso)
   })
 
   it('INDI tanpa ASSO: associations tetap NULL, sesama INDI ber-ASSO tetap tertulis', async () => {
