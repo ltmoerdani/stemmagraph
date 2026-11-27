@@ -39,6 +39,8 @@ export interface FamilyMember {
   calendarSystem?: CalendarSystem;
   /** Gap 0.6: privacy status inheritance from events. */
   privacyStatus?: 'shared' | 'private';
+  /** v468: asosiasi ASSO GEDCOM 7 hasil capture import (ParsedAssociation verbatim, kolom associations Json?). */
+  associations?: unknown[];
   created_at?: string;
   updated_at?: string;
 }
