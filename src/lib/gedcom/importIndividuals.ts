@@ -94,8 +94,20 @@ function payloadOf(struct: GEDCStruct | undefined): string | undefined {
  * type-Date: hasil dateOf menjadi undefined plus log, tanpa crash,
  * tanpa menyimpan bentuk ilegal.
  */
+// v465-C2: substructure PHRASE di bawah DATE (bentuk kanonik v7, payload
+// DATE boleh kosong) dijembatani ke konvensi INT inline v459b agar isi
+// phrase verbatim lolos jalur raw exporter.
 function dateOf(event: GEDCStruct | undefined): ParsedEventDateExt | undefined {
   const dateStruct = subWithTag(event, 'DATE')
+  const phraseSub = dateStruct === undefined ? undefined : dateStruct.sub.find((s) => s.tag === 'PHRASE')
+  const phraseText = phraseSub === undefined ? undefined : payloadOf(phraseSub)
+  if (phraseText !== undefined && phraseText !== '') {
+    return {
+      dateKind: 'PHRASE',
+      originalDateString: `INT ${phraseText}`,
+      phrase: phraseText,
+    }
+  }
   const raw = payloadOf(dateStruct)
   if (raw === undefined) return undefined
   const hasTime = dateStruct.sub.some((s) => s.tag === 'TIME')
