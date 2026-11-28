@@ -5559,6 +5559,224 @@ app.post(
   },
 );
 
+// ─── Citation upsert routes (v470, GAP#1 sourcing) ────────
+//
+// Tiga route PUT idempoten find-or-create untuk ekor pipeline import
+// GEDCOM (kontrak CitationApi di src/lib/adapters/types.ts, dipanggil
+// RestAdapter pasca applyImportPlan). Semua route memakai guard
+// 'manage_membership': keputusan yang didokumentasikan agar permisi
+// identik dengan route /gedcom/apply, sebab upsert sitasi hanyalah
+// ekor dari pipeline import yang sama (matrix ADR 0002).
+//
+// Keputusan mapping field (kontrak v470 + addendum wake-372):
+// 1. Source: find-or-create pada (treeId, title); title diisi pointer
+//    verbatim karena satu-satunya kolom NOT NULL yang layak sebagai
+//    kunci stabil hasil parse GEDCOM.
+// 2. Citation: find-or-create pada (sourceId, qualifier, transcription)
+//    dengan qualifier = spec.page dan transcription = spec.note;
+//    confidence mengikuti semantik QUAY GEDCOM 7 (0..3, makin tinggi
+//    makin andal): quay '3' simpan primary, selain itu default
+//    secondary sesuai default kolom.
+// 3. LifeEvent: find-or-create pada (treeId, memberId, eventType,
+//    partnerMemberId). eventType dipetakan identitas satu-satu ke nilai
+//    yang SUDAH ditulis kode existing (EVENT_TAG di
+//    src/lib/gedcom/citationApply.ts: BIRT, DEAT, MARR, DIV menjadi
+//    BIRTH, DEATH, MARRIAGE, DIVORCE; nilai sama dipakai query existing
+//    di server/index.ts). Nilai di luar empat itu ditolak 400
+//    invalid_body. citationId diset bila diberikan, dan join
+//    LifeEventCitation ditulis idempoten dengan order = jumlah join
+//    existing untuk lifeEvent tersebut.
+//
+// BOLA: resource (source, member, partner, citation) wajib milik
+// treeId pada path. Pelanggaran dijawab 404 NOT_FOUND, konsisten
+// pola guardTreeAction, agar keberadaan baris milik tree lain tidak
+// bocor. Guard tree sendiri menjawab 404 NOT_FOUND (tree nihil) atau
+// 403 FORBIDDEN_TREE (role tidak cukup).
+
+const CITATION_UPSERT_EVENT_TYPES = ['BIRTH', 'DEATH', 'MARRIAGE', 'DIVORCE'] as const;
+type CitationUpsertEventType = (typeof CITATION_UPSERT_EVENT_TYPES)[number];
+
+function isCitationUpsertEventType(value: unknown): value is CitationUpsertEventType {
+  return typeof value === 'string' && (CITATION_UPSERT_EVENT_TYPES as readonly string[]).includes(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function invalidBody(res: express.Response, message: string): express.Response {
+  return res.status(400).json({ code: 'invalid_body', message });
+}
+
+app.put(
+  '/api/v1/trees/:treeId/sources/upsert',
+  requireAuth,
+  async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+    try {
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
+      if (!guard.ok) {
+        return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+      }
+      const pointer = req.body?.pointer;
+      if (!isNonEmptyString(pointer)) {
+        return invalidBody(res, 'pointer is required');
+      }
+      const existing = await prisma.source.findFirst({
+        where: { treeId: req.params.treeId, title: pointer },
+      });
+      if (existing) return res.json({ id: existing.id });
+      const created = await prisma.source.create({
+        data: { treeId: req.params.treeId, title: pointer },
+      });
+      return res.json({ id: created.id });
+    } catch {
+      res.status(500).json({ code: 'SOURCE_UPSERT_FAILED', message: 'Failed to upsert source' });
+    }
+  },
+);
+
+app.put(
+  '/api/v1/trees/:treeId/citations/upsert',
+  requireAuth,
+  async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+    try {
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
+      if (!guard.ok) {
+        return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+      }
+      const b = (req.body ?? {}) as Record<string, unknown>;
+      if (!isNonEmptyString(b.sourceId) || !isNonEmptyString(b.memberId) || !isCitationUpsertEventType(b.eventType)) {
+        return invalidBody(res, 'sourceId, memberId, and eventType (BIRTH, DEATH, MARRIAGE, DIVORCE) are required');
+      }
+      if (b.page !== undefined && typeof b.page !== 'string') {
+        return invalidBody(res, 'page must be a string');
+      }
+      if (b.note !== undefined && typeof b.note !== 'string') {
+        return invalidBody(res, 'note must be a string');
+      }
+      // BOLA: source wajib milik tree ini.
+      const source = await prisma.source.findFirst({
+        where: { id: b.sourceId, treeId: req.params.treeId },
+      });
+      if (!source) {
+        return res.status(404).json({ code: 'NOT_FOUND', message: 'Source not found on this tree' });
+      }
+      // BOLA: member pemilik event wajib milik tree ini.
+      const member = await prisma.familyMember.findFirst({
+        where: { id: b.memberId, treeId: req.params.treeId },
+      });
+      if (!member) {
+        return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found on this tree' });
+      }
+      const qualifier = typeof b.page === 'string' ? b.page : null;
+      const transcription = typeof b.note === 'string' ? b.note : null;
+      const confidence = b.quay === '3' ? 'primary' : 'secondary';
+      let citation = await prisma.citation.findFirst({
+        where: { sourceId: b.sourceId, qualifier, transcription },
+      });
+      if (!citation) {
+        citation = await prisma.citation.create({
+          data: { sourceId: b.sourceId, qualifier, transcription, confidence },
+        });
+      }
+      return res.json({ id: citation.id });
+    } catch {
+      res.status(500).json({ code: 'CITATION_UPSERT_FAILED', message: 'Failed to upsert citation' });
+    }
+  },
+);
+
+app.put(
+  '/api/v1/trees/:treeId/life-events/upsert',
+  requireAuth,
+  async (req: AuthenticatedRequest<{ treeId: string }>, res) => {
+    try {
+      const guard = await guardTreeAction(req.userId!, req.params.treeId, 'manage_membership');
+      if (!guard.ok) {
+        return res.status(guard.statusCode).json({ code: guard.code, message: guard.message });
+      }
+      const b = (req.body ?? {}) as Record<string, unknown>;
+      if (!isNonEmptyString(b.memberId) || !isCitationUpsertEventType(b.eventType)) {
+        return invalidBody(res, 'memberId and eventType (BIRTH, DEATH, MARRIAGE, DIVORCE) are required');
+      }
+      if (b.partnerMemberId !== undefined && !isNonEmptyString(b.partnerMemberId)) {
+        return invalidBody(res, 'partnerMemberId must be a non-empty string');
+      }
+      if (b.citationId !== undefined && !isNonEmptyString(b.citationId)) {
+        return invalidBody(res, 'citationId must be a non-empty string');
+      }
+      // BOLA: member dan partner wajib milik tree ini.
+      const member = await prisma.familyMember.findFirst({
+        where: { id: b.memberId, treeId: req.params.treeId },
+      });
+      if (!member) {
+        return res.status(404).json({ code: 'NOT_FOUND', message: 'Member not found on this tree' });
+      }
+      const partnerValue = typeof b.partnerMemberId === 'string' ? b.partnerMemberId : null;
+      if (partnerValue !== null) {
+        const partner = await prisma.familyMember.findFirst({
+          where: { id: partnerValue, treeId: req.params.treeId },
+        });
+        if (!partner) {
+          return res.status(404).json({ code: 'NOT_FOUND', message: 'Partner member not found on this tree' });
+        }
+      }
+      // BOLA: citation (lewat source-nya) wajib milik tree ini.
+      const citationValue = typeof b.citationId === 'string' ? b.citationId : null;
+      if (citationValue !== null) {
+        const citation = await prisma.citation.findFirst({
+          where: { id: citationValue, source: { treeId: req.params.treeId } },
+        });
+        if (!citation) {
+          return res.status(404).json({ code: 'NOT_FOUND', message: 'Citation not found on this tree' });
+        }
+      }
+      let lifeEvent = await prisma.lifeEvent.findFirst({
+        where: {
+          treeId: req.params.treeId,
+          memberId: b.memberId,
+          eventType: b.eventType,
+          partnerMemberId: partnerValue,
+        },
+      });
+      if (!lifeEvent) {
+        lifeEvent = await prisma.lifeEvent.create({
+          data: {
+            treeId: req.params.treeId,
+            memberId: b.memberId,
+            eventType: b.eventType,
+            partnerMemberId: partnerValue,
+            ...(citationValue === null ? {} : { citationId: citationValue }),
+          },
+        });
+      } else if (citationValue !== null && lifeEvent.citationId !== citationValue) {
+        // Reuse lintas citation: event yang sama dipakai ulang, kolom
+        // tunggal citationId dimutakhir ke sitasi terkini.
+        lifeEvent = await prisma.lifeEvent.update({
+          where: { id: lifeEvent.id },
+          data: { citationId: citationValue },
+        });
+      }
+      if (citationValue !== null) {
+        const join = await prisma.lifeEventCitation.findFirst({
+          where: { lifeEventId: lifeEvent.id, citationId: citationValue },
+        });
+        if (!join) {
+          const order = await prisma.lifeEventCitation.count({
+            where: { lifeEventId: lifeEvent.id },
+          });
+          await prisma.lifeEventCitation.create({
+            data: { lifeEventId: lifeEvent.id, citationId: citationValue, order },
+          });
+        }
+      }
+      return res.json({ id: lifeEvent.id });
+    } catch {
+      res.status(500).json({ code: 'LIFE_EVENT_UPSERT_FAILED', message: 'Failed to upsert life event' });
+    }
+  },
+);
+
 // ─── Start ───────────────────────────────────────────────
 
 // P2-7: the hourly digest check exists only when a mailer is configured.
