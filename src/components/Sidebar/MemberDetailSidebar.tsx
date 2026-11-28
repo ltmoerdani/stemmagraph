@@ -3,6 +3,7 @@ import { X, Phone, Mail, MapPin, Calendar, Briefcase, GraduationCap, Heart, Mess
 import { useFamilyStore } from '../../store/familyStore';
 import { UnifiedMemberModal } from '../Forms/UnifiedMemberModal';
 import { MemberDetailSidebarKinship } from './MemberDetailSidebarKinship';
+import { AssociationEditor } from './AssociationEditor';
 import { MemberAuthPhoto } from './MemberAuthPhoto';
 import { MemberPhotoControls } from './MemberPhotoControls';
 import { CommentsSection } from './CommentsSection';
@@ -161,6 +162,8 @@ export const MemberDetailSidebar: React.FC = () => {
         {selectedMember.id && <CommentsSection key={selectedMember.id} memberId={selectedMember.id} />}
 
         <MemberDetailSidebarKinship />
+
+        <AssociationEditor member={selectedMember} />
 
         {/* Contact Information */}
         {(selectedMember.phone || selectedMember.email) && (
